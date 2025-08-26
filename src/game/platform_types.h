@@ -30,11 +30,12 @@ struct MovingPlatform : public BasePlatform {
     glm::vec3 originalPosition;
     bool returnToOriginal = false;
     float moveTimer = 0.0f;
+    glm::vec3 previousPosition;
     
     MovingPlatform(const glm::vec3& pos, const glm::vec3& siz, const glm::vec3& col,
                    const glm::vec3& target, float speed)
         : BasePlatform(pos, siz, col), moveTargetPosition(target), moveSpeed(speed), 
-          originalPosition(pos) {}
+          originalPosition(pos), previousPosition(pos) {}
 };
 
 // 回転足場
@@ -54,10 +55,12 @@ struct PatrollingPlatform : public BasePlatform {
     float patrolSpeed;
     int currentPatrolIndex = 0;
     float patrolTimer = 0.0f;
+    glm::vec3 previousPosition;
     
     PatrollingPlatform(const glm::vec3& pos, const glm::vec3& siz, const glm::vec3& col,
                        const std::vector<glm::vec3>& points, float speed)
-        : BasePlatform(pos, siz, col), patrolPoints(points), patrolSpeed(speed) {}
+        : BasePlatform(pos, siz, col), patrolPoints(points), patrolSpeed(speed), 
+          previousPosition(pos) {}
 };
 
 // テレポート足場

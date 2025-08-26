@@ -55,23 +55,17 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
         newPosition.x += moveDir.x * moveDistance;
         newPosition.z += moveDir.z * moveDistance;
         
-        // 重力反転時は水平移動の制限を緩和
-        if (gravityDirection.y > 0.5f) {
-            // 重力反転時：水平移動を自由に許可
+        // 水平移動での足場衝突をチェック（足場の上にいる時は移動を許可）
+        glm::vec3 playerSize = glm::vec3(1.0f, 1.0f, 1.0f);
+        if (!PhysicsSystem::checkPlatformCollisionHorizontal(gameState, newPosition, playerSize)) {
             gameState.playerPosition = newPosition;
-        } else {
-            // 通常時：水平移動での足場衝突をチェック
-            glm::vec3 playerSize = glm::vec3(1.0f, 1.0f, 1.0f);
-            if (!PhysicsSystem::checkPlatformCollisionHorizontal(gameState, newPosition, playerSize)) {
-                gameState.playerPosition = newPosition;
-            }
         }
     }
 }
 
-// ジャンプと浮遊の処理
-void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection) {
-    // ジャンプと浮遊
+// ジャンプの処理
+void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem) {
+    // シンプルなジャンプ処理
     static bool spacePressed = false;
     bool spaceCurrentlyPressed = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
 
@@ -80,13 +74,45 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
         glm::vec3 playerSize = glm::vec3(1.0f, 1.0f, 1.0f);
         bool onPlatform = false;
         
+        // 新しいPlatformSystemから足場データを取得
+        const auto& platforms = platformSystem.getPlatforms();
+        
         // 重力方向に応じて足場判定を行う
-        for (const auto& platform : gameState.platforms) {
-            if (platform.size.x <= 0 || platform.size.y <= 0 || platform.size.z <= 0) continue;
-            if (PhysicsSystem::isPlayerOnPlatformWithGravityForMovement(platform, gameState.playerPosition, playerSize, gravityDirection)) {
-                onPlatform = true;
-                break;
-            }
+        for (const auto& platform : platforms) {
+            std::visit([&](const auto& p) {
+                if (p.size.x <= 0 || p.size.y <= 0 || p.size.z <= 0) return;
+                
+                // 重力方向に応じた判定
+                if (gravityDirection.y > 0.5f) {
+                    // 重力反転時：足場の下面に衝突判定
+                    glm::vec3 platformMin = p.position - p.size * 0.5f;
+                    glm::vec3 platformMax = p.position + p.size * 0.5f;
+                    glm::vec3 playerMin = gameState.playerPosition - playerSize * 0.5f;
+                    glm::vec3 playerMax = gameState.playerPosition + playerSize * 0.5f;
+                    
+                    bool horizontalOverlap = (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                                             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+                    
+                    if (horizontalOverlap && std::abs(playerMax.y - platformMin.y) < 0.5f) {
+                        onPlatform = true;
+                    }
+                } else {
+                    // 通常の重力：足場の上面に衝突判定
+                    glm::vec3 platformMin = p.position - p.size * 0.5f;
+                    glm::vec3 platformMax = p.position + p.size * 0.5f;
+                    glm::vec3 playerMin = gameState.playerPosition - playerSize * 0.5f;
+                    glm::vec3 playerMax = gameState.playerPosition + playerSize * 0.5f;
+                    
+                    bool horizontalOverlap = (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                                             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+                    
+                    if (horizontalOverlap && std::abs(playerMin.y - platformMax.y) < 0.2f) {
+                        onPlatform = true;
+                    }
+                }
+            }, platform);
+            
+            if (onPlatform) break;
         }
         
         if (onPlatform) {
@@ -96,39 +122,8 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
             } else {
                 gameState.playerVelocity.y = 8.0f; // 通常時は上向きにジャンプ
             }
-            gameState.isFloating = false;
-        } else if (!gameState.isFloating && gameState.floatCount < 2) { // 最大2回まで
-            gameState.isFloating = true;
-            gameState.floatTimer = 0.0f;
-            if (gravityDirection.y > 0.5f) {
-                gameState.playerVelocity.y = -2.0f; // 重力反転時は下向きに浮遊
-            } else {
-                gameState.playerVelocity.y = 2.0f; // 通常時は上向きに浮遊
-            }
-            gameState.floatCount++; // 浮遊回数を増加
         }
     }
     spacePressed = spaceCurrentlyPressed;
-
-    if (gameState.isFloating) {
-        gameState.floatTimer += deltaTime;
-        if (gameState.floatTimer < 5.0f) {
-            if (gravityDirection.y > 0.5f) {
-                // 重力反転時：下向きに浮遊
-                gameState.playerVelocity.y = std::min(gameState.playerVelocity.y + 1.0f * deltaTime, 1.0f);
-                if (spaceCurrentlyPressed) {
-                    gameState.playerVelocity.y = std::max(gameState.playerVelocity.y - 3.0f * deltaTime, -2.0f);
-                }
-            } else {
-                // 通常時：上向きに浮遊
-                gameState.playerVelocity.y = std::max(gameState.playerVelocity.y - 1.0f * deltaTime, -1.0f);
-                if (spaceCurrentlyPressed) {
-                    gameState.playerVelocity.y = std::min(gameState.playerVelocity.y + 3.0f * deltaTime, 2.0f);
-                }
-            }
-        } else {
-            gameState.isFloating = false;
-        }
-    }
 }
 

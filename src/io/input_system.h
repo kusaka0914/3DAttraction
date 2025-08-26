@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include "../game/game_state.h"
+#include "../game/platform_system.h"
 
 // 入力システム
 class InputSystem {
@@ -14,6 +15,6 @@ public:
     static void processInput(GLFWwindow* window, GameState& gameState, float deltaTime);
     
     // ジャンプと浮遊の処理
-    static void processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection);
+    static void processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem);
 };
 

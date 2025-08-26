@@ -1,6 +1,7 @@
 #include "platform_system.h"
 #include <algorithm>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos) {
     for (auto& platform : platforms) {
@@ -20,9 +21,16 @@ void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos) {
 
 GameState::PlatformVariant* PlatformSystem::checkCollision(const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (auto& platform : platforms) {
-        if (std::visit([this, &playerPos, &playerSize](const auto& p) {
-            return checkCollisionWithBase(p, playerPos, playerSize);
-        }, platform)) {
+        bool collision = std::visit(overloaded{
+            [this, &playerPos, &playerSize](const GameState::RotatingPlatform& p) {
+                return checkCollisionWithRotatingPlatform(p, playerPos, playerSize);
+            },
+            [this, &playerPos, &playerSize](const auto& p) {
+                return checkCollisionWithBase(p, playerPos, playerSize);
+            }
+        }, platform);
+        
+        if (collision) {
             return &platform;
         }
     }
@@ -31,9 +39,16 @@ GameState::PlatformVariant* PlatformSystem::checkCollision(const glm::vec3& play
 
 GameState::PlatformVariant* PlatformSystem::getCurrentPlatform(const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (auto& platform : platforms) {
-        if (std::visit([this, &playerPos, &playerSize](const auto& p) {
-            return checkCollisionWithBase(p, playerPos, playerSize);
-        }, platform)) {
+        bool collision = std::visit(overloaded{
+            [this, &playerPos, &playerSize](const GameState::RotatingPlatform& p) {
+                return checkCollisionWithRotatingPlatform(p, playerPos, playerSize);
+            },
+            [this, &playerPos, &playerSize](const auto& p) {
+                return checkCollisionWithBase(p, playerPos, playerSize);
+            }
+        }, platform);
+        
+        if (collision) {
             return &platform;
         }
     }
@@ -143,6 +158,23 @@ std::vector<glm::vec3> PlatformSystem::getRotationAxes() const {
     return rotationAxes;
 }
 
+std::vector<float> PlatformSystem::getBlinkAlphas() const {
+    std::vector<float> blinkAlphas;
+    blinkAlphas.reserve(platforms.size());
+    
+    for (const auto& platform : platforms) {
+        std::visit([&blinkAlphas](const auto& p) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, GameState::CycleDisappearingPlatform>) {
+                blinkAlphas.push_back(p.blinkAlpha);
+            } else {
+                blinkAlphas.push_back(1.0f);
+            }
+        }, platform);
+    }
+    
+    return blinkAlphas;
+}
+
 // 古い設計との互換性のための静的メソッド
 void PlatformSystem::updatePlatforms(GameState& gameState, float deltaTime) {
     // 古い設計の実装をここに追加
@@ -164,6 +196,9 @@ void PlatformSystem::updateStaticPlatform(GameState::StaticPlatform& platform, f
 }
 
 void PlatformSystem::updateMovingPlatform(GameState::MovingPlatform& platform, float deltaTime) {
+    // 前フレームの位置を保存
+    platform.previousPosition = platform.position;
+    
     if (platform.hasPlayerOnBoard) {
         platform.moveTimer += deltaTime;
         
@@ -182,9 +217,30 @@ void PlatformSystem::updateMovingPlatform(GameState::MovingPlatform& platform, f
             // 目標に到達
             platform.position = targetPos;
             platform.moveTimer = 0.0f;
-            platform.hasPlayerOnBoard = false;
+            platform.returnToOriginal = true;
         } else {
             // 2点間を線形補間で滑らかに移動
+            platform.position = glm::mix(startPos, targetPos, t);
+        }
+    } else if (platform.returnToOriginal) {
+        // 元の位置に戻る
+        platform.moveTimer += deltaTime;
+        
+        glm::vec3 targetPos = platform.originalPosition;
+        glm::vec3 startPos = platform.moveTargetPosition;
+        
+        float distance = glm::length(targetPos - startPos);
+        float timeToTarget = distance / platform.moveSpeed;
+        
+        float t = platform.moveTimer / timeToTarget;
+        
+        if (t >= 1.0f) {
+            // 元の位置に到達
+            platform.position = targetPos;
+            platform.moveTimer = 0.0f;
+            platform.returnToOriginal = false;
+        } else {
+            // 元の位置に向かって移動
             platform.position = glm::mix(startPos, targetPos, t);
         }
     }
@@ -200,6 +256,9 @@ void PlatformSystem::updateRotatingPlatform(GameState::RotatingPlatform& platfor
 
 void PlatformSystem::updatePatrollingPlatform(GameState::PatrollingPlatform& platform, float deltaTime) {
     if (platform.patrolPoints.empty()) return;
+    
+    // 前フレームの位置を保存
+    platform.previousPosition = platform.position;
     
     platform.patrolTimer += deltaTime;
     
@@ -338,6 +397,17 @@ void PlatformSystem::updateFlyingPlatform(GameState::FlyingPlatform& platform, f
     }
 }
 
+void PlatformSystem::resetMovingPlatformFlags() {
+    for (auto& platform : platforms) {
+        std::visit(overloaded{
+            [](auto& p) {}, // 他のタイプは何もしない
+            [](GameState::MovingPlatform& p) {
+                p.hasPlayerOnBoard = false;
+            }
+        }, platform);
+    }
+}
+
 bool PlatformSystem::checkCollisionWithBase(const GameState::BasePlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
     if (!platform.isVisible) return false;
     
@@ -350,4 +420,81 @@ bool PlatformSystem::checkCollisionWithBase(const GameState::BasePlatform& platf
     return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
             playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+}
+
+bool PlatformSystem::checkCollisionWithRotatingPlatform(const GameState::RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
+    if (!platform.isVisible) return false;
+    
+    // 回転した足場の当たり判定
+    glm::vec3 halfSize = platform.size * 0.5f;
+    
+    // Y軸回転の場合の特別な処理
+    if (glm::length(platform.rotationAxis - glm::vec3(0, 1, 0)) < 0.1f) {
+        // Y軸回転の場合、XZ平面での回転のみを考慮
+        float angle = glm::radians(platform.rotationAngle);
+        float cosAngle = cos(angle);
+        float sinAngle = sin(angle);
+        
+        // プレイヤーの位置を足場のローカル座標系に変換
+        glm::vec3 localPlayerPos = playerPos - platform.position;
+        
+        // XZ平面での逆回転
+        float newX = localPlayerPos.x * cosAngle + localPlayerPos.z * sinAngle;
+        float newZ = -localPlayerPos.x * sinAngle + localPlayerPos.z * cosAngle;
+        
+        glm::vec3 unrotatedPlayerPos = platform.position + glm::vec3(newX, localPlayerPos.y, newZ);
+        
+        // 回転を考慮しない通常の当たり判定
+        glm::vec3 platformMin = platform.position - halfSize;
+        glm::vec3 platformMax = platform.position + halfSize;
+        glm::vec3 playerMin = unrotatedPlayerPos - playerSize * 0.5f;
+        glm::vec3 playerMax = unrotatedPlayerPos + playerSize * 0.5f;
+        
+        // 衝突判定
+        return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
+                playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+    } else if (glm::length(platform.rotationAxis - glm::vec3(1, 0, 0)) < 0.1f) {
+        // X軸回転（縦回転）の場合、YZ平面での回転のみを考慮
+        float angle = glm::radians(platform.rotationAngle);
+        float cosAngle = cos(angle);
+        float sinAngle = sin(angle);
+        
+        // プレイヤーの位置を足場のローカル座標系に変換
+        glm::vec3 localPlayerPos = playerPos - platform.position;
+        
+        // YZ平面での逆回転
+        float newY = localPlayerPos.y * cosAngle - localPlayerPos.z * sinAngle;
+        float newZ = localPlayerPos.y * sinAngle + localPlayerPos.z * cosAngle;
+        
+        glm::vec3 unrotatedPlayerPos = platform.position + glm::vec3(localPlayerPos.x, newY, newZ);
+        
+        // 回転を考慮しない通常の当たり判定
+        glm::vec3 platformMin = platform.position - halfSize;
+        glm::vec3 platformMax = platform.position + halfSize;
+        glm::vec3 playerMin = unrotatedPlayerPos - playerSize * 0.5f;
+        glm::vec3 playerMax = unrotatedPlayerPos + playerSize * 0.5f;
+        
+        // 衝突判定
+        return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
+                playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+    } else {
+        // その他の軸回転の場合、一般的な回転行列を使用
+        glm::vec3 localPlayerPos = playerPos - platform.position;
+        glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-platform.rotationAngle), platform.rotationAxis);
+        glm::vec4 rotatedPlayerPos = rotationMatrix * glm::vec4(localPlayerPos, 1.0f);
+        glm::vec3 unrotatedPlayerPos = glm::vec3(rotatedPlayerPos) + platform.position;
+        
+        // 回転を考慮しない通常の当たり判定
+        glm::vec3 platformMin = platform.position - halfSize;
+        glm::vec3 platformMax = platform.position + halfSize;
+        glm::vec3 playerMin = unrotatedPlayerPos - playerSize * 0.5f;
+        glm::vec3 playerMax = unrotatedPlayerPos + playerSize * 0.5f;
+        
+        // 衝突判定
+        return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
+                playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+    }
 }

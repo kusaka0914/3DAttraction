@@ -87,7 +87,7 @@ void StageGenerator::generatePlatforms(GameState& gameState, PlatformSystem& pla
     };
     platformSystem.addPlatform(GameState::PatrollingPlatform(
         glm::vec3(8, 5, -25), glm::vec3(2.5f, 1, 2.5f), glm::vec3(0.2f, 0.8f, 0.8f),
-        patrolPoints, 2.0f
+        patrolPoints, 1.0f
     ));
     
     // 周期的に消える足場（スタート地点の後ろ）
@@ -131,6 +131,8 @@ void StageGenerator::generatePlatforms(GameState& gameState, PlatformSystem& pla
         glm::vec3(5, 6.5, -25), glm::vec3(1.5, 0.5, 1.5), glm::vec3(1.0f, 0.0f, 1.0f),
         glm::vec3(15, 5, -10)
     ));
+    
+
     
     // 移動足場
     platformSystem.addPlatform(GameState::MovingPlatform(

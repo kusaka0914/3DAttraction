@@ -36,11 +36,15 @@ public:
     std::vector<bool> getIsRotating() const;
     std::vector<float> getRotationAngles() const;
     std::vector<glm::vec3> getRotationAxes() const;
+    std::vector<float> getBlinkAlphas() const;
     
     // 古い設計との互換性のための静的メソッド
     static void updatePlatforms(GameState& gameState, float deltaTime);
     static void checkTeleportPlatformCollision(GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize);
     static void checkMovingPlatformCollision(GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize);
+    
+    // MovingPlatformのhasPlayerOnBoardフラグをリセット
+    void resetMovingPlatformFlags();
     
 private:
     // 各足場タイプの更新処理
@@ -56,6 +60,7 @@ private:
     
     // 衝突判定ヘルパー
     bool checkCollisionWithBase(const GameState::BasePlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize);
+    bool checkCollisionWithRotatingPlatform(const GameState::RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize);
 };
 
 // バリアント訪問用のヘルパー関数

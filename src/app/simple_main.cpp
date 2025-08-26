@@ -108,14 +108,12 @@ int main() {
         }
         glm::vec3 gravityForce = gravityDirection * gravityStrength;
 
-        if (!gameState.isFloating) {
-            gameState.playerVelocity += gravityForce;
-            gameState.playerVelocity *= 0.98f; // 空気抵抗
-        }
+        gameState.playerVelocity += gravityForce;
+        gameState.playerVelocity *= 0.98f; // 空気抵抗
         
         // 入力処理
         InputSystem::processInput(window, gameState, deltaTime);
-        InputSystem::processJumpAndFloat(window, gameState, deltaTime, gravityDirection);
+        InputSystem::processJumpAndFloat(window, gameState, deltaTime, gravityDirection, platformSystem);
 
         // 垂直位置更新
         gameState.playerPosition.y += gameState.playerVelocity.y * deltaTime;
@@ -141,8 +139,6 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = 0.0f;
-                    gameState.isFloating = false;
-                    gameState.floatCount = 0;
                 },
                 [&](const GameState::MovingPlatform& platform) {
                     // 移動足場の処理
@@ -152,8 +148,6 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = 0.0f;
-                    gameState.isFloating = false;
-                    gameState.floatCount = 0;
                     const_cast<GameState::MovingPlatform&>(platform).hasPlayerOnBoard = true;
                 },
                 [&](const GameState::RotatingPlatform& platform) {
@@ -186,8 +180,6 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = 0.0f;
-                    gameState.isFloating = false;
-                    gameState.floatCount = 0;
                     
                     if (!platform.hasTeleported && platform.cooldownTimer <= 0.0f) {
                         gameState.playerPosition = platform.teleportDestination;
@@ -203,8 +195,6 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = platform.jumpPower;
-                    gameState.isFloating = false;
-                    gameState.floatCount = 0;
                 },
                 [&](const GameState::CycleDisappearingPlatform& platform) {
                     // 周期的に消える足場の処理
@@ -215,8 +205,6 @@ int main() {
                             gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                         }
                         gameState.playerVelocity.y = 0.0f;
-                        gameState.isFloating = false;
-                        gameState.floatCount = 0;
                     }
                 },
                 [&](const GameState::DisappearingPlatform& platform) {
@@ -227,8 +215,6 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = 0.0f;
-                    gameState.isFloating = false;
-                    gameState.floatCount = 0;
                 },
                 [&](const GameState::FlyingPlatform& platform) {
                     // 飛んでくる足場の処理
@@ -238,8 +224,6 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = 0.0f;
-                    gameState.isFloating = false;
-                    gameState.floatCount = 0;
                 }
             }, *currentPlatform);
         }
@@ -250,7 +234,7 @@ int main() {
                 [&](const GameState::StaticPlatform& platform) {
                     // 静的足場は何もしない
                 },
-                [&](const GameState::MovingPlatform& platform) {
+                [&](GameState::MovingPlatform& platform) {
                     if (platform.hasPlayerOnBoard) {
                         // プレイヤーが足場の上に正しく配置されるようにする
                         if (gravityDirection.y > 0.5f) {
@@ -258,17 +242,102 @@ int main() {
                         } else {
                             gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                         }
+                        
+                        // プレイヤーのX座標とZ座標を足場の移動に合わせて更新
+                        // 足場の移動量を計算してプレイヤーに適用
+                        glm::vec3 platformMovement = platform.position - platform.previousPosition;
+                        gameState.playerPosition.x += platformMovement.x;
+                        gameState.playerPosition.z += platformMovement.z;
                     }
                 },
-                [&](const GameState::RotatingPlatform& platform) {
-                    // 回転足場は何もしない
+                [&](GameState::RotatingPlatform& platform) {
+                    // 回転足場の処理
+                    // プレイヤーが足場の上にいる場合、回転に合わせて移動させる
+                    glm::vec3 halfSize = platform.size * 0.5f;
+                    glm::vec3 platformMin = platform.position - halfSize;
+                    glm::vec3 platformMax = platform.position + halfSize;
+                    
+                    // プレイヤーが足場の範囲内にいるかチェック
+                    bool onPlatform = (gameState.playerPosition.x >= platformMin.x && gameState.playerPosition.x <= platformMax.x &&
+                                      gameState.playerPosition.z >= platformMin.z && gameState.playerPosition.z <= platformMax.z);
+                    
+                    if (onPlatform) {
+                        // プレイヤーの位置を足場のローカル座標系に変換
+                        glm::vec3 localPlayerPos = gameState.playerPosition - platform.position;
+                        
+                        // 回転軸に応じて回転を適用
+                        if (glm::length(platform.rotationAxis - glm::vec3(0, 1, 0)) < 0.1f) {
+                            // Y軸回転の場合、XZ平面での回転
+                            float angle = glm::radians(platform.rotationSpeed * gameState.gameTime);
+                            float cosAngle = cos(angle);
+                            float sinAngle = sin(angle);
+                            
+                            float newX = localPlayerPos.x * cosAngle - localPlayerPos.z * sinAngle;
+                            float newZ = localPlayerPos.x * sinAngle + localPlayerPos.z * cosAngle;
+                            
+                            gameState.playerPosition = platform.position + glm::vec3(newX, localPlayerPos.y, newZ);
+                        } else if (glm::length(platform.rotationAxis - glm::vec3(1, 0, 0)) < 0.1f) {
+                            // X軸回転（縦回転）の場合、YZ平面での回転
+                            float angle = glm::radians(platform.rotationSpeed * gameState.gameTime);
+                            float cosAngle = cos(angle);
+                            float sinAngle = sin(angle);
+                            
+                            float newY = localPlayerPos.y * cosAngle - localPlayerPos.z * sinAngle;
+                            float newZ = localPlayerPos.y * sinAngle + localPlayerPos.z * cosAngle;
+                            
+                            gameState.playerPosition = platform.position + glm::vec3(localPlayerPos.x, newY, newZ);
+                        }
+                        
+                        // Y座標を足場の上に固定
+                        if (gravityDirection.y > 0.5f) {
+                            gameState.playerPosition.y = platform.position.y - platform.size.y * 0.5f - playerSize.y * 0.5f;
+                        } else {
+                            gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
+                        }
+                    }
                 },
-                [&](const GameState::PatrollingPlatform& platform) {
+                [&](GameState::PatrollingPlatform& platform) {
                     // 巡回足場の場合も同様の処理
-                    if (gravityDirection.y > 0.5f) {
-                        gameState.playerPosition.y = platform.position.y - platform.size.y * 0.5f - playerSize.y * 0.5f;
-                    } else {
-                        gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
+                    // プレイヤーが足場の範囲内にいるかチェック（より緩い判定）
+                    glm::vec3 halfSize = platform.size * 0.5f;
+                    glm::vec3 platformMin = platform.position - halfSize;
+                    glm::vec3 platformMax = platform.position + halfSize;
+                    
+                    // より緩い判定範囲（足場のサイズの1.5倍）
+                    glm::vec3 extendedHalfSize = halfSize * 1.5f;
+                    glm::vec3 extendedMin = platform.position - extendedHalfSize;
+                    glm::vec3 extendedMax = platform.position + extendedHalfSize;
+                    
+                    bool onPlatform = (gameState.playerPosition.x >= platformMin.x && gameState.playerPosition.x <= platformMax.x &&
+                                      gameState.playerPosition.z >= platformMin.z && gameState.playerPosition.z <= platformMax.z);
+                    
+                    bool inExtendedRange = (gameState.playerPosition.x >= extendedMin.x && gameState.playerPosition.x <= extendedMax.x &&
+                                           gameState.playerPosition.z >= extendedMin.z && gameState.playerPosition.z <= extendedMax.z);
+                    
+                    if (onPlatform || inExtendedRange) {
+                        // Y座標を足場の上に固定
+                        if (gravityDirection.y > 0.5f) {
+                            gameState.playerPosition.y = platform.position.y - platform.size.y * 0.5f - playerSize.y * 0.5f;
+                        } else {
+                            gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
+                        }
+                        
+                        // プレイヤーのX座標とZ座標を足場の移動に合わせて更新
+                        // 足場の移動量を計算してプレイヤーに適用
+                        glm::vec3 platformMovement = platform.position - platform.previousPosition;
+                        gameState.playerPosition.x += platformMovement.x;
+                        gameState.playerPosition.z += platformMovement.z;
+                        
+                        // プレイヤーが足場の中心に近づくように調整
+                        if (!onPlatform && inExtendedRange) {
+                            glm::vec3 directionToCenter = platform.position - gameState.playerPosition;
+                            directionToCenter.y = 0; // Y軸は無視
+                            float distanceToCenter = glm::length(directionToCenter);
+                            if (distanceToCenter > 0.1f) {
+                                glm::vec3 normalizedDirection = glm::normalize(directionToCenter);
+                                gameState.playerPosition += normalizedDirection * 0.5f * deltaTime;
+                            }
+                        }
                     }
                 },
                 [&](const GameState::TeleportPlatform& platform) {
@@ -287,6 +356,12 @@ int main() {
                     // 飛んでくる足場は何もしない
                 }
             }, *currentPlatform);
+        }
+        
+        // プレイヤーが足場から離れた時の処理
+        if (currentPlatform == nullptr) {
+            // 全てのMovingPlatformのhasPlayerOnBoardフラグをリセット
+            platformSystem.resetMovingPlatformFlags();
         }
         
         // 下限チェック（奈落に落ちた場合）
@@ -323,6 +398,7 @@ int main() {
         auto isRotating = platformSystem.getIsRotating();
         auto rotationAngles = platformSystem.getRotationAngles();
         auto rotationAxes = platformSystem.getRotationAxes();
+        auto blinkAlphas = platformSystem.getBlinkAlphas();
         
         for (size_t i = 0; i < positions.size(); i++) {
             if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
@@ -330,7 +406,7 @@ int main() {
             if (isRotating[i]) {
                 renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
             } else {
-                renderer->renderBox(positions[i], colors[i], sizes[i]);
+                renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
             }
         }
         
