@@ -28,6 +28,9 @@ public:
     // 全てのプラットフォームの取得
     const std::vector<GameState::PlatformVariant>& getPlatforms() const { return platforms; }
     
+    // プラットフォームのクリア
+    void clear() { platforms.clear(); }
+    
     // プラットフォームの描画用データ取得
     std::vector<glm::vec3> getPositions() const;
     std::vector<glm::vec3> getSizes() const;

@@ -108,9 +108,10 @@ void OpenGLRenderer::renderTriangle(const glm::vec3& position, const glm::vec3& 
     drawTriangle(model, color);
 }
 
-void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color) {
+void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
     // 簡易的なテキスト表示（実際のテキストレンダリングは複雑なので、ここではスキップ）
-    
+    // コンソールに出力してデバッグ用に表示
+    std::cout << "Text: " << text << " at (" << position.x << ", " << position.y << ") scale: " << scale << std::endl;
 }
 
 void OpenGLRenderer::renderGround(float size) {

@@ -27,6 +27,7 @@ add_executable(Vulkan3D
     src/gfx/opengl_renderer.cpp
     src/game/game_state.cpp
     src/game/stage_generator.cpp
+    src/game/stage_manager.cpp
     src/game/platform_system.cpp
     src/game/cannon_system.cpp
     src/game/switch_system.cpp

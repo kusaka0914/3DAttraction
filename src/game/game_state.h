@@ -206,6 +206,11 @@ struct GameState {
     int score = 0;
     float gameTime = 0.0f;
     int currentStage = 1;
+    
+    // ステージクリアUI状態
+    bool showStageClearUI = false;
+    float stageClearTimer = 0.0f;
+    bool stageClearConfirmed = false;
 };
 
 // ゲーム状態の初期化関数

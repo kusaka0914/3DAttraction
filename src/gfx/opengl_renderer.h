@@ -28,7 +28,7 @@ public:
     void renderRotatedBoxWithAlpha(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, 
                                   const glm::vec3& rotationAxis, float rotationAngle, float alpha);
     void renderTriangle(const glm::vec3& position, const glm::vec3& color, float size = 1.0f);
-    void renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color);
+    void renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     void renderGround(float size = 10.0f);
     void renderTerrain(const std::vector<std::vector<float>>& heightmap, float scale = 1.0f);
     

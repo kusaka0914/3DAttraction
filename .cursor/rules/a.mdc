@@ -1,0 +1,5 @@
+---
+description:原因が明確になるまで調査してください。また、作業完了後にはsayコマンドを用いて音声で報告してください。
+globs:
+alwaysApply: true
+---

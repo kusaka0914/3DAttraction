@@ -11,6 +11,7 @@
 #include "../gfx/opengl_renderer.h"
 #include "../game/game_state.h"
 #include "../game/stage_generator.h"
+#include "../game/stage_manager.h"
 #include "../game/platform_system.h"
 #include "../game/cannon_system.h"
 #include "../game/switch_system.h"
@@ -59,12 +60,11 @@ int main() {
     // 新しい設計のプラットフォームシステム
     PlatformSystem platformSystem;
     
-    // ステージ生成（新しい設計）
-    StageGenerator::generateTerrain(gameState, platformSystem);
+    // ステージ管理システム
+    StageManager stageManager;
     
-    // プレイヤーとゴール位置設定
-    gameState.playerPosition = glm::vec3(0, 6.0f, -25.0f);  // スタート足場の上
-    gameState.goalPosition   = glm::vec3(0, 16.0f, 25.0f);  // ゴール足場の上
+    // ステージ1を読み込み
+    stageManager.loadStage(1, gameState, platformSystem);
 
     // ゲーム開始準備完了
     bool gameRunning = true;
@@ -95,6 +95,91 @@ int main() {
         // 入力処理
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             gameRunning = false;
+        }
+        
+        // ステージ切り替えキー
+        static bool key1Pressed = false, key2Pressed = false, key3Pressed = false, key4Pressed = false, key5Pressed = false;
+        static bool nextStagePressed = false, prevStagePressed = false;
+        
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS && !key1Pressed) {
+            stageManager.goToStage(1, gameState, platformSystem);
+            key1Pressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE) {
+            key1Pressed = false;
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS && !key2Pressed) {
+            stageManager.goToStage(2, gameState, platformSystem);
+            key2Pressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_2) == GLFW_RELEASE) {
+            key2Pressed = false;
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS && !key3Pressed) {
+            stageManager.goToStage(3, gameState, platformSystem);
+            key3Pressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_3) == GLFW_RELEASE) {
+            key3Pressed = false;
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS && !key4Pressed) {
+            stageManager.goToStage(4, gameState, platformSystem);
+            key4Pressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_4) == GLFW_RELEASE) {
+            key4Pressed = false;
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS && !key5Pressed) {
+            stageManager.goToStage(5, gameState, platformSystem);
+            key5Pressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_5) == GLFW_RELEASE) {
+            key5Pressed = false;
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && !nextStagePressed) {
+            stageManager.goToNextStage(gameState, platformSystem);
+            nextStagePressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_RELEASE) {
+            nextStagePressed = false;
+        }
+        
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && !prevStagePressed) {
+            stageManager.goToPreviousStage(gameState, platformSystem);
+            prevStagePressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_RELEASE) {
+            prevStagePressed = false;
+        }
+        
+        // ステージクリアUIでのキー入力処理
+        if (gameState.showStageClearUI) {
+            static bool enterPressed = false, rPressed = false;
+            
+            // ENTERキーで次のステージに進む
+            if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS && !enterPressed) {
+                enterPressed = true;
+                if (stageManager.getCurrentStage() < stageManager.getTotalStages()) {
+                    // ステージをクリアして次のステージに進む
+                    stageManager.completeStage(stageManager.getCurrentStage());
+                    if (stageManager.goToNextStage(gameState, platformSystem)) {
+                        printf("Moving to next stage: %d\n", stageManager.getCurrentStage());
+                        gameState.showStageClearUI = false;
+                        gameState.gameWon = false;
+                    }
+                }
+            } else if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE) {
+                enterPressed = false;
+            }
+            
+            // Rキーでリトライ
+            if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rPressed) {
+                rPressed = true;
+                // 現在のステージを再読み込み
+                stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
+                gameState.showStageClearUI = false;
+                gameState.gameWon = false;
+            } else if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
+                rPressed = false;
+            }
         }
         
         // 重力反転エリアのチェック
@@ -139,6 +224,17 @@ int main() {
                         gameState.playerPosition.y = platform.position.y + platform.size.y * 0.5f + playerSize.y * 0.5f;
                     }
                     gameState.playerVelocity.y = 0.0f;
+                    
+                    // ゴール判定（黄色い足場の場合）
+                    if (platform.color.r > 0.9f && platform.color.g > 0.9f && platform.color.b < 0.1f) {
+                        // 黄色い足場（ゴール足場）に触れた場合
+                        if (!gameState.gameWon) {
+                            gameState.gameWon = true;
+                            gameState.showStageClearUI = true;
+                            gameState.stageClearTimer = 0.0f;
+                            printf("Stage %d completed! (Goal platform reached)\n", stageManager.getCurrentStage());
+                        }
+                    }
                 },
                 [&](const GameState::MovingPlatform& platform) {
                     // 移動足場の処理
@@ -370,10 +466,9 @@ int main() {
             gameState.playerVelocity = glm::vec3(0, 0, 0);
         }
         
-        // ゴール判定
-            float goalDistance = glm::length(gameState.playerPosition - gameState.goalPosition);
-            if (goalDistance < 2.0f) {
-                gameState.gameWon = true;
+        // ステージクリアUIのタイマー更新
+        if (gameState.showStageClearUI) {
+            gameState.stageClearTimer += deltaTime;
         }
 
         // --------------------------
@@ -440,31 +535,70 @@ int main() {
         
         // プレイヤーの描画
         renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
-        
-        // ゴールの描画
-        renderer->renderCube(gameState.goalPosition, gameState.goalColor, 1.5f);
 
                 // UI
         renderer->renderText("Score: " + std::to_string(gameState.score), glm::vec2(10, 10), glm::vec3(1, 1, 1));
         renderer->renderText("Time: " + std::to_string((int)gameState.gameTime) + "s", glm::vec2(10, 30), glm::vec3(1, 1, 1));
         renderer->renderText("Float Count: " + std::to_string(gameState.floatCount) + "/2", glm::vec2(10, 50), glm::vec3(1, 1, 1));
+        
+        // ステージ情報
+        const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
+        if (currentStageData) {
+            renderer->renderText("Stage " + std::to_string(stageManager.getCurrentStage()) + ": " + currentStageData->stageName, 
+                               glm::vec2(10, 70), glm::vec3(1, 1, 0));
+        }
+        
         renderer->renderText("Platforms: " + std::to_string(platformSystem.getPlatforms().size()), glm::vec2(10, 90), glm::vec3(1, 1, 1));
         
         // 重力状態の表示
         if (inGravityZone) {
-            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 70), glm::vec3(0.2f, 0.6f, 1.0f));
+            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 110), glm::vec3(0.2f, 0.6f, 1.0f));
         } else {
-            renderer->renderText("Normal Gravity", glm::vec2(10, 70), glm::vec3(1.0f, 1.0f, 1.0f));
+            renderer->renderText("Normal Gravity", glm::vec2(10, 110), glm::vec3(1.0f, 1.0f, 1.0f));
         }
         
         // システム情報の表示
-        renderer->renderText("Platforms: " + std::to_string(gameState.platforms.size()), glm::vec2(10, 90), glm::vec3(1, 1, 1));
-        renderer->renderText("Switches: " + std::to_string(gameState.switches.size()), glm::vec2(10, 110), glm::vec3(1, 1, 1));
-        renderer->renderText("Cannons: " + std::to_string(gameState.cannons.size()), glm::vec2(10, 130), glm::vec3(1, 1, 1));
+        renderer->renderText("Switches: " + std::to_string(gameState.switches.size()), glm::vec2(10, 130), glm::vec3(1, 1, 1));
+        renderer->renderText("Cannons: " + std::to_string(gameState.cannons.size()), glm::vec2(10, 150), glm::vec3(1, 1, 1));
         
-        if (gameState.gameWon) {
-            renderer->renderText("STAGE COMPLETE!", glm::vec2(640, 360), glm::vec3(1, 1, 0));
+        // ステージクリアUI
+        if (gameState.showStageClearUI) {
+            // 背景オーバーレイ
+            renderer->renderText("", glm::vec2(0, 0), glm::vec3(0, 0, 0), 0.7f);
+            
+            // ステージクリアメッセージ
+            renderer->renderText("STAGE COMPLETE!", glm::vec2(width/2 - 150, height/2 - 100), glm::vec3(1, 1, 0), 2.0f);
+            
+            // ステージ情報
+            const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
+            if (currentStageData) {
+                renderer->renderText("Stage " + std::to_string(stageManager.getCurrentStage()) + ": " + currentStageData->stageName, 
+                                   glm::vec2(width/2 - 120, height/2 - 50), glm::vec3(1, 1, 1), 1.2f);
+            }
+            
+            // スコアとタイム
+            renderer->renderText("Score: " + std::to_string(gameState.score), 
+                               glm::vec2(width/2 - 80, height/2), glm::vec3(1, 1, 1), 1.0f);
+            renderer->renderText("Time: " + std::to_string((int)gameState.gameTime) + "s", 
+                               glm::vec2(width/2 - 80, height/2 + 30), glm::vec3(1, 1, 1), 1.0f);
+            
+            // 次のステージボタン
+            if (stageManager.getCurrentStage() < stageManager.getTotalStages()) {
+                renderer->renderText("Press ENTER to continue to next stage", 
+                                   glm::vec2(width/2 - 180, height/2 + 80), glm::vec3(0.2f, 1.0f, 0.2f), 1.0f);
+            } else {
+                renderer->renderText("All stages completed! Congratulations!", 
+                                   glm::vec2(width/2 - 200, height/2 + 80), glm::vec3(1.0f, 0.8f, 0.2f), 1.0f);
+            }
+            
+            // リトライボタン
+            renderer->renderText("Press R to retry this stage", 
+                               glm::vec2(width/2 - 120, height/2 + 120), glm::vec3(0.8f, 0.8f, 0.8f), 0.8f);
         }
+        
+        // 操作説明
+        renderer->renderText("Controls: WASD=Move, SPACE=Jump, 1-5=Stage Select, LEFT/RIGHT=Next/Prev Stage", 
+                           glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
         
         renderer->endFrame();
         
