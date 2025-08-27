@@ -199,13 +199,29 @@ struct GameState {
     
     std::vector<Switch> switches;
     
+    // アイテムシステム
+    struct Item {
+        glm::vec3 position;
+        glm::vec3 size;
+        glm::vec3 color;
+        bool isCollected;
+        int itemId;  // アイテムの識別ID
+        float rotationAngle;  // 回転角度（視覚効果用）
+        float bobHeight;  // 上下の揺れ（視覚効果用）
+        float bobTimer;  // 揺れのタイマー
+    };
+    
+    std::vector<Item> items;
+    int collectedItems = 0;  // 収集したアイテム数
+    int requiredItems = 3;   // ステージクリアに必要なアイテム数
+    
     // デコ（道路マーカーや草パッチ）
     std::vector<glm::vec3> roadMarkers; // 細いグレーの目印（簡易道路表現）
     std::vector<glm::vec3> grassDecos;  // 小さな緑ブロック
     
     int score = 0;
     float gameTime = 0.0f;
-    int currentStage = 1;
+    int currentStage = 1;  // 初期ステージを2に変更
     
     // ステージクリアUI状態
     bool showStageClearUI = false;

@@ -22,7 +22,7 @@
 // ======================================================
 //                        main
 // ======================================================
-int main() {
+int main(int argc, char* argv[]) {
     
     // GLFW初期化
     if (!glfwInit()) {
@@ -55,6 +55,16 @@ int main() {
     
     // ゲーム状態
     GameState gameState;
+    
+    // コマンドライン引数で初期ステージを指定
+    if (argc > 1) {
+        int requestedStage = std::atoi(argv[1]);
+        if (requestedStage >= 1 && requestedStage <= 5) {
+            gameState.currentStage = requestedStage;
+            printf("Initial stage set to %d via command line argument\n", requestedStage);
+        }
+    }
+    
     glfwSetWindowUserPointer(window, &gameState);
     
     // 新しい設計のプラットフォームシステム
@@ -63,8 +73,16 @@ int main() {
     // ステージ管理システム
     StageManager stageManager;
     
-    // ステージ1を読み込み
-    stageManager.loadStage(1, gameState, platformSystem);
+    // currentStageの値に基づいて初期ステージを設定
+    int initialStage = gameState.currentStage;
+    if (initialStage < 1) initialStage = 1;
+    if (initialStage > stageManager.getTotalStages()) initialStage = stageManager.getTotalStages();
+    
+    printf("Starting from stage %d\n", initialStage);
+    stageManager.loadStage(initialStage, gameState, platformSystem);
+
+    // ゲームパッド初期化
+    InputSystem::initializeGamepad();
 
     // ゲーム開始準備完了
     bool gameRunning = true;
@@ -182,12 +200,35 @@ int main() {
             }
         }
         
+        // アイテム更新
+        for (auto& item : gameState.items) {
+            if (!item.isCollected) {
+                // アイテムの回転
+                item.rotationAngle += deltaTime * 90.0f; // 1秒で90度回転
+                if (item.rotationAngle >= 360.0f) {
+                    item.rotationAngle -= 360.0f;
+                }
+                
+                // アイテムの上下の揺れ
+                item.bobTimer += deltaTime;
+                item.bobHeight = sin(item.bobTimer * 2.0f) * 0.2f;
+                
+                // プレイヤーとの距離チェック（アイテム収集）
+                float distance = glm::length(gameState.playerPosition - item.position);
+                if (distance < 1.5f) { // 収集範囲
+                    item.isCollected = true;
+                    gameState.collectedItems++;
+                    printf("Item %d collected! (%d/%d)\n", item.itemId, gameState.collectedItems, gameState.requiredItems);
+                }
+            }
+        }
+        
         // 重力反転エリアのチェック
         glm::vec3 gravityDirection = glm::vec3(0, -1, 0); // デフォルトは下向き
         bool inGravityZone = PhysicsSystem::isPlayerInGravityZone(gameState, gameState.playerPosition, gravityDirection);
         
         // 物理演算
-        float gravityStrength = 8.0f * deltaTime;
+        float gravityStrength = 12.0f * deltaTime;  // 重力を強くして、より速く落下するように
         if (gravityDirection.y > 0.5f) {
             gravityStrength *= 0.7f; // 重力反転時は70%の強度
         }
@@ -228,11 +269,14 @@ int main() {
                     // ゴール判定（黄色い足場の場合）
                     if (platform.color.r > 0.9f && platform.color.g > 0.9f && platform.color.b < 0.1f) {
                         // 黄色い足場（ゴール足場）に触れた場合
-                        if (!gameState.gameWon) {
+                        if (!gameState.gameWon && gameState.collectedItems >= gameState.requiredItems) {
                             gameState.gameWon = true;
                             gameState.showStageClearUI = true;
                             gameState.stageClearTimer = 0.0f;
-                            printf("Stage %d completed! (Goal platform reached)\n", stageManager.getCurrentStage());
+                            printf("Stage %d completed! All items collected (%d/%d)\n", 
+                                   stageManager.getCurrentStage(), gameState.collectedItems, gameState.requiredItems);
+                        } else if (!gameState.gameWon && gameState.collectedItems < gameState.requiredItems) {
+                            printf("Need to collect all items first! (%d/%d)\n", gameState.collectedItems, gameState.requiredItems);
                         }
                     }
                 },
@@ -533,10 +577,19 @@ int main() {
             }
         }
         
+        // アイテムの描画
+        for (const auto& item : gameState.items) {
+            if (!item.isCollected) {
+                // アイテムの位置に揺れを適用
+                glm::vec3 itemPos = item.position + glm::vec3(0, item.bobHeight, 0);
+                renderer->renderRotatedBox(itemPos, item.color, item.size, glm::vec3(0, 1, 0), item.rotationAngle);
+            }
+        }
+        
         // プレイヤーの描画
         renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
 
-                // UI
+        // UI
         renderer->renderText("Score: " + std::to_string(gameState.score), glm::vec2(10, 10), glm::vec3(1, 1, 1));
         renderer->renderText("Time: " + std::to_string((int)gameState.gameTime) + "s", glm::vec2(10, 30), glm::vec3(1, 1, 1));
         renderer->renderText("Float Count: " + std::to_string(gameState.floatCount) + "/2", glm::vec2(10, 50), glm::vec3(1, 1, 1));
@@ -550,11 +603,15 @@ int main() {
         
         renderer->renderText("Platforms: " + std::to_string(platformSystem.getPlatforms().size()), glm::vec2(10, 90), glm::vec3(1, 1, 1));
         
+        // アイテム収集状況の表示
+        renderer->renderText("Items: " + std::to_string(gameState.collectedItems) + "/" + std::to_string(gameState.requiredItems), 
+                           glm::vec2(10, 130), glm::vec3(1, 1, 0));
+        
         // 重力状態の表示
         if (inGravityZone) {
-            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 110), glm::vec3(0.2f, 0.6f, 1.0f));
+            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 150), glm::vec3(0.2f, 0.6f, 1.0f));
         } else {
-            renderer->renderText("Normal Gravity", glm::vec2(10, 110), glm::vec3(1.0f, 1.0f, 1.0f));
+            renderer->renderText("Normal Gravity", glm::vec2(10, 150), glm::vec3(1.0f, 1.0f, 1.0f));
         }
         
         // システム情報の表示
@@ -581,19 +638,21 @@ int main() {
                                glm::vec2(width/2 - 80, height/2), glm::vec3(1, 1, 1), 1.0f);
             renderer->renderText("Time: " + std::to_string((int)gameState.gameTime) + "s", 
                                glm::vec2(width/2 - 80, height/2 + 30), glm::vec3(1, 1, 1), 1.0f);
+            renderer->renderText("Items Collected: " + std::to_string(gameState.collectedItems) + "/" + std::to_string(gameState.requiredItems), 
+                               glm::vec2(width/2 - 100, height/2 + 60), glm::vec3(1, 1, 0), 1.0f);
             
             // 次のステージボタン
             if (stageManager.getCurrentStage() < stageManager.getTotalStages()) {
                 renderer->renderText("Press ENTER to continue to next stage", 
-                                   glm::vec2(width/2 - 180, height/2 + 80), glm::vec3(0.2f, 1.0f, 0.2f), 1.0f);
+                                   glm::vec2(width/2 - 180, height/2 + 100), glm::vec3(0.2f, 1.0f, 0.2f), 1.0f);
             } else {
                 renderer->renderText("All stages completed! Congratulations!", 
-                                   glm::vec2(width/2 - 200, height/2 + 80), glm::vec3(1.0f, 0.8f, 0.2f), 1.0f);
+                                   glm::vec2(width/2 - 200, height/2 + 100), glm::vec3(1.0f, 0.8f, 0.2f), 1.0f);
             }
             
             // リトライボタン
             renderer->renderText("Press R to retry this stage", 
-                               glm::vec2(width/2 - 120, height/2 + 120), glm::vec3(0.8f, 0.8f, 0.8f), 0.8f);
+                               glm::vec2(width/2 - 120, height/2 + 140), glm::vec3(0.8f, 0.8f, 0.8f), 0.8f);
         }
         
         // 操作説明

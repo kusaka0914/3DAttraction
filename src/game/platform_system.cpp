@@ -348,11 +348,11 @@ void PlatformSystem::updateDisappearingPlatform(GameState::DisappearingPlatform&
 }
 
 void PlatformSystem::updateFlyingPlatform(GameState::FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos) {
-    // プレイヤーとの距離をチェック
-    float distanceToPlayer = glm::length(playerPos - platform.spawnPosition);
+    // プレイヤーとターゲット位置との距離をチェック
+    float distanceToTarget = glm::length(playerPos - platform.targetPosition);
     
     // プレイヤーが検知範囲内に入ったら発動
-    if (!platform.hasSpawned && distanceToPlayer <= platform.detectionRange) {
+    if (!platform.hasSpawned && distanceToTarget <= platform.detectionRange) {
         platform.hasSpawned = true;
         platform.isFlying = true;
         platform.isVisible = true;

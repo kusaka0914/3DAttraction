@@ -16,5 +16,12 @@ public:
     
     // ジャンプと浮遊の処理
     static void processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem);
+    
+    // ゲームパッド関連
+    static void initializeGamepad();
+    static bool isGamepadConnected();
+    static glm::vec2 getGamepadLeftStick();
+    static bool isGamepadButtonPressed(int button);
+    static bool isGamepadButtonJustPressed(int button);
 };
 

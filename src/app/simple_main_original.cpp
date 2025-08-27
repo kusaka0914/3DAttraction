@@ -209,7 +209,7 @@ struct GameState {
     
     int score = 0;
     float gameTime = 0.0f;
-    int currentStage = 1;
+    int currentStage = 2;
 };
 
 // ------------------------------------------------------

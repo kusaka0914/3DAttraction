@@ -2,6 +2,12 @@
 #include "../physics/physics_system.h"
 #include <algorithm>
 
+// ゲームパッド関連の静的変数
+static bool gamepadConnected = false;
+static int gamepadId = GLFW_JOYSTICK_1;
+static bool gamepadButtons[15] = {false}; // ボタンの状態を保存
+static bool gamepadButtonsLast[15] = {false}; // 前フレームのボタン状態
+
 // マウスコールバック
 void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     GameState* gameState = static_cast<GameState*>(glfwGetWindowUserPointer(window));
@@ -41,10 +47,19 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
     
     // 移動入力
     glm::vec3 moveDir(0.0f);
+    
+    // キーボード入力
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveDir.z += 1.0f;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveDir.z -= 1.0f;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) moveDir.x += 1.0f;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) moveDir.x -= 1.0f;
+    
+    // ゲームパッド入力（左スティック）
+    if (isGamepadConnected()) {
+        glm::vec2 gamepadStick = getGamepadLeftStick();
+        moveDir.x += gamepadStick.x;
+        moveDir.z -= gamepadStick.y; // Y軸を反転（ゲームパッドの上が前進）
+    }
 
     if (glm::length(moveDir) > 0.0f) {
         moveDir = glm::normalize(moveDir);
@@ -67,9 +82,15 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
 void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem) {
     // シンプルなジャンプ処理
     static bool spacePressed = false;
+    static bool gamepadJumpPressed = false;
+    
     bool spaceCurrentlyPressed = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+    bool gamepadJumpCurrentlyPressed = isGamepadButtonPressed(0); // Aボタン（通常は0番）
+    
+    bool shouldJump = (spaceCurrentlyPressed && !spacePressed) || 
+                     (gamepadJumpCurrentlyPressed && !gamepadJumpPressed);
 
-    if (spaceCurrentlyPressed && !spacePressed) {
+    if (shouldJump) {
         // 重力方向を考慮した足場判定
         glm::vec3 playerSize = glm::vec3(1.0f, 1.0f, 1.0f);
         bool onPlatform = false;
@@ -125,5 +146,61 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
         }
     }
     spacePressed = spaceCurrentlyPressed;
+    gamepadJumpPressed = gamepadJumpCurrentlyPressed;
+}
+
+// ゲームパッド初期化
+void InputSystem::initializeGamepad() {
+    if (glfwJoystickPresent(gamepadId)) {
+        gamepadConnected = true;
+        printf("Gamepad connected: %s\n", glfwGetJoystickName(gamepadId));
+    } else {
+        gamepadConnected = false;
+        printf("No gamepad detected\n");
+    }
+}
+
+// ゲームパッド接続状態をチェック
+bool InputSystem::isGamepadConnected() {
+    gamepadConnected = glfwJoystickPresent(gamepadId);
+    return gamepadConnected;
+}
+
+// 左スティックの入力を取得
+glm::vec2 InputSystem::getGamepadLeftStick() {
+    if (!gamepadConnected) return glm::vec2(0.0f);
+    
+    int axesCount;
+    const float* axes = glfwGetJoystickAxes(gamepadId, &axesCount);
+    if (axesCount >= 2) {
+        // デッドゾーンを設定（小さな入力を無視）
+        float deadzone = 0.1f;
+        float x = std::abs(axes[0]) > deadzone ? axes[0] : 0.0f;
+        float y = std::abs(axes[1]) > deadzone ? axes[1] : 0.0f;
+        return glm::vec2(x, y);
+    }
+    return glm::vec2(0.0f);
+}
+
+// ゲームパッドボタンの状態を取得
+bool InputSystem::isGamepadButtonPressed(int button) {
+    if (!gamepadConnected) return false;
+    
+    int buttonCount;
+    const unsigned char* buttons = glfwGetJoystickButtons(gamepadId, &buttonCount);
+    if (button < buttonCount) {
+        return buttons[button] == GLFW_PRESS;
+    }
+    return false;
+}
+
+// ゲームパッドボタンが今フレーム押されたかをチェック
+bool InputSystem::isGamepadButtonJustPressed(int button) {
+    if (!gamepadConnected) return false;
+    
+    bool currentState = isGamepadButtonPressed(button);
+    bool justPressed = currentState && !gamepadButtonsLast[button];
+    gamepadButtonsLast[button] = currentState;
+    return justPressed;
 }
 
