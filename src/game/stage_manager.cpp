@@ -392,6 +392,10 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.score = 0;
     gameState.gameTime = 0.0f;
     
+    // チェックポイントをリセット
+    gameState.lastCheckpoint = stageIt->playerStartPosition;
+    gameState.lastCheckpointItemId = -1;
+    
     // プラットフォームシステムをクリア
     platformSystem.clear();
     

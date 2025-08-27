@@ -218,7 +218,14 @@ int main(int argc, char* argv[]) {
                 if (distance < 1.5f) { // 収集範囲
                     item.isCollected = true;
                     gameState.collectedItems++;
-                    printf("Item %d collected! (%d/%d)\n", item.itemId, gameState.collectedItems, gameState.requiredItems);
+                    
+                    // チェックポイントを更新
+                    gameState.lastCheckpoint = item.position;
+                    gameState.lastCheckpointItemId = item.itemId;
+                    
+                    printf("Item %d collected! (%d/%d) - Checkpoint set at (%.1f, %.1f, %.1f)\n", 
+                           item.itemId, gameState.collectedItems, gameState.requiredItems,
+                           gameState.lastCheckpoint.x, gameState.lastCheckpoint.y, gameState.lastCheckpoint.z);
                 }
             }
         }
@@ -505,8 +512,17 @@ int main(int argc, char* argv[]) {
         }
         
         // 下限チェック（奈落に落ちた場合）
-        if (gameState.playerPosition.y < -10.0f) {
-            gameState.playerPosition = glm::vec3(0, 6.0f, -25.0f); // スタート地点にリセット
+        if (gameState.playerPosition.y < 0) {
+            // チェックポイントがある場合はそこに復活、ない場合はスタート地点に復活
+            if (gameState.lastCheckpointItemId != -1) {
+                gameState.playerPosition = gameState.lastCheckpoint;
+                printf("Respawned at checkpoint (Item %d) at (%.1f, %.1f, %.1f)\n", 
+                       gameState.lastCheckpointItemId,
+                       gameState.lastCheckpoint.x, gameState.lastCheckpoint.y, gameState.lastCheckpoint.z);
+            } else {
+                gameState.playerPosition = glm::vec3(0, 6.0f, -25.0f); // スタート地点にリセット
+                printf("Respawned at start position (no checkpoint)\n");
+            }
             gameState.playerVelocity = glm::vec3(0, 0, 0);
         }
         
@@ -607,11 +623,19 @@ int main(int argc, char* argv[]) {
         renderer->renderText("Items: " + std::to_string(gameState.collectedItems) + "/" + std::to_string(gameState.requiredItems), 
                            glm::vec2(10, 130), glm::vec3(1, 1, 0));
         
+        // チェックポイント情報の表示
+        if (gameState.lastCheckpointItemId != -1) {
+            renderer->renderText("Checkpoint: Item " + std::to_string(gameState.lastCheckpointItemId), 
+                               glm::vec2(10, 170), glm::vec3(0, 1, 1));
+        } else {
+            renderer->renderText("Checkpoint: None", glm::vec2(10, 170), glm::vec3(0.5f, 0.5f, 0.5f));
+        }
+        
         // 重力状態の表示
         if (inGravityZone) {
-            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 150), glm::vec3(0.2f, 0.6f, 1.0f));
+            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 190), glm::vec3(0.2f, 0.6f, 1.0f));
         } else {
-            renderer->renderText("Normal Gravity", glm::vec2(10, 150), glm::vec3(1.0f, 1.0f, 1.0f));
+            renderer->renderText("Normal Gravity", glm::vec2(10, 190), glm::vec3(1.0f, 1.0f, 1.0f));
         }
         
         // システム情報の表示

@@ -215,6 +215,10 @@ struct GameState {
     int collectedItems = 0;  // 収集したアイテム数
     int requiredItems = 3;   // ステージクリアに必要なアイテム数
     
+    // チェックポイントシステム
+    glm::vec3 lastCheckpoint = glm::vec3(0, 30.0f, 0);  // 最後のチェックポイント位置
+    int lastCheckpointItemId = -1;  // 最後のチェックポイントのアイテムID
+    
     // デコ（道路マーカーや草パッチ）
     std::vector<glm::vec3> roadMarkers; // 細いグレーの目印（簡易道路表現）
     std::vector<glm::vec3> grassDecos;  // 小さな緑ブロック
