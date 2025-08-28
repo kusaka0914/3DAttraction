@@ -239,17 +239,24 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
     glm::vec3 goalColor = glm::vec3(1.0f, 1.0f, 1.0f);
     
     renderText(goalText, glm::vec2(962, 65), goalColor, 1.0f);
-
+    if(timeLimit<=20){
     std::string goalText2 = "5s";
-    glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        std::string goalText3 = "10s";
+        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+    }
 
-
-    std::string goalText3 = "10s";
-    glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+    if(timeLimit>20){
+        std::string goalText2 = "10s";
+        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        std::string goalText3 = "20s";
+        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+    }
     
-    renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
 
     if(existingStars==0){
         for (int i = 0; i < 3; i++) {
@@ -293,31 +300,40 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
     glPopMatrix();
 }
 
-// 星の描画
+// 星の描画（塗りつぶし版）
 void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
     glColor3f(color.r, color.g, color.b);
     
-    // 星の5つの角を描画
+    // 星の中心点
+    float centerX = position.x;
+    float centerY = position.y;
+    
+    // 星の5つの角を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < 5; i++) {
         float angle1 = i * 72.0f * 3.14159f / 180.0f;
         float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
         
         // 外側の点
-        float x1 = position.x + cos(angle1) * 12.0f * scale;
-        float y1 = position.y + sin(angle1) * 12.0f * scale;
+        float x1 = centerX + cos(angle1) * 12.0f * scale;
+        float y1 = centerY + sin(angle1) * 12.0f * scale;
         
         // 内側の点
-        float x2 = position.x + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
-        float y2 = position.y + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
+        float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
+        float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
         
         // 次の外側の点
-        float x3 = position.x + cos(angle2) * 12.0f * scale;
-        float y3 = position.y + sin(angle2) * 12.0f * scale;
+        float x3 = centerX + cos(angle2) * 12.0f * scale;
+        float y3 = centerY + sin(angle2) * 12.0f * scale;
         
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
+        // 中心から各点への三角形を描画（塗りつぶし）
+        glVertex2f(centerX, centerY);  // 中心点
+        glVertex2f(x1, y1);            // 外側の点1
+        glVertex2f(x2, y2);            // 内側の点
+        
+        glVertex2f(centerX, centerY);  // 中心点
+        glVertex2f(x2, y2);            // 内側の点
+        glVertex2f(x3, y3);            // 外側の点2
     }
     glEnd();
 }
@@ -398,6 +414,111 @@ void OpenGLRenderer::renderTutorialUI(int width, int height) {
     
     // 注意事項
     renderText("ENTER", glm::vec2((boxX + boxWidth/2 +200) * scaleX, (boxY + 500) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.3f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// ステージクリアUI用の背景描画
+void OpenGLRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // // ステージクリアボックス（中央に配置）
+    float boxWidth = 800.0f;
+    float boxHeight = 500.0f;
+    float boxX = (width - boxWidth) / 2.0f;
+    float boxY = (height - boxHeight) / 2.0f;
+    
+    // // ボックス背景（白）
+    // glColor3f(1.0f, 1.0f, 1.0f);
+    // glBegin(GL_QUADS);
+    // glVertex2f(boxX, boxY);
+    // glVertex2f(boxX + boxWidth, boxY);
+    // glVertex2f(boxX + boxWidth, boxY + boxHeight);
+    // glVertex2f(boxX, boxY + boxHeight);
+    // glEnd();
+    
+    // // ボックス枠線（緑）
+    // glColor3f(0.2f, 0.8f, 0.2f);
+    // glLineWidth(3.0f);
+    // glBegin(GL_LINE_LOOP);
+    // glVertex2f(boxX, boxY);
+    // glVertex2f(boxX + boxWidth, boxY);
+    // glVertex2f(boxX + boxWidth, boxY + boxHeight);
+    // glVertex2f(boxX, boxY + boxHeight);
+    // glEnd();
+    // glLineWidth(1.0f);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // ステージクリアメッセージ
+    if (earnedStars == 3) {
+        renderText("STAGE COMPLETED!", glm::vec2((boxX + boxWidth/2 - 300) * scaleX, (boxY - 80) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 2.5f);
+    } else {
+        renderText("STAGE CLEAR!", glm::vec2((boxX + boxWidth/2 - 300) * scaleX, (boxY - 80) * scaleY), glm::vec3(0.8f, 0.2f, 0.2f), 2.5f);
+    }
+    
+    // クリアタイム
+    renderText("CLEAR TIME: " + std::to_string((int)clearTime) + "s", 
+               glm::vec2((boxX + 200) * scaleX, (boxY + 350) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.8f);
+    
+    // 星の表示（実際の星を3つ表示）
+    for (int i = 0; i < 3; i++) {
+        glm::vec2 starPos = glm::vec2((boxX + 750 + i * 600) * scaleX, (boxY + 720) * scaleY);
+        glm::vec3 starColor;
+        
+        if (i < earnedStars) {
+            // 獲得した星（黄色で点灯）
+            starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+        } else {
+            // まだ獲得していない星（灰色）
+            starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        }
+        
+        renderStar(starPos, starColor, 10.0f);
+    }
+    
+    // ステージ選択フィールドに戻るボタン
+    renderText("RETURN FIELD: ENTER", 
+               glm::vec2((boxX + 130) * scaleX, (boxY + 500) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.0f);
+    
+    // リトライボタン
+    renderText("RETRY: R", 
+               glm::vec2((boxX + 550) * scaleX, (boxY + 500) * scaleY), glm::vec3(0.8f, 0.8f, 0.8f), 1.0f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -1164,6 +1285,61 @@ void OpenGLRenderer::renderBitmapChar(char c, const glm::vec2& position, const g
             }
         }
     }
+}
+
+// ゲームオーバーUI用の背景描画
+void OpenGLRenderer::renderGameOverBackground(int width, int height) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // ゲームオーバーメッセージ
+    renderText("GAME OVER!", glm::vec2((width/2 - 300) * scaleX, (height/2 - 100) * scaleY), glm::vec3(1.0f, 0.2f, 0.2f), 3.0f);
+    
+    // ステージ選択フィールドに戻るボタン
+    renderText("RETURN FIELD: ENTER", 
+               glm::vec2((width/2 - 300) * scaleX, (height/2 + 50) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);
+    
+    // リトライボタン
+    renderText("RETRY: R", 
+               glm::vec2((width/2 - 150) * scaleX, (height/2 + 150) * scaleY), glm::vec3(0.8f, 0.8f, 0.8f), 1.5f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 

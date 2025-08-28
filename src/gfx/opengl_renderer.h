@@ -36,6 +36,8 @@ public:
     void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars = 0);
     void renderStar(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     void renderTutorialUI(int width, int height);
+    void renderStageClearBackground(int width, int height, float clearTime, int earnedStars);
+    void renderGameOverBackground(int width, int height);
     
     void setCamera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up = glm::vec3(0, 1, 0));
     void setProjection(float fov, float aspect, float near, float far);

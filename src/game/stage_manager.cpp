@@ -419,6 +419,8 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.stageClearTimer = 0.0f;   // タイマーをリセット
     gameState.stageClearConfirmed = false; // 確認フラグをリセット
     gameState.isGoalReached = false;    // ゴール後の移動制限をリセット
+    gameState.isGameOver = false;       // ゲームオーバーフラグをリセット
+    gameState.isTimeUp = false;         // 時間切れフラグをリセット
     
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;

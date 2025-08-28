@@ -238,6 +238,7 @@ int main(int argc, char* argv[]) {
             if (gameState.remainingTime <= 0.0f) {
                 gameState.remainingTime = 0.0f;
                 gameState.isTimeUp = true;
+                gameState.isGameOver = true;  // ゲームオーバーフラグを設定
                 printf("Time's up! Stage failed.\n");
             }
         }
@@ -416,6 +417,40 @@ int main(int argc, char* argv[]) {
                 gameState.timeScaleLevel = 0;
                 // 残機をリセット
                 gameState.lives = 6;
+            }
+        }
+        
+        // ゲームオーバーUIでのキー入力処理
+        if (gameState.isGameOver) {
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                // ステージ選択フィールドに戻る
+                stageManager.goToStage(0, gameState, platformSystem);
+                gameState.timeScale = 1.0f;
+                gameState.timeScaleLevel = 0;
+                gameState.isGameOver = false;  // ゲームオーバーフラグをリセット
+                gameState.isTimeUp = false;    // 時間切れフラグをリセット
+                gameState.remainingTime = gameState.timeLimit;  // 残り時間をリセット
+                
+                // ステージ選択フィールドの中央にプレイヤーを配置
+                gameState.playerPosition = glm::vec3(0, 2.0f, 0);
+                gameState.playerVelocity = glm::vec3(0, 0, 0);
+                
+                printf("Returning to stage selection field after game over.\n");
+            }
+            
+            if (keyStates[GLFW_KEY_R].justPressed()) {
+                // 現在のステージをリトライ
+                stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
+                gameState.isGameOver = false;  // ゲームオーバーフラグをリセット
+                gameState.isTimeUp = false;    // 時間切れフラグをリセット
+                gameState.remainingTime = gameState.timeLimit;  // 残り時間をリセット
+                // 速度倍率をリセット
+                gameState.timeScale = 1.0f;
+                gameState.timeScaleLevel = 0;
+                // 残機をリセット
+                gameState.lives = 6;
+                
+                printf("Retrying current stage after game over.\n");
             }
         }
         
@@ -957,30 +992,14 @@ int main(int argc, char* argv[]) {
         
         // ステージクリアUI
         if (gameState.showStageClearUI) {
-            // 背景オーバーレイ
-            renderer->renderText("", glm::vec2(0, 0), glm::vec3(0, 0, 0), 0.7f);
-            
-            // ステージクリアメッセージ
-            renderer->renderText("STAGE CLEAR!", glm::vec2(width/2 - 650, height/2 - 550), glm::vec3(1, 1, 0), 3.0f);
-            
-
-            
-            // クリアタイム
-            renderer->renderText("CLEAR TIME: " + std::to_string((int)gameState.clearTime) + "s", 
-                               glm::vec2(width/2 - 650, height/2 - 450), glm::vec3(1, 1, 1), 2.0f);
-            
-            
-            // 星の表示
-            renderer->renderText("GET STARS: " + std::to_string(gameState.earnedStars), 
-                               glm::vec2(width/2 - 650, height/2 - 400), glm::vec3(1, 1, 0), 2.0f);
-            
-            // ステージ選択フィールドに戻るボタン
-            renderer->renderText("RETURN FIELD: ENTER", 
-                               glm::vec2(width/2 - 650, height/2 - 350), glm::vec3(0.2f, 1.0f, 0.2f), 2.0f);
-            
-            // リトライボタン
-            renderer->renderText("RETRY: R", 
-                               glm::vec2(width/2 - 650, height/2 - 300), glm::vec3(0.8f, 0.8f, 0.8f), 2.0f);
+            // 背景とボックスを描画
+            renderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.earnedStars);
+        }
+        
+        // ゲームオーバーUI
+        if (gameState.isGameOver) {
+            // 背景とUIを描画
+            renderer->renderGameOverBackground(width, height);
         }
         
         // ステージ選択フィールド用のUI表示

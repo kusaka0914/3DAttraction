@@ -53,6 +53,11 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
         return; // ゴール後は移動入力を無視
     }
     
+    // ゲームオーバー時の移動制限チェック
+    if (gameState.isGameOver) {
+        return; // ゲームオーバー時は移動入力を無視
+    }
+    
     // キーボード入力
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveDir.z += 1.0f;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveDir.z -= 1.0f;
@@ -88,6 +93,11 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
     // ゴール後の移動制限チェック
     if (gameState.isGoalReached) {
         return; // ゴール後はジャンプ入力を無視
+    }
+    
+    // ゲームオーバー時の移動制限チェック
+    if (gameState.isGameOver) {
+        return; // ゲームオーバー時はジャンプ入力を無視
     }
     
     // シンプルなジャンプ処理
