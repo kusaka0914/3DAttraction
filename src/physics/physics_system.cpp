@@ -30,13 +30,19 @@ bool PhysicsSystem::checkPlatformCollisionHorizontal(const GameState& gameState,
         glm::vec3 playerMax = playerPos + playerSize * 0.5f;
         
         // プレイヤーが足場の上にいる場合は水平移動を許可（通常重力）
-        bool onTopSurface = std::abs(playerMin.y - platformMax.y) < 0.3f;
+        // 厳密に判定：プレイヤーが実際に足場の上に乗っているかチェック
+        bool onTopSurface = (std::abs(playerMin.y - platformMax.y) < 0.1f) && 
+                           (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                            playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
         if (onTopSurface) {
             continue; // 足場の上にいる場合は水平衝突を無視
         }
         
         // プレイヤーが足場の下面にいる場合も水平移動を許可（重力反転時）
-        bool onBottomSurface = std::abs(playerMax.y - platformMin.y) < 0.3f;
+        // 厳密に判定：プレイヤーが実際に足場の下面に乗っているかチェック
+        bool onBottomSurface = (std::abs(playerMax.y - platformMin.y) < 0.1f) && 
+                              (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                               playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
         if (onBottomSurface) {
             continue; // 足場の下面にいる場合も水平衝突を無視
         }

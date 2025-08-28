@@ -227,6 +227,14 @@ struct GameState {
     float gameTime = 0.0f;
     int currentStage = 1;  // 初期ステージを2に変更
     
+    // 制限時間システム
+    float timeLimit = 20.0f;        // 制限時間（秒）
+    float remainingTime = 20.0f;    // 残り時間（秒）
+    int earnedStars = 0;            // 獲得した星の数（0-3）
+    float clearTime = 0.0f;         // クリア時間（秒）
+    bool isTimeUp = false;          // 時間切れフラグ
+    bool isStageCompleted = false;  // ステージ完了フラグ
+    
     // ステージクリアUI状態
     bool showStageClearUI = false;
     float stageClearTimer = 0.0f;

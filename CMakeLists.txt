@@ -23,7 +23,7 @@ find_package(OpenGL REQUIRED)
 
 # メインアプリケーション
 add_executable(Vulkan3D 
-    src/app/simple_main.cpp
+    src/app/main.cpp
     src/gfx/opengl_renderer.cpp
     src/game/game_state.cpp
     src/game/stage_generator.cpp

@@ -392,6 +392,17 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.score = 0;
     gameState.gameTime = 0.0f;
     
+    // 制限時間システムをリセット
+    gameState.timeLimit = 20.0f;        // デフォルト制限時間
+    gameState.remainingTime = 20.0f;    // デフォルト残り時間
+    gameState.earnedStars = 0;          // 星をリセット
+    gameState.clearTime = 0.0f;         // クリア時間をリセット
+    gameState.isTimeUp = false;         // 時間切れフラグをリセット
+    gameState.isStageCompleted = false; // ステージ完了フラグをリセット
+    gameState.showStageClearUI = false; // UIをリセット
+    gameState.stageClearTimer = 0.0f;   // タイマーをリセット
+    gameState.stageClearConfirmed = false; // 確認フラグをリセット
+    
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;
     gameState.lastCheckpointItemId = -1;
@@ -660,10 +671,6 @@ void StageManager::generateStage4(GameState& gameState, PlatformSystem& platform
     createStaticPlatforms(gameState, platformSystem, {
         // {{x, y, z}, {size_x, size_y, size_z}, color, description}
         {{0, 5, -25}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        // {{0, 5, -15}, {3, 1, 3}, Colors::BLUE, "基本的なジャンプセクション"},
-        // {{0, 7, -5}, {3, 1, 3}, Colors::BLUE, "少し高いジャンプ"},
-        // {{0, 10, 5}, {3, 1, 3}, Colors::BLUE, "高ジャンプセクション"},
-        // {{0, 15, 15}, {3, 1, 3}, Colors::BLUE, "超高ジャンプセクション"},
         {{-9, 12, 15}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
     });
     
@@ -696,8 +703,6 @@ void StageManager::generateStage4(GameState& gameState, PlatformSystem& platform
         {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, 6}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
         {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, 9}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
     });
-    
-    printf("Stage 4 generated: %zu platforms\n", platformSystem.getPlatforms().size());
 }
 
 void StageManager::generateStage5(GameState& gameState, PlatformSystem& platformSystem) {

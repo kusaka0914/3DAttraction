@@ -23,7 +23,6 @@ bool VulkanDevice::initialize(VkInstance instance, VkSurfaceKHR surface) {
         return false;
     }
 
-    std::cout << "Vulkan device initialized successfully" << std::endl;
     return true;
 }
 

@@ -32,6 +32,10 @@ public:
     void renderGround(float size = 10.0f);
     void renderTerrain(const std::vector<std::vector<float>>& heightmap, float scale = 1.0f);
     
+    // UI表示関数
+    void renderTimeUI(float remainingTime, float timeLimit, int earnedStars);
+    void renderStar(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
+    
     void setCamera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up = glm::vec3(0, 1, 0));
     void setProjection(float fov, float aspect, float near, float far);
 

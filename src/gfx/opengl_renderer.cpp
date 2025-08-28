@@ -22,8 +22,6 @@ bool OpenGLRenderer::initialize(GLFWwindow* window) {
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
     
-    std::cout << "OpenGL initialized with viewport: " << width << "x" << height << std::endl;
-    
     // 深度テスト有効化
     glEnable(GL_DEPTH_TEST);
     
@@ -31,7 +29,6 @@ bool OpenGLRenderer::initialize(GLFWwindow* window) {
     // setCamera(glm::vec3(0, 5, 10), glm::vec3(0, 0, 0));
     // setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
     
-    std::cout << "OpenGL renderer initialized successfully" << std::endl;
     return true;
 }
 
@@ -111,7 +108,6 @@ void OpenGLRenderer::renderTriangle(const glm::vec3& position, const glm::vec3& 
 void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
     // 簡易的なテキスト表示（実際のテキストレンダリングは複雑なので、ここではスキップ）
     // コンソールに出力してデバッグ用に表示
-    std::cout << "Text: " << text << " at (" << position.x << ", " << position.y << ") scale: " << scale << std::endl;
 }
 
 void OpenGLRenderer::renderGround(float size) {
@@ -246,6 +242,78 @@ void OpenGLRenderer::drawTriangle(const glm::mat4& model, const glm::vec3& color
     glEnd();
     
     glPopMatrix();
+}
+
+// 制限時間UI表示
+void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 残り時間表示（右上）
+    std::string timeText = "Time: " + std::to_string(static_cast<int>(remainingTime)) + "s";
+    renderText(timeText, glm::vec2(1100, 30), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    // 時間が少なくなったら赤色で警告
+    if (remainingTime <= 5.0f) {
+        renderText(timeText, glm::vec2(1100, 30), glm::vec3(1.0f, 0.0f, 0.0f), 1.2f);
+    }
+    
+    // 星の表示（右上、時間の下）
+    for (int i = 0; i < 3; i++) {
+        glm::vec2 starPos = glm::vec2(1100 + i * 40, 70);
+        glm::vec3 starColor = (i < earnedStars) ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.5f, 0.5f, 0.5f);
+        renderStar(starPos, starColor, 0.8f);
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// 星の描画
+void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
+    glColor3f(color.r, color.g, color.b);
+    
+    glBegin(GL_TRIANGLES);
+    
+    // 星の5つの角を描画
+    for (int i = 0; i < 5; i++) {
+        float angle1 = i * 72.0f * 3.14159f / 180.0f;
+        float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
+        
+        // 外側の点
+        float x1 = position.x + cos(angle1) * 15.0f * scale;
+        float y1 = position.y + sin(angle1) * 15.0f * scale;
+        
+        // 内側の点
+        float x2 = position.x + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 7.0f * scale;
+        float y2 = position.y + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 7.0f * scale;
+        
+        // 次の外側の点
+        float x3 = position.x + cos(angle2) * 15.0f * scale;
+        float y3 = position.y + sin(angle2) * 15.0f * scale;
+        
+        glVertex2f(x1, y1);
+        glVertex2f(x2, y2);
+        glVertex2f(x3, y3);
+    }
+    
+    glEnd();
 }
 
 } // namespace gfx
