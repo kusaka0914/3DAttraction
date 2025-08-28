@@ -259,6 +259,13 @@ struct GameState {
     
     // ゴール後の移動制限
     bool isGoalReached = false;    // ゴール到達フラグ（移動制限用）
+    
+    // Ready画面システム
+    bool showReadyScreen = false;  // Ready画面表示フラグ
+    bool readyScreenShown = false; // Ready画面が既に表示されたかどうか
+    int readyScreenSpeedLevel = 0; // Ready画面での速度レベル（0=1x, 1=2x, 2=3x）
+    bool isCountdownActive = false; // カウントダウン中フラグ
+    float countdownTimer = 3.0f;   // カウントダウンタイマー（3秒から開始）
 };
 
 // ゲーム状態の初期化関数

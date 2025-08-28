@@ -210,8 +210,8 @@ void OpenGLRenderer::drawCube(const glm::mat4& model, const glm::vec3& color) {
 
 
 
-// 制限時間UI表示
-void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+    // 制限時間UI表示
+void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives) {
     // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -283,11 +283,27 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
             
             renderStar(starPos, starColor, 1.5f);
         }
-        for (int i = existingStars; i < existingStars+1 && existingStars+1<4; i++) {
-            glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
+        for (int i = existingStars; i<3; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
             glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
             renderStar(starPos, starColor, 1.5f);
         }
+    }
+    
+    // ハートを6個表示（右から消えていく）
+    for (int i = 0; i < 6; i++) {
+        glm::vec3 heartColor;
+        if (i < lives) {
+            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
+        } else {
+            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
+        }
+        
+        // STAGEテキストの右側にハートを配置
+        float heartX = 200.0f + i * 40.0f; // STAGEテキストの右側から40px間隔
+        float heartY = 45.0f; // STAGEテキストと同じY座標
+        
+        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
     }
     
     // 3D描画モードに戻す
@@ -489,7 +505,7 @@ void OpenGLRenderer::renderStageClearBackground(int width, int height, float cle
     if (earnedStars == 3) {
         renderText("STAGE COMPLETED!", glm::vec2((boxX + boxWidth/2 - 300) * scaleX, (boxY - 80) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 2.5f);
     } else {
-        renderText("STAGE CLEAR!", glm::vec2((boxX + boxWidth/2 - 300) * scaleX, (boxY - 80) * scaleY), glm::vec3(0.8f, 0.2f, 0.2f), 2.5f);
+        renderText("STAGE CLEAR!", glm::vec2((boxX + boxWidth/2 - 200) * scaleX, (boxY - 80) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 2.5f);
     }
     
     // クリアタイム
@@ -1340,6 +1356,170 @@ void OpenGLRenderer::renderGameOverBackground(int width, int height) {
     
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+}
+
+// Ready画面の描画
+void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // "Ready?"メッセージ
+    renderText("READY", glm::vec2((width/2 - 230) * scaleX, (height/2 - 300) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 5.0f);
+    renderText("PLAY SPEED", glm::vec2((width/2 - 150) * scaleX, (height/2 - 70) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    // 速度選択（1x, 2x, 3x）
+    std::vector<std::string> speedTexts = {"1x", "2x", "3x"};
+    for (int i = 0; i < 3; i++) {
+        glm::vec3 color;
+        if (i == speedLevel) {
+            color = glm::vec3(1.0f, 0.8f, 0.2f); // 金色（選択中）
+        } else {
+            color = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未選択）
+        }
+        
+        float xPos = (width/2 - 200 + i * 150) * scaleX;
+        float yPos = (height/2) * scaleY;
+        renderText(speedTexts[i], glm::vec2(xPos, yPos), color, 2.0f);
+    }
+    renderText("PRESS T", glm::vec2((width/2 - 100) * scaleX, (height/2 + 100) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    
+    // "Enter"メッセージ
+    renderText("ENTER", glm::vec2((width/2 + 60) * scaleX, (height/2 + 300) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// カウントダウンの描画
+void OpenGLRenderer::renderCountdown(int width, int height, int count) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // カウントダウン数字
+    std::string countText = std::to_string(count);
+    renderText(countText, glm::vec2((width/2 - 100) * scaleX, (height/2 - 100) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 5.0f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// ハートの描画
+void OpenGLRenderer::renderHeart(const glm::vec2& position, const glm::vec3& color, float scale) {
+    glColor3f(color.r, color.g, color.b);
+    
+    // ハートの中心点
+    float centerX = position.x;
+    float centerY = position.y;
+    
+    // ハートの形状を描画（塗りつぶし）
+    glBegin(GL_TRIANGLES);
+    
+    // 左側の円形部分
+    for (int i = 0; i < 8; i++) {
+        float angle1 = i * 45.0f * 3.14159f / 180.0f;
+        float angle2 = (i + 1) * 45.0f * 3.14159f / 180.0f;
+        
+        float x1 = centerX - 8.0f * scale + cos(angle1) * 8.0f * scale;
+        float y1 = centerY - 4.0f * scale + sin(angle1) * 8.0f * scale;
+        float x2 = centerX - 8.0f * scale + cos(angle2) * 8.0f * scale;
+        float y2 = centerY - 4.0f * scale + sin(angle2) * 8.0f * scale;
+        
+        glVertex2f(centerX - 8.0f * scale, centerY - 4.0f * scale); // 中心
+        glVertex2f(x1, y1);
+        glVertex2f(x2, y2);
+    }
+    
+    // 右側の円形部分
+    for (int i = 0; i < 8; i++) {
+        float angle1 = i * 45.0f * 3.14159f / 180.0f;
+        float angle2 = (i + 1) * 45.0f * 3.14159f / 180.0f;
+        
+        float x1 = centerX + 8.0f * scale + cos(angle1) * 8.0f * scale;
+        float y1 = centerY - 4.0f * scale + sin(angle1) * 8.0f * scale;
+        float x2 = centerX + 8.0f * scale + cos(angle2) * 8.0f * scale;
+        float y2 = centerY - 4.0f * scale + sin(angle2) * 8.0f * scale;
+        
+        glVertex2f(centerX + 8.0f * scale, centerY - 4.0f * scale); // 中心
+        glVertex2f(x1, y1);
+        glVertex2f(x2, y2);
+    }
+    
+    // 下部の三角形部分
+    glVertex2f(centerX, centerY + 12.0f * scale); // 下部の尖った部分
+    glVertex2f(centerX - 16.0f * scale, centerY - 4.0f * scale); // 左側
+    glVertex2f(centerX + 16.0f * scale, centerY - 4.0f * scale); // 右側
+    
+    glEnd();
 }
 
 

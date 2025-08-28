@@ -26,5 +26,12 @@ void initializeGameState(GameState& gameState) {
     
     // ゴール後の移動制限の初期化
     gameState.isGoalReached = false;
+    
+    // Ready画面システムの初期化
+    gameState.showReadyScreen = false;
+    gameState.readyScreenShown = false;
+    gameState.readyScreenSpeedLevel = 0;
+    gameState.isCountdownActive = false;
+    gameState.countdownTimer = 3.0f;
 }
 

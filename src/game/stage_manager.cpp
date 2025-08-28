@@ -421,6 +421,7 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.isGoalReached = false;    // ゴール後の移動制限をリセット
     gameState.isGameOver = false;       // ゲームオーバーフラグをリセット
     gameState.isTimeUp = false;         // 時間切れフラグをリセット
+    gameState.readyScreenShown = false; // Ready画面表示フラグをリセット
     
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;

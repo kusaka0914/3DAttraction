@@ -180,6 +180,14 @@ int main(int argc, char* argv[]) {
             if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
                 gameState.showTutorial = false;
                 printf("Tutorial dismissed.\n");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                
+                // チュートリアル終了後にReady画面を表示
+                if (!gameState.readyScreenShown) {
+                    gameState.showReadyScreen = true;
+                    gameState.readyScreenShown = false;
+                    gameState.readyScreenSpeedLevel = 0;
+                }
             }
             // チュートリアル表示中は他の処理をスキップ
             renderer->beginFrame();
@@ -230,6 +238,162 @@ int main(int argc, char* argv[]) {
             continue; // チュートリアル表示中は他の処理をスキップ
         }
         
+        // Ready画面表示中の処理
+        if (gameState.showReadyScreen) {
+            // Ready画面表示中はゲームを一時停止
+            renderer->beginFrame();
+            
+            // カメラ設定
+            glm::vec3 cameraPos, cameraTarget;
+            if (stageManager.getCurrentStage() == 0) {
+                cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
+                cameraTarget = gameState.playerPosition;
+            } else {
+                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
+                cameraTarget = gameState.playerPosition;
+            }
+            renderer->setCamera(cameraPos, cameraTarget);
+
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+            
+            // 通常のゲーム要素を描画（背景として）
+            auto positions = platformSystem.getPositions();
+            auto sizes = platformSystem.getSizes();
+            auto colors = platformSystem.getColors();
+            auto visibility = platformSystem.getVisibility();
+            auto isRotating = platformSystem.getIsRotating();
+            auto rotationAngles = platformSystem.getRotationAngles();
+            auto rotationAxes = platformSystem.getRotationAxes();
+            auto blinkAlphas = platformSystem.getBlinkAlphas();
+            
+            for (size_t i = 0; i < positions.size(); i++) {
+                if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
+                
+                if (isRotating[i]) {
+                    renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+                } else {
+                    renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                }
+            }
+            
+            // プレイヤーの描画
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+            
+            // Ready画面UIを描画
+            renderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel);
+            
+            renderer->endFrame();
+            
+            // キー状態更新（Ready画面中でも必要）
+            for (auto& [key, state] : keyStates) {
+                state.update(glfwGetKey(window, key) == GLFW_PRESS);
+            }
+            
+            // Ready画面でのキー入力処理
+            if (keyStates[GLFW_KEY_T].justPressed()) {
+                gameState.readyScreenSpeedLevel = (gameState.readyScreenSpeedLevel + 1) % 3;
+                printf("Ready screen speed level: %d\n", gameState.readyScreenSpeedLevel);
+            }
+            
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                gameState.showReadyScreen = false;
+                gameState.isCountdownActive = true;
+                gameState.countdownTimer = 3.0f;
+                
+                // 選択された速度を設定
+                switch (gameState.readyScreenSpeedLevel) {
+                    case 0:
+                        gameState.timeScale = 1.0f;
+                        gameState.timeScaleLevel = 0;
+                        break;
+                    case 1:
+                        gameState.timeScale = 2.0f;
+                        gameState.timeScaleLevel = 1;
+                        break;
+                    case 2:
+                        gameState.timeScale = 3.0f;
+                        gameState.timeScaleLevel = 2;
+                        break;
+                }
+                
+                printf("Starting countdown with speed: %.1fx\n", gameState.timeScale);
+            }
+            
+            glfwPollEvents();
+            continue; // Ready画面表示中は他の処理をスキップ
+        }
+        
+        // カウントダウン中の処理
+        if (gameState.isCountdownActive) {
+            // カウントダウン中はゲームを一時停止
+            renderer->beginFrame();
+            
+            // カメラ設定
+            glm::vec3 cameraPos, cameraTarget;
+            if (stageManager.getCurrentStage() == 0) {
+                cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
+                cameraTarget = gameState.playerPosition;
+            } else {
+                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
+                cameraTarget = gameState.playerPosition;
+            }
+            renderer->setCamera(cameraPos, cameraTarget);
+
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+            
+            // 通常のゲーム要素を描画（背景として）
+            auto positions = platformSystem.getPositions();
+            auto sizes = platformSystem.getSizes();
+            auto colors = platformSystem.getColors();
+            auto visibility = platformSystem.getVisibility();
+            auto isRotating = platformSystem.getIsRotating();
+            auto rotationAngles = platformSystem.getRotationAngles();
+            auto rotationAxes = platformSystem.getRotationAxes();
+            auto blinkAlphas = platformSystem.getBlinkAlphas();
+            
+            for (size_t i = 0; i < positions.size(); i++) {
+                if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
+                
+                if (isRotating[i]) {
+                    renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+                } else {
+                    renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                }
+            }
+            
+            // プレイヤーの描画
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+            
+            // カウントダウンUIを描画
+            int count = (int)gameState.countdownTimer + 1;
+            if (count > 0) {
+                renderer->renderCountdown(width, height, count);
+            }
+            
+            renderer->endFrame();
+            
+            // キー状態更新（カウントダウン中でも必要）
+            for (auto& [key, state] : keyStates) {
+                state.update(glfwGetKey(window, key) == GLFW_PRESS);
+            }
+            
+            // カウントダウン処理
+            gameState.countdownTimer -= deltaTime;
+            
+            if (gameState.countdownTimer <= 0.0f) {
+                gameState.isCountdownActive = false;
+                resetStageStartTime();  // カウントダウン終了時にゲーム開始時間をリセット
+                printf("Countdown finished, starting gameplay!\n");
+            }
+            
+            glfwPollEvents();
+            continue; // カウントダウン中は他の処理をスキップ
+        }
+        
         // 制限時間システムの更新（実際の時間で更新）
         if (!gameState.isStageCompleted && !gameState.isTimeUp) {
             gameState.remainingTime -= deltaTime;
@@ -268,6 +432,9 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            // Ready画面を非表示（ステージ選択フィールドでは表示しない）
+            gameState.showReadyScreen = false;
+            gameState.readyScreenShown = false;
         }
         if (keyStates[GLFW_KEY_1].justPressed()) {
             resetStageStartTime();  // ステージ開始時間をリセット
@@ -277,6 +444,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
             
             // ステージ1でチュートリアルを表示
             if (!gameState.tutorialShown) {
@@ -292,6 +464,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
         }
         if (keyStates[GLFW_KEY_3].justPressed()) {
             resetStageStartTime();  // ステージ開始時間をリセット
@@ -301,6 +478,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
         }
         if (keyStates[GLFW_KEY_4].justPressed()) {
             resetStageStartTime();  // ステージ開始時間をリセット
@@ -310,6 +492,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
         }
         if (keyStates[GLFW_KEY_5].justPressed()) {
             resetStageStartTime();  // ステージ開始時間をリセット
@@ -319,6 +506,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
         }
         if (keyStates[GLFW_KEY_RIGHT].justPressed()) {
             stageManager.goToNextStage(gameState, platformSystem);
@@ -327,6 +519,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
         }
         if (keyStates[GLFW_KEY_LEFT].justPressed()) {
             stageManager.goToPreviousStage(gameState, platformSystem);
@@ -335,6 +532,11 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // Ready画面のフラグをリセットして表示
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
         }
         
         // 速度制御処理（Tキー）- 全ステージで有効
@@ -408,6 +610,7 @@ int main(int argc, char* argv[]) {
             }
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
+                resetStageStartTime();  // ステージ開始時間をリセット
                 stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
                 gameState.showStageClearUI = false;
                 gameState.gameWon = false;
@@ -417,8 +620,13 @@ int main(int argc, char* argv[]) {
                 gameState.timeScaleLevel = 0;
                 // 残機をリセット
                 gameState.lives = 6;
+                gameState.showReadyScreen = true;
+                gameState.readyScreenShown = false;
+                gameState.readyScreenSpeedLevel = 0;
             }
         }
+        
+
         
         // ゲームオーバーUIでのキー入力処理
         if (gameState.isGameOver) {
@@ -440,6 +648,7 @@ int main(int argc, char* argv[]) {
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
                 // 現在のステージをリトライ
+                resetStageStartTime();  // ステージ開始時間をリセット
                 stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
                 gameState.isGameOver = false;  // ゲームオーバーフラグをリセット
                 gameState.isTimeUp = false;    // 時間切れフラグをリセット
@@ -449,6 +658,15 @@ int main(int argc, char* argv[]) {
                 gameState.timeScaleLevel = 0;
                 // 残機をリセット
                 gameState.lives = 6;
+                // プレイヤーの速度をリセット
+                gameState.playerVelocity = glm::vec3(0, 0, 0);
+                // チェックポイントをリセット
+                gameState.lastCheckpoint = glm::vec3(0, 30.0f, 0);
+                gameState.lastCheckpointItemId = -1;
+                gameState.showReadyScreen = true;
+                gameState.readyScreenShown = false;
+                gameState.readyScreenSpeedLevel = 0;
+                
                 
                 printf("Retrying current stage after game over.\n");
             }
@@ -551,11 +769,16 @@ int main(int argc, char* argv[]) {
                                 resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
                                 stageManager.goToStage(1, gameState, platformSystem);
+
                                 
                                 // ステージ1でチュートリアルを表示
                                 if (!gameState.tutorialShown) {
                                     gameState.showTutorial = true;
                                     gameState.tutorialShown = true;
+                                }else{
+                                    gameState.readyScreenShown = false;
+                                    gameState.showReadyScreen = true;
+                                    gameState.readyScreenSpeedLevel = 0;
                                 }
                             }
                         }
@@ -569,6 +792,9 @@ int main(int argc, char* argv[]) {
                                 gameState.lives = 6;
                                 if(gameState.totalStars>=1){
                                     stageManager.goToStage(2, gameState, platformSystem);
+                                    gameState.readyScreenShown = false;
+                                    gameState.showReadyScreen = true;
+                                    gameState.readyScreenSpeedLevel = 0;
                                 }
                             }
                         }
@@ -583,6 +809,9 @@ int main(int argc, char* argv[]) {
                                 gameState.lives = 6;
                                 if(gameState.totalStars>=3){
                                     stageManager.goToStage(3, gameState, platformSystem);
+                                    gameState.readyScreenShown = false;
+                                    gameState.showReadyScreen = true;
+                                    gameState.readyScreenSpeedLevel = 0;
                                 }
                             }
                         }
@@ -597,6 +826,9 @@ int main(int argc, char* argv[]) {
                                 gameState.lives = 6;
                                 if(gameState.totalStars>=5){
                                     stageManager.goToStage(4, gameState, platformSystem);
+                                    gameState.readyScreenShown = false;
+                                    gameState.showReadyScreen = true;
+                                    gameState.readyScreenSpeedLevel = 0;
                                 }
                             }
                         }
@@ -821,12 +1053,6 @@ int main(int argc, char* argv[]) {
                 // ゲームオーバー
                 gameState.isGameOver = true;
                 printf("Game Over! No lives remaining.\n");
-                
-                // ステージを最初からリセット
-                stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
-                gameState.lives = 6; // 残機を6個にリセット
-                gameState.isGameOver = false;
-                printf("Stage reset to beginning.\n");
             } else {
                 // 残機がある場合はチェックポイントにリセット（アイテムは保持）
                 if (gameState.lastCheckpointItemId != -1) {
@@ -930,21 +1156,10 @@ int main(int argc, char* argv[]) {
         // ステージ情報
         const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
         if (currentStageData && stageManager.getCurrentStage()!=0) {
+            // STAGEテキストを表示
             renderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
                                glm::vec2(30, 30), glm::vec3(1, 1, 0), 2.0f);
         }
-        
-        // 残機表示
-        std::string livesText = "Lives: ";
-        for (int i = 0; i < 6; i++) {
-            if (i < gameState.lives) {
-                livesText += "●"; // 残っている残機
-            } else {
-                livesText += "○"; // 失った残機
-            }
-        }
-        glm::vec3 livesColor = (gameState.lives <= 2) ? glm::vec3(1.0f, 0.3f, 0.3f) : glm::vec3(1.0f, 1.0f, 1.0f);
-        renderer->renderText(livesText, glm::vec2(10, 210), livesColor);
         
         // // トータル星数表示
         // renderer->renderText("Total Stars: " + std::to_string(gameState.totalStars), 
@@ -985,8 +1200,10 @@ int main(int argc, char* argv[]) {
         // 制限時間UIの表示（ステージ選択フィールドでは非表示）
         if (stageManager.getCurrentStage() != 0) {
             int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-            renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
+            renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
         }
+        
+
         
 
         
@@ -1004,7 +1221,31 @@ int main(int argc, char* argv[]) {
         
         // ステージ選択フィールド用のUI表示
         if (stageManager.getCurrentStage() == 0) {
+            // 2DモードでUIを描画
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, width, height, 0, -1, 1);
+            
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            
+            // 深度テストを無効化（UI表示のため）
+            glDisable(GL_DEPTH_TEST);
+            
             renderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
+            
+            // 左上に星アイコンとトータル星数を表示
+            renderer->renderStar(glm::vec2(70, 70), glm::vec3(1.0f, 1.0f, 0.0f), 3.0f);
+            renderer->renderText("x " + std::to_string(gameState.totalStars), glm::vec2(72, 27), glm::vec3(1.0f, 1.0f, 0.0f), 1.5f);
+            
+            // 2Dモードを終了
+            glEnable(GL_DEPTH_TEST);
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
         }
         
         // 操作説明
