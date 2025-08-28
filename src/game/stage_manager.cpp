@@ -313,6 +313,17 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
 void StageManager::initializeStages() {
     stages.clear();
     
+    // ステージ0: ステージ選択フィールド
+    stages.push_back({
+        0, "ステージ選択フィールド",
+        glm::vec3(0, 2.0f, 0),  // 中央に配置
+        glm::vec3(0, 2.0f, 0),  // ゴール位置（使用しない）
+        generateStageSelectionField,
+        true,  // 最初からアンロック
+        false,
+        999.0f  // 制限時間なし
+    });
+    
     // ステージ1: 基本的なジャンプとプラットフォーム
     stages.push_back({
         1, "基本的なジャンプ",
@@ -320,7 +331,8 @@ void StageManager::initializeStages() {
         glm::vec3(0, 16.0f, 25.0f),
         generateStage1,
         true,  // 最初からアンロック
-        false
+        false,
+        20.0f  // 30秒制限時間
     });
     
     // ステージ2: 重力反転エリア
@@ -330,7 +342,8 @@ void StageManager::initializeStages() {
         glm::vec3(0, 20.0f, 30.0f),
         generateStage2,
         true,  // テスト用にアンロック
-        false
+        false,
+        40.0f  // 45秒制限時間
     });
     
     // ステージ3: スイッチと大砲
@@ -340,7 +353,8 @@ void StageManager::initializeStages() {
         glm::vec3(0, 18.0f, 35.0f),
         generateStage3,
         true,
-        false
+        false,
+        70.0f  // 60秒制限時間
     });
     
     // ステージ4: 複雑な移動プラットフォーム
@@ -350,7 +364,8 @@ void StageManager::initializeStages() {
         glm::vec3(0, 22.0f, 40.0f),
         generateStage4,
         true,
-        false
+        false,
+        90.0f  // 90秒制限時間
     });
     
     // ステージ5: 最終ステージ
@@ -360,7 +375,8 @@ void StageManager::initializeStages() {
         glm::vec3(0, 25.0f, 45.0f),
         generateStage5,
         true,
-        false
+        false,
+        120.0f // 120秒制限時間
     });
     
     printf("StageManager initialized with %zu stages\n", stages.size());
@@ -392,9 +408,9 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.score = 0;
     gameState.gameTime = 0.0f;
     
-    // 制限時間システムをリセット
-    gameState.timeLimit = 20.0f;        // デフォルト制限時間
-    gameState.remainingTime = 20.0f;    // デフォルト残り時間
+    // 制限時間システムをリセット（ステージ固有の制限時間を適用）
+    gameState.timeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
+    gameState.remainingTime = stageIt->timeLimit;    // ステージ固有の残り時間
     gameState.earnedStars = 0;          // 星をリセット
     gameState.clearTime = 0.0f;         // クリア時間をリセット
     gameState.isTimeUp = false;         // 時間切れフラグをリセット
@@ -419,7 +435,7 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     stageIt->generateFunction(gameState, platformSystem);
     
     currentStage = stageNumber;
-    printf("Loaded stage %d: %s\n", stageNumber, stageIt->stageName.c_str());
+    printf("Loaded stage %d: %s (Time Limit: %.1f seconds)\n", stageNumber, stageIt->stageName.c_str(), stageIt->timeLimit);
 }
 
 void StageManager::unlockStage(int stageNumber) {
@@ -509,8 +525,8 @@ bool StageManager::goToStage(int stageNumber, GameState& gameState, PlatformSyst
 void StageManager::generateStage1(GameState& gameState, PlatformSystem& platformSystem) {
     createItems(gameState, platformSystem, {
         // {{x, y, z}, color, description}
-        {{5, 5, -15}, Colors::RED, "アイテム1: スタート足場の右側"},
-        {{-5, 7, -10}, Colors::GREEN, "アイテム2: スタート足場の左側"},
+        {{7, 5, -15}, Colors::RED, "アイテム1: スタート足場の右側"},
+        {{-7, 7, -10}, Colors::GREEN, "アイテム2: スタート足場の左側"},
         {{5, 9, 3}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
     });
     
@@ -808,4 +824,41 @@ void StageManager::generateStage5(GameState& gameState, PlatformSystem& platform
     printf("Stage 5 generated: %zu platforms, %zu gravity zones, %zu switches, %zu cannons\n", 
            platformSystem.getPlatforms().size(), gameState.gravityZones.size(), 
            gameState.switches.size(), gameState.cannons.size());
+}
+
+// ステージ選択フィールドの生成
+void StageManager::generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem) {
+    platformSystem.clear();
+    
+    // メインの選択フィールド（画像のような長方形）
+    platformSystem.addPlatform(GameState::StaticPlatform(
+        glm::vec3(0, 0, 0), glm::vec3(20, 1, 8), glm::vec3(0.3f, 0.3f, 0.3f)
+    ));
+    
+    // ステージ1選択エリア（左側の円）
+    platformSystem.addPlatform(GameState::StaticPlatform(
+        glm::vec3(-8, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(1.0f, 0.2f, 0.2f)
+    ));
+    
+    // ステージ2選択エリア（右側の円）
+    platformSystem.addPlatform(GameState::StaticPlatform(
+        glm::vec3(8, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(0.2f, 1.0f, 0.2f)
+    ));
+    
+    // ステージ3選択エリア（中央左）
+    platformSystem.addPlatform(GameState::StaticPlatform(
+        glm::vec3(-4, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(0.2f, 0.2f, 1.0f)
+    ));
+    
+    // ステージ4選択エリア（中央右）
+    platformSystem.addPlatform(GameState::StaticPlatform(
+        glm::vec3(4, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(1.0f, 1.0f, 0.2f)
+    ));
+    
+    // ステージ5選択エリア（後方中央）
+    platformSystem.addPlatform(GameState::StaticPlatform(
+        glm::vec3(0, 0.5f, -6), glm::vec3(4, 1, 4), glm::vec3(1.0f, 0.2f, 1.0f)
+    ));
+    
+    printf("Stage Selection Field generated: %zu platforms\n", platformSystem.getPlatforms().size());
 }

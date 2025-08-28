@@ -225,7 +225,7 @@ struct GameState {
     
     int score = 0;
     float gameTime = 0.0f;
-    int currentStage = 1;  // 初期ステージを2に変更
+    int currentStage = 0;  // 初期ステージをステージ選択フィールドに変更
     
     // 制限時間システム
     float timeLimit = 20.0f;        // 制限時間（秒）
@@ -239,6 +239,14 @@ struct GameState {
     bool showStageClearUI = false;
     float stageClearTimer = 0.0f;
     bool stageClearConfirmed = false;
+    
+    // 速度制御システム
+    float timeScale = 1.0f;        // 時間倍率（1.0 = 通常速度、2.0 = 2倍速、3.0 = 3倍速）
+    int timeScaleLevel = 0;        // 速度レベル（0 = 1倍、1 = 2倍、2 = 3倍）
+    
+    // 残機システム
+    int lives = 6;                 // 残機数（最大6個）
+    bool isGameOver = false;       // ゲームオーバーフラグ
 };
 
 // ゲーム状態の初期化関数

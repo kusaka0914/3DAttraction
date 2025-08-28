@@ -14,6 +14,7 @@ struct StageData {
     std::function<void(GameState&, PlatformSystem&)> generateFunction;
     bool isUnlocked;
     bool isCompleted;
+    float timeLimit;  // ステージ固有の制限時間（秒）
 };
 
 // ステージ管理システム
@@ -46,6 +47,7 @@ private:
     int currentStage;
     
     // 各ステージの生成関数
+    static void generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem);
     static void generateStage1(GameState& gameState, PlatformSystem& platformSystem);
     static void generateStage2(GameState& gameState, PlatformSystem& platformSystem);
     static void generateStage3(GameState& gameState, PlatformSystem& platformSystem);

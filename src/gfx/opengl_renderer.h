@@ -6,8 +6,15 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <string>
+#include <map>
 
 namespace gfx {
+
+struct GlyphInfo {
+    float x, y, width, height;  // テクスチャ座標
+    float advanceX;             // 次の文字までの距離
+    float bearingX, bearingY;   // 文字の基準位置
+};
 
 class OpenGLRenderer {
 public:
@@ -42,12 +49,26 @@ public:
 private:
     void drawCube(const glm::mat4& model, const glm::vec3& color);
     void drawTriangle(const glm::mat4& model, const glm::vec3& color);
+    void initializeBitmapFont();
+    void renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale);
+    void initializeTextureFont();
+    void renderTextureText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale);
     
     GLFWwindow* window;
     
     // Matrices
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
+    
+    // ビットマップフォント用のデータ
+    std::map<char, std::vector<bool>> bitmapFont;
+    bool fontInitialized;
+    
+    // テクスチャフォント用のデータ
+    GLuint fontTexture;
+    std::map<char, GlyphInfo> glyphs;
+    bool textureFontInitialized;
+    float fontAtlasWidth, fontAtlasHeight;
 };
 
 } // namespace gfx
