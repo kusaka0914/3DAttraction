@@ -153,10 +153,8 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
 void InputSystem::initializeGamepad() {
     if (glfwJoystickPresent(gamepadId)) {
         gamepadConnected = true;
-        printf("Gamepad connected: %s\n", glfwGetJoystickName(gamepadId));
     } else {
         gamepadConnected = false;
-        printf("No gamepad detected\n");
     }
 }
 

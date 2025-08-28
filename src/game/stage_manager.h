@@ -37,6 +37,12 @@ public:
     bool isStageCompleted(int stageNumber) const;
     const StageData* getStageData(int stageNumber) const;
     
+    // 星数管理
+    int getStageStars(int stageNumber) const;
+    int getTotalStars() const;
+    void updateStageStars(int stageNumber, int newStars);
+    int calculateStarDifference(int stageNumber, int newStars) const;
+    
     // ステージ移動
     bool goToNextStage(GameState& gameState, PlatformSystem& platformSystem);
     bool goToPreviousStage(GameState& gameState, PlatformSystem& platformSystem);

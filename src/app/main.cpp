@@ -148,6 +148,12 @@ int main(int argc, char* argv[]) {
     auto startTime = std::chrono::high_resolution_clock::now();
     auto lastFrameTime = startTime;
     
+    // ステージ開始時間を管理する関数
+    auto resetStageStartTime = [&startTime]() {
+        startTime = std::chrono::high_resolution_clock::now();
+        printf("Stage start time reset\n");
+    };
+    
     // --------------------------
     //         ゲームループ
     // --------------------------
@@ -195,6 +201,7 @@ int main(int argc, char* argv[]) {
         
         // ステージ切り替え処理
         if (keyStates[GLFW_KEY_0].justPressed()) {
+            resetStageStartTime();  // ステージ開始時間をリセット
             stageManager.goToStage(0, gameState, platformSystem);
             // 速度倍率をリセット
             gameState.timeScale = 1.0f;
@@ -203,6 +210,7 @@ int main(int argc, char* argv[]) {
             gameState.lives = 6;
         }
         if (keyStates[GLFW_KEY_1].justPressed()) {
+            resetStageStartTime();  // ステージ開始時間をリセット
             stageManager.goToStage(1, gameState, platformSystem);
             // 速度倍率をリセット
             gameState.timeScale = 1.0f;
@@ -211,6 +219,7 @@ int main(int argc, char* argv[]) {
             gameState.lives = 6;
         }
         if (keyStates[GLFW_KEY_2].justPressed()) {
+            resetStageStartTime();  // ステージ開始時間をリセット
             stageManager.goToStage(2, gameState, platformSystem);
             // 速度倍率をリセット
             gameState.timeScale = 1.0f;
@@ -219,6 +228,7 @@ int main(int argc, char* argv[]) {
             gameState.lives = 6;
         }
         if (keyStates[GLFW_KEY_3].justPressed()) {
+            resetStageStartTime();  // ステージ開始時間をリセット
             stageManager.goToStage(3, gameState, platformSystem);
             // 速度倍率をリセット
             gameState.timeScale = 1.0f;
@@ -227,6 +237,7 @@ int main(int argc, char* argv[]) {
             gameState.lives = 6;
         }
         if (keyStates[GLFW_KEY_4].justPressed()) {
+            resetStageStartTime();  // ステージ開始時間をリセット
             stageManager.goToStage(4, gameState, platformSystem);
             // 速度倍率をリセット
             gameState.timeScale = 1.0f;
@@ -235,6 +246,7 @@ int main(int argc, char* argv[]) {
             gameState.lives = 6;
         }
         if (keyStates[GLFW_KEY_5].justPressed()) {
+            resetStageStartTime();  // ステージ開始時間をリセット
             stageManager.goToStage(5, gameState, platformSystem);
             // 速度倍率をリセット
             gameState.timeScale = 1.0f;
@@ -281,14 +293,45 @@ int main(int argc, char* argv[]) {
         // ステージクリアUIでのキー入力処理
         if (gameState.showStageClearUI) {
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
-                if (stageManager.getCurrentStage() < stageManager.getTotalStages()) {
-                    stageManager.completeStage(stageManager.getCurrentStage());
-                    if (stageManager.goToNextStage(gameState, platformSystem)) {
-                        printf("Moving to next stage: %d\n", stageManager.getCurrentStage());
-                        gameState.showStageClearUI = false;
-                        gameState.gameWon = false;
-                    }
+                // クリアしたステージ番号を保存
+                int clearedStage = stageManager.getCurrentStage();
+                
+                // ステージ選択フィールドに戻る
+                stageManager.completeStage(clearedStage);
+                stageManager.goToStage(0, gameState, platformSystem);
+                
+                // クリアしたステージに対応する位置にプレイヤーを配置
+                glm::vec3 returnPosition;
+                
+                switch (clearedStage) {
+                    case 1: // ステージ1クリア後
+                        returnPosition = glm::vec3(7, 2.0f, 0); // 赤色エリア +1
+                        break;
+                    case 2: // ステージ2クリア後
+                        returnPosition = glm::vec3(-7, 2.0f, 0); // 緑色エリア +1
+                        break;
+                    case 3: // ステージ3クリア後
+                        returnPosition = glm::vec3(-3, 2.0f, 0); // 青色エリア +1
+                        break;
+                    case 4: // ステージ4クリア後
+                        returnPosition = glm::vec3(5, 2.0f, 0); // 黄色エリア +1
+                        break;
+                    case 5: // ステージ5クリア後
+                        returnPosition = glm::vec3(1, 2.0f, -5); // マゼンタエリア +1
+                        break;
+                    default:
+                        returnPosition = glm::vec3(0, 2.0f, 0); // デフォルト位置
+                        break;
                 }
+                
+                gameState.playerPosition = returnPosition;
+                gameState.playerVelocity = glm::vec3(0, 0, 0);
+                
+                printf("Returning to stage selection field at position (%.1f, %.1f, %.1f) after clearing stage %d\n", 
+                       returnPosition.x, returnPosition.y, returnPosition.z, clearedStage);
+                
+                gameState.showStageClearUI = false;
+                gameState.gameWon = false;
             }
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
@@ -386,41 +429,52 @@ int main(int argc, char* argv[]) {
                         // ステージ1選択エリア（赤色）
                         if (platform.color.r > 0.8f && platform.color.g < 0.3f && platform.color.b < 0.3f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                stageManager.goToStage(1, gameState, platformSystem);
+                                int existingStars = gameState.stageStars[1];
+                                printf("Selected Stage 1 (Current stars: %d)\n", existingStars);
+    
+                                resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                printf("Selected Stage 1\n");
+                                stageManager.goToStage(1, gameState, platformSystem);
                             }
                         }
                         // ステージ2選択エリア（緑色）
                         else if (platform.color.r < 0.3f && platform.color.g > 0.8f && platform.color.b < 0.3f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                stageManager.goToStage(2, gameState, platformSystem);
+                                int existingStars = gameState.stageStars[2];
+                                printf("Selected Stage 2 (Current stars: %d)\n", existingStars);
+                                resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                printf("Selected Stage 2\n");
+                                stageManager.goToStage(2, gameState, platformSystem);
                             }
                         }
                         // ステージ3選択エリア（青色）
                         else if (platform.color.r < 0.3f && platform.color.g < 0.3f && platform.color.b > 0.8f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                stageManager.goToStage(3, gameState, platformSystem);
+                                int existingStars = gameState.stageStars[3];
+                                printf("Selected Stage 3 (Current stars: %d)\n", existingStars);
+                                resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                printf("Selected Stage 3\n");
+                                stageManager.goToStage(3, gameState, platformSystem);
                             }
                         }
                         // ステージ4選択エリア（黄色）
                         else if (platform.color.r > 0.8f && platform.color.g > 0.8f && platform.color.b < 0.3f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                stageManager.goToStage(4, gameState, platformSystem);
+                                int existingStars = gameState.stageStars[4];
+                                printf("Selected Stage 4 (Current stars: %d)\n", existingStars);
+                                resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                printf("Selected Stage 4\n");
+                                stageManager.goToStage(4, gameState, platformSystem);
                             }
                         }
                         // ステージ5選択エリア（マゼンタ）
                         else if (platform.color.r > 0.8f && platform.color.g < 0.3f && platform.color.b > 0.8f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                stageManager.goToStage(5, gameState, platformSystem);
+                                int existingStars = gameState.stageStars[5];
+                                printf("Selected Stage 5 (Current stars: %d)\n", existingStars);
+                                resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                printf("Selected Stage 5\n");
+                                stageManager.goToStage(5, gameState, platformSystem);
                             }
                         }
                     }
@@ -430,11 +484,13 @@ int main(int argc, char* argv[]) {
                         if (!gameState.gameWon && gameState.collectedItems >= gameState.requiredItems) {
                             gameState.gameWon = true;
                             gameState.isStageCompleted = true;
+                            printf("=== GOAL REACHED DEBUG ===\n");
                             gameState.clearTime = gameState.gameTime;
                             
                             // 星の計算（固定基準）
                             float remainingTime = gameState.timeLimit - gameState.clearTime;
                             float limitTime = gameState.timeLimit;
+                            
                             if(limitTime>=30){
                                 if (remainingTime >= 20.0f) {
                                     gameState.earnedStars = 3;
@@ -453,9 +509,27 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                             
+                            // 星数管理システムの更新
+                            int currentStage = stageManager.getCurrentStage();
+                            int oldStars = gameState.stageStars[currentStage];
+                            int starDifference = gameState.earnedStars - oldStars;
+                            
+
+                            
+                            if (starDifference > 0) {
+                                gameState.stageStars[currentStage] = gameState.earnedStars;
+                                gameState.totalStars += starDifference;
+                                printf("Stage %d stars updated: %d -> %d (+%d), Total: %d\n", 
+                                       currentStage, oldStars, gameState.earnedStars, starDifference, gameState.totalStars);
+                            }
+                        
+                            
+                            
+
+                            
                             gameState.showStageClearUI = true;
                             printf("Stage %d completed! All items collected (%d/%d) in %.1f seconds - %d stars earned!\n", 
-                                   stageManager.getCurrentStage(), gameState.collectedItems, gameState.requiredItems,
+                                   currentStage, gameState.collectedItems, gameState.requiredItems,
                                    gameState.clearTime, gameState.earnedStars);
                         } else if (!gameState.gameWon && gameState.collectedItems < gameState.requiredItems) {
                             printf("Need to collect all items first! (%d/%d)\n", gameState.collectedItems, gameState.requiredItems);
@@ -642,7 +716,7 @@ int main(int argc, char* argv[]) {
         glm::vec3 cameraPos, cameraTarget;
         if (stageManager.getCurrentStage() == 0) {
             // ステージ選択フィールドでは上からのアングル
-            cameraPos = gameState.playerPosition + glm::vec3(0, 20, -1);
+            cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
             cameraTarget = gameState.playerPosition;
         } else {
             // 通常のステージでは従来のアングル
@@ -735,6 +809,18 @@ int main(int argc, char* argv[]) {
         glm::vec3 livesColor = (gameState.lives <= 2) ? glm::vec3(1.0f, 0.3f, 0.3f) : glm::vec3(1.0f, 1.0f, 1.0f);
         renderer->renderText(livesText, glm::vec2(10, 210), livesColor);
         
+        // トータル星数表示
+        renderer->renderText("Total Stars: " + std::to_string(gameState.totalStars), 
+                           glm::vec2(10, 230), glm::vec3(1.0f, 1.0f, 0.0f));
+        
+        // 現在のステージの星数表示（ステージ選択フィールドでは非表示）
+        if (stageManager.getCurrentStage() != 0) {
+            int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
+            std::string stageStarsText = "Stage Stars: " + std::to_string(currentStageStars) + "/3";
+            glm::vec3 stageStarsColor = (currentStageStars > 0) ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.7f, 0.7f, 0.7f);
+            renderer->renderText(stageStarsText, glm::vec2(10, 250), stageStarsColor);
+        }
+        
         renderer->renderText("Platforms: " + std::to_string(platformSystem.getPlatforms().size()), glm::vec2(10, 50), glm::vec3(1, 1, 1));
         
         // アイテム収集状況の表示
@@ -770,7 +856,8 @@ int main(int argc, char* argv[]) {
         
         // 制限時間UIの表示（ステージ選択フィールドでは非表示）
         if (stageManager.getCurrentStage() != 0) {
-            renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars);
+            int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
+            renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
         }
         
         // システム情報の表示（ステージ選択フィールドでは非表示）
@@ -803,14 +890,9 @@ int main(int argc, char* argv[]) {
             renderer->renderText("Stars Earned: " + std::to_string(gameState.earnedStars) + "/3", 
                                glm::vec2(width/2 - 80, height/2 + 50), glm::vec3(1, 1, 0), 1.0f);
             
-            // 次のステージボタン
-            if (stageManager.getCurrentStage() < stageManager.getTotalStages()) {
-                renderer->renderText("Press ENTER to continue to next stage", 
-                                   glm::vec2(width/2 - 180, height/2 + 70), glm::vec3(0.2f, 1.0f, 0.2f), 1.0f);
-            } else {
-                renderer->renderText("All stages completed! Congratulations!", 
-                                   glm::vec2(width/2 - 200, height/2 + 70), glm::vec3(1.0f, 0.8f, 0.2f), 1.0f);
-            }
+            // ステージ選択フィールドに戻るボタン
+            renderer->renderText("Press ENTER to return to stage selection field", 
+                               glm::vec2(width/2 - 200, height/2 + 70), glm::vec3(0.2f, 1.0f, 0.2f), 1.0f);
             
             // リトライボタン
             renderer->renderText("Press R to retry this stage", 
@@ -823,6 +905,13 @@ int main(int argc, char* argv[]) {
             renderer->renderText("Red: Stage 1, Green: Stage 2, Blue: Stage 3", glm::vec2(10, 230), glm::vec3(1, 1, 1));
             renderer->renderText("Yellow: Stage 4, Magenta: Stage 5", glm::vec2(10, 250), glm::vec3(1, 1, 1));
             renderer->renderText("Stand on a colored platform and press SPACE to select stage", glm::vec2(10, 270), glm::vec3(0.8f, 0.8f, 1.0f));
+            
+            // 各ステージの星数表示
+            renderer->renderText("Stage 1: " + std::to_string(gameState.stageStars[1]) + "/3 stars", glm::vec2(10, 290), glm::vec3(1.0f, 0.2f, 0.2f));
+            renderer->renderText("Stage 2: " + std::to_string(gameState.stageStars[2]) + "/3 stars", glm::vec2(10, 310), glm::vec3(0.2f, 1.0f, 0.2f));
+            renderer->renderText("Stage 3: " + std::to_string(gameState.stageStars[3]) + "/3 stars", glm::vec2(10, 330), glm::vec3(0.2f, 0.2f, 1.0f));
+            renderer->renderText("Stage 4: " + std::to_string(gameState.stageStars[4]) + "/3 stars", glm::vec2(10, 350), glm::vec3(1.0f, 1.0f, 0.2f));
+            renderer->renderText("Stage 5: " + std::to_string(gameState.stageStars[5]) + "/3 stars", glm::vec2(10, 370), glm::vec3(1.0f, 0.2f, 1.0f));
         }
         
         // 操作説明

@@ -144,7 +144,6 @@ void StageGenerator::generatePlatforms(GameState& gameState, PlatformSystem& pla
         glm::vec3(25, 5, -5), 2.0f
     ));
     
-    printf("New design platforms generated: %zu platforms\n", platformSystem.getPlatforms().size());
 }
 
 void StageGenerator::generateGravityZones(GameState& gameState) {
@@ -223,7 +222,6 @@ void StageGenerator::generateSwitches(GameState& gameState) {
     multiSwitch2.multiSwitchGroup = 0;
     gameState.switches.push_back(multiSwitch2);
     
-    printf("Switches generated: %zu switches\n", gameState.switches.size());
 }
 
 void StageGenerator::generateCannons(GameState& gameState) {
@@ -274,7 +272,6 @@ void StageGenerator::generateCannons(GameState& gameState) {
     
     gameState.cannons.push_back(cannon2);
     
-    printf("Cannons generated: %zu cannons\n", gameState.cannons.size());
 }
 
 void StageGenerator::initializeEnemies(GameState& gameState) {
@@ -309,6 +306,5 @@ void StageGenerator::initializeEnemies(GameState& gameState) {
     brontoBurt.size = 0.4f;
     gameState.enemies.push_back(brontoBurt);
     
-    printf("Enemies initialized: %zu enemies\n", gameState.enemies.size());
 }
 

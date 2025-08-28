@@ -291,7 +291,7 @@ void OpenGLRenderer::drawTriangle(const glm::mat4& model, const glm::vec3& color
 }
 
 // 制限時間UI表示
-void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars) {
+void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars) {
     // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -315,12 +315,36 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
     }
     
     renderText(timeText, glm::vec2(900, 50), timeColor, 2.0f);
-    
+    if(existingStars==0){
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
+            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            renderStar(starPos, starColor, 1.5f);
+        }
+    }else{
     // 星の表示（右上、時間の下）
-    for (int i = 0; i < 3; i++) {
-        glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
-        glm::vec3 starColor = (i < earnedStars) ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.5f, 0.5f, 0.5f);
-        renderStar(starPos, starColor, 1.5f);
+        for (int i = 0; i < existingStars; i++) {
+            glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
+            glm::vec3 starColor;
+            
+            if (i < existingStars) {
+                // 既に取得している星（黄色で点灯）
+                starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            } else if (i < existingStars + earnedStars) {
+                // 今回新しく獲得した星（明るい黄色で点灯）
+                // starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            } else {
+                // まだ取得していない星（灰色）
+                starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            }
+            
+            renderStar(starPos, starColor, 1.5f);
+        }
+        for (int i = existingStars; i < existingStars+1 && existingStars+1<4; i++) {
+            glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
+            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            renderStar(starPos, starColor, 1.5f);
+        }
     }
     
     // 3D描画モードに戻す
@@ -336,17 +360,6 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
 // 星の描画
 void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
     glColor3f(color.r, color.g, color.b);
-    
-    // 星の中心に小さな円を描画
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(position.x, position.y);
-    for (int i = 0; i <= 360; i += 10) {
-        float angle = i * 3.14159f / 180.0f;
-        float x = position.x + cos(angle) * 8.0f * scale;
-        float y = position.y + sin(angle) * 8.0f * scale;
-        glVertex2f(x, y);
-    }
-    glEnd();
     
     // 星の5つの角を描画
     glBegin(GL_TRIANGLES);

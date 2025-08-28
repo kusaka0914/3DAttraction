@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <glm/glm.hpp>
 
 // =========================
@@ -230,10 +231,14 @@ struct GameState {
     // 制限時間システム
     float timeLimit = 20.0f;        // 制限時間（秒）
     float remainingTime = 20.0f;    // 残り時間（秒）
-    int earnedStars = 0;            // 獲得した星の数（0-3）
+    int earnedStars = 0;            // 今回獲得した星の数（0-3）
     float clearTime = 0.0f;         // クリア時間（秒）
     bool isTimeUp = false;          // 時間切れフラグ
     bool isStageCompleted = false;  // ステージ完了フラグ
+    
+    // 星数管理システム
+    std::map<int, int> stageStars;  // ステージ別の最高星数記録 {ステージ番号, 星数}
+    int totalStars = 0;             // トータル星数
     
     // ステージクリアUI状態
     bool showStageClearUI = false;

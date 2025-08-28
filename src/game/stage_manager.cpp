@@ -316,7 +316,7 @@ void StageManager::initializeStages() {
     // ステージ0: ステージ選択フィールド
     stages.push_back({
         0, "ステージ選択フィールド",
-        glm::vec3(0, 2.0f, 0),  // 中央に配置
+        glm::vec3(8, 2.0f, 0),  // 中央に配置
         glm::vec3(0, 2.0f, 0),  // ゴール位置（使用しない）
         generateStageSelectionField,
         true,  // 最初からアンロック
@@ -406,7 +406,7 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.collectedItems = 0;
     gameState.gameWon = false;
     gameState.score = 0;
-    gameState.gameTime = 0.0f;
+    gameState.gameTime = 0.0f;  // ステージ開始時にゲーム時間をリセット
     
     // 制限時間システムをリセット（ステージ固有の制限時間を適用）
     gameState.timeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
@@ -511,7 +511,7 @@ bool StageManager::goToPreviousStage(GameState& gameState, PlatformSystem& platf
 }
 
 bool StageManager::goToStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem) {
-    if (stageNumber >= 1 && stageNumber <= static_cast<int>(stages.size())) {
+    if (stageNumber >= 0 && stageNumber <= static_cast<int>(stages.size())) {
         loadStage(stageNumber, gameState, platformSystem);
         return true;
     }
@@ -831,34 +831,52 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
     platformSystem.clear();
     
     // メインの選択フィールド（画像のような長方形）
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(0, 0, 0), glm::vec3(20, 1, 8), glm::vec3(0.3f, 0.3f, 0.3f)
-    ));
-    
-    // ステージ1選択エリア（左側の円）
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(-8, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(1.0f, 0.2f, 0.2f)
-    ));
-    
-    // ステージ2選択エリア（右側の円）
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(8, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(0.2f, 1.0f, 0.2f)
-    ));
-    
-    // ステージ3選択エリア（中央左）
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(-4, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(0.2f, 0.2f, 1.0f)
-    ));
-    
-    // ステージ4選択エリア（中央右）
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(4, 0.5f, 0), glm::vec3(4, 1, 4), glm::vec3(1.0f, 1.0f, 0.2f)
-    ));
-    
-    // ステージ5選択エリア（後方中央）
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(0, 0.5f, -6), glm::vec3(4, 1, 4), glm::vec3(1.0f, 0.2f, 1.0f)
-    ));
+    createStaticPlatforms(gameState, platformSystem, {
+        // メインフィールド（右側）
+        {{6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
+        
+        // メインフィールド（中央）
+        {{0, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
+        
+        // メインフィールド（左側）
+        {{-6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+        
+        // ステージ1選択エリア（赤色）
+        {{6, 0.5f, 0}, {1, .5, 1}, glm::vec3(1.0f, 0.2f, 0.2f), "Stage 1 Selection Area"},
+        
+        // ステージ2選択エリア（緑色）
+        {{-8, 0.5f, 0}, {1, .5, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 2 Selection Area"},
+        
+        // ステージ3選択エリア（青色）
+        // {{-4, 0.5f, 0}, {4, 1, 4}, glm::vec3(0.2f, 0.2f, 1.0f), "Stage 3 Selection Area"},
+        
+        // // ステージ4選択エリア（黄色）
+        // {{4, 0.5f, 0}, {4, 1, 4}, glm::vec3(1.0f, 1.0f, 0.2f), "Stage 4 Selection Area"},
+        
+        // // ステージ5選択エリア（マゼンタ）
+        // {{0, 0.5f, -6}, {4, 1, 4}, glm::vec3(1.0f, 0.2f, 1.0f), "Stage 5 Selection Area"}
+    });
     
     printf("Stage Selection Field generated: %zu platforms\n", platformSystem.getPlatforms().size());
+}
+
+// 星数管理メソッドの実装
+int StageManager::getStageStars(int stageNumber) const {
+    // この実装は後で修正が必要
+    return 0;
+}
+
+int StageManager::getTotalStars() const {
+    // この実装は後で修正が必要
+    return 0;
+}
+
+void StageManager::updateStageStars(int stageNumber, int newStars) {
+    // この実装は後で修正が必要
+    printf("Stage %d stars updated to %d\n", stageNumber, newStars);
+}
+
+int StageManager::calculateStarDifference(int stageNumber, int newStars) const {
+    // この実装は後で修正が必要
+    return newStars;
 }
