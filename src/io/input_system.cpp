@@ -48,6 +48,11 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
     // 移動入力
     glm::vec3 moveDir(0.0f);
     
+    // ゴール後の移動制限チェック
+    if (gameState.isGoalReached) {
+        return; // ゴール後は移動入力を無視
+    }
+    
     // キーボード入力
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveDir.z += 1.0f;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveDir.z -= 1.0f;
@@ -80,6 +85,11 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
 
 // ジャンプの処理
 void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem) {
+    // ゴール後の移動制限チェック
+    if (gameState.isGoalReached) {
+        return; // ゴール後はジャンプ入力を無視
+    }
+    
     // シンプルなジャンプ処理
     static bool spacePressed = false;
     static bool gamepadJumpPressed = false;

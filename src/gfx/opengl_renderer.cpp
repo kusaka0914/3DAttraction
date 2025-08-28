@@ -4,7 +4,7 @@
 
 namespace gfx {
 
-OpenGLRenderer::OpenGLRenderer() : window(nullptr), fontInitialized(false), textureFontInitialized(false), fontTexture(0) {
+OpenGLRenderer::OpenGLRenderer() : window(nullptr), fontInitialized(false) {
 }
 
 OpenGLRenderer::~OpenGLRenderer() {
@@ -27,9 +27,6 @@ bool OpenGLRenderer::initialize(GLFWwindow* window) {
     
     // ビットマップフォント初期化
     initializeBitmapFont();
-    
-    // テクスチャフォント初期化
-    initializeTextureFont();
     
     // カメラとプロジェクションの初期設定は削除（simple_main.cppで設定される）
     // setCamera(glm::vec3(0, 5, 10), glm::vec3(0, 0, 0));
@@ -104,12 +101,7 @@ void OpenGLRenderer::renderRotatedBoxWithAlpha(const glm::vec3& position, const 
     drawCube(model, alphaColor);
 }
 
-void OpenGLRenderer::renderTriangle(const glm::vec3& position, const glm::vec3& color, float size) {
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, position);
-    model = glm::scale(model, glm::vec3(size));
-    drawTriangle(model, color);
-}
+
 
 void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
     // 2D描画モードに切り替え
@@ -131,7 +123,7 @@ void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& positi
     float currentX = position.x;
     float charWidth = 8.0f * scale;
     float charHeight = 12.0f * scale;
-    float spaceWidth = 4.0f * scale;
+    float spaceWidth = 6.0f * scale;  // スペース幅を増加
     
     for (size_t i = 0; i < text.length(); i++) {
         char c = text[i];
@@ -143,7 +135,7 @@ void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& positi
         
         // ビットマップフォントで文字を描画
         renderBitmapChar(c, glm::vec2(currentX, position.y), color, scale);
-        currentX += charWidth + 1.0f * scale;
+        currentX += charWidth + 2.0f * scale;  // 文字間隔を増加
     }
     
     // 3D描画モードに戻す
@@ -156,66 +148,7 @@ void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& positi
     glPopMatrix();
 }
 
-void OpenGLRenderer::renderGround(float size) {
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(size, 0.1f, size));
-    model = glm::translate(model, glm::vec3(0, -0.5f, 0));
-    drawCube(model, glm::vec3(0.5f, 0.5f, 0.5f));
-}
 
-void OpenGLRenderer::renderTerrain(const std::vector<std::vector<float>>& heightmap, float scale) {
-    if (heightmap.empty() || heightmap[0].empty()) return;
-    
-    int width = heightmap.size();
-    int height = heightmap[0].size();
-    
-    glPushMatrix();
-    
-    // 草原の緑色
-    glColor3f(0.2f, 0.8f, 0.3f);
-    
-    // 三角形メッシュでハイトマップを描画
-    for (int x = 0; x < width - 1; x++) {
-        for (int z = 0; z < height - 1; z++) {
-            float x1 = (x - width/2.0f) * scale;
-            float x2 = (x + 1 - width/2.0f) * scale;
-            float z1 = (z - height/2.0f) * scale;
-            float z2 = (z + 1 - height/2.0f) * scale;
-            
-            float h1 = heightmap[x][z];
-            float h2 = heightmap[x+1][z];
-            float h3 = heightmap[x][z+1];
-            float h4 = heightmap[x+1][z+1];
-            
-            // 高度によって色を変える（草原効果）
-            float avgHeight = (h1 + h2 + h3 + h4) / 4.0f;
-            if (avgHeight > 2.0f) {
-                glColor3f(0.1f, 0.6f, 0.2f); // 高い場所は濃い緑
-            } else if (avgHeight > 1.0f) {
-                glColor3f(0.2f, 0.8f, 0.3f); // 中間は明るい緑
-            } else {
-                glColor3f(0.3f, 0.9f, 0.4f); // 低い場所は薄い緑
-            }
-            
-            // 四角形を2つの三角形に分割
-            glBegin(GL_TRIANGLES);
-            
-            // 最初の三角形
-            glVertex3f(x1, h1, z1);
-            glVertex3f(x2, h2, z1);
-            glVertex3f(x1, h3, z2);
-            
-            // 二番目の三角形
-            glVertex3f(x2, h2, z1);
-            glVertex3f(x2, h4, z2);
-            glVertex3f(x1, h3, z2);
-            
-            glEnd();
-        }
-    }
-    
-    glPopMatrix();
-}
 
 void OpenGLRenderer::setCamera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up) {
     viewMatrix = glm::lookAt(position, target, up);
@@ -275,20 +208,7 @@ void OpenGLRenderer::drawCube(const glm::mat4& model, const glm::vec3& color) {
     glPopMatrix();
 }
 
-void OpenGLRenderer::drawTriangle(const glm::mat4& model, const glm::vec3& color) {
-    glPushMatrix();
-    glMultMatrixf(glm::value_ptr(model));
-    
-    glColor3f(color.r, color.g, color.b);
-    
-    glBegin(GL_TRIANGLES);
-    glVertex3f( 0.0f,  0.5f, 0.0f);
-    glVertex3f(-0.5f, -0.5f, 0.0f);
-    glVertex3f( 0.5f, -0.5f, 0.0f);
-    glEnd();
-    
-    glPopMatrix();
-}
+
 
 // 制限時間UI表示
 void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars) {
@@ -306,7 +226,7 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
     glDisable(GL_DEPTH_TEST);
     
     // 残り時間表示（右上、より見やすい位置に調整）
-    std::string timeText = "Remaining: " + std::to_string(static_cast<int>(remainingTime)) + "s";
+    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
     glm::vec3 timeColor = glm::vec3(1.0f, 1.0f, 1.0f);
     
     // 時間が少なくなったら赤色で警告
@@ -314,17 +234,33 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
         timeColor = glm::vec3(1.0f, 0.0f, 0.0f);
     }
     
-    renderText(timeText, glm::vec2(900, 50), timeColor, 2.0f);
+    renderText(timeText, glm::vec2(1170, 30), timeColor, 3.0f);
+    std::string goalText = "GOAL";
+    glm::vec3 goalColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    renderText(goalText, glm::vec2(962, 65), goalColor, 1.0f);
+
+    std::string goalText2 = "5s";
+    glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+
+
+    std::string goalText3 = "10s";
+    glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+
     if(existingStars==0){
         for (int i = 0; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
             glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
             renderStar(starPos, starColor, 1.5f);
         }
     }else{
     // 星の表示（右上、時間の下）
         for (int i = 0; i < existingStars; i++) {
-            glm::vec2 starPos = glm::vec2(900 + i * 70, 100);
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
             glm::vec3 starColor;
             
             if (i < existingStars) {
@@ -384,6 +320,93 @@ void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& colo
         glVertex2f(x3, y3);
     }
     glEnd();
+}
+
+// チュートリアルUI表示
+void OpenGLRenderer::renderTutorialUI(int width, int height) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // チュートリアルボックス（中央に配置）
+    float boxWidth = 800.0f;
+    float boxHeight = 600.0f;
+    float boxX = (width - boxWidth) / 2.0f;
+    float boxY = (height - boxHeight) / 2.0f;
+    
+    // ボックス背景（白）
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(boxX, boxY);
+    glVertex2f(boxX + boxWidth, boxY);
+    glVertex2f(boxX + boxWidth, boxY + boxHeight);
+    glVertex2f(boxX, boxY + boxHeight);
+    glEnd();
+    
+    // ボックス枠線（青）
+    glColor3f(0.2f, 0.4f, 1.0f);
+    glLineWidth(3.0f);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(boxX, boxY);
+    glVertex2f(boxX + boxWidth, boxY);
+    glVertex2f(boxX + boxWidth, boxY + boxHeight);
+    glVertex2f(boxX, boxY + boxHeight);
+    glEnd();
+    glLineWidth(1.0f);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    renderText("TUTORIAL", glm::vec2((boxX + boxWidth/2 - 130) * scaleX, (boxY + 40) * scaleY), glm::vec3(0.2f, 0.4f, 1.0f), 2.0f);
+    
+    // 操作説明
+    renderText("MOVE", glm::vec2((boxX + 60) * scaleX, (boxY + 120) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.5f);
+    renderText("FORWARD: W", glm::vec2((boxX + 100) * scaleX, (boxY + 170) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.2f);
+    renderText("LEFT: A", glm::vec2((boxX + 100) * scaleX, (boxY + 210) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.2f);
+    renderText("BACKWARD: S", glm::vec2((boxX + 100) * scaleX, (boxY + 250) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.2f);
+    renderText("RIGHT: D", glm::vec2((boxX + 100) * scaleX, (boxY + 290) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.2f);
+    
+    renderText("ACTION", glm::vec2((boxX + 60) * scaleX, (boxY + 350) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.5f);
+    renderText("JUMP: SPACE", glm::vec2((boxX + 100) * scaleX, (boxY + 400) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.2f);
+    renderText("SPEED UP(1x 2x 3x): T", glm::vec2((boxX + 100) * scaleX, (boxY + 440) * scaleY), glm::vec3(0.1f, 0.1f, 0.1f), 1.2f);
+    
+    // 注意事項
+    renderText("ENTER", glm::vec2((boxX + boxWidth/2 +200) * scaleX, (boxY + 500) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.3f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 void OpenGLRenderer::initializeBitmapFont() {
@@ -643,6 +666,21 @@ void OpenGLRenderer::initializeBitmapFont() {
         1,1,0,0,0,0,1,1,
         1,1,0,0,0,0,1,1
     };
+
+    bitmapFont['x'] = {
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        1,1,0,0,0,0,1,1,
+        0,1,1,0,0,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,0,0,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,0,0,0,0,0,0,1,
+    };
     
     bitmapFont['g'] = {
         0,0,0,0,0,0,0,0,
@@ -673,6 +711,36 @@ void OpenGLRenderer::initializeBitmapFont() {
         0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0
     };
+
+    bitmapFont['-'] = {
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        1,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,1,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0
+    };
+
+    // bitmapFont['↑'] = {
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,1,1,1,1,0,0,
+    //     0,1,1,1,1,1,1,0,
+    //     1,1,0,1,1,0,1,1,
+    //     0,0,0,1,1,0,0,1,
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,0,1,1,0,0,0,
+    //     0,0,0,1,1,0,0,0
+    // };
     
     bitmapFont['s'] = {
         0,0,0,0,0,0,0,0,
@@ -687,6 +755,382 @@ void OpenGLRenderer::initializeBitmapFont() {
         0,0,0,0,0,0,1,1,
         0,1,1,1,1,1,1,0,
         0,0,1,1,1,1,0,0
+    };
+    
+    // 大文字のアルファベットを追加
+    bitmapFont['T'] = {
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0
+    };
+    
+    bitmapFont['U'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1
+    };
+    
+    bitmapFont['O'] = {
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0
+    };
+    
+    bitmapFont['P'] = {
+        1,1,1,1,1,1,0,0,
+        1,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0
+    };
+    
+    bitmapFont['I'] = {
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0
+    };
+    
+    bitmapFont['A'] = {
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,0,0,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1
+    };
+    
+    bitmapFont['L'] = {
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1
+    };
+    
+    bitmapFont['M'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,1,0,0,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,0,1,1,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1
+    };
+    
+    bitmapFont['V'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,0,0,1,1,0,
+        0,1,1,0,0,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0
+    };
+    
+    bitmapFont['E'] = {
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,1,1,1,1,0,0,
+        1,1,1,1,1,1,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1
+    };
+    
+    bitmapFont['N'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,1,0,0,0,1,1,
+        1,1,1,1,0,0,1,1,
+        1,1,0,1,1,0,1,1,
+        1,1,0,0,1,1,1,1,
+        1,1,0,0,0,1,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1
+    };
+    
+    bitmapFont['S'] = {
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,0,0,
+        0,1,1,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,0,1,1,1,0,
+        0,0,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0
+    };
+    
+    bitmapFont['P'] = {
+        1,1,1,1,1,1,0,0,
+        1,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0
+    };
+    
+    bitmapFont['C'] = {
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,1,1,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0
+    };
+    
+    bitmapFont['J'] = {
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0
+    };
+    
+    bitmapFont['B'] = {
+        1,1,1,1,1,1,0,0,
+        1,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,0,0
+    };
+    
+    bitmapFont['D'] = {
+        1,1,1,1,1,1,0,0,
+        1,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,0,0
+    };
+    
+    bitmapFont['F'] = {
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,1,1,1,1,0,0,
+        1,1,1,1,1,1,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0
+    };
+    
+    bitmapFont['G'] = {
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,1,1,1,1,1,
+        1,1,0,1,1,1,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0
+    };
+    
+    bitmapFont['H'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1
+    };
+    
+    bitmapFont['K'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,1,1,0,
+        1,1,0,0,1,1,0,0,
+        1,1,0,1,1,0,0,0,
+        1,1,1,1,0,0,0,0,
+        1,1,1,1,0,0,0,0,
+        1,1,1,1,0,0,0,0,
+        1,1,0,1,1,0,0,0,
+        1,1,0,0,1,1,0,0,
+        1,1,0,0,0,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1
+    };
+    
+    bitmapFont['W'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,1,1,0,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,0,0,1,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+    };
+    
+    bitmapFont['X'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,0,0,1,1,0,
+        0,1,1,0,0,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,0,0,1,1,0,
+        0,1,1,0,0,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1
+    };
+    
+    bitmapFont['Y'] = {
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,1,1,0,0,1,1,0,
+        0,1,1,0,0,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0
+    };
+    
+    bitmapFont['Z'] = {
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,1,1,0,
+        0,0,0,0,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,0,0,0,0,
+        0,1,1,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1
     };
     
     fontInitialized = true;
@@ -722,123 +1166,6 @@ void OpenGLRenderer::renderBitmapChar(char c, const glm::vec2& position, const g
     }
 }
 
-void OpenGLRenderer::initializeTextureFont() {
-    if (textureFontInitialized) return;
-    
-    // 簡単なテクスチャフォントの初期化
-    // 実際のプロジェクトでは、事前に生成したフォントテクスチャを使用
-    
-    // テクスチャ生成
-    glGenTextures(1, &fontTexture);
-    glBindTexture(GL_TEXTURE_2D, fontTexture);
-    
-    // 簡単なフォントテクスチャを生成（8x12ピクセルの文字を並べたもの）
-    const int atlasWidth = 256;
-    const int atlasHeight = 256;
-    const int charWidth = 8;
-    const int charHeight = 12;
-    const int charsPerRow = atlasWidth / charWidth;
-    
-    std::vector<unsigned char> atlasData(atlasWidth * atlasHeight, 0);
-    
-    // ビットマップフォントデータからテクスチャを生成
-    for (auto& [c, charData] : bitmapFont) {
-        int charIndex = static_cast<int>(c);
-        int row = charIndex / charsPerRow;
-        int col = charIndex % charsPerRow;
-        
-        int startX = col * charWidth;
-        int startY = row * charHeight;
-        
-        // 文字データをテクスチャに配置
-        for (int y = 0; y < charHeight; y++) {
-            for (int x = 0; x < charWidth; x++) {
-                int atlasIndex = (startY + y) * atlasWidth + (startX + x);
-                int charIndex = y * charWidth + x;
-                
-                if (charIndex < charData.size() && charData[charIndex]) {
-                    atlasData[atlasIndex] = 255; // 白
-                } else {
-                    atlasData[atlasIndex] = 0;   // 透明
-                }
-            }
-        }
-        
-        // グリフ情報を設定
-        GlyphInfo& glyph = glyphs[c];
-        glyph.x = static_cast<float>(startX) / atlasWidth;
-        glyph.y = static_cast<float>(startY) / atlasHeight;
-        glyph.width = static_cast<float>(charWidth) / atlasWidth;
-        glyph.height = static_cast<float>(charHeight) / atlasHeight;
-        glyph.advanceX = charWidth + 1;
-        glyph.bearingX = 0;
-        glyph.bearingY = charHeight;
-    }
-    
-    // テクスチャデータをアップロード
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, atlasWidth, atlasHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasData.data());
-    
-    // テクスチャパラメータ設定
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    fontAtlasWidth = static_cast<float>(atlasWidth);
-    fontAtlasHeight = static_cast<float>(atlasHeight);
-    textureFontInitialized = true;
-}
 
-void OpenGLRenderer::renderTextureText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
-    if (!textureFontInitialized) return;
-    
-    // テクスチャを有効化
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, fontTexture);
-    
-    // ブレンディングを有効化
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    glColor3f(color.r, color.g, color.b);
-    
-    float currentX = position.x;
-    
-    for (char c : text) {
-        if (c == ' ') {
-            currentX += 8.0f * scale;
-            continue;
-        }
-        
-        auto it = glyphs.find(c);
-        if (it == glyphs.end()) continue;
-        
-        const GlyphInfo& glyph = it->second;
-        
-        float charWidth = glyph.width * fontAtlasWidth * scale;
-        float charHeight = glyph.height * fontAtlasHeight * scale;
-        
-        // 文字の四角形を描画
-        glBegin(GL_QUADS);
-        glTexCoord2f(glyph.x, glyph.y + glyph.height);
-        glVertex2f(currentX, position.y);
-        
-        glTexCoord2f(glyph.x + glyph.width, glyph.y + glyph.height);
-        glVertex2f(currentX + charWidth, position.y);
-        
-        glTexCoord2f(glyph.x + glyph.width, glyph.y);
-        glVertex2f(currentX + charWidth, position.y + charHeight);
-        
-        glTexCoord2f(glyph.x, glyph.y);
-        glVertex2f(currentX, position.y + charHeight);
-        glEnd();
-        
-        currentX += glyph.advanceX * scale;
-    }
-    
-    // テクスチャを無効化
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-}
 
 } // namespace gfx

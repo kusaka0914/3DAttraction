@@ -302,7 +302,7 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
             }
             platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
                 position, sizeVec, color,
-                visibleTime, invisibleTime, blinkTime, initialTimer
+                visibleTime + invisibleTime, visibleTime, blinkTime, initialTimer
             ));
         }
         printf("Created %d consecutive cycling platforms from (%.1f, %.1f, %.1f) in direction (%.1f, %.1f, %.1f) with %.1f spacing (reverse timer: %s)\n",
@@ -418,6 +418,7 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.showStageClearUI = false; // UIをリセット
     gameState.stageClearTimer = 0.0f;   // タイマーをリセット
     gameState.stageClearConfirmed = false; // 確認フラグをリセット
+    gameState.isGoalReached = false;    // ゴール後の移動制限をリセット
     
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;
@@ -666,9 +667,6 @@ void StageManager::generateStage3(GameState& gameState, PlatformSystem& platform
 }
 
 void StageManager::generateStage4(GameState& gameState, PlatformSystem& platformSystem) {
-    // ステージ4: 移動プラットフォーム
-    printf("Generating Stage 4: Moving Platforms\n");
-    
     // ステージ4用の共通スポーン位置を定義
     glm::vec3 leftSpawnPos = glm::vec3(-15, 0, -10);   // 左側のスポーン位置
     glm::vec3 rightSpawnPos = glm::vec3(15, 0, -10);   // 右側のスポーン位置
@@ -722,142 +720,172 @@ void StageManager::generateStage4(GameState& gameState, PlatformSystem& platform
 }
 
 void StageManager::generateStage5(GameState& gameState, PlatformSystem& platformSystem) {
-    // ステージ5: 最終ステージ（全ての要素を組み合わせ）
-    printf("Generating Stage 5: Final Stage\n");
-    
     // スタート足場
     platformSystem.addPlatform(GameState::StaticPlatform(
         glm::vec3(0, 5, -25), glm::vec3(4, 1, 4), glm::vec3(0.2f, 0.8f, 0.2f)
     ));
     
     // 重力反転エリア
-    gameState.gravityZones.clear();
-    GameState::GravityZone gravityZone;
-    gravityZone.position = glm::vec3(0, 8, -20);
-    gravityZone.size = glm::vec3(6, 2, 6);
-    gravityZone.gravityDirection = glm::vec3(0, 1, 0);
-    gravityZone.radius = 3.0f;
-    gravityZone.isActive = true;
-    gameState.gravityZones.push_back(gravityZone);
+    // gameState.gravityZones.clear();
+    // GameState::GravityZone gravityZone;
+    // gravityZone.position = glm::vec3(0, 8, -20);
+    // gravityZone.size = glm::vec3(6, 2, 6);
+    // gravityZone.gravityDirection = glm::vec3(0, 1, 0);
+    // gravityZone.radius = 3.0f;
+    // gravityZone.isActive = true;
+    // gameState.gravityZones.push_back(gravityZone);
     
-    // 重力反転エリア内の足場
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(0, 12, -20), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.2f)
-    ));
+    // // 重力反転エリア内の足場
+    // platformSystem.addPlatform(GameState::StaticPlatform(
+    //     glm::vec3(0, 12, -20), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.2f)
+    // ));
     
-    // 複数スイッチ
-    gameState.switches.clear();
-    GameState::Switch multiSwitch1;
-    multiSwitch1.position = glm::vec3(-1, 6.5, -15);
-    multiSwitch1.size = glm::vec3(1, 0.5, 1);
-    multiSwitch1.color = glm::vec3(0.2f, 1.0f, 0.2f);
-    multiSwitch1.isPressed = false;
-    multiSwitch1.isToggle = false;
-    multiSwitch1.targetPlatformIndices = {};
-    multiSwitch1.targetStates = {};
-    multiSwitch1.pressTimer = 0.0f;
-    multiSwitch1.cooldownTimer = 0.0f;
-    multiSwitch1.isMultiSwitch = true;
-    multiSwitch1.multiSwitchGroup = 0;
-    gameState.switches.push_back(multiSwitch1);
+    // // 複数スイッチ
+    // gameState.switches.clear();
+    // GameState::Switch multiSwitch1;
+    // multiSwitch1.position = glm::vec3(-1, 6.5, -15);
+    // multiSwitch1.size = glm::vec3(1, 0.5, 1);
+    // multiSwitch1.color = glm::vec3(0.2f, 1.0f, 0.2f);
+    // multiSwitch1.isPressed = false;
+    // multiSwitch1.isToggle = false;
+    // multiSwitch1.targetPlatformIndices = {};
+    // multiSwitch1.targetStates = {};
+    // multiSwitch1.pressTimer = 0.0f;
+    // multiSwitch1.cooldownTimer = 0.0f;
+    // multiSwitch1.isMultiSwitch = true;
+    // multiSwitch1.multiSwitchGroup = 0;
+    // gameState.switches.push_back(multiSwitch1);
     
-    GameState::Switch multiSwitch2;
-    multiSwitch2.position = glm::vec3(-1, 8.5, -10);
-    multiSwitch2.size = glm::vec3(1, 0.5, 1);
-    multiSwitch2.color = glm::vec3(1.0f, 1.0f, 0.2f);
-    multiSwitch2.isPressed = false;
-    multiSwitch2.isToggle = false;
-    multiSwitch2.targetPlatformIndices = {};
-    multiSwitch2.targetStates = {};
-    multiSwitch2.pressTimer = 0.0f;
-    multiSwitch2.cooldownTimer = 0.0f;
-    multiSwitch2.isMultiSwitch = true;
-    multiSwitch2.multiSwitchGroup = 0;
-    gameState.switches.push_back(multiSwitch2);
+    // GameState::Switch multiSwitch2;
+    // multiSwitch2.position = glm::vec3(-1, 8.5, -10);
+    // multiSwitch2.size = glm::vec3(1, 0.5, 1);
+    // multiSwitch2.color = glm::vec3(1.0f, 1.0f, 0.2f);
+    // multiSwitch2.isPressed = false;
+    // multiSwitch2.isToggle = false;
+    // multiSwitch2.targetPlatformIndices = {};
+    // multiSwitch2.targetStates = {};
+    // multiSwitch2.pressTimer = 0.0f;
+    // multiSwitch2.cooldownTimer = 0.0f;
+    // multiSwitch2.isMultiSwitch = true;
+    // multiSwitch2.multiSwitchGroup = 0;
+    // gameState.switches.push_back(multiSwitch2);
     
-    // 大砲
-    gameState.cannons.clear();
-    GameState::Cannon cannon1;
-    cannon1.position = glm::vec3(5, 5, -15);
-    cannon1.size = glm::vec3(2, 2, 2);
-    cannon1.color = glm::vec3(0.8f, 0.4f, 0.2f);
-    cannon1.targetPosition = glm::vec3(20, 8, -5);
-    cannon1.power = 15.0f;
-    cannon1.isActive = true;
-    cannon1.hasPlayerInside = false;
-    cannon1.cooldownTimer = 0.0f;
-    cannon1.cooldownTime = 2.0f;
+    // // 大砲
+    // gameState.cannons.clear();
+    // GameState::Cannon cannon1;
+    // cannon1.position = glm::vec3(5, 5, -15);
+    // cannon1.size = glm::vec3(2, 2, 2);
+    // cannon1.color = glm::vec3(0.8f, 0.4f, 0.2f);
+    // cannon1.targetPosition = glm::vec3(20, 8, -5);
+    // cannon1.power = 15.0f;
+    // cannon1.isActive = true;
+    // cannon1.hasPlayerInside = false;
+    // cannon1.cooldownTimer = 0.0f;
+    // cannon1.cooldownTime = 2.0f;
     
-    glm::vec3 direction = glm::normalize(cannon1.targetPosition - cannon1.position);
-    float distance = glm::length(cannon1.targetPosition - cannon1.position);
-    float gravity = 9.8f;
-    float timeToTarget = sqrt(2.0f * distance / gravity);
-    cannon1.launchDirection = direction * cannon1.power;
-    cannon1.launchDirection.y = (cannon1.targetPosition.y - cannon1.position.y) / timeToTarget + 0.5f * gravity * timeToTarget;
+    // glm::vec3 direction = glm::normalize(cannon1.targetPosition - cannon1.position);
+    // float distance = glm::length(cannon1.targetPosition - cannon1.position);
+    // float gravity = 9.8f;
+    // float timeToTarget = sqrt(2.0f * distance / gravity);
+    // cannon1.launchDirection = direction * cannon1.power;
+    // cannon1.launchDirection.y = (cannon1.targetPosition.y - cannon1.position.y) / timeToTarget + 0.5f * gravity * timeToTarget;
     
-    gameState.cannons.push_back(cannon1);
+    // gameState.cannons.push_back(cannon1);
     
-    // 複雑な移動要素
-    platformSystem.addPlatform(GameState::MovingPlatform(
-        glm::vec3(-5, 5, -10), glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.4f, 0.8f),
-        glm::vec3(5, 8, -10), 2.0f
-    ));
+    // // 複雑な移動要素
+    // platformSystem.addPlatform(GameState::MovingPlatform(
+    //     glm::vec3(-5, 5, -10), glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.4f, 0.8f),
+    //     glm::vec3(5, 8, -10), 2.0f
+    // ));
     
-    platformSystem.addPlatform(GameState::RotatingPlatform(
-        glm::vec3(0, 5, -5), glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.2f, 0.8f),
-        glm::vec3(1, 0, 0), 90.0f
-    ));
+    // platformSystem.addPlatform(GameState::RotatingPlatform(
+    //     glm::vec3(0, 5, -5), glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.2f, 0.8f),
+    //     glm::vec3(1, 0, 0), 90.0f
+    // ));
     
-    // 順次出現・消失する足場
-    for (int i = 0; i < 5; i++) {
-        platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
-            glm::vec3(0, 5, 5 + i * 4), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.8f),
-            8.0f, 4.0f, 0.5f, i * 1.0f
-        ));
-    }
+    // // 順次出現・消失する足場
+    // for (int i = 0; i < 5; i++) {
+    //     platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
+    //         glm::vec3(0, 5, 5 + i * 4), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.8f),
+    //         8.0f, 4.0f, 0.5f, i * 1.0f
+    //     ));
+    // }
     
     // ゴール足場
     platformSystem.addPlatform(GameState::StaticPlatform(
         glm::vec3(0, 25, 45), glm::vec3(4, 1, 4), glm::vec3(1.0f, 1.0f, 0.0f)
     ));
-    
-    printf("Stage 5 generated: %zu platforms, %zu gravity zones, %zu switches, %zu cannons\n", 
-           platformSystem.getPlatforms().size(), gameState.gravityZones.size(), 
-           gameState.switches.size(), gameState.cannons.size());
 }
 
 // ステージ選択フィールドの生成
 void StageManager::generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem) {
     platformSystem.clear();
+
+    glm::vec3 rightSpawnPos = glm::vec3(-50, 0, 0);
+    float speed = 80.0f;
+    float detectionRange = 2.5f;
     
     // メインの選択フィールド（画像のような長方形）
     createStaticPlatforms(gameState, platformSystem, {
-        // メインフィールド（右側）
+        // メインフィールド（1つ目）
         {{6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
+
+        // ステージ1選択エリア（赤色）
+        {{6, 1, 0}, {1, 1, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 1 Selection Area"},
         
-        // メインフィールド（中央）
+        // メインフィールド（間）
         {{0, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
+        // {{-26, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
         
-        // メインフィールド（左側）
+        // メインフィールド（2つ目）
         {{-6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ1選択エリア（赤色）
-        {{6, 0.5f, 0}, {1, .5, 1}, glm::vec3(1.0f, 0.2f, 0.2f), "Stage 1 Selection Area"},
+        // ステージ2選択エリア（トータルスター数に応じて色を変更）
+        {{-8, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 1) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
         
-        // ステージ2選択エリア（緑色）
-        {{-8, 0.5f, 0}, {1, .5, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 2 Selection Area"},
-        
+        // メインフィールド（3つ目）
+        {{-20, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+
         // ステージ3選択エリア（青色）
-        // {{-4, 0.5f, 0}, {4, 1, 4}, glm::vec3(0.2f, 0.2f, 1.0f), "Stage 3 Selection Area"},
+        {{-22, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 3) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
+
+        // メインフィールド（4つ目）
+        {{-32, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // // ステージ4選択エリア（黄色）
-        // {{4, 0.5f, 0}, {4, 1, 4}, glm::vec3(1.0f, 1.0f, 0.2f), "Stage 4 Selection Area"},
+        // ステージ4選択エリア（黄色）
+        {{-34, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 5) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
         
-        // // ステージ5選択エリア（マゼンタ）
-        // {{0, 0.5f, -6}, {4, 1, 4}, glm::vec3(1.0f, 0.2f, 1.0f), "Stage 5 Selection Area"}
+        // メインフィールド（5つ目）
+        {{-44, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+
+        // ステージ5選択エリア（マゼンタ）
+        {{-46, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 7) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
+    });
+
+    createFlyingPlatforms(gameState, platformSystem, {
+        // {{spawn_x, spawn_y, spawn_z}, {size_x, size_y, size_z}, {target_x, target_y, target_z}, color, speed, detection_range, description}
+        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-36.5, 0, 0}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
+        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-39.5, 0, 0}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
+    });
+
+    createPatrolPlatforms(gameState, platformSystem, {
+        //{{start_x, start_y, start_z}, {second_point_x, second_point_y, second_point_z}, {third_point_x, third_point_y, third_point_z}, {fourth_point_x, fourth_point_y, fourth_point_z}, {fifth_point_x, fifth_point_y, fifth_point_z}, description}
+        {{{-12, 0, 0}, {-12, 0, 0}, {-14, 0, 0}, {-14, 0, 0}, {-12, 0, 0}}, "ステージ1選択エリア"},
+        {{{-26, 0, 100}, {-26, 0, 100}, {-28, 0, 100}, {-28, 0, 100}, {-26, 0, 100}}, "ステージ2選択エリア"},
+        {{{-40, 0, 100}, {-40, 0, 100}, {-42, 0, 100}, {-42, 0, 100}, {-40, 0, 100}}, "ステージ3選択エリア"},
+        {{{-12, 0, 100}, {-12, 0, 100}, {-14, 0, 100}, {-14, 0, 100}, {-12, 0, 100}}, "ステージ1選択エリア"},
+        {{{-26, 0, 100}, {-26, 0, 100}, {-28, 0, 100}, {-28, 0, 100}, {-26, 0, 100}}, "ステージ2選択エリア"},
+        // {{{-40, 0, 0}, {-40, 0, 0}, {-42, 0, 0}, {-42, 0, 0}, {-40, 0, 0}}, "ステージ3選択エリア"},
+    });
+
+    // 可変長サイクリングディスアピアリングプラットフォーム生成（個別配置）
+    createCyclingDisappearingPlatforms(gameState, platformSystem, {
+        // {{x, y, z}, {size_x, size_y, size_z}, visible_time, invisible_time, initial_timer, color, description}
+        {{-26, 0, 0}, {3, 1, 3}, 6.0f, 4.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
+        // {{-40, 0, 0}, {3, 1, 3}, 6.0f, 4.0f, 1.0f, Colors::PURPLE, "サイクル消える足場2"},
+        // {{-54, 0, 0}, {3, 1, 3}, 6.0f, 4.0f, 1.0f, Colors::CYAN, "サイクル消える足場3"},
     });
     
-    printf("Stage Selection Field generated: %zu platforms\n", platformSystem.getPlatforms().size());
 }
 
 // 星数管理メソッドの実装

@@ -252,6 +252,13 @@ struct GameState {
     // 残機システム
     int lives = 6;                 // 残機数（最大6個）
     bool isGameOver = false;       // ゲームオーバーフラグ
+    
+    // チュートリアルシステム
+    bool showTutorial = false;     // チュートリアル表示フラグ
+    bool tutorialShown = false;    // チュートリアルが既に表示されたかどうか
+    
+    // ゴール後の移動制限
+    bool isGoalReached = false;    // ゴール到達フラグ（移動制限用）
 };
 
 // ゲーム状態の初期化関数

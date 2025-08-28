@@ -93,7 +93,7 @@ void StageGenerator::generatePlatforms(GameState& gameState, PlatformSystem& pla
     // 周期的に消える足場（スタート地点の後ろ）
     platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
         glm::vec3(0, 5, -30), glm::vec3(3, 1, 3), glm::vec3(1.0f, 0.5f, 0.0f),
-        4.0f, 2.0f, 1.0f
+        6.0f, 4.0f, 0.5f, 1.0f
     ));
     
     // 重力反転エリア内の足場（天井に配置）
@@ -114,7 +114,7 @@ void StageGenerator::generatePlatforms(GameState& gameState, PlatformSystem& pla
     for (int i = 0; i < 8; i++) {
         platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
             glm::vec3(0, 5, 5 + i * 4), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.8f),
-            8.0f, 4.0f, 0.5f, i * 1.0f
+            12.0f, 8.0f, 0.5f, i * 1.0f
         ));
     }
     

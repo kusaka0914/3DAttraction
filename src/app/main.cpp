@@ -39,7 +39,7 @@ void adjustPlayerPositionForGravity(GameState& gameState, const glm::vec3& platf
 }
 
 // 速度倍率に応じた重力強度を計算
-float calculateGravityStrength(float baseGravity, float deltaTime, float timeScale, const glm::vec3& gravityDirection) {
+float calculateGravityStrength(float baseGravity, float deltaTime, float timeScale, const glm::vec3& gravityDirection, GameState& gameState) {
     // 基本重力強度
     float gravityStrength = baseGravity * deltaTime;
     
@@ -47,7 +47,10 @@ float calculateGravityStrength(float baseGravity, float deltaTime, float timeSca
     if (timeScale > 1.0f) {
         // 速度倍率の2乗に比例して重力を増強（より明確な効果）
         // 2倍速で4倍の重力、3倍速で9倍の重力
-        gravityStrength *= timeScale;
+        gravityStrength *= timeScale *1.2f;
+    }
+    if(gameState.currentStage==0){
+        gravityStrength *= 2.0f;
     }
     
     // 重力反転時は70%の強度
@@ -171,6 +174,62 @@ int main(int argc, char* argv[]) {
         // 速度倍率を適用したdeltaTimeを計算（全ステージで有効）
         float scaledDeltaTime = deltaTime * gameState.timeScale;
         
+        // チュートリアル表示中の処理
+        if (gameState.showTutorial) {
+            // チュートリアル表示中はゲームを一時停止
+            if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+                gameState.showTutorial = false;
+                printf("Tutorial dismissed.\n");
+            }
+            // チュートリアル表示中は他の処理をスキップ
+            renderer->beginFrame();
+            
+            // カメラ設定
+            glm::vec3 cameraPos, cameraTarget;
+            if (stageManager.getCurrentStage() == 0) {
+                cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
+                cameraTarget = gameState.playerPosition;
+            } else {
+                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
+                cameraTarget = gameState.playerPosition;
+            }
+            renderer->setCamera(cameraPos, cameraTarget);
+
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+            
+            // 通常のゲーム要素を描画（背景として）
+            auto positions = platformSystem.getPositions();
+            auto sizes = platformSystem.getSizes();
+            auto colors = platformSystem.getColors();
+            auto visibility = platformSystem.getVisibility();
+            auto isRotating = platformSystem.getIsRotating();
+            auto rotationAngles = platformSystem.getRotationAngles();
+            auto rotationAxes = platformSystem.getRotationAxes();
+            auto blinkAlphas = platformSystem.getBlinkAlphas();
+            
+            for (size_t i = 0; i < positions.size(); i++) {
+                if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
+                
+                if (isRotating[i]) {
+                    renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+                } else {
+                    renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                }
+            }
+            
+            // プレイヤーの描画
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+            
+            // チュートリアルUIを描画
+            renderer->renderTutorialUI(width, height);
+            
+            renderer->endFrame();
+            glfwPollEvents();
+            continue; // チュートリアル表示中は他の処理をスキップ
+        }
+        
         // 制限時間システムの更新（実際の時間で更新）
         if (!gameState.isStageCompleted && !gameState.isTimeUp) {
             gameState.remainingTime -= deltaTime;
@@ -217,6 +276,12 @@ int main(int argc, char* argv[]) {
             gameState.timeScaleLevel = 0;
             // 残機をリセット
             gameState.lives = 6;
+            
+            // ステージ1でチュートリアルを表示
+            if (!gameState.tutorialShown) {
+                gameState.showTutorial = true;
+                gameState.tutorialShown = true;
+            }
         }
         if (keyStates[GLFW_KEY_2].justPressed()) {
             resetStageStartTime();  // ステージ開始時間をリセット
@@ -273,7 +338,11 @@ int main(int argc, char* argv[]) {
         
         // 速度制御処理（Tキー）- 全ステージで有効
         if (keyStates[GLFW_KEY_T].justPressed()) {
-            gameState.timeScaleLevel = (gameState.timeScaleLevel + 1) % 3;
+            if(gameState.currentStage==0){
+                gameState.timeScaleLevel = 0;
+            }else{
+                gameState.timeScaleLevel = (gameState.timeScaleLevel + 1) % 3;
+            }
             switch (gameState.timeScaleLevel) {
                 case 0:
                     gameState.timeScale = 1.0f;
@@ -299,6 +368,8 @@ int main(int argc, char* argv[]) {
                 // ステージ選択フィールドに戻る
                 stageManager.completeStage(clearedStage);
                 stageManager.goToStage(0, gameState, platformSystem);
+                gameState.timeScale = 1.0f;
+                gameState.timeScaleLevel = 0;
                 
                 // クリアしたステージに対応する位置にプレイヤーを配置
                 glm::vec3 returnPosition;
@@ -332,12 +403,14 @@ int main(int argc, char* argv[]) {
                 
                 gameState.showStageClearUI = false;
                 gameState.gameWon = false;
+                gameState.isGoalReached = false;  // ゴール後の移動制限をリセット
             }
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
                 stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
                 gameState.showStageClearUI = false;
                 gameState.gameWon = false;
+                gameState.isGoalReached = false;  // ゴール後の移動制限をリセット
                 // 速度倍率をリセット
                 gameState.timeScale = 1.0f;
                 gameState.timeScaleLevel = 0;
@@ -381,7 +454,7 @@ int main(int argc, char* argv[]) {
         bool inGravityZone = PhysicsSystem::isPlayerInGravityZone(gameState, gameState.playerPosition, gravityDirection);
         
         // 物理演算
-        float gravityStrength = calculateGravityStrength(12.0f, deltaTime, gameState.timeScale, gravityDirection);
+        float gravityStrength = calculateGravityStrength(12.0f, deltaTime, gameState.timeScale, gravityDirection, gameState);
         glm::vec3 gravityForce = gravityDirection * gravityStrength;
 
         // デバッグ: 重力値を出力（速度倍率が1倍より大きい時）
@@ -426,8 +499,16 @@ int main(int argc, char* argv[]) {
                     
                     // ステージ選択フィールドでのステージ選択処理
                     if (stageManager.getCurrentStage() == 0) {
-                        // ステージ1選択エリア（赤色）
-                        if (platform.color.r > 0.8f && platform.color.g < 0.3f && platform.color.b < 0.3f) {
+                        // デバッグ: ステージ3選択エリアにいるプラットフォームをログ出力
+                        if (platform.position.x > -22.5f && platform.position.x < -21.5f && 
+                            platform.position.y > 0.5f && platform.position.y < 1.5f &&
+                            platform.position.z > -0.5f && platform.position.z < 0.5f) {
+                            printf("DEBUG: Platform in Stage 3 selection area - Type: StaticPlatform, Position: (%.1f, %.1f, %.1f)\n", 
+                                   platform.position.x, platform.position.y, platform.position.z);
+                        }
+                        // ステージ1選択エリア（位置で判定）
+                        if (platform.position.x > 5.5f && platform.position.x < 6.5f && 
+                            platform.position.z > -0.5f && platform.position.z < 0.5f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                                 int existingStars = gameState.stageStars[1];
                                 printf("Selected Stage 1 (Current stars: %d)\n", existingStars);
@@ -435,46 +516,66 @@ int main(int argc, char* argv[]) {
                                 resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
                                 stageManager.goToStage(1, gameState, platformSystem);
+                                
+                                // ステージ1でチュートリアルを表示
+                                if (!gameState.tutorialShown) {
+                                    gameState.showTutorial = true;
+                                    gameState.tutorialShown = true;
+                                }
                             }
                         }
-                        // ステージ2選択エリア（緑色）
-                        else if (platform.color.r < 0.3f && platform.color.g > 0.8f && platform.color.b < 0.3f) {
+                        // ステージ2選択エリア（位置で判定）
+                        else if (platform.position.x > -8.5f && platform.position.x < -7.5f && 
+                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                                 int existingStars = gameState.stageStars[2];
                                 printf("Selected Stage 2 (Current stars: %d)\n", existingStars);
                                 resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                stageManager.goToStage(2, gameState, platformSystem);
+                                if(gameState.totalStars>=1){
+                                    stageManager.goToStage(2, gameState, platformSystem);
+                                }
                             }
                         }
-                        // ステージ3選択エリア（青色）
-                        else if (platform.color.r < 0.3f && platform.color.g < 0.3f && platform.color.b > 0.8f) {
+                        // ステージ3選択エリア（位置で判定）
+                        else if (platform.position.x > -22.5f && platform.position.x < -21.5f && 
+                                 platform.position.y > 0.5f && platform.position.y < 1.5f &&
+                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                                 int existingStars = gameState.stageStars[3];
                                 printf("Selected Stage 3 (Current stars: %d)\n", existingStars);
                                 resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                stageManager.goToStage(3, gameState, platformSystem);
+                                if(gameState.totalStars>=3){
+                                    stageManager.goToStage(3, gameState, platformSystem);
+                                }
                             }
                         }
-                        // ステージ4選択エリア（黄色）
-                        else if (platform.color.r > 0.8f && platform.color.g > 0.8f && platform.color.b < 0.3f) {
+                        // ステージ4選択エリア（位置で判定）
+                        else if (platform.position.x > -34.5f && platform.position.x < -33.5f && 
+                                 platform.position.y > 0.5f && platform.position.y < 1.5f &&
+                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                                 int existingStars = gameState.stageStars[4];
                                 printf("Selected Stage 4 (Current stars: %d)\n", existingStars);
                                 resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                stageManager.goToStage(4, gameState, platformSystem);
+                                if(gameState.totalStars>=5){
+                                    stageManager.goToStage(4, gameState, platformSystem);
+                                }
                             }
                         }
-                        // ステージ5選択エリア（マゼンタ）
-                        else if (platform.color.r > 0.8f && platform.color.g < 0.3f && platform.color.b > 0.8f) {
+                        // ステージ5選択エリア（位置で判定）
+                        else if (platform.position.x > -46.5f && platform.position.x < -45.5f && 
+                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
                             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                                 int existingStars = gameState.stageStars[5];
                                 printf("Selected Stage 5 (Current stars: %d)\n", existingStars);
                                 resetStageStartTime();  // ステージ開始時間をリセット
                                 gameState.lives = 6;
-                                stageManager.goToStage(5, gameState, platformSystem);
+                                if(gameState.totalStars>=7){
+                                    stageManager.goToStage(5, gameState, platformSystem);
+                                }
                             }
                         }
                     }
@@ -484,6 +585,7 @@ int main(int argc, char* argv[]) {
                         if (!gameState.gameWon && gameState.collectedItems >= gameState.requiredItems) {
                             gameState.gameWon = true;
                             gameState.isStageCompleted = true;
+                            gameState.isGoalReached = true;  // ゴール後の移動制限を有効化
                             printf("=== GOAL REACHED DEBUG ===\n");
                             gameState.clearTime = gameState.gameTime;
                             
@@ -792,9 +894,9 @@ int main(int argc, char* argv[]) {
         
         // ステージ情報
         const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
-        if (currentStageData) {
-            renderer->renderText("Stage " + std::to_string(stageManager.getCurrentStage()) + ": " + currentStageData->stageName, 
-                               glm::vec2(10, 30), glm::vec3(1, 1, 0));
+        if (currentStageData && stageManager.getCurrentStage()!=0) {
+            renderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
+                               glm::vec2(30, 30), glm::vec3(1, 1, 0), 2.0f);
         }
         
         // 残機表示
@@ -809,50 +911,41 @@ int main(int argc, char* argv[]) {
         glm::vec3 livesColor = (gameState.lives <= 2) ? glm::vec3(1.0f, 0.3f, 0.3f) : glm::vec3(1.0f, 1.0f, 1.0f);
         renderer->renderText(livesText, glm::vec2(10, 210), livesColor);
         
-        // トータル星数表示
-        renderer->renderText("Total Stars: " + std::to_string(gameState.totalStars), 
-                           glm::vec2(10, 230), glm::vec3(1.0f, 1.0f, 0.0f));
+        // // トータル星数表示
+        // renderer->renderText("Total Stars: " + std::to_string(gameState.totalStars), 
+        //                    glm::vec2(10, 230), glm::vec3(1.0f, 1.0f, 0.0f));
         
-        // 現在のステージの星数表示（ステージ選択フィールドでは非表示）
-        if (stageManager.getCurrentStage() != 0) {
-            int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-            std::string stageStarsText = "Stage Stars: " + std::to_string(currentStageStars) + "/3";
-            glm::vec3 stageStarsColor = (currentStageStars > 0) ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.7f, 0.7f, 0.7f);
-            renderer->renderText(stageStarsText, glm::vec2(10, 250), stageStarsColor);
-        }
         
-        renderer->renderText("Platforms: " + std::to_string(platformSystem.getPlatforms().size()), glm::vec2(10, 50), glm::vec3(1, 1, 1));
         
-        // アイテム収集状況の表示
-        renderer->renderText("Items: " + std::to_string(gameState.collectedItems) + "/" + std::to_string(gameState.requiredItems), 
-                           glm::vec2(10, 70), glm::vec3(1, 1, 0));
+        // // アイテム収集状況の表示
+        // renderer->renderText("Items: " + std::to_string(gameState.collectedItems) + "/" + std::to_string(gameState.requiredItems), 
+        //                    glm::vec2(10, 70), glm::vec3(1, 1, 0));
         
-        // チェックポイント情報の表示
-        if (gameState.lastCheckpointItemId != -1) {
-            renderer->renderText("Checkpoint: Item " + std::to_string(gameState.lastCheckpointItemId), 
-                               glm::vec2(10, 90), glm::vec3(0, 1, 1));
-        } else {
-            renderer->renderText("Checkpoint: None", glm::vec2(10, 90), glm::vec3(0.5f, 0.5f, 0.5f));
-        }
+        // // チェックポイント情報の表示
+        // if (gameState.lastCheckpointItemId != -1) {
+        //     renderer->renderText("Checkpoint: Item " + std::to_string(gameState.lastCheckpointItemId), 
+        //                        glm::vec2(10, 90), glm::vec3(0, 1, 1));
+        // } else {
+        //     renderer->renderText("Checkpoint: None", glm::vec2(10, 90), glm::vec3(0.5f, 0.5f, 0.5f));
+        // }
         
-        // 重力状態の表示
-        if (inGravityZone) {
-            renderer->renderText("GRAVITY INVERTED!", glm::vec2(10, 110), glm::vec3(0.2f, 0.6f, 1.0f));
-        } else {
-            renderer->renderText("Normal Gravity", glm::vec2(10, 110), glm::vec3(1.0f, 1.0f, 1.0f));
-        }
-        
+    
         // 速度倍率の表示（全ステージで表示）
-        std::string speedText = "Speed: " + std::to_string((int)gameState.timeScale) + "x (Press T)";
+        if(stageManager.getCurrentStage()!=0){
+        std::string speedText = std::to_string((int)gameState.timeScale) + "x";
         glm::vec3 speedColor = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-        renderer->renderText(speedText, glm::vec2(10, 170), speedColor);
-        
-        // 重力倍率の表示（速度倍率が1倍より大きい時のみ）
-        if (gameState.timeScale > 1.0f) {
-            float gravityMultiplier = gameState.timeScale * gameState.timeScale;
-            std::string gravityText = "Gravity: " + std::to_string((int)gravityMultiplier) + "x";
-            renderer->renderText(gravityText, glm::vec2(10, 190), glm::vec3(1.0f, 0.6f, 0.2f));
+        renderer->renderText(speedText, glm::vec2(880, 25), speedColor, 2.0f);
+
+        std::string speedText2 =  "PRESS T";
+        glm::vec3 speedColor2 = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
+        renderer->renderText(speedText2, glm::vec2(870, 65), speedColor2, 1.0f);
         }
+        // // 重力倍率の表示（速度倍率が1倍より大きい時のみ）
+        // if (gameState.timeScale > 1.0f) {
+        //     float gravityMultiplier = gameState.timeScale * gameState.timeScale;
+        //     std::string gravityText = "Gravity: " + std::to_string((int)gravityMultiplier) + "x";
+        //     renderer->renderText(gravityText, glm::vec2(10, 190), glm::vec3(1.0f, 0.6f, 0.2f));
+        // }
         
         // 制限時間UIの表示（ステージ選択フィールドでは非表示）
         if (stageManager.getCurrentStage() != 0) {
@@ -860,11 +953,7 @@ int main(int argc, char* argv[]) {
             renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
         }
         
-        // システム情報の表示（ステージ選択フィールドでは非表示）
-        if (stageManager.getCurrentStage() != 0) {
-            renderer->renderText("Switches: " + std::to_string(gameState.switches.size()), glm::vec2(10, 130), glm::vec3(1, 1, 1));
-            renderer->renderText("Cannons: " + std::to_string(gameState.cannons.size()), glm::vec2(10, 150), glm::vec3(1, 1, 1));
-        }
+
         
         // ステージクリアUI
         if (gameState.showStageClearUI) {
@@ -872,46 +961,31 @@ int main(int argc, char* argv[]) {
             renderer->renderText("", glm::vec2(0, 0), glm::vec3(0, 0, 0), 0.7f);
             
             // ステージクリアメッセージ
-            renderer->renderText("STAGE COMPLETE!", glm::vec2(width/2 - 150, height/2 - 100), glm::vec3(1, 1, 0), 2.0f);
+            renderer->renderText("STAGE CLEAR!", glm::vec2(width/2 - 650, height/2 - 550), glm::vec3(1, 1, 0), 3.0f);
             
-            // ステージ情報
-            if (currentStageData) {
-                renderer->renderText("Stage " + std::to_string(stageManager.getCurrentStage()) + ": " + currentStageData->stageName, 
-                                   glm::vec2(width/2 - 120, height/2 - 50), glm::vec3(1, 1, 1), 1.2f);
-            }
+
             
             // クリアタイム
-            renderer->renderText("Clear Time: " + std::to_string((int)gameState.clearTime) + "s", 
-                               glm::vec2(width/2 - 80, height/2), glm::vec3(1, 1, 1), 1.0f);
-            renderer->renderText("Items Collected: " + std::to_string(gameState.collectedItems) + "/" + std::to_string(gameState.requiredItems), 
-                               glm::vec2(width/2 - 100, height/2 + 30), glm::vec3(1, 1, 0), 1.0f);
+            renderer->renderText("CLEAR TIME: " + std::to_string((int)gameState.clearTime) + "s", 
+                               glm::vec2(width/2 - 650, height/2 - 450), glm::vec3(1, 1, 1), 2.0f);
+            
             
             // 星の表示
-            renderer->renderText("Stars Earned: " + std::to_string(gameState.earnedStars) + "/3", 
-                               glm::vec2(width/2 - 80, height/2 + 50), glm::vec3(1, 1, 0), 1.0f);
+            renderer->renderText("GET STARS: " + std::to_string(gameState.earnedStars), 
+                               glm::vec2(width/2 - 650, height/2 - 400), glm::vec3(1, 1, 0), 2.0f);
             
             // ステージ選択フィールドに戻るボタン
-            renderer->renderText("Press ENTER to return to stage selection field", 
-                               glm::vec2(width/2 - 200, height/2 + 70), glm::vec3(0.2f, 1.0f, 0.2f), 1.0f);
+            renderer->renderText("RETURN FIELD: ENTER", 
+                               glm::vec2(width/2 - 650, height/2 - 350), glm::vec3(0.2f, 1.0f, 0.2f), 2.0f);
             
             // リトライボタン
-            renderer->renderText("Press R to retry this stage", 
-                               glm::vec2(width/2 - 120, height/2 + 110), glm::vec3(0.8f, 0.8f, 0.8f), 0.8f);
+            renderer->renderText("RETRY: R", 
+                               glm::vec2(width/2 - 650, height/2 - 300), glm::vec3(0.8f, 0.8f, 0.8f), 2.0f);
         }
         
         // ステージ選択フィールド用のUI表示
         if (stageManager.getCurrentStage() == 0) {
-            renderer->renderText("STAGE SELECTION FIELD", glm::vec2(width/2 - 150, 30), glm::vec3(1, 1, 0), 1.5f);
-            renderer->renderText("Red: Stage 1, Green: Stage 2, Blue: Stage 3", glm::vec2(10, 230), glm::vec3(1, 1, 1));
-            renderer->renderText("Yellow: Stage 4, Magenta: Stage 5", glm::vec2(10, 250), glm::vec3(1, 1, 1));
-            renderer->renderText("Stand on a colored platform and press SPACE to select stage", glm::vec2(10, 270), glm::vec3(0.8f, 0.8f, 1.0f));
-            
-            // 各ステージの星数表示
-            renderer->renderText("Stage 1: " + std::to_string(gameState.stageStars[1]) + "/3 stars", glm::vec2(10, 290), glm::vec3(1.0f, 0.2f, 0.2f));
-            renderer->renderText("Stage 2: " + std::to_string(gameState.stageStars[2]) + "/3 stars", glm::vec2(10, 310), glm::vec3(0.2f, 1.0f, 0.2f));
-            renderer->renderText("Stage 3: " + std::to_string(gameState.stageStars[3]) + "/3 stars", glm::vec2(10, 330), glm::vec3(0.2f, 0.2f, 1.0f));
-            renderer->renderText("Stage 4: " + std::to_string(gameState.stageStars[4]) + "/3 stars", glm::vec2(10, 350), glm::vec3(1.0f, 1.0f, 0.2f));
-            renderer->renderText("Stage 5: " + std::to_string(gameState.stageStars[5]) + "/3 stars", glm::vec2(10, 370), glm::vec3(1.0f, 0.2f, 1.0f));
+            renderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
         }
         
         // 操作説明
