@@ -67,34 +67,34 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
         float sinYaw = sin(yaw);
         
         // Wキー：常に前進（カメラの向いている方向）
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
             // カメラの向きベクトルと同じ方向に移動（Y成分は無視）
             moveDir.x += cosYaw * cos(pitch);
             moveDir.z += sinYaw * cos(pitch);
         }
         // Sキー：後退（カメラの向いている方向の逆）
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             moveDir.x -= cosYaw * cos(pitch);
             moveDir.z -= sinYaw * cos(pitch);
         }
         // Aキー：左移動（カメラの向いている方向に対して左）
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             // カメラの向きベクトルを90度左に回転
             moveDir.x += sinYaw;
             moveDir.z -= cosYaw;
         }
         // Dキー：右移動（カメラの向いている方向に対して右）
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
             // カメラの向きベクトルを90度右に回転
             moveDir.x -= sinYaw;
             moveDir.z += cosYaw;
         }
     } else {
         // 3人称視点：従来の固定方向移動
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveDir.z += 1.0f;
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveDir.z -= 1.0f;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) moveDir.x += 1.0f;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) moveDir.x -= 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) moveDir.z += 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) moveDir.z -= 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) moveDir.x += 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) moveDir.x -= 1.0f;
     }
     
     // ゲームパッド入力（左スティック）
@@ -196,6 +196,17 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
             } else {
                 gameState.playerVelocity.y = 8.0f; // 通常時は上向きにジャンプ
             }
+            // 足場に着地したら二段ジャンプをリセット
+            gameState.canDoubleJump = true;
+        } else if (gameState.isEasyMode && gameState.canDoubleJump) {
+            // お助けモードでの二段ジャンプ
+            if (gravityDirection.y > 0.5f) {
+                gameState.playerVelocity.y = -6.0f; // 重力反転時は下向きにジャンプ
+            } else {
+                gameState.playerVelocity.y = 6.0f; // 通常時は上向きにジャンプ
+            }
+            gameState.canDoubleJump = false; // 二段ジャンプを使用
+            printf("Double jump used!\n");
         }
     }
     spacePressed = spaceCurrentlyPressed;

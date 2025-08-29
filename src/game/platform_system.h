@@ -22,6 +22,9 @@ public:
     // 衝突判定
     GameState::PlatformVariant* checkCollision(const glm::vec3& playerPos, const glm::vec3& playerSize);
     
+    // 衝突判定（インデックス付き）
+    std::pair<GameState::PlatformVariant*, int> checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize);
+    
     // プレイヤーが乗っている足場の取得
     GameState::PlatformVariant* getCurrentPlatform(const glm::vec3& playerPos, const glm::vec3& playerSize);
     

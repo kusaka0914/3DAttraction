@@ -410,16 +410,24 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     
     // 制限時間システムをリセット（ステージ固有の制限時間を適用）
     float baseTimeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
-    printf("Stage %d base time limit: %.1f, isFirstPersonMode: %s\n", 
-           stageNumber, baseTimeLimit, gameState.isFirstPersonMode ? "true" : "false");
+    printf("Stage %d base time limit: %.1f, isFirstPersonMode: %s, isEasyMode: %s\n", 
+           stageNumber, baseTimeLimit, gameState.isFirstPersonMode ? "true" : "false", 
+           gameState.isEasyMode ? "true" : "false");
+    
+    // 制限時間の計算
+    float finalTimeLimit = baseTimeLimit;
     if (gameState.isFirstPersonMode) {
-        gameState.timeLimit = baseTimeLimit + 20.0f;  // 1人称モード：+20秒
-        printf("1ST PERSON MODE: Time limit set to %.1f (base %.1f + 20.0)\n", gameState.timeLimit, baseTimeLimit);
-    } else {
-        gameState.timeLimit = baseTimeLimit;          // 3人称モード：通常の制限時間
-        printf("3RD PERSON MODE: Time limit set to %.1f\n", gameState.timeLimit);
+        finalTimeLimit += 20.0f;  // 1人称モード：+20秒
+        printf("1ST PERSON MODE: +20.0s\n");
     }
+    if (gameState.isEasyMode) {
+        finalTimeLimit += 20.0f;  // お助けモード：+20秒
+        printf("EASY MODE: +20.0s\n");
+    }
+    
+    gameState.timeLimit = finalTimeLimit;
     gameState.remainingTime = gameState.timeLimit;    // 残り時間を設定
+    printf("Final time limit: %.1f seconds\n", gameState.timeLimit);
     gameState.earnedStars = 0;          // 星をリセット
     gameState.clearTime = 0.0f;         // クリア時間をリセット
     gameState.isTimeUp = false;         // 時間切れフラグをリセット

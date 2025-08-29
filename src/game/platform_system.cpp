@@ -37,6 +37,25 @@ GameState::PlatformVariant* PlatformSystem::checkCollision(const glm::vec3& play
     return nullptr;
 }
 
+std::pair<GameState::PlatformVariant*, int> PlatformSystem::checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize) {
+    for (int i = 0; i < platforms.size(); i++) {
+        auto& platform = platforms[i];
+        bool collision = std::visit(overloaded{
+            [this, &playerPos, &playerSize](const GameState::RotatingPlatform& p) {
+                return checkCollisionWithRotatingPlatform(p, playerPos, playerSize);
+            },
+            [this, &playerPos, &playerSize](const auto& p) {
+                return checkCollisionWithBase(p, playerPos, playerSize);
+            }
+        }, platform);
+        
+        if (collision) {
+            return {&platform, i};
+        }
+    }
+    return {nullptr, -1};
+}
+
 GameState::PlatformVariant* PlatformSystem::getCurrentPlatform(const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (auto& platform : platforms) {
         bool collision = std::visit(overloaded{

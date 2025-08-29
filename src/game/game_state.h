@@ -175,6 +175,9 @@ struct GameState {
     // カメラモード制御
     bool isFirstPersonView = false;  // 1人称視点フラグ
     bool isFirstPersonMode = false;  // 1人称モードフラグ（Ready画面で選択）
+    
+    // 難易度モード制御
+    bool isEasyMode = false;  // お助けモードフラグ
 
     // 重力反転エリア
     struct GravityZone {
@@ -270,6 +273,12 @@ struct GameState {
     int readyScreenSpeedLevel = 0; // Ready画面での速度レベル（0=1x, 1=2x, 2=3x）
     bool isCountdownActive = false; // カウントダウン中フラグ
     float countdownTimer = 3.0f;   // カウントダウンタイマー（3秒から開始）
+    
+    // お助けモード用
+    bool canDoubleJump = true;  // 二段ジャンプ可能フラグ
+    glm::vec3 lastPlatformPosition = glm::vec3(0, 0, 0);  // 最後に乗っていた床の位置
+    int lastPlatformIndex = -1;  // 最後に乗っていた床のインデックス
+    bool isTrackingPlatform = false;  // 足場を追跡中かどうか
 };
 
 // ゲーム状態の初期化関数

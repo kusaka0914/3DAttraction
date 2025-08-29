@@ -536,32 +536,7 @@ int main(int argc, char* argv[]) {
             gameState.showReadyScreen = true;
             gameState.readyScreenSpeedLevel = 0;
         }
-        if (keyStates[GLFW_KEY_RIGHT].justPressed()) {
-            stageManager.goToNextStage(gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-        }
-        if (keyStates[GLFW_KEY_LEFT].justPressed()) {
-            stageManager.goToPreviousStage(gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-        }
+        
         
         // 速度制御処理（Tキー）- 全ステージで有効
         if (keyStates[GLFW_KEY_T].justPressed()) {
@@ -584,6 +559,12 @@ int main(int argc, char* argv[]) {
                     printf("Speed: Very Fast (3x), Gravity: Very Strong (9x)\n");
                     break;
             }
+        }
+        
+        // お助けモード切り替え処理（Eキー）- ステージ0でのみ有効
+        if (keyStates[GLFW_KEY_E].justPressed() && stageManager.getCurrentStage() == 0) {
+            gameState.isEasyMode = !gameState.isEasyMode;
+            printf("Easy mode: %s\n", gameState.isEasyMode ? "ON" : "OFF");
         }
         
         // カメラ切り替え処理（Fキー）- ステージ0でのみ有効
@@ -781,11 +762,42 @@ int main(int argc, char* argv[]) {
         SwitchSystem::checkSwitchCollision(gameState, gameState.playerPosition, playerSize);
         CannonSystem::checkCannonCollision(gameState, gameState.playerPosition, playerSize);
         
-        // プラットフォーム衝突判定
-        GameState::PlatformVariant* currentPlatform = platformSystem.checkCollision(gameState.playerPosition, playerSize);
+        // プラットフォーム衝突判定（インデックス付き）
+        auto collisionResult = platformSystem.checkCollisionWithIndex(gameState.playerPosition, playerSize);
+        GameState::PlatformVariant* currentPlatform = collisionResult.first;
+        int currentPlatformIndex = collisionResult.second;
         
         // 足場衝突処理
         if (currentPlatform != nullptr) {
+            // お助けモード用：足場の中心位置とインデックスを記録
+            if (gameState.isEasyMode) {
+                std::visit([&](const auto& platform) {
+                    gameState.lastPlatformPosition = platform.position;
+                    gameState.lastPlatformIndex = currentPlatformIndex;
+                    gameState.isTrackingPlatform = true;
+                    
+                    // 足場の種類を判定
+                    std::string platformType = "Unknown";
+                    if constexpr (std::is_same_v<decltype(platform), const GameState::StaticPlatform&>) {
+                        platformType = "Static";
+                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::MovingPlatform&>) {
+                        platformType = "Moving";
+                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::RotatingPlatform&>) {
+                        platformType = "Rotating";
+                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::PatrollingPlatform&>) {
+                        platformType = "Patrolling";
+                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::TeleportPlatform&>) {
+                        platformType = "Teleport";
+                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::JumpPad&>) {
+                        platformType = "JumpPad";
+                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::CycleDisappearingPlatform&>) {
+                        platformType = "CycleDisappearing";
+                    }
+                    printf("Easy mode: Updated last %s platform (index %d) center to (%.1f, %.1f, %.1f)\n", 
+                           platformType.c_str(), currentPlatformIndex, gameState.lastPlatformPosition.x, gameState.lastPlatformPosition.y, gameState.lastPlatformPosition.z);
+                }, *currentPlatform);
+            }
+            
             std::visit(overloaded{
                 [&](const GameState::StaticPlatform& platform) {
                     if (!PhysicsSystem::checkPlatformCollisionHorizontal(gameState, gameState.playerPosition, playerSize)) {
@@ -1081,27 +1093,55 @@ int main(int argc, char* argv[]) {
         
         // 下限チェック（奈落に落ちた場合）
         if (gameState.playerPosition.y < 0) {
-            gameState.lives--; // 残機を1つ減らす
-            printf("Fell off! Lives remaining: %d\n", gameState.lives);
-            
-            if (gameState.lives <= 0) {
-                // ゲームオーバー
-                gameState.isGameOver = true;
-                printf("Game Over! No lives remaining.\n");
-            } else {
-                // 残機がある場合はチェックポイントにリセット（アイテムは保持）
-                if (gameState.lastCheckpointItemId != -1) {
-                    gameState.playerPosition = gameState.lastCheckpoint;
-                    printf("Respawned at checkpoint (Item %d) at (%.1f, %.1f, %.1f). Items preserved.\n", 
-                           gameState.lastCheckpointItemId,
-                           gameState.lastCheckpoint.x, gameState.lastCheckpoint.y, gameState.lastCheckpoint.z);
+            if (gameState.isEasyMode) {
+                // お助けモード：足場の追跡を試行
+                if (gameState.isTrackingPlatform && gameState.lastPlatformIndex >= 0) {
+                    const auto& platforms = platformSystem.getPlatforms();
+                    if (gameState.lastPlatformIndex < platforms.size()) {
+                        // 追跡中の足場の現在位置を取得
+                        std::visit([&](const auto& platform) {
+                            glm::vec3 currentPlatformPos = platform.position;
+                            gameState.playerPosition = currentPlatformPos + glm::vec3(0, 2.0f, 0);
+                            printf("Easy mode: Respawned at tracked platform (index %d) current position (%.1f, %.1f, %.1f)\n", 
+                                   gameState.lastPlatformIndex, currentPlatformPos.x, currentPlatformPos.y, currentPlatformPos.z);
+                        }, platforms[gameState.lastPlatformIndex]);
+                    } else {
+                        // インデックスが無効な場合は記録された位置にリスポーン
+                        gameState.playerPosition = gameState.lastPlatformPosition + glm::vec3(0, 2.0f, 0);
+                        printf("Easy mode: Respawned at last platform center (%.1f, %.1f, %.1f) - invalid index\n", 
+                               gameState.lastPlatformPosition.x, gameState.lastPlatformPosition.y, gameState.lastPlatformPosition.z);
+                    }
                 } else {
-                    gameState.playerPosition = glm::vec3(0, 6.0f, -25.0f); // スタート地点にリセット
-                    printf("Respawned at start position (no checkpoint). Items preserved.\n");
+                    // 追跡情報がない場合は記録された位置にリスポーン
+                    gameState.playerPosition = gameState.lastPlatformPosition + glm::vec3(0, 2.0f, 0);
+                    printf("Easy mode: Respawned at last platform center (%.1f, %.1f, %.1f) - no tracking\n", 
+                           gameState.lastPlatformPosition.x, gameState.lastPlatformPosition.y, gameState.lastPlatformPosition.z);
                 }
                 gameState.playerVelocity = glm::vec3(0, 0, 0);
+            } else {
+                // 通常モード：残機を減らす
+                gameState.lives--; // 残機を1つ減らす
+                printf("Fell off! Lives remaining: %d\n", gameState.lives);
                 
-                // アイテム収集状況は保持（リセットしない）
+                if (gameState.lives <= 0) {
+                    // ゲームオーバー
+                    gameState.isGameOver = true;
+                    printf("Game Over! No lives remaining.\n");
+                } else {
+                    // 残機がある場合はチェックポイントにリセット（アイテムは保持）
+                    if (gameState.lastCheckpointItemId != -1) {
+                        gameState.playerPosition = gameState.lastCheckpoint;
+                        printf("Respawned at checkpoint (Item %d) at (%.1f, %.1f, %.1f). Items preserved.\n", 
+                               gameState.lastCheckpointItemId,
+                               gameState.lastCheckpoint.x, gameState.lastCheckpoint.y, gameState.lastCheckpoint.z);
+                    } else {
+                        gameState.playerPosition = glm::vec3(0, 6.0f, -25.0f); // スタート地点にリセット
+                        printf("Respawned at start position (no checkpoint). Items preserved.\n");
+                    }
+                    gameState.playerVelocity = glm::vec3(0, 0, 0);
+                    
+                    // アイテム収集状況は保持（リセットしない）
+                }
             }
         }
 
@@ -1398,7 +1438,7 @@ int main(int argc, char* argv[]) {
         // 操作説明
         std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control";
         if (stageManager.getCurrentStage() == 0) {
-            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle";
+            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle, E=Easy Mode";
         }
         renderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
         
