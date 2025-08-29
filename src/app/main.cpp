@@ -123,6 +123,10 @@ int main(int argc, char* argv[]) {
     
     glfwSetWindowUserPointer(window, &gameState);
     
+    // マウスコールバックを設定（1人称視点用）
+    glfwSetCursorPosCallback(window, InputSystem::mouse_callback);
+    glfwSetScrollCallback(window, InputSystem::scroll_callback);
+    
     // システム初期化
     PlatformSystem platformSystem;
     StageManager stageManager;
@@ -141,7 +145,8 @@ int main(int argc, char* argv[]) {
     // キー状態管理
     std::map<int, KeyState> keyStates;
     for (int key : {GLFW_KEY_0, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5, 
-                    GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_ENTER, GLFW_KEY_R, GLFW_KEY_T}) {
+                    GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_ENTER, GLFW_KEY_R, GLFW_KEY_T,
+                    GLFW_KEY_F}) {  // Fキーでカメラ切り替え
         keyStates[key] = KeyState();
     }
 
@@ -559,6 +564,29 @@ int main(int argc, char* argv[]) {
                     gameState.timeScale = 3.0f;
                     printf("Speed: Very Fast (3x), Gravity: Very Strong (9x)\n");
                     break;
+            }
+        }
+        
+        // カメラ切り替え処理（Fキー）- 全ステージで有効
+        if (keyStates[GLFW_KEY_F].justPressed()) {
+            gameState.isFirstPersonView = !gameState.isFirstPersonView;
+            if (gameState.isFirstPersonView) {
+                printf("Switched to First Person View\n");
+                // 1人称視点時はマウスカーソルを非表示
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                // 1人称視点用のカメラ角度にリセ1ット
+                if(stageManager.getCurrentStage() != 0){
+                    gameState.cameraYaw = 90.0f;    // 右を向く
+                    gameState.cameraPitch = -10.0f;   // 水平方向
+                }else{
+                    gameState.cameraYaw = 180.0f;    // 右を向く
+                    gameState.cameraPitch = -10.0f;   // 水平方向
+                }
+                gameState.firstMouse = true;  // マウス初期化フラグをリセット
+            } else {
+                printf("Switched to Third Person View\n");
+                // 3人称視点時はマウスカーソルを表示
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             }
         }
         
@@ -1077,14 +1105,32 @@ int main(int argc, char* argv[]) {
         
         // カメラ設定
         glm::vec3 cameraPos, cameraTarget;
-        if (stageManager.getCurrentStage() == 0) {
-            // ステージ選択フィールドでは上からのアングル
-            cameraPos = gameState.playerPosition + glm::vec3(0, 10, -15);
-            cameraTarget = gameState.playerPosition;
+        if (gameState.isFirstPersonView) {
+            // 1人称視点：プレイヤーの目の位置
+            cameraPos = gameState.playerPosition + glm::vec3(0, 1.0f, 0); // 目の高さ
+            
+            // マウス入力でカメラの向きを制御
+            float yaw = glm::radians(gameState.cameraYaw);
+            float pitch = glm::radians(gameState.cameraPitch);
+            
+            // カメラの向きを計算
+            glm::vec3 direction;
+            direction.x = cos(yaw) * cos(pitch);
+            direction.y = sin(pitch);
+            direction.z = sin(yaw) * cos(pitch);
+            
+            cameraTarget = cameraPos + direction;
         } else {
-            // 通常のステージでは従来のアングル
-            cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
-            cameraTarget = gameState.playerPosition;
+            // 3人称視点（現在の実装）
+            if (stageManager.getCurrentStage() == 0) {
+                // ステージ選択フィールドでは上からのアングル
+                cameraPos = gameState.playerPosition + glm::vec3(0, 10, -15);
+                cameraTarget = gameState.playerPosition;
+            } else {
+                // 通常のステージでは従来のアングル
+                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
+                cameraTarget = gameState.playerPosition;
+            }
         }
         renderer->setCamera(cameraPos, cameraTarget);
 
@@ -1148,8 +1194,10 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        // プレイヤーの描画
-        renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+        // プレイヤーの描画（1人称視点時は描画しない）
+        if (!gameState.isFirstPersonView) {
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+        }
 
         // UI（時間表示はrenderTimeUI関数で行うため削除）
         
@@ -1341,9 +1389,9 @@ int main(int argc, char* argv[]) {
         }
         
         // 操作説明
-        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control";
+        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control, F=Camera Toggle";
         if (stageManager.getCurrentStage() == 0) {
-            controlsText = "Controls: WASD=Move, SPACE=Select Stage";
+            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle";
         }
         renderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
         

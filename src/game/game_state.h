@@ -165,12 +165,15 @@ struct GameState {
     float terrainScale = 1.0f;
 
     // カメラ制御（動的：今回は固定寄り）
-    float cameraYaw = 0.0f;
-    float cameraPitch = 90.0f; 
+    float cameraYaw = 90.0f;    // 90度 = 右を向く
+    float cameraPitch = 0.0f;  // 1人称視点用：水平方向
     float cameraDistance = 30.0f;
     bool firstMouse = true;
     float lastMouseX = 640.0f;
     float lastMouseY = 360.0f;
+    
+    // カメラモード制御
+    bool isFirstPersonView = false;  // 1人称視点フラグ
 
     // 重力反転エリア
     struct GravityZone {

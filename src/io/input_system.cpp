@@ -59,10 +59,43 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
     }
     
     // キーボード入力
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveDir.z += 1.0f;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveDir.z -= 1.0f;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) moveDir.x += 1.0f;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) moveDir.x -= 1.0f;
+    if (gameState.isFirstPersonView) {
+        // 1人称視点：カメラの向いている方向に応じて移動
+        float yaw = glm::radians(gameState.cameraYaw);
+        float pitch = glm::radians(gameState.cameraPitch);
+        float cosYaw = cos(yaw);
+        float sinYaw = sin(yaw);
+        
+        // Wキー：常に前進（カメラの向いている方向）
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            // カメラの向きベクトルと同じ方向に移動（Y成分は無視）
+            moveDir.x += cosYaw * cos(pitch);
+            moveDir.z += sinYaw * cos(pitch);
+        }
+        // Sキー：後退（カメラの向いている方向の逆）
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            moveDir.x -= cosYaw * cos(pitch);
+            moveDir.z -= sinYaw * cos(pitch);
+        }
+        // Aキー：左移動（カメラの向いている方向に対して左）
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            // カメラの向きベクトルを90度左に回転
+            moveDir.x += sinYaw;
+            moveDir.z -= cosYaw;
+        }
+        // Dキー：右移動（カメラの向いている方向に対して右）
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            // カメラの向きベクトルを90度右に回転
+            moveDir.x -= sinYaw;
+            moveDir.z += cosYaw;
+        }
+    } else {
+        // 3人称視点：従来の固定方向移動
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveDir.z += 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveDir.z -= 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) moveDir.x += 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) moveDir.x -= 1.0f;
+    }
     
     // ゲームパッド入力（左スティック）
     if (isGamepadConnected()) {
