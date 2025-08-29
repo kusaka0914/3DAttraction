@@ -174,6 +174,7 @@ struct GameState {
     
     // カメラモード制御
     bool isFirstPersonView = false;  // 1人称視点フラグ
+    bool isFirstPersonMode = false;  // 1人称モードフラグ（Ready画面で選択）
 
     // 重力反転エリア
     struct GravityZone {

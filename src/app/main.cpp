@@ -132,9 +132,8 @@ int main(int argc, char* argv[]) {
     StageManager stageManager;
     
     // 初期ステージ設定
-    int initialStage = gameState.currentStage;
-    if (initialStage < 0) initialStage = 0;  // ステージ0（ステージ選択フィールド）を許可
-    if (initialStage > stageManager.getTotalStages()) initialStage = stageManager.getTotalStages();
+    int initialStage = 1;
+    gameState.showTutorial = true;
     
     printf("Starting from stage %d\n", initialStage);
     stageManager.loadStage(initialStage, gameState, platformSystem);
@@ -287,7 +286,7 @@ int main(int argc, char* argv[]) {
             renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
             
             // Ready画面UIを描画
-            renderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel);
+            renderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel, gameState.isFirstPersonMode);
             
             renderer->endFrame();
             
@@ -302,10 +301,28 @@ int main(int argc, char* argv[]) {
                 printf("Ready screen speed level: %d\n", gameState.readyScreenSpeedLevel);
             }
             
+            if (keyStates[GLFW_KEY_F].justPressed()) {
+                gameState.isFirstPersonMode = !gameState.isFirstPersonMode;
+                printf("Ready screen mode: %s\n", gameState.isFirstPersonMode ? "1ST PERSON" : "3RD PERSON");
+            }
+            
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                 gameState.showReadyScreen = false;
                 gameState.isCountdownActive = true;
                 gameState.countdownTimer = 3.0f;
+                
+                // 選択されたモードを適用
+                gameState.isFirstPersonView = gameState.isFirstPersonMode;
+                
+                // 1人称モード選択時はカメラ角度を初期化し、マウスカーソルを非表示
+                if (gameState.isFirstPersonMode) {
+                    gameState.cameraYaw = 90.0f;    // 後ろを向く
+                    gameState.cameraPitch = -10.0f;   // 水平方向
+                    gameState.firstMouse = true;  // マウス初期化フラグをリセット
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                } else {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                }
                 
                 // 選択された速度を設定
                 switch (gameState.readyScreenSpeedLevel) {
@@ -323,7 +340,12 @@ int main(int argc, char* argv[]) {
                         break;
                 }
                 
-                printf("Starting countdown with speed: %.1fx\n", gameState.timeScale);
+
+                
+                printf("Starting countdown with speed: %.1fx, mode: %s, isFirstPersonMode: %s\n", 
+                       gameState.timeScale, 
+                       gameState.isFirstPersonMode ? "1ST PERSON" : "3RD PERSON",
+                       gameState.isFirstPersonMode ? "true" : "false");
             }
             
             glfwPollEvents();
@@ -392,7 +414,10 @@ int main(int argc, char* argv[]) {
             if (gameState.countdownTimer <= 0.0f) {
                 gameState.isCountdownActive = false;
                 resetStageStartTime();  // カウントダウン終了時にゲーム開始時間をリセット
-                printf("Countdown finished, starting gameplay!\n");
+                // カウントダウン終了時にステージをロード（制限時間設定のため）
+                stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
+                printf("Countdown finished, starting gameplay! Mode: %s\n", 
+                       gameState.isFirstPersonMode ? "1ST PERSON" : "3RD PERSON");
             }
             
             glfwPollEvents();
@@ -454,12 +479,6 @@ int main(int argc, char* argv[]) {
             gameState.readyScreenShown = false;
             gameState.showReadyScreen = true;
             gameState.readyScreenSpeedLevel = 0;
-            
-            // ステージ1でチュートリアルを表示
-            if (!gameState.tutorialShown) {
-                gameState.showTutorial = true;
-                gameState.tutorialShown = true;
-            }
         }
         if (keyStates[GLFW_KEY_2].justPressed()) {
             resetStageStartTime();  // ステージ開始時間をリセット
@@ -567,21 +586,16 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        // カメラ切り替え処理（Fキー）- 全ステージで有効
-        if (keyStates[GLFW_KEY_F].justPressed()) {
+        // カメラ切り替え処理（Fキー）- ステージ0でのみ有効
+        if (keyStates[GLFW_KEY_F].justPressed() && stageManager.getCurrentStage() == 0) {
             gameState.isFirstPersonView = !gameState.isFirstPersonView;
             if (gameState.isFirstPersonView) {
                 printf("Switched to First Person View\n");
                 // 1人称視点時はマウスカーソルを非表示
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                // 1人称視点用のカメラ角度にリセ1ット
-                if(stageManager.getCurrentStage() != 0){
-                    gameState.cameraYaw = 90.0f;    // 右を向く
-                    gameState.cameraPitch = -10.0f;   // 水平方向
-                }else{
-                    gameState.cameraYaw = 180.0f;    // 右を向く
-                    gameState.cameraPitch = -10.0f;   // 水平方向
-                }
+                // 1人称視点用のカメラ角度にリセット
+                gameState.cameraYaw = 180.0f;    // 後ろを向く
+                gameState.cameraPitch = -10.0f;   // 水平方向
                 gameState.firstMouse = true;  // マウス初期化フラグをリセット
             } else {
                 printf("Switched to Third Person View\n");
@@ -798,16 +812,9 @@ int main(int argc, char* argv[]) {
                                 gameState.lives = 6;
                                 stageManager.goToStage(1, gameState, platformSystem);
 
-                                
-                                // ステージ1でチュートリアルを表示
-                                if (!gameState.tutorialShown) {
-                                    gameState.showTutorial = true;
-                                    gameState.tutorialShown = true;
-                                }else{
-                                    gameState.readyScreenShown = false;
-                                    gameState.showReadyScreen = true;
-                                    gameState.readyScreenSpeedLevel = 0;
-                                }
+                                gameState.showReadyScreen = true;
+                                gameState.readyScreenShown = false;
+                                gameState.readyScreenSpeedLevel = 0;
                             }
                         }
                         // ステージ2選択エリア（位置で判定）
@@ -1389,7 +1396,7 @@ int main(int argc, char* argv[]) {
         }
         
         // 操作説明
-        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control, F=Camera Toggle";
+        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control";
         if (stageManager.getCurrentStage() == 0) {
             controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle";
         }

@@ -409,8 +409,17 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.gameTime = 0.0f;  // ステージ開始時にゲーム時間をリセット
     
     // 制限時間システムをリセット（ステージ固有の制限時間を適用）
-    gameState.timeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
-    gameState.remainingTime = stageIt->timeLimit;    // ステージ固有の残り時間
+    float baseTimeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
+    printf("Stage %d base time limit: %.1f, isFirstPersonMode: %s\n", 
+           stageNumber, baseTimeLimit, gameState.isFirstPersonMode ? "true" : "false");
+    if (gameState.isFirstPersonMode) {
+        gameState.timeLimit = baseTimeLimit + 20.0f;  // 1人称モード：+20秒
+        printf("1ST PERSON MODE: Time limit set to %.1f (base %.1f + 20.0)\n", gameState.timeLimit, baseTimeLimit);
+    } else {
+        gameState.timeLimit = baseTimeLimit;          // 3人称モード：通常の制限時間
+        printf("3RD PERSON MODE: Time limit set to %.1f\n", gameState.timeLimit);
+    }
+    gameState.remainingTime = gameState.timeLimit;    // 残り時間を設定
     gameState.earnedStars = 0;          // 星をリセット
     gameState.clearTime = 0.0f;         // クリア時間をリセット
     gameState.isTimeUp = false;         // 時間切れフラグをリセット

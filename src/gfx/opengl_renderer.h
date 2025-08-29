@@ -51,7 +51,7 @@ public:
     void renderTutorialUI(int width, int height);
     void renderStageClearBackground(int width, int height, float clearTime, int earnedStars);
     void renderGameOverBackground(int width, int height);
-    void renderReadyScreen(int width, int height, int speedLevel);
+    void renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode);
     void renderCountdown(int width, int height, int count);
     void renderHeart(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     

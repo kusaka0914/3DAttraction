@@ -2042,7 +2042,7 @@ void OpenGLRenderer::renderGameOverBackground(int width, int height) {
 }
 
 // Ready画面の描画
-void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel) {
+void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode) {
     // フォントの初期化を確実に行う
     initializeBitmapFont();
     
@@ -2094,6 +2094,14 @@ void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel) {
         renderText(speedTexts[i], glm::vec2(xPos, yPos), color, 2.0f);
     }
     renderText("PRESS T", glm::vec2((width/2 - 100) * scaleX, (height/2 + 100) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    
+    // モード選択
+    renderText("3RD PERSON", glm::vec2((width/2 - 200) * scaleX, (height/2 + 150) * scaleY), 
+               isFirstPersonMode ? glm::vec3(0.5f, 0.5f, 0.5f) : glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    renderText("1ST PERSON", glm::vec2((width/2 + 50) * scaleX, (height/2 + 150) * scaleY), 
+               isFirstPersonMode ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), 1.2f);
+    
+    renderText("PRESS F", glm::vec2((width/2 - 100) * scaleX, (height/2 + 200) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
     
     // "Enter"メッセージ
     renderText("ENTER", glm::vec2((width/2 + 60) * scaleX, (height/2 + 300) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
