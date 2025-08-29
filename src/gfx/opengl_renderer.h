@@ -43,6 +43,9 @@ public:
     
     // UI表示関数
     void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives);
+    void renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses);
+    void renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int remainingUses, int maxUses);
+    void renderHeartFeelUI(bool hasSkill, int remainingUses, int maxUses, int currentLives);
     void renderStar(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     void renderStar3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
     void renderLock3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);

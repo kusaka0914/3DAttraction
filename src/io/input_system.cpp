@@ -198,15 +198,23 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
             }
             // 足場に着地したら二段ジャンプをリセット
             gameState.canDoubleJump = true;
-        } else if (gameState.isEasyMode && gameState.canDoubleJump) {
-            // お助けモードでの二段ジャンプ
+        } else if ((gameState.isEasyMode && gameState.canDoubleJump) || 
+                   (!gameState.isEasyMode && gameState.hasDoubleJumpSkill && gameState.doubleJumpRemainingUses > 0 && gameState.canDoubleJump)) {
+            // 二段ジャンプ（お助けモードまたは通常モードでスキル取得済み）
             if (gravityDirection.y > 0.5f) {
                 gameState.playerVelocity.y = -6.0f; // 重力反転時は下向きにジャンプ
             } else {
                 gameState.playerVelocity.y = 6.0f; // 通常時は上向きにジャンプ
             }
             gameState.canDoubleJump = false; // 二段ジャンプを使用
-            printf("Double jump used!\n");
+            
+            // 通常モードの場合は使用回数を減らす
+            if (!gameState.isEasyMode) {
+                gameState.doubleJumpRemainingUses--;
+                printf("Double jump used! Remaining uses: %d/%d\n", gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses);
+            } else {
+                printf("Double jump used! (Easy mode - unlimited)\n");
+            }
         }
     }
     spacePressed = spaceCurrentlyPressed;

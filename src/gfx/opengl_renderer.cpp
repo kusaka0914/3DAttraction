@@ -764,6 +764,166 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
     glPopMatrix();
 }
 
+// 時間停止スキルUI表示
+void OpenGLRenderer::renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses) {
+    // スキルを取得していない場合は表示しない
+    if (!hasSkill) {
+        return;
+    }
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 時間停止スキルの表示（左下）
+    std::string skillText = "時間よ止まれ";
+    glm::vec3 skillColor = glm::vec3(0.8f, 0.8f, 1.0f); // 薄い青色
+    
+    // 時間停止中は明るい青色
+    if (isTimeStopped) {
+        skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
+    }
+    
+    renderText(skillText, glm::vec2(30, 650), skillColor, 1.5f);
+    
+    // 使用回数表示
+    std::string usesText = "Q: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 使用回数が0の場合は灰色
+    if (remainingUses <= 0) {
+        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+    }
+    
+    renderText(usesText, glm::vec2(30, 680), usesColor, 1.2f);
+    
+    // 時間停止中の残り時間表示
+    if (isTimeStopped) {
+        std::string timerText = "残り: " + std::to_string(static_cast<int>(timeStopTimer)) + "s";
+        renderText(timerText, glm::vec2(30, 620), glm::vec3(1.0f, 0.5f, 0.5f), 1.2f);
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// 二段ジャンプスキルUI表示
+void OpenGLRenderer::renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int remainingUses, int maxUses) {
+    // お助けモードの場合は表示しない（無制限のため）
+    if (isEasyMode) {
+        return;
+    }
+    
+    // スキルを取得していない場合は表示しない
+    if (!hasSkill) {
+        return;
+    }
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 二段ジャンプスキルの表示（左下、時間停止スキルの上）
+    std::string skillText = "二段ジャンプ";
+    glm::vec3 skillColor = glm::vec3(0.8f, 1.0f, 0.8f); // 薄い緑色
+    
+    renderText(skillText, glm::vec2(30, 590), skillColor, 1.5f);
+    
+    // 使用回数表示
+    std::string usesText = "SPACE: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 使用回数が0の場合は灰色
+    if (remainingUses <= 0) {
+        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+    }
+    
+    renderText(usesText, glm::vec2(30, 620), usesColor, 1.2f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// ハートフエールスキルUI表示
+void OpenGLRenderer::renderHeartFeelUI(bool hasSkill, int remainingUses, int maxUses, int currentLives) {
+    // スキルを取得していない場合は表示しない
+    if (!hasSkill) {
+        return;
+    }
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // ハートフエールスキルの表示（左下、二段ジャンプスキルの上）
+    std::string skillText = "ハートフエール";
+    glm::vec3 skillColor = glm::vec3(1.0f, 0.8f, 0.8f); // 薄い赤色
+    
+    renderText(skillText, glm::vec2(30, 530), skillColor, 1.5f);
+    
+    // 使用回数表示
+    std::string usesText = "H: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 使用回数が0の場合は灰色
+    if (remainingUses <= 0) {
+        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+    }
+    
+    renderText(usesText, glm::vec2(30, 560), usesColor, 1.2f);
+    
+    // 現在の残機数表示
+    std::string livesText = "残機: " + std::to_string(currentLives) + "/6";
+    renderText(livesText, glm::vec2(30, 500), glm::vec3(1.0f, 0.3f, 0.3f), 1.2f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 // 星の描画（塗りつぶし版）
 void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
     glColor3f(color.r, color.g, color.b);

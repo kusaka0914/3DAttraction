@@ -424,8 +424,18 @@ int main(int argc, char* argv[]) {
             continue; // カウントダウン中は他の処理をスキップ
         }
         
-        // 制限時間システムの更新（実際の時間で更新）
-        if (!gameState.isStageCompleted && !gameState.isTimeUp) {
+        // 時間停止スキルの更新
+        if (gameState.isTimeStopped) {
+            gameState.timeStopTimer -= deltaTime;
+            if (gameState.timeStopTimer <= 0.0f) {
+                gameState.isTimeStopped = false;
+                gameState.timeStopTimer = 0.0f;
+                printf("時間停止終了！\n");
+            }
+        }
+        
+        // 制限時間システムの更新（時間停止中は更新しない）
+        if (!gameState.isStageCompleted && !gameState.isTimeUp && !gameState.isTimeStopped) {
             gameState.remainingTime -= deltaTime;
             
             // 時間切れ判定
@@ -565,6 +575,49 @@ int main(int argc, char* argv[]) {
         if (keyStates[GLFW_KEY_E].justPressed() && stageManager.getCurrentStage() == 0) {
             gameState.isEasyMode = !gameState.isEasyMode;
             printf("Easy mode: %s\n", gameState.isEasyMode ? "ON" : "OFF");
+        }
+        
+        // 時間停止スキル取得切り替え処理（Rキー）- ステージ0でのみ有効（テスト用）
+        if (keyStates[GLFW_KEY_R].justPressed() && stageManager.getCurrentStage() == 0) {
+            gameState.hasTimeStopSkill = !gameState.hasTimeStopSkill;
+            if (gameState.hasTimeStopSkill) {
+                gameState.timeStopRemainingUses = gameState.timeStopMaxUses; // 使用回数をリセット
+            }
+            printf("Time Stop Skill: %s\n", gameState.hasTimeStopSkill ? "ACQUIRED" : "NOT ACQUIRED");
+        }
+        
+        // 二段ジャンプスキル取得切り替え処理（Tキー）- ステージ0でのみ有効（テスト用）
+        if (keyStates[GLFW_KEY_T].justPressed() && stageManager.getCurrentStage() == 0) {
+            gameState.hasDoubleJumpSkill = !gameState.hasDoubleJumpSkill;
+            if (gameState.hasDoubleJumpSkill) {
+                gameState.doubleJumpRemainingUses = gameState.doubleJumpMaxUses; // 使用回数をリセット
+            }
+            printf("Double Jump Skill: %s\n", gameState.hasDoubleJumpSkill ? "ACQUIRED" : "NOT ACQUIRED");
+        }
+        
+        // ハートフエールスキル取得切り替え処理（Yキー）- ステージ0でのみ有効（テスト用）
+        if (keyStates[GLFW_KEY_Y].justPressed() && stageManager.getCurrentStage() == 0) {
+            gameState.hasHeartFeelSkill = !gameState.hasHeartFeelSkill;
+            if (gameState.hasHeartFeelSkill) {
+                gameState.heartFeelRemainingUses = gameState.heartFeelMaxUses; // 使用回数をリセット
+            }
+            printf("Heart Feel Skill: %s\n", gameState.hasHeartFeelSkill ? "ACQUIRED" : "NOT ACQUIRED");
+        }
+        
+        // 時間停止スキル処理（Qキー）
+        if (keyStates[GLFW_KEY_Q].justPressed() && gameState.hasTimeStopSkill && !gameState.isTimeStopped && gameState.timeStopRemainingUses > 0) {
+            gameState.isTimeStopped = true;
+            gameState.timeStopTimer = gameState.timeStopDuration;
+            gameState.timeStopRemainingUses--;
+            printf("時間よ止まれ！残り使用回数: %d/%d\n", gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
+        }
+        
+        // ハートフエールスキル処理（Hキー）
+        if (keyStates[GLFW_KEY_H].justPressed() && gameState.hasHeartFeelSkill && gameState.heartFeelRemainingUses > 0 && gameState.lives < 6) {
+            gameState.lives++;
+            gameState.heartFeelRemainingUses--;
+            printf("ハートフエール！残機が1増加しました。残り使用回数: %d/%d, 残機: %d\n", 
+                   gameState.heartFeelRemainingUses, gameState.heartFeelMaxUses, gameState.lives);
         }
         
         // カメラ切り替え処理（Fキー）- ステージ0でのみ有効
@@ -1296,6 +1349,18 @@ int main(int argc, char* argv[]) {
         if (stageManager.getCurrentStage() != 0) {
             int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
             renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+            
+            // ハートフエールスキルUIを描画
+            renderer->renderHeartFeelUI(gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, 
+                                       gameState.heartFeelMaxUses, gameState.lives);
+            
+            // 二段ジャンプスキルUIを描画
+            renderer->renderDoubleJumpUI(gameState.hasDoubleJumpSkill, gameState.isEasyMode, 
+                                        gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses);
+            
+            // 時間停止スキルUIを描画
+            renderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
+                                      gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
         }
         
 
@@ -1436,9 +1501,9 @@ int main(int argc, char* argv[]) {
         }
         
         // 操作説明
-        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control";
+        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control, Q=Time Stop, H=Heart Feel";
         if (stageManager.getCurrentStage() == 0) {
-            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle, E=Easy Mode";
+            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle, E=Easy Mode, R=Toggle Time Stop Skill, T=Toggle Double Jump Skill, Y=Toggle Heart Feel Skill";
         }
         renderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
         

@@ -279,6 +279,24 @@ struct GameState {
     glm::vec3 lastPlatformPosition = glm::vec3(0, 0, 0);  // 最後に乗っていた床の位置
     int lastPlatformIndex = -1;  // 最後に乗っていた床のインデックス
     bool isTrackingPlatform = false;  // 足場を追跡中かどうか
+    
+    // 二段ジャンプスキル用
+    bool hasDoubleJumpSkill = true;  // 二段ジャンプスキルを取得しているかどうか
+    int doubleJumpMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
+    int doubleJumpRemainingUses = 3;  // 残り使用回数
+    
+    // ハートフエールスキル用
+    bool hasHeartFeelSkill = true;  // ハートフエールスキルを取得しているかどうか
+    int heartFeelMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
+    int heartFeelRemainingUses = 3;  // 残り使用回数
+    
+    // 時間停止スキル用
+    bool hasTimeStopSkill = true;  // 時間停止スキルを取得しているかどうか
+    bool isTimeStopped = false;  // 時間停止中かどうか
+    float timeStopDuration = 5.0f;  // 時間停止の持続時間（秒）
+    float timeStopTimer = 0.0f;  // 時間停止の残り時間
+    int timeStopMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
+    int timeStopRemainingUses = 3;  // 残り使用回数
 };
 
 // ゲーム状態の初期化関数
