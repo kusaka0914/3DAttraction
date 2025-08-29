@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             // チュートリアル表示中は他の処理をスキップ
-            renderer->beginFrame();
+            renderer->beginFrameWithBackground(stageManager.getCurrentStage());
             
             // カメラ設定
             glm::vec3 cameraPos, cameraTarget;
@@ -223,7 +223,7 @@ int main(int argc, char* argv[]) {
                 if (isRotating[i]) {
                     renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
                 } else {
-                    renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                    renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
                 }
             }
             
@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
         // Ready画面表示中の処理
         if (gameState.showReadyScreen) {
             // Ready画面表示中はゲームを一時停止
-            renderer->beginFrame();
+            renderer->beginFrameWithBackground(stageManager.getCurrentStage());
             
             // カメラ設定
             glm::vec3 cameraPos, cameraTarget;
@@ -274,7 +274,7 @@ int main(int argc, char* argv[]) {
                 if (isRotating[i]) {
                     renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
                 } else {
-                    renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                    renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
                 }
             }
             
@@ -328,7 +328,7 @@ int main(int argc, char* argv[]) {
         // カウントダウン中の処理
         if (gameState.isCountdownActive) {
             // カウントダウン中はゲームを一時停止
-            renderer->beginFrame();
+            renderer->beginFrameWithBackground(stageManager.getCurrentStage());
             
             // カメラ設定
             glm::vec3 cameraPos, cameraTarget;
@@ -361,7 +361,7 @@ int main(int argc, char* argv[]) {
                 if (isRotating[i]) {
                     renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
                 } else {
-                    renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                    renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
                 }
             }
             
@@ -1073,7 +1073,7 @@ int main(int argc, char* argv[]) {
         // --------------------------
         //            描画
         // --------------------------
-        renderer->beginFrame();
+        renderer->beginFrameWithBackground(stageManager.getCurrentStage());
         
         // カメラ設定
         glm::vec3 cameraPos, cameraTarget;
@@ -1108,7 +1108,7 @@ int main(int argc, char* argv[]) {
             if (isRotating[i]) {
                 renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
             } else {
-                renderer->renderBoxWithAlpha(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
             }
         }
         

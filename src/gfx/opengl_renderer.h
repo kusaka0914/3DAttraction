@@ -21,6 +21,7 @@ public:
     void cleanup();
     
     void beginFrame();
+    void beginFrameWithBackground(int stageNumber);
     void endFrame();
     
     void renderCube(const glm::vec3& position, const glm::vec3& color, float size = 1.0f);
@@ -30,6 +31,14 @@ public:
     void renderBoxWithAlpha(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, float alpha);
     void renderRotatedBoxWithAlpha(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, 
                                   const glm::vec3& rotationAxis, float rotationAngle, float alpha);
+    void renderRealisticBox(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, float alpha = 1.0f);
+    void renderStageBackground(int stageNumber);
+    void renderGrassland();
+    void renderClouds();
+    void renderSunset();
+    void renderStars();
+    void renderThunderClouds();
+    void renderNebula();
     void renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     
     // UI表示関数

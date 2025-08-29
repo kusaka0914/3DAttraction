@@ -52,6 +52,21 @@ void OpenGLRenderer::beginFrame() {
     glLoadMatrixf(glm::value_ptr(viewMatrix));
 }
 
+void OpenGLRenderer::beginFrameWithBackground(int stageNumber) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // ステージ別背景を描画
+    renderStageBackground(stageNumber);
+    
+    // プロジェクション行列を設定
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(glm::value_ptr(projectionMatrix));
+    
+    // ビュー行列を設定
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(glm::value_ptr(viewMatrix));
+}
+
 void OpenGLRenderer::endFrame() {
     glfwSwapBuffers(window);
 }
@@ -99,6 +114,439 @@ void OpenGLRenderer::renderRotatedBoxWithAlpha(const glm::vec3& position, const 
     // 透明度を適用した色
     glm::vec3 alphaColor = color * alpha;
     drawCube(model, alphaColor);
+}
+
+void OpenGLRenderer::renderRealisticBox(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, float alpha) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::scale(model, size);
+    
+    // 透明度を適用した色
+    glm::vec3 alphaColor = color * alpha;
+    
+    // ライティングを有効化
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    
+    // 光源の位置を設定
+    GLfloat lightPosition[] = {10.0f, 20.0f, 10.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+    
+    // 環境光を設定
+    GLfloat ambientLight[] = {0.3f, 0.3f, 0.3f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+    
+    // 拡散光を設定
+    GLfloat diffuseLight[] = {0.7f, 0.7f, 0.7f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+    
+    glPushMatrix();
+    glMultMatrixf(glm::value_ptr(model));
+    
+    // 基本色を設定（透明度適用）
+    glColor3f(alphaColor.r, alphaColor.g, alphaColor.b);
+    
+    // 法線を計算して各面を描画
+    glBegin(GL_QUADS);
+    
+    // 前面（Z軸正方向）
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-0.5f, -0.5f,  0.5f);
+    glVertex3f( 0.5f, -0.5f,  0.5f);
+    glVertex3f( 0.5f,  0.5f,  0.5f);
+    glVertex3f(-0.5f,  0.5f,  0.5f);
+    
+    // 背面（Z軸負方向）
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f(-0.5f,  0.5f, -0.5f);
+    glVertex3f( 0.5f,  0.5f, -0.5f);
+    glVertex3f( 0.5f, -0.5f, -0.5f);
+    
+    // 上面（Y軸正方向）- より明るく
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glColor3f(alphaColor.r * 1.2f, alphaColor.g * 1.2f, alphaColor.b * 1.2f);
+    glVertex3f(-0.5f,  0.5f, -0.5f);
+    glVertex3f(-0.5f,  0.5f,  0.5f);
+    glVertex3f( 0.5f,  0.5f,  0.5f);
+    glVertex3f( 0.5f,  0.5f, -0.5f);
+    
+    // 下面（Y軸負方向）- より暗く
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glColor3f(alphaColor.r * 0.6f, alphaColor.g * 0.6f, alphaColor.b * 0.6f);
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f( 0.5f, -0.5f, -0.5f);
+    glVertex3f( 0.5f, -0.5f,  0.5f);
+    glVertex3f(-0.5f, -0.5f,  0.5f);
+    
+    // 右面（X軸正方向）- 中間の明るさ
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glColor3f(alphaColor.r * 0.9f, alphaColor.g * 0.9f, alphaColor.b * 0.9f);
+    glVertex3f( 0.5f, -0.5f, -0.5f);
+    glVertex3f( 0.5f,  0.5f, -0.5f);
+    glVertex3f( 0.5f,  0.5f,  0.5f);
+    glVertex3f( 0.5f, -0.5f,  0.5f);
+    
+    // 左面（X軸負方向）- 中間の明るさ
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glColor3f(alphaColor.r * 0.9f, alphaColor.g * 0.9f, alphaColor.b * 0.9f);
+    glVertex3f(-0.5f, -0.5f, -0.5f);
+    glVertex3f(-0.5f, -0.5f,  0.5f);
+    glVertex3f(-0.5f,  0.5f,  0.5f);
+    glVertex3f(-0.5f,  0.5f, -0.5f);
+    
+    glEnd();
+    
+    // エッジの強調（ワイヤーフレーム風）
+    glDisable(GL_LIGHTING);
+    glColor3f(alphaColor.r * 0.3f, alphaColor.g * 0.3f, alphaColor.b * 0.3f);
+    glLineWidth(1.0f);
+    glBegin(GL_LINES);
+    
+    // 前面のエッジ
+    glVertex3f(-0.5f, -0.5f,  0.5f); glVertex3f( 0.5f, -0.5f,  0.5f);
+    glVertex3f( 0.5f, -0.5f,  0.5f); glVertex3f( 0.5f,  0.5f,  0.5f);
+    glVertex3f( 0.5f,  0.5f,  0.5f); glVertex3f(-0.5f,  0.5f,  0.5f);
+    glVertex3f(-0.5f,  0.5f,  0.5f); glVertex3f(-0.5f, -0.5f,  0.5f);
+    
+    // 背面のエッジ
+    glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f( 0.5f, -0.5f, -0.5f);
+    glVertex3f( 0.5f, -0.5f, -0.5f); glVertex3f( 0.5f,  0.5f, -0.5f);
+    glVertex3f( 0.5f,  0.5f, -0.5f); glVertex3f(-0.5f,  0.5f, -0.5f);
+    glVertex3f(-0.5f,  0.5f, -0.5f); glVertex3f(-0.5f, -0.5f, -0.5f);
+    
+    // 縦のエッジ
+    glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f(-0.5f, -0.5f,  0.5f);
+    glVertex3f( 0.5f, -0.5f, -0.5f); glVertex3f( 0.5f, -0.5f,  0.5f);
+    glVertex3f( 0.5f,  0.5f, -0.5f); glVertex3f( 0.5f,  0.5f,  0.5f);
+    glVertex3f(-0.5f,  0.5f, -0.5f); glVertex3f(-0.5f,  0.5f,  0.5f);
+    
+    glEnd();
+    
+    glPopMatrix();
+    
+    // ライティングを無効化
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    glDisable(GL_COLOR_MATERIAL);
+}
+
+void OpenGLRenderer::renderStageBackground(int stageNumber) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    
+    // ステージ別の背景色とグラデーション
+    glm::vec3 topColor, bottomColor;
+    
+    switch (stageNumber) {
+        case 0: // ステージ選択画面
+            topColor = glm::vec3(0.5f, 0.7f, 1.0f);    // 青空
+            bottomColor = glm::vec3(0.2f, 0.5f, 0.1f); // 深い緑（草原）
+            break;
+        case 1: // ステージ1 - 青空、白い雲（初心者向けの明るい雰囲気）
+            topColor = glm::vec3(0.5f, 0.7f, 1.0f);    // 青空
+            bottomColor = glm::vec3(0.8f, 0.9f, 1.0f); // 明るい青
+            break;
+        case 2: // ステージ2 - 夕日、オレンジ色の空（中級者向けの暖かい雰囲気）
+            topColor = glm::vec3(1.0f, 0.6f, 0.3f);    // オレンジ
+            bottomColor = glm::vec3(1.0f, 0.8f, 0.5f); // 明るいオレンジ
+            break;
+        case 3: // ステージ3 - 夜、星空（上級者向けの神秘的雰囲気）
+            topColor = glm::vec3(0.1f, 0.1f, 0.3f);    // 深い青
+            bottomColor = glm::vec3(0.3f, 0.2f, 0.5f); // 紫
+            break;
+        case 4: // ステージ4 - 雷雲、稲妻（難易度の高い雰囲気）
+            topColor = glm::vec3(0.2f, 0.2f, 0.3f);    // 暗い青
+            bottomColor = glm::vec3(0.4f, 0.4f, 0.5f); // グレー
+            break;
+        case 5: // ステージ5 - 宇宙、星雲（最終ステージの壮大な雰囲気）
+            topColor = glm::vec3(0.0f, 0.0f, 0.1f);    // 深い黒
+            bottomColor = glm::vec3(0.2f, 0.1f, 0.4f); // 深い紫
+            break;
+        default:
+            topColor = glm::vec3(0.2f, 0.3f, 0.3f);    // デフォルト
+            bottomColor = glm::vec3(0.4f, 0.5f, 0.5f);
+            break;
+    }
+    
+    // 背景を描画（ステージ0は空と草原を分離）
+    if (stageNumber == 0) {
+        // 空の部分（上半分）
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glVertex2f(1280, 360);
+        glVertex2f(0, 360);
+        glEnd();
+        
+        // 草原の部分（下半分）
+        glBegin(GL_QUADS);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(0, 360);
+        glVertex2f(1280, 360);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+    } else {
+        // 他のステージはグラデーション
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+    }
+    
+    // ステージ別の装飾要素を追加
+    switch (stageNumber) {
+        case 0: // ステージ選択画面 - 草原
+            renderGrassland();
+            break;
+        case 1: // ステージ1 - 雲
+            renderClouds();
+            break;
+        case 2: // ステージ2 - 夕日
+            renderSunset();
+            break;
+        case 3: // ステージ3 - 星
+            renderStars();
+            break;
+        case 4: // ステージ4 - 雷雲
+            renderThunderClouds();
+            break;
+        case 5: // ステージ5 - 星雲
+            renderNebula();
+            break;
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void OpenGLRenderer::renderGrassland() {
+    // 雲を描画（空の部分）
+    glColor3f(1.0f, 1.0f, 1.0f);
+    for (int i = 0; i < 4; i++) {
+        float x = fmod(i * 350.0f + (i * 30.0f), 1280.0f);
+        float y = 80.0f + (i * 25.0f);
+        float size = 70.0f + (i * 15.0f);
+        
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y);
+        for (int j = 0; j <= 12; j++) {
+            float angle = 2.0f * 3.14159f * j / 12;
+            float cloudX = x + cos(angle) * size;
+            float cloudY = y + sin(angle) * (size * 0.6f);
+            glVertex2f(cloudX, cloudY);
+        }
+        glEnd();
+    }
+    
+    // 草を描画
+    glColor3f(0.1f, 0.6f, 0.1f); // 濃い緑
+    for (int i = 0; i < 100; i++) {
+        float x = fmod(i * 12.0f + (i * 7.0f), 1280.0f);
+        float y = 720.0f - fmod(i * 8.0f + (i * 13.0f), 200.0f); // 画面下部から
+        float height = 15.0f + (i % 5) * 3.0f;
+        float width = 2.0f + (i % 3);
+        
+        // 草の葉を描画
+        glBegin(GL_TRIANGLES);
+        glVertex2f(x, y);
+        glVertex2f(x - width, y - height);
+        glVertex2f(x + width, y - height);
+        glEnd();
+    }
+    
+    // 花を描画
+    for (int i = 0; i < 20; i++) {
+        float x = fmod(i * 60.0f + (i * 23.0f), 1280.0f);
+        float y = 720.0f - fmod(i * 15.0f + (i * 37.0f), 150.0f);
+        float size = 8.0f + (i % 3) * 2.0f;
+        
+        // 花の色（ランダム）
+        glm::vec3 flowerColors[] = {
+            glm::vec3(1.0f, 0.3f, 0.3f), // 赤
+            glm::vec3(1.0f, 0.8f, 0.2f), // 黄色
+            glm::vec3(0.8f, 0.2f, 0.8f), // ピンク
+            glm::vec3(1.0f, 1.0f, 1.0f)  // 白
+        };
+        glm::vec3 flowerColor = flowerColors[i % 4];
+        
+        glColor3f(flowerColor.r, flowerColor.g, flowerColor.b);
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y);
+        for (int j = 0; j <= 8; j++) {
+            float angle = 2.0f * 3.14159f * j / 8;
+            float flowerX = x + cos(angle) * size;
+            float flowerY = y + sin(angle) * size;
+            glVertex2f(flowerX, flowerY);
+        }
+        glEnd();
+    }
+    
+    // 木を描画
+    for (int i = 0; i < 8; i++) {
+        float x = 100.0f + i * 150.0f;
+        float y = 720.0f - 80.0f;
+        
+        // 木の幹
+        glColor3f(0.4f, 0.2f, 0.1f); // 茶色
+        glBegin(GL_QUADS);
+        glVertex2f(x - 8, y);
+        glVertex2f(x + 8, y);
+        glVertex2f(x + 8, y - 60);
+        glVertex2f(x - 8, y - 60);
+        glEnd();
+        
+        // 木の葉
+        glColor3f(0.2f, 0.5f, 0.1f); // 濃い緑
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y - 60);
+        for (int j = 0; j <= 12; j++) {
+            float angle = 2.0f * 3.14159f * j / 12;
+            float leafX = x + cos(angle) * 40;
+            float leafY = y - 60 + sin(angle) * 40;
+            glVertex2f(leafX, leafY);
+        }
+        glEnd();
+    }
+    
+    // 小さな丘を描画
+    glColor3f(0.3f, 0.6f, 0.2f); // 明るい緑
+    for (int i = 0; i < 3; i++) {
+        float x = 200.0f + i * 400.0f;
+        float y = 720.0f - 50.0f;
+        float width = 200.0f;
+        float height = 80.0f;
+        
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y - height);
+        for (int j = 0; j <= 16; j++) {
+            float angle = 3.14159f * j / 16;
+            float hillX = x + cos(angle) * width;
+            float hillY = y - height + sin(angle) * height;
+            glVertex2f(hillX, hillY);
+        }
+        glEnd();
+    }
+}
+
+void OpenGLRenderer::renderClouds() {
+    // 雲を描画
+    glColor3f(1.0f, 1.0f, 1.0f);
+    for (int i = 0; i < 5; i++) {
+        float x = fmod(i * 300.0f + (i * 50.0f), 1280.0f);
+        float y = 100.0f + (i * 20.0f);
+        float size = 80.0f + (i * 10.0f);
+        
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y);
+        for (int j = 0; j <= 12; j++) {
+            float angle = 2.0f * 3.14159f * j / 12;
+            float cloudX = x + cos(angle) * size;
+            float cloudY = y + sin(angle) * (size * 0.6f);
+            glVertex2f(cloudX, cloudY);
+        }
+        glEnd();
+    }
+}
+
+void OpenGLRenderer::renderSunset() {
+    // 夕日を描画
+    glColor3f(1.0f, 0.8f, 0.3f);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(1000, 150);
+    for (int i = 0; i <= 20; i++) {
+        float angle = 3.14159f * i / 20;
+        float x = 1000 + cos(angle) * 80;
+        float y = 150 + sin(angle) * 80;
+        glVertex2f(x, y);
+    }
+    glEnd();
+}
+
+void OpenGLRenderer::renderStars() {
+    // 星を描画
+    glColor3f(1.0f, 1.0f, 1.0f);
+    for (int i = 0; i < 50; i++) {
+        float x = fmod(i * 25.0f + (i * 17.0f), 1280.0f);
+        float y = fmod(i * 15.0f + (i * 23.0f), 300.0f);
+        float size = 2.0f + (i % 3);
+        
+        glBegin(GL_QUADS);
+        glVertex2f(x - size, y - size);
+        glVertex2f(x + size, y - size);
+        glVertex2f(x + size, y + size);
+        glVertex2f(x - size, y + size);
+        glEnd();
+    }
+}
+
+void OpenGLRenderer::renderThunderClouds() {
+    // 雷雲を描画
+    glColor3f(0.3f, 0.3f, 0.4f);
+    for (int i = 0; i < 3; i++) {
+        float x = 200.0f + i * 400.0f;
+        float y = 80.0f + i * 30.0f;
+        float size = 120.0f + i * 20.0f;
+        
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y);
+        for (int j = 0; j <= 12; j++) {
+            float angle = 2.0f * 3.14159f * j / 12;
+            float cloudX = x + cos(angle) * size;
+            float cloudY = y + sin(angle) * (size * 0.8f);
+            glVertex2f(cloudX, cloudY);
+        }
+        glEnd();
+    }
+}
+
+void OpenGLRenderer::renderNebula() {
+    // 星雲を描画
+    for (int i = 0; i < 3; i++) {
+        float x = 300.0f + i * 300.0f;
+        float y = 200.0f + i * 100.0f;
+        float size = 150.0f + i * 50.0f;
+        
+        // 星雲の色（紫、青、ピンク）
+        glm::vec3 colors[] = {
+            glm::vec3(0.8f, 0.2f, 0.8f), // 紫
+            glm::vec3(0.2f, 0.4f, 0.8f), // 青
+            glm::vec3(0.8f, 0.3f, 0.6f)  // ピンク
+        };
+        
+        glColor3f(colors[i].r, colors[i].g, colors[i].b);
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y);
+        for (int j = 0; j <= 16; j++) {
+            float angle = 2.0f * 3.14159f * j / 16;
+            float nebulaX = x + cos(angle) * size;
+            float nebulaY = y + sin(angle) * (size * 0.7f);
+            glVertex2f(nebulaX, nebulaY);
+        }
+        glEnd();
+    }
 }
 
 
