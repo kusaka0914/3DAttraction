@@ -354,6 +354,241 @@ void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& colo
     glEnd();
 }
 
+// 3D星の描画（塗りつぶし版）
+void OpenGLRenderer::renderStar3D(const glm::vec3& position, const glm::vec3& color, float scale) {
+    glColor3f(color.r, color.g, color.b);
+    
+    // 星の中心点
+    float centerX = position.x;
+    float centerY = position.y;
+    float centerZ = position.z;
+    
+    // 星の5つの角を描画（塗りつぶし）
+    glBegin(GL_TRIANGLES);
+    for (int i = 0; i < 5; i++) {
+        float angle1 = i * 72.0f * 3.14159f / 180.0f;
+        float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
+        
+        // 外側の点
+        float x1 = centerX + cos(angle1) * 0.3f * scale;
+        float y1 = centerY + sin(angle1) * 0.3f * scale;
+        
+        // 内側の点
+        float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 0.12f * scale;
+        float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 0.12f * scale;
+        
+        // 次の外側の点
+        float x3 = centerX + cos(angle2) * 0.3f * scale;
+        float y3 = centerY + sin(angle2) * 0.3f * scale;
+        
+        // 中心から各点への三角形を描画（塗りつぶし）
+        glVertex3f(centerX, centerY, centerZ);  // 中心点
+        glVertex3f(x1, y1, centerZ);            // 外側の点1
+        glVertex3f(x2, y2, centerZ);            // 内側の点
+        
+        glVertex3f(centerX, centerY, centerZ);  // 中心点
+        glVertex3f(x2, y2, centerZ);            // 内側の点
+        glVertex3f(x3, y3, centerZ);            // 外側の点2
+    }
+    glEnd();
+}
+
+// 3D鍵穴マークの描画
+void OpenGLRenderer::renderLock3D(const glm::vec3& position, const glm::vec3& color, float scale) {
+    glColor3f(color.r, color.g, color.b);
+    
+    float centerX = position.x;
+    float centerY = position.y;
+    float centerZ = position.z;
+    
+    // 鍵穴の本体（四角形）
+    float halfWidth = 0.3f * scale;
+    float halfHeight = 0.4f * scale;
+    
+    glBegin(GL_QUADS);
+    // 前面
+    glVertex3f(centerX - halfWidth, centerY - halfHeight, centerZ);
+    glVertex3f(centerX + halfWidth, centerY - halfHeight, centerZ);
+    glVertex3f(centerX + halfWidth, centerY + halfHeight, centerZ);
+    glVertex3f(centerX - halfWidth, centerY + halfHeight, centerZ);
+    glEnd();
+    
+    // 鍵穴の穴（円形）
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3f(centerX, centerY, centerZ); // 中心
+    int segments = 12;
+    for (int i = 0; i <= segments; i++) {
+        float angle = 2.0f * 3.14159f * i / segments;
+        float x = centerX + cos(angle) * 0.15f * scale;
+        float y = centerY + sin(angle) * 0.15f * scale;
+        glVertex3f(x, y, centerZ);
+    }
+    glEnd();
+    
+    // 鍵穴の下の穴（小さな四角形）
+    float smallHalfWidth = 0.08f * scale;
+    float smallHalfHeight = 0.15f * scale;
+    
+    glBegin(GL_QUADS);
+    glVertex3f(centerX - smallHalfWidth, centerY - halfHeight - smallHalfHeight, centerZ);
+    glVertex3f(centerX + smallHalfWidth, centerY - halfHeight - smallHalfHeight, centerZ);
+    glVertex3f(centerX + smallHalfWidth, centerY - halfHeight + smallHalfHeight, centerZ);
+    glVertex3f(centerX - smallHalfWidth, centerY - halfHeight + smallHalfHeight, centerZ);
+    glEnd();
+}
+
+// 3D数字の描画
+void OpenGLRenderer::renderNumber3D(const glm::vec3& position, int number, const glm::vec3& color, float scale) {
+    glColor3f(color.r, color.g, color.b);
+    
+    float centerX = position.x;
+    float centerY = position.y;
+    float centerZ = position.z;
+    
+    // 数字を文字列に変換
+    std::string numStr = std::to_string(number);
+    
+    // 各文字を描画
+    for (size_t i = 0; i < numStr.length(); i++) {
+        char digit = numStr[i];
+        float charX = centerX + i * 0.6f * scale;
+        
+        // 数字の形状を定義（実際の数字の形状）
+        float width = 0.4f * scale;
+        float height = 0.6f * scale;
+        float thickness = 0.1f * scale;
+        
+        // 数字の形状を定義（各数字のセグメント）
+        std::vector<std::vector<glm::vec2>> segments;
+        
+        if (digit == '0') {
+            // 0の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, height/2}, {width/2, height/2}},    // 上
+                {{width/2, height/2}, {width/2, -height/2}},    // 右
+                {{width/2, -height/2}, {-width/2, -height/2}},  // 下
+                {{-width/2, -height/2}, {-width/2, height/2}}   // 左
+            };
+        } else if (digit == '1') {
+            // 1の形状（現在の向きに合わせて修正）
+            segments = {
+                {{0, height/2}, {0, -height/2}}  // 中央縦線
+            };
+        } else if (digit == '2') {
+            // 2の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{width/2, -height/2}, {width/2, 0}},            // 右下
+                {{width/2, 0}, {-width/2, 0}},                  // 中央
+                {{-width/2, 0}, {-width/2, height/2}},          // 左上
+                {{-width/2, height/2}, {width/2, height/2}}     // 上
+            };
+        } else if (digit == '3') {
+            // 3の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{width/2, -height/2}, {width/2, height/2}},    // 右
+                {{-width/2, 0}, {width/2, 0}},                  // 中央
+                {{-width/2, height/2}, {width/2, height/2}}     // 上
+            };
+        } else if (digit == '4') {
+            // 4の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {-width/2, 0}},         // 左下
+                {{-width/2, 0}, {width/2, 0}},                  // 中央
+                {{width/2, -height/2}, {width/2, height/2}}     // 右
+            };
+        } else if (digit == '5') {
+            // 5の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{-width/2, -height/2}, {-width/2, 0}},         // 左下
+                {{-width/2, 0}, {width/2, 0}},                  // 中央
+                {{width/2, 0}, {width/2, height/2}},            // 右上
+                {{-width/2, height/2}, {width/2, height/2}}     // 上
+            };
+        } else if (digit == '6') {
+            // 6の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{-width/2, -height/2}, {-width/2, height/2}},  // 左
+                {{-width/2, 0}, {width/2, 0}},                  // 中央
+                {{width/2, 0}, {width/2, height/2}},            // 右上
+                {{-width/2, height/2}, {width/2, height/2}}     // 上
+            };
+        } else if (digit == '7') {
+            // 7の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{width/2, -height/2}, {width/2, height/2}}     // 右
+            };
+        } else if (digit == '8') {
+            // 8の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{width/2, -height/2}, {width/2, height/2}},    // 右
+                {{-width/2, -height/2}, {-width/2, height/2}},  // 左
+                {{-width/2, 0}, {width/2, 0}},                  // 中央
+                {{-width/2, height/2}, {width/2, height/2}}     // 上
+            };
+        } else if (digit == '9') {
+            // 9の形状（現在の向きに合わせて修正）
+            segments = {
+                {{-width/2, -height/2}, {width/2, -height/2}},  // 下
+                {{width/2, -height/2}, {width/2, height/2}},    // 右
+                {{-width/2, -height/2}, {-width/2, 0}},         // 左下
+                {{-width/2, 0}, {width/2, 0}},                  // 中央
+                {{-width/2, height/2}, {width/2, height/2}}     // 上
+            };
+        }
+        
+        // 各セグメントを描画
+        for (const auto& segment : segments) {
+            glBegin(GL_QUADS);
+            // セグメントを太い線として描画（線対称で正しい向きに）
+            glm::vec2 start = segment[0];
+            glm::vec2 end = segment[1];
+            // 線対称（180度回転：xとyを両方反転）
+            start = glm::vec2(-start.x, -start.y);
+            end = glm::vec2(-end.x, -end.y);
+            glm::vec2 dir = glm::normalize(end - start);
+            glm::vec2 perp = glm::vec2(-dir.y, dir.x) * thickness / 2.0f;
+            
+            glVertex3f(charX + start.x - perp.x, centerY + start.y - perp.y, centerZ);
+            glVertex3f(charX + start.x + perp.x, centerY + start.y + perp.y, centerZ);
+            glVertex3f(charX + end.x + perp.x, centerY + end.y + perp.y, centerZ);
+            glVertex3f(charX + end.x - perp.x, centerY + end.y - perp.y, centerZ);
+            glEnd();
+        }
+    }
+}
+
+// 3D×記号の描画
+void OpenGLRenderer::renderXMark3D(const glm::vec3& position, const glm::vec3& color, float scale) {
+    glColor3f(color.r, color.g, color.b);
+    
+    float centerX = position.x;
+    float centerY = position.y;
+    float centerZ = position.z;
+    
+    // ×記号を2つの交差する線で表現
+    float halfSize = 0.3f * scale;
+    
+    glBegin(GL_QUADS);
+    // 左上から右下への線
+    glVertex3f(centerX - halfSize, centerY + halfSize, centerZ);
+    glVertex3f(centerX - halfSize + 0.1f * scale, centerY + halfSize, centerZ);
+    glVertex3f(centerX + halfSize, centerY - halfSize, centerZ);
+    glVertex3f(centerX + halfSize - 0.1f * scale, centerY - halfSize, centerZ);
+    
+    // 右上から左下への線
+    glVertex3f(centerX + halfSize, centerY + halfSize, centerZ);
+    glVertex3f(centerX + halfSize - 0.1f * scale, centerY + halfSize, centerZ);
+    glVertex3f(centerX - halfSize, centerY - halfSize, centerZ);
+    glVertex3f(centerX - halfSize + 0.1f * scale, centerY - halfSize, centerZ);
+    glEnd();
+}
+
 // チュートリアルUI表示
 void OpenGLRenderer::renderTutorialUI(int width, int height) {
     // フォントの初期化を確実に行う

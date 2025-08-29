@@ -1079,7 +1079,7 @@ int main(int argc, char* argv[]) {
         glm::vec3 cameraPos, cameraTarget;
         if (stageManager.getCurrentStage() == 0) {
             // ステージ選択フィールドでは上からのアングル
-            cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
+            cameraPos = gameState.playerPosition + glm::vec3(0, 10, -15);
             cameraTarget = gameState.playerPosition;
         } else {
             // 通常のステージでは従来のアングル
@@ -1246,6 +1246,98 @@ int main(int argc, char* argv[]) {
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
             glPopMatrix();
+        }
+        
+        // ステージ0での3D星の描画（ステージ選択エリアの上に固定）
+        if (stageManager.getCurrentStage() == 0) {
+            // ステージ選択エリアの位置と高さを定義
+            struct StageArea {
+                float x, y, z;  // エリアの中心位置
+                float height;   // エリアの高さ
+            };
+            
+            StageArea stageAreas[] = {
+                {6.0f, 0.0f, 0.0f, 1.0f},    // ステージ1
+                {-8.0f, 0.0f, 0.0f, 1.0f},   // ステージ2
+                {-22.0f, 0.0f, 0.0f, 1.0f},  // ステージ3
+                {-34.0f, 0.0f, 0.0f, 1.0f},  // ステージ4
+                {-46.0f, 0.0f, 0.0f, 1.0f}   // ステージ5
+            };
+            
+            // 各ステージの星を描画
+            for (int stage = 0; stage < 5; stage++) {
+                StageArea& area = stageAreas[stage];
+                int stageNumber = stage + 1;
+                
+                // ステージ2~5の解禁条件チェック
+                bool isUnlocked = true;
+                int requiredStars = 0;
+                
+                if (stageNumber == 2 && gameState.totalStars < 1) {
+                    isUnlocked = false;
+                    requiredStars = 1;
+                } else if (stageNumber == 3 && gameState.totalStars < 3) {
+                    isUnlocked = false;
+                    requiredStars = 3;
+                } else if (stageNumber == 4 && gameState.totalStars < 5) {
+                    isUnlocked = false;
+                    requiredStars = 5;
+                } else if (stageNumber == 5 && gameState.totalStars < 7) {
+                    isUnlocked = false;
+                    requiredStars = 7;
+                }
+                
+                if (isUnlocked) {
+                    // 解禁済み：通常の星を表示
+                    for (int i = 0; i < 3; i++) {
+                        glm::vec3 starColor = (i < gameState.stageStars[stageNumber]) ? 
+                            glm::vec3(1.0f, 1.0f, 0.0f) :  // 黄色（獲得済み）
+                            glm::vec3(0.5f, 0.5f, 0.5f);   // 灰色（未獲得）
+                        
+                        // 星の位置をエリアの中心から計算
+                        glm::vec3 starPos = glm::vec3(
+                            area.x - 0.8f + i * 0.8f,  // 左から右に並べる
+                            area.y + area.height + 1.5f,  // エリアの上に配置
+                            area.z
+                        );
+                        
+                        renderer->renderStar3D(starPos, starColor, 1.0f);
+                    }
+                } else {
+                    // 未解禁：数値×星鍵穴の順番で横並びに表示
+                    // 数値を左側に表示
+                    glm::vec3 numberPos = glm::vec3(
+                        area.x - 0.6f,  // エリアの中心より左
+                        area.y + area.height + 1.5f,  // エリアの上に配置
+                        area.z
+                    );
+                    renderer->renderNumber3D(numberPos, requiredStars, glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
+                    
+                    // ×記号を中央に表示
+                    glm::vec3 xMarkPos = glm::vec3(
+                        area.x,  // エリアの中心
+                        area.y + area.height + 1.5f,  // エリアの上に配置
+                        area.z
+                    );
+                    renderer->renderXMark3D(xMarkPos, glm::vec3(1.0f, 1.0f, 0.0f), 0.5f);
+                    
+                    // 星1個を右側に表示
+                    glm::vec3 starPos = glm::vec3(
+                        area.x + 0.6f,  // エリアの中心より右
+                        area.y + area.height + 1.5f,  // エリアの上に配置
+                        area.z
+                    );
+                    renderer->renderStar3D(starPos, glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
+                    
+                    // 鍵穴マークを最右側に表示
+                    // glm::vec3 lockPos = glm::vec3(
+                    //     area.x + 1.0f,  // 星の右側
+                    //     area.y + area.height + 1.5f,  // エリアの上に配置
+                    //     area.z
+                    // );
+                    // renderer->renderLock3D(lockPos, glm::vec3(0.6f, 0.3f, 0.3f), 1.5f);
+                }
+            }
         }
         
         // 操作説明
