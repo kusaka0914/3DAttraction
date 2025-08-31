@@ -19,6 +19,9 @@
 #include "../game/gravity_system.h"
 #include "../physics/physics_system.h"
 #include "../io/input_system.h"
+#include "game_constants.h"
+#include "error_handler.h"
+#include "camera_system.h"
 
 // ======================================================
 //                        ヘルパー関数
@@ -98,9 +101,10 @@ int main(int argc, char* argv[]) {
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     
     // ウィンドウ作成
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Vulkan3D - Portal Physics Puzzle", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(GameConstants::WINDOW_WIDTH, GameConstants::WINDOW_HEIGHT, 
+                                         GameConstants::WINDOW_TITLE, nullptr, nullptr);
     if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
+        ErrorHandler::handleGLFWError("window creation");
         glfwTerminate();
         return -1;
     }
@@ -108,7 +112,7 @@ int main(int argc, char* argv[]) {
     // OpenGLレンダラー初期化
     auto renderer = std::make_unique<gfx::OpenGLRenderer>();
     if (!renderer->initialize(window)) {
-        std::cerr << "Failed to initialize OpenGL renderer" << std::endl;
+        ErrorHandler::handleRendererError("OpenGL renderer initialization");
         glfwDestroyWindow(window);
         glfwTerminate();
         return -1;
@@ -174,7 +178,7 @@ int main(int argc, char* argv[]) {
         float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
         
         // deltaTimeの異常値を制限（フレームレート低下時の問題を防ぐ）
-        deltaTime = std::min(deltaTime, 0.1f); // 最大100ms（10FPS相当）
+        deltaTime = std::min(deltaTime, GameConstants::MAX_DELTA_TIME);
         
         lastFrameTime = currentTime;
         
@@ -202,19 +206,11 @@ int main(int argc, char* argv[]) {
             renderer->beginFrameWithBackground(stageManager.getCurrentStage());
             
             // カメラ設定
-            glm::vec3 cameraPos, cameraTarget;
-            if (stageManager.getCurrentStage() == 0) {
-                cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
-                cameraTarget = gameState.playerPosition;
-            } else {
-                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
-                cameraTarget = gameState.playerPosition;
-            }
-            renderer->setCamera(cameraPos, cameraTarget);
-
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
-            renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+            auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
+            CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
+            
+            // ウィンドウサイズを取得
+            auto [width, height] = CameraSystem::getWindowSize(window);
             
             // 通常のゲーム要素を描画（背景として）
             auto positions = platformSystem.getPositions();
@@ -253,19 +249,11 @@ int main(int argc, char* argv[]) {
             renderer->beginFrameWithBackground(stageManager.getCurrentStage());
             
             // カメラ設定
-            glm::vec3 cameraPos, cameraTarget;
-            if (stageManager.getCurrentStage() == 0) {
-                cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
-                cameraTarget = gameState.playerPosition;
-            } else {
-                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
-                cameraTarget = gameState.playerPosition;
-            }
-            renderer->setCamera(cameraPos, cameraTarget);
-
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
-            renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+            auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
+            CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
+            
+            // ウィンドウサイズを取得
+            auto [width, height] = CameraSystem::getWindowSize(window);
             
             // 通常のゲーム要素を描画（背景として）
             auto positions = platformSystem.getPositions();
@@ -288,7 +276,7 @@ int main(int argc, char* argv[]) {
             }
             
             // プレイヤーの描画
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
             
             // Ready画面UIを描画
             renderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel, gameState.isFirstPersonMode);
@@ -363,19 +351,11 @@ int main(int argc, char* argv[]) {
             renderer->beginFrameWithBackground(stageManager.getCurrentStage());
             
             // カメラ設定
-            glm::vec3 cameraPos, cameraTarget;
-            if (stageManager.getCurrentStage() == 0) {
-                cameraPos = gameState.playerPosition + glm::vec3(0, 15, -15);
-                cameraTarget = gameState.playerPosition;
-            } else {
-                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
-                cameraTarget = gameState.playerPosition;
-            }
-            renderer->setCamera(cameraPos, cameraTarget);
-
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
-            renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+            auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
+            CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
+            
+            // ウィンドウサイズを取得
+            auto [width, height] = CameraSystem::getWindowSize(window);
             
             // 通常のゲーム要素を描画（背景として）
             auto positions = platformSystem.getPositions();
@@ -398,7 +378,7 @@ int main(int argc, char* argv[]) {
             }
             
             // プレイヤーの描画
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
             
             // カウントダウンUIを描画
             int count = (int)gameState.countdownTimer + 1;
@@ -493,88 +473,29 @@ int main(int argc, char* argv[]) {
             state.update(glfwGetKey(window, key) == GLFW_PRESS);
         }
         
-        // ステージ切り替え処理
-        if (keyStates[GLFW_KEY_0].justPressed()) {
-            resetStageStartTime();  // ステージ開始時間をリセット
-            stageManager.goToStage(0, gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            // Ready画面を非表示（ステージ選択フィールドでは表示しない）
-            gameState.showReadyScreen = false;
-            gameState.readyScreenShown = false;
-        }
-        if (keyStates[GLFW_KEY_1].justPressed()) {
-            resetStageStartTime();  // ステージ開始時間をリセット
-            stageManager.goToStage(1, gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-        }
-        if (keyStates[GLFW_KEY_2].justPressed()) {
-            resetStageStartTime();  // ステージ開始時間をリセット
-            stageManager.goToStage(2, gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-        }
-        if (keyStates[GLFW_KEY_3].justPressed()) {
-            resetStageStartTime();  // ステージ開始時間をリセット
-            stageManager.goToStage(3, gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-        }
-        if (keyStates[GLFW_KEY_4].justPressed()) {
-            resetStageStartTime();  // ステージ開始時間をリセット
-            stageManager.goToStage(4, gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-        }
-        if (keyStates[GLFW_KEY_5].justPressed()) {
-            resetStageStartTime();  // ステージ開始時間をリセット
-            stageManager.goToStage(5, gameState, platformSystem);
-            // 速度倍率をリセット
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
-            // 残機をリセット
-            gameState.lives = 6;
-            
-            // Ready画面のフラグをリセットして表示
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
+        // ステージ切り替え処理（統一版）
+        for (int key = GLFW_KEY_0; key <= GLFW_KEY_5; key++) {
+            if (keyStates[key].justPressed()) {
+                int stageNumber = key - GLFW_KEY_0;
+                resetStageStartTime();
+                stageManager.goToStage(stageNumber, gameState, platformSystem);
+                
+                // 共通のリセット処理
+                gameState.timeScale = 1.0f;
+                gameState.timeScaleLevel = 0;
+                gameState.lives = 6;
+                
+                // ステージ0の場合はReady画面を非表示
+                if (stageNumber == 0) {
+                    gameState.showReadyScreen = false;
+                    gameState.readyScreenShown = false;
+                } else {
+                    // その他のステージはReady画面を表示
+                    gameState.readyScreenShown = false;
+                    gameState.showReadyScreen = true;
+                    gameState.readyScreenSpeedLevel = 0;
+                }
+            }
         }
         
         
@@ -607,49 +528,34 @@ int main(int argc, char* argv[]) {
             printf("Easy mode: %s\n", gameState.isEasyMode ? "ON" : "OFF");
         }
         
-        // 時間停止スキル取得切り替え処理（Rキー）- ステージ0でのみ有効（テスト用）
-        if (keyStates[GLFW_KEY_R].justPressed() && stageManager.getCurrentStage() == 0) {
-            gameState.hasTimeStopSkill = !gameState.hasTimeStopSkill;
-            if (gameState.hasTimeStopSkill) {
-                gameState.timeStopRemainingUses = gameState.timeStopMaxUses; // 使用回数をリセット
+        // スキル取得切り替え処理（ステージ0でのみ有効）
+        if (stageManager.getCurrentStage() == 0) {
+            // スキル取得キーマッピング
+            struct SkillToggle {
+                int key;
+                bool& hasSkill;
+                int& remainingUses;
+                int maxUses;
+                const char* skillName;
+            };
+            
+            std::vector<SkillToggle> skillToggles = {
+                {GLFW_KEY_R, gameState.hasTimeStopSkill, gameState.timeStopRemainingUses, gameState.timeStopMaxUses, "Time Stop"},
+                {GLFW_KEY_T, gameState.hasDoubleJumpSkill, gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses, "Double Jump"},
+                {GLFW_KEY_Y, gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, gameState.heartFeelMaxUses, "Heart Feel"},
+                {GLFW_KEY_U, gameState.hasFreeCameraSkill, gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses, "Free Camera"},
+                {GLFW_KEY_I, gameState.hasBurstJumpSkill, gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses, "Burst Jump"}
+            };
+            
+            for (const auto& skill : skillToggles) {
+                if (keyStates[skill.key].justPressed()) {
+                    skill.hasSkill = !skill.hasSkill;
+                    if (skill.hasSkill) {
+                        skill.remainingUses = skill.maxUses;
+                    }
+                    printf("%s Skill: %s\n", skill.skillName, skill.hasSkill ? "ACQUIRED" : "NOT ACQUIRED");
+                }
             }
-            printf("Time Stop Skill: %s\n", gameState.hasTimeStopSkill ? "ACQUIRED" : "NOT ACQUIRED");
-        }
-        
-        // 二段ジャンプスキル取得切り替え処理（Tキー）- ステージ0でのみ有効（テスト用）
-        if (keyStates[GLFW_KEY_T].justPressed() && stageManager.getCurrentStage() == 0) {
-            gameState.hasDoubleJumpSkill = !gameState.hasDoubleJumpSkill;
-            if (gameState.hasDoubleJumpSkill) {
-                gameState.doubleJumpRemainingUses = gameState.doubleJumpMaxUses; // 使用回数をリセット
-            }
-            printf("Double Jump Skill: %s\n", gameState.hasDoubleJumpSkill ? "ACQUIRED" : "NOT ACQUIRED");
-        }
-        
-        // ハートフエールスキル取得切り替え処理（Yキー）- ステージ0でのみ有効（テスト用）
-        if (keyStates[GLFW_KEY_Y].justPressed() && stageManager.getCurrentStage() == 0) {
-            gameState.hasHeartFeelSkill = !gameState.hasHeartFeelSkill;
-            if (gameState.hasHeartFeelSkill) {
-                gameState.heartFeelRemainingUses = gameState.heartFeelMaxUses; // 使用回数をリセット
-            }
-            printf("Heart Feel Skill: %s\n", gameState.hasHeartFeelSkill ? "ACQUIRED" : "NOT ACQUIRED");
-        }
-        
-        // フリーカメラスキル取得切り替え処理（Uキー）- ステージ0でのみ有効（テスト用）
-        if (keyStates[GLFW_KEY_U].justPressed() && stageManager.getCurrentStage() == 0) {
-            gameState.hasFreeCameraSkill = !gameState.hasFreeCameraSkill;
-            if (gameState.hasFreeCameraSkill) {
-                gameState.freeCameraRemainingUses = gameState.freeCameraMaxUses; // 使用回数をリセット
-            }
-            printf("Free Camera Skill: %s\n", gameState.hasFreeCameraSkill ? "ACQUIRED" : "NOT ACQUIRED");
-        }
-        
-        // バーストジャンプスキル取得切り替え処理（Iキー）- ステージ0でのみ有効（テスト用）
-        if (keyStates[GLFW_KEY_I].justPressed() && stageManager.getCurrentStage() == 0) {
-            gameState.hasBurstJumpSkill = !gameState.hasBurstJumpSkill;
-            if (gameState.hasBurstJumpSkill) {
-                gameState.burstJumpRemainingUses = gameState.burstJumpMaxUses; // 使用回数をリセット
-            }
-            printf("Burst Jump Skill: %s\n", gameState.hasBurstJumpSkill ? "ACQUIRED" : "NOT ACQUIRED");
         }
         
         // 時間停止スキル処理（Qキー）
@@ -858,7 +764,7 @@ int main(int argc, char* argv[]) {
         bool inGravityZone = PhysicsSystem::isPlayerInGravityZone(gameState, gameState.playerPosition, gravityDirection);
         
         // 物理演算
-        float gravityStrength = calculateGravityStrength(12.0f, deltaTime, gameState.timeScale, gravityDirection, gameState);
+        float gravityStrength = calculateGravityStrength(GameConstants::BASE_GRAVITY, deltaTime, gameState.timeScale, gravityDirection, gameState);
         glm::vec3 gravityForce = gravityDirection * gravityStrength;
 
         // デバッグ: 重力値を出力（速度倍率が1倍より大きい時）
@@ -874,7 +780,7 @@ int main(int argc, char* argv[]) {
         gameState.playerVelocity += gravityForce;
         
         // 速度倍率に応じて空気抵抗も調整（高速時はより少ない抵抗）
-        float airResistance = (gameState.timeScale > 1.0f) ? 0.99f : 0.98f;
+        float airResistance = (gameState.timeScale > 1.0f) ? GameConstants::AIR_RESISTANCE_FAST : GameConstants::AIR_RESISTANCE_NORMAL;
         gameState.playerVelocity *= airResistance;
         
         // 入力処理
@@ -885,7 +791,7 @@ int main(int argc, char* argv[]) {
         gameState.playerPosition.y += gameState.playerVelocity.y * scaledDeltaTime;
 
         // 衝突判定
-        glm::vec3 playerSize = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 playerSize = GameConstants::PLAYER_SIZE;
         
         SwitchSystem::checkSwitchCollision(gameState, gameState.playerPosition, playerSize);
         CannonSystem::checkCannonCollision(gameState, gameState.playerPosition, playerSize);
@@ -941,82 +847,44 @@ int main(int argc, char* argv[]) {
                             printf("DEBUG: Platform in Stage 3 selection area - Type: StaticPlatform, Position: (%.1f, %.1f, %.1f)\n", 
                                    platform.position.x, platform.position.y, platform.position.z);
                         }
-                        // ステージ1選択エリア（位置で判定）
-                        if (platform.position.x > 5.5f && platform.position.x < 6.5f && 
-                            platform.position.z > -0.5f && platform.position.z < 0.5f) {
-                            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                int existingStars = gameState.stageStars[1];
-                                printf("Selected Stage 1 (Current stars: %d)\n", existingStars);
-    
-                                resetStageStartTime();  // ステージ開始時間をリセット
-                                gameState.lives = 6;
-                                stageManager.goToStage(1, gameState, platformSystem);
-
-                                gameState.showReadyScreen = true;
-                                gameState.readyScreenShown = false;
-                                gameState.readyScreenSpeedLevel = 0;
+                        // ステージ選択処理（統一版）
+                        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                            int selectedStage = -1;
+                            
+                            // 各ステージエリアの判定
+                            for (int stage = 0; stage < 5; stage++) {
+                                const auto& stageArea = GameConstants::STAGE_AREAS[stage];
+                                if (platform.position.x > stageArea.x - GameConstants::STAGE_SELECTION_RANGE && 
+                                    platform.position.x < stageArea.x + GameConstants::STAGE_SELECTION_RANGE && 
+                                    platform.position.y > GameConstants::STAGE_SELECTION_HEIGHT_MIN && 
+                                    platform.position.y < GameConstants::STAGE_SELECTION_HEIGHT_MAX &&
+                                    platform.position.z > -GameConstants::STAGE_SELECTION_RANGE && 
+                                    platform.position.z < GameConstants::STAGE_SELECTION_RANGE) {
+                                    selectedStage = stage + 1;
+                                    break;
+                                }
                             }
-                        }
-                        // ステージ2選択エリア（位置で判定）
-                        else if (platform.position.x > -8.5f && platform.position.x < -7.5f && 
-                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
-                            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                int existingStars = gameState.stageStars[2];
-                                printf("Selected Stage 2 (Current stars: %d)\n", existingStars);
-                                resetStageStartTime();  // ステージ開始時間をリセット
-                                gameState.lives = 6;
-                                if(gameState.totalStars>=1){
-                                    stageManager.goToStage(2, gameState, platformSystem);
+                            
+                            if (selectedStage > 0) {
+                                int existingStars = gameState.stageStars[selectedStage];
+                                printf("Selected Stage %d (Current stars: %d)\n", selectedStage, existingStars);
+                                
+                                // ステージ解禁条件チェック
+                                bool canAccess = true;
+                                switch (selectedStage) {
+                                    case 2: canAccess = gameState.totalStars >= GameConstants::STAGE_2_REQUIRED_STARS; break;
+                                    case 3: canAccess = gameState.totalStars >= GameConstants::STAGE_3_REQUIRED_STARS; break;
+                                    case 4: canAccess = gameState.totalStars >= GameConstants::STAGE_4_REQUIRED_STARS; break;
+                                    case 5: canAccess = gameState.totalStars >= GameConstants::STAGE_5_REQUIRED_STARS; break;
+                                }
+                                
+                                if (canAccess) {
+                                    resetStageStartTime();
+                                    gameState.lives = 6;
+                                    stageManager.goToStage(selectedStage, gameState, platformSystem);
                                     gameState.readyScreenShown = false;
                                     gameState.showReadyScreen = true;
                                     gameState.readyScreenSpeedLevel = 0;
-                                }
-                            }
-                        }
-                        // ステージ3選択エリア（位置で判定）
-                        else if (platform.position.x > -22.5f && platform.position.x < -21.5f && 
-                                 platform.position.y > 0.5f && platform.position.y < 1.5f &&
-                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
-                            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                int existingStars = gameState.stageStars[3];
-                                printf("Selected Stage 3 (Current stars: %d)\n", existingStars);
-                                resetStageStartTime();  // ステージ開始時間をリセット
-                                gameState.lives = 6;
-                                if(gameState.totalStars>=3){
-                                    stageManager.goToStage(3, gameState, platformSystem);
-                                    gameState.readyScreenShown = false;
-                                    gameState.showReadyScreen = true;
-                                    gameState.readyScreenSpeedLevel = 0;
-                                }
-                            }
-                        }
-                        // ステージ4選択エリア（位置で判定）
-                        else if (platform.position.x > -34.5f && platform.position.x < -33.5f && 
-                                 platform.position.y > 0.5f && platform.position.y < 1.5f &&
-                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
-                            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                int existingStars = gameState.stageStars[4];
-                                printf("Selected Stage 4 (Current stars: %d)\n", existingStars);
-                                resetStageStartTime();  // ステージ開始時間をリセット
-                                gameState.lives = 6;
-                                if(gameState.totalStars>=5){
-                                    stageManager.goToStage(4, gameState, platformSystem);
-                                    gameState.readyScreenShown = false;
-                                    gameState.showReadyScreen = true;
-                                    gameState.readyScreenSpeedLevel = 0;
-                                }
-                            }
-                        }
-                        // ステージ5選択エリア（位置で判定）
-                        else if (platform.position.x > -46.5f && platform.position.x < -45.5f && 
-                                 platform.position.z > -0.5f && platform.position.z < 0.5f) {
-                            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                                int existingStars = gameState.stageStars[5];
-                                printf("Selected Stage 5 (Current stars: %d)\n", existingStars);
-                                resetStageStartTime();  // ステージ開始時間をリセット
-                                gameState.lives = 6;
-                                if(gameState.totalStars>=7){
-                                    stageManager.goToStage(5, gameState, platformSystem);
                                 }
                             }
                         }
@@ -1035,18 +903,18 @@ int main(int argc, char* argv[]) {
                             float remainingTime = gameState.timeLimit - gameState.clearTime;
                             float limitTime = gameState.timeLimit;
                             
-                            if(limitTime>=30){
-                                if (remainingTime >= 20.0f) {
+                            if(limitTime >= GameConstants::LONG_TIME_THRESHOLD){
+                                if (remainingTime >= GameConstants::STAR_3_TIME_LONG) {
                                     gameState.earnedStars = 3;
-                                } else if (remainingTime >= 10.0f) {
+                                } else if (remainingTime >= GameConstants::STAR_2_TIME_LONG) {
                                     gameState.earnedStars = 2;
                                 } else {
                                     gameState.earnedStars = 1;
                                 }
                             }else{
-                                if (remainingTime >= 10.0f) {
+                                if (remainingTime >= GameConstants::STAR_3_TIME_SHORT) {
                                     gameState.earnedStars = 3;
-                                } else if (remainingTime >= 5.0f) {
+                                } else if (remainingTime >= GameConstants::STAR_2_TIME_SHORT) {
                                     gameState.earnedStars = 2;
                                 } else {
                                     gameState.earnedStars = 1;
@@ -1279,59 +1147,11 @@ int main(int argc, char* argv[]) {
         renderer->beginFrameWithBackground(stageManager.getCurrentStage());
         
         // カメラ設定
-        glm::vec3 cameraPos, cameraTarget;
-        if (gameState.isFreeCameraActive) {
-            // フリーカメラ：プレイヤーを中心にカメラが回転
-            float yaw = glm::radians(gameState.freeCameraYaw);
-            float pitch = glm::radians(gameState.freeCameraPitch);
-            
-            // カメラの位置を計算（プレイヤーからの相対位置）
-            float distance = 15.0f; // カメラとプレイヤーの距離
-            if (stageManager.getCurrentStage() == 0) {
-                distance = 15.0f;
-            } else {
-                distance = 8.0f;
-            }
-            
-            // プレイヤーを中心とした球面座標でカメラ位置を計算
-            cameraPos.x = gameState.playerPosition.x + distance * cos(yaw) * cos(pitch);
-            cameraPos.y = gameState.playerPosition.y + distance * sin(pitch);
-            cameraPos.z = gameState.playerPosition.z + distance * sin(yaw) * cos(pitch);
-            
-            // カメラは常にプレイヤーを見る
-            cameraTarget = gameState.playerPosition;
-        } else if (gameState.isFirstPersonView) {
-            // 1人称視点：プレイヤーの目の位置
-            cameraPos = gameState.playerPosition + glm::vec3(0, 1.0f, 0); // 目の高さ
-            
-            // マウス入力でカメラの向きを制御
-            float yaw = glm::radians(gameState.cameraYaw);
-            float pitch = glm::radians(gameState.cameraPitch);
-            
-            // カメラの向きを計算
-            glm::vec3 direction;
-            direction.x = cos(yaw) * cos(pitch);
-            direction.y = sin(pitch);
-            direction.z = sin(yaw) * cos(pitch);
-            
-            cameraTarget = cameraPos + direction;
-        } else {
-            // 3人称視点（現在の実装）
-            if (stageManager.getCurrentStage() == 0) {
-                // ステージ選択フィールドでは上からのアングル
-                cameraPos = gameState.playerPosition + glm::vec3(0, 10, -15);
-                cameraTarget = gameState.playerPosition;
-            } else {
-                // 通常のステージでは従来のアングル
-                cameraPos = gameState.playerPosition + glm::vec3(0, 2, -8);
-                cameraTarget = gameState.playerPosition;
-            }
-        }
-        renderer->setCamera(cameraPos, cameraTarget);
-
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        renderer->setProjection(45.0f, (float)width / (float)height, 0.1f, 100.0f);
+        auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
+        CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
+        
+        // ウィンドウサイズを取得
+        auto [width, height] = CameraSystem::getWindowSize(window);
         
         // 足場の描画
         auto positions = platformSystem.getPositions();
@@ -1356,8 +1176,8 @@ int main(int argc, char* argv[]) {
         // 重力反転エリアの描画
         for (const auto& zone : gameState.gravityZones) {
             if (zone.isActive) {
-                glm::vec3 zoneColor = glm::vec3(0.2f, 0.6f, 1.0f);
-                renderer->renderBoxWithAlpha(zone.position, zoneColor, zone.size, 0.3f);
+                renderer->renderBoxWithAlpha(zone.position, GameConstants::Colors::GRAVITY_ZONE_COLOR, 
+                                           zone.size, GameConstants::Colors::GRAVITY_ZONE_ALPHA);
             }
         }
         
@@ -1391,7 +1211,7 @@ int main(int argc, char* argv[]) {
         
         // プレイヤーの描画（1人称視点時は描画しない）
         if (!gameState.isFirstPersonView) {
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
+            renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
         }
 
         // UI（時間表示はrenderTimeUI関数で行うため削除）
@@ -1513,23 +1333,11 @@ int main(int argc, char* argv[]) {
         
         // ステージ0での3D星の描画（ステージ選択エリアの上に固定）
         if (stageManager.getCurrentStage() == 0) {
-            // ステージ選択エリアの位置と高さを定義
-            struct StageArea {
-                float x, y, z;  // エリアの中心位置
-                float height;   // エリアの高さ
-            };
-            
-            StageArea stageAreas[] = {
-                {6.0f, 0.0f, 0.0f, 1.0f},    // ステージ1
-                {-8.0f, 0.0f, 0.0f, 1.0f},   // ステージ2
-                {-22.0f, 0.0f, 0.0f, 1.0f},  // ステージ3
-                {-34.0f, 0.0f, 0.0f, 1.0f},  // ステージ4
-                {-46.0f, 0.0f, 0.0f, 1.0f}   // ステージ5
-            };
+            // GameConstantsのSTAGE_AREASを使用
             
             // 各ステージの星を描画
             for (int stage = 0; stage < 5; stage++) {
-                StageArea& area = stageAreas[stage];
+                const auto& area = GameConstants::STAGE_AREAS[stage];
                 int stageNumber = stage + 1;
                 
                 // ステージ2~5の解禁条件チェック
@@ -1613,7 +1421,7 @@ int main(int argc, char* argv[]) {
         renderer->endFrame();
         
         // フレームレート制限
-        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
+        std::this_thread::sleep_for(std::chrono::milliseconds(GameConstants::FRAME_DELAY_MS));
         
         glfwPollEvents();
     }

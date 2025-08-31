@@ -1,26 +1,12 @@
 #include "stage_manager.h"
 #include "stage_generator.h"
+#include "../app/game_constants.h"
 #include <iostream>
 #include <algorithm>
 #include <tuple>
 
-// 色の定数定義
-namespace Colors {
-    const glm::vec3 RED = glm::vec3(1.0f, 0.0f, 0.0f);
-    const glm::vec3 GREEN = glm::vec3(0.0f, 1.0f, 0.0f);
-    const glm::vec3 BLUE = glm::vec3(0.0f, 0.0f, 1.0f);
-    const glm::vec3 YELLOW = glm::vec3(1.0f, 1.0f, 0.0f);
-    const glm::vec3 CYAN = glm::vec3(0.0f, 1.0f, 1.0f);
-    const glm::vec3 MAGENTA = glm::vec3(1.0f, 0.0f, 1.0f);
-    const glm::vec3 ORANGE = glm::vec3(1.0f, 0.5f, 0.0f);
-    const glm::vec3 PURPLE = glm::vec3(0.5f, 0.0f, 1.0f);
-    const glm::vec3 PINK = glm::vec3(1.0f, 0.0f, 0.5f);
-    const glm::vec3 LIME = glm::vec3(0.5f, 1.0f, 0.0f);
-    const glm::vec3 BROWN = glm::vec3(0.6f, 0.4f, 0.2f);
-    const glm::vec3 GRAY = glm::vec3(0.5f, 0.5f, 0.5f);
-    const glm::vec3 WHITE = glm::vec3(1.0f, 1.0f, 1.0f);
-    const glm::vec3 BLACK = glm::vec3(0.0f, 0.0f, 0.0f);
-}
+// 色の定数定義（GameConstants::Colorsを使用）
+namespace Colors = GameConstants::Colors;
 
 // 共通で使用する構造体を定義
 struct ItemConfig {
@@ -321,7 +307,7 @@ void StageManager::initializeStages() {
         generateStageSelectionField,
         true,  // 最初からアンロック
         false,
-        999.0f  // 制限時間なし
+        GameConstants::STAGE_0_TIME_LIMIT  // 制限時間なし
     });
     
     // ステージ1: 基本的なジャンプとプラットフォーム
@@ -332,7 +318,7 @@ void StageManager::initializeStages() {
         generateStage1,
         true,  // 最初からアンロック
         false,
-        20.0f  // 30秒制限時間
+        GameConstants::STAGE_1_TIME_LIMIT
     });
     
     // ステージ2: 重力反転エリア
@@ -343,7 +329,7 @@ void StageManager::initializeStages() {
         generateStage2,
         true,  // テスト用にアンロック
         false,
-        40.0f  // 45秒制限時間
+        GameConstants::STAGE_2_TIME_LIMIT
     });
     
     // ステージ3: スイッチと大砲
@@ -354,7 +340,7 @@ void StageManager::initializeStages() {
         generateStage3,
         true,
         false,
-        70.0f  // 60秒制限時間
+        GameConstants::STAGE_3_TIME_LIMIT
     });
     
     // ステージ4: 複雑な移動プラットフォーム
@@ -365,7 +351,7 @@ void StageManager::initializeStages() {
         generateStage4,
         true,
         false,
-        90.0f  // 90秒制限時間
+        GameConstants::STAGE_4_TIME_LIMIT
     });
     
     // ステージ5: 最終ステージ
@@ -376,7 +362,7 @@ void StageManager::initializeStages() {
         generateStage5,
         true,
         false,
-        120.0f // 120秒制限時間
+        GameConstants::STAGE_5_TIME_LIMIT
     });
     
     printf("StageManager initialized with %zu stages\n", stages.size());
@@ -417,12 +403,12 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     // 制限時間の計算
     float finalTimeLimit = baseTimeLimit;
     if (gameState.isFirstPersonMode) {
-        finalTimeLimit += 20.0f;  // 1人称モード：+20秒
-        printf("1ST PERSON MODE: +20.0s\n");
+        finalTimeLimit += GameConstants::FIRST_PERSON_TIME_BONUS;  // 1人称モードボーナス
+        printf("1ST PERSON MODE: +%.1fs\n", GameConstants::FIRST_PERSON_TIME_BONUS);
     }
     if (gameState.isEasyMode) {
-        finalTimeLimit += 20.0f;  // お助けモード：+20秒
-        printf("EASY MODE: +20.0s\n");
+        finalTimeLimit += GameConstants::EASY_MODE_TIME_BONUS;  // お助けモードボーナス
+        printf("EASY MODE: +%.1fs\n", GameConstants::EASY_MODE_TIME_BONUS);
     }
     
     gameState.timeLimit = finalTimeLimit;
@@ -851,7 +837,7 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
         {{6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
 
         // ステージ1選択エリア（赤色）
-        {{6, 1, 0}, {1, 1, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 1 Selection Area"},
+        {{GameConstants::STAGE_AREAS[0].x, 1, 0}, {1, 1, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 1 Selection Area"},
         
         // メインフィールド（間）
         {{0, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
@@ -860,26 +846,26 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
         // メインフィールド（2つ目）
         {{-6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ2選択エリア（トータルスター数に応じて色を変更）
-        {{-8, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 1) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
+        // ステージ2選択エリア（トータルスター数に応じて色を変更）- GameConstants::STAGE_AREAS[1]と同期
+        {{GameConstants::STAGE_AREAS[1].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 1) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
         
         // メインフィールド（3つ目）
         {{-20, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
 
-        // ステージ3選択エリア（青色）
-        {{-22, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 3) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
+        // ステージ3選択エリア（青色）- GameConstants::STAGE_AREAS[2]と同期
+        {{GameConstants::STAGE_AREAS[2].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 3) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
 
         // メインフィールド（4つ目）
         {{-32, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ4選択エリア（黄色）
-        {{-34, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 5) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
+        // ステージ4選択エリア（黄色）- GameConstants::STAGE_AREAS[3]と同期
+        {{GameConstants::STAGE_AREAS[3].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 5) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
         
         // メインフィールド（5つ目）
         {{-44, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
 
-        // ステージ5選択エリア（マゼンタ）
-        {{-46, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 7) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
+        // ステージ5選択エリア（マゼンタ）- GameConstants::STAGE_AREAS[4]と同期
+        {{GameConstants::STAGE_AREAS[4].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 7) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
     });
 
     createFlyingPlatforms(gameState, platformSystem, {
