@@ -17,7 +17,7 @@ void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
         gameState->firstMouse = false;
     }
     float xoffset = float(xpos - gameState->lastMouseX);
-    float yoffset = float(gameState->lastMouseY - ypos);
+    float yoffset = float(ypos - gameState->lastMouseY);
     gameState->lastMouseX = float(xpos);
     gameState->lastMouseY = float(ypos);
     
@@ -25,9 +25,17 @@ void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     xoffset *= sensitivity;
     yoffset *= sensitivity;
     
-    gameState->cameraYaw += xoffset;
-    gameState->cameraPitch += yoffset;
-    gameState->cameraPitch = std::max(-89.0f, std::min(89.0f, gameState->cameraPitch));
+    if (gameState->isFreeCameraActive) {
+        // フリーカメラ中のマウス入力
+        gameState->freeCameraYaw += xoffset;
+        gameState->freeCameraPitch += yoffset;
+        gameState->freeCameraPitch = std::max(-89.0f, std::min(89.0f, gameState->freeCameraPitch));
+    } else if (gameState->isFirstPersonView) {
+        // 1人称視点中のマウス入力
+        gameState->cameraYaw += xoffset;
+        gameState->cameraPitch += yoffset;
+        gameState->cameraPitch = std::max(-89.0f, std::min(89.0f, gameState->cameraPitch));
+    }
 }
 
 // スクロールコールバック
@@ -59,7 +67,37 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
     }
     
     // キーボード入力
-    if (gameState.isFirstPersonView) {
+    if (gameState.isFreeCameraActive) {
+        // フリーカメラ：1人称視点と同じ移動（進行方向を逆に）
+        float yaw = glm::radians(gameState.freeCameraYaw);
+        float pitch = glm::radians(gameState.freeCameraPitch);
+        float cosYaw = cos(yaw);
+        float sinYaw = sin(yaw);
+        
+        // Wキー：常に前進（カメラの向いている方向）
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+            // カメラの向きベクトルと同じ方向に移動（Y成分は無視）
+            moveDir.x -= cosYaw * cos(pitch);
+            moveDir.z -= sinYaw * cos(pitch);
+        }
+        // Sキー：後退（カメラの向いている方向の逆）
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            moveDir.x += cosYaw * cos(pitch);
+            moveDir.z += sinYaw * cos(pitch);
+        }
+        // Aキー：左移動（カメラの向いている方向に対して左）
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            // カメラの向きベクトルを90度左に回転
+            moveDir.x -= sinYaw;
+            moveDir.z += cosYaw;
+        }
+        // Dキー：右移動（カメラの向いている方向に対して右）
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            // カメラの向きベクトルを90度右に回転
+            moveDir.x += sinYaw;
+            moveDir.z -= cosYaw;
+        }
+    } else if (gameState.isFirstPersonView) {
         // 1人称視点：カメラの向いている方向に応じて移動
         float yaw = glm::radians(gameState.cameraYaw);
         float pitch = glm::radians(gameState.cameraPitch);
@@ -109,6 +147,13 @@ void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float d
         
         // 移動量を計算
         float moveDistance = moveSpeed * deltaTime;
+        
+        // バーストジャンプ空中中は移動速度を2倍にする
+        if (gameState.isInBurstJumpAir) {
+            moveDistance *= 2.0f;
+
+        }
+        
         glm::vec3 newPosition = gameState.playerPosition;
         newPosition.x += moveDir.x * moveDistance;
         newPosition.z += moveDir.z * moveDistance;
@@ -190,14 +235,33 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
         }
         
         if (onPlatform) {
-            // 重力方向に応じたジャンプ
-            if (gravityDirection.y > 0.5f) {
-                gameState.playerVelocity.y = -8.0f; // 重力反転時は下向きにジャンプ
+            // バーストジャンプがアクティブで未使用の場合
+            if (gameState.isBurstJumpActive && !gameState.hasUsedBurstJump) {
+                // バーストジャンプ：めちゃくちゃ高いジャンプ力
+                if (gravityDirection.y > 0.5f) {
+                    gameState.playerVelocity.y = -20.0f; // 重力反転時は下向きにバーストジャンプ
+                } else {
+                    gameState.playerVelocity.y = 20.0f; // 通常時は上向きにバーストジャンプ
+                }
+                gameState.hasUsedBurstJump = true;
+                gameState.isBurstJumpActive = false; // バーストジャンプを使用したので非アクティブに
+                gameState.burstJumpDelayTimer = 0.01f; // 1秒後に空中フラグを設定
+                printf("バーストジャンプ発動！1秒後に空中移動速度2倍効果が開始されます！\n");
+                printf("バーストジャンプ遅延タイマー開始: %.1f秒\n", gameState.burstJumpDelayTimer);
             } else {
-                gameState.playerVelocity.y = 8.0f; // 通常時は上向きにジャンプ
+                // 通常のジャンプ
+                if (gravityDirection.y > 0.5f) {
+                    gameState.playerVelocity.y = -8.0f; // 重力反転時は下向きにジャンプ
+                } else {
+                    gameState.playerVelocity.y = 8.0f; // 通常時は上向きにジャンプ
+                }
             }
-            // 足場に着地したら二段ジャンプをリセット
+            // 足場に着地したら二段ジャンプとバーストジャンプ空中フラグをリセット
             gameState.canDoubleJump = true;
+            if (gameState.isInBurstJumpAir) {
+                gameState.isInBurstJumpAir = false; // バーストジャンプ空中フラグをリセット
+                printf("足場着地！バーストジャンプ空中フラグリセット: isInBurstJumpAir = false\n");
+            }
         } else if ((gameState.isEasyMode && gameState.canDoubleJump) || 
                    (!gameState.isEasyMode && gameState.hasDoubleJumpSkill && gameState.doubleJumpRemainingUses > 0 && gameState.canDoubleJump)) {
             // 二段ジャンプ（お助けモードまたは通常モードでスキル取得済み）
@@ -215,6 +279,16 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
             } else {
                 printf("Double jump used! (Easy mode - unlimited)\n");
             }
+        } else if (gameState.isBurstJumpActive && !gameState.hasUsedBurstJump) {
+            // バーストジャンプ：空中でジャンプボタンを押した場合
+            if (gravityDirection.y > 0.5f) {
+                gameState.playerVelocity.y = -20.0f; // 重力反転時は下向きにバーストジャンプ
+            } else {
+                gameState.playerVelocity.y = 20.0f; // 通常時は上向きにバーストジャンプ
+            }
+            gameState.hasUsedBurstJump = true;
+            gameState.isBurstJumpActive = false; // バーストジャンプを使用したので非アクティブに
+            gameState.isInBurstJumpAir = true; // バーストジャンプ空中フラグを設定
         }
     }
     spacePressed = spaceCurrentlyPressed;

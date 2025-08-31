@@ -46,6 +46,8 @@ public:
     void renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses);
     void renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int remainingUses, int maxUses);
     void renderHeartFeelUI(bool hasSkill, int remainingUses, int maxUses, int currentLives);
+    void renderFreeCameraUI(bool hasSkill, bool isActive, float timer, int remainingUses, int maxUses);
+    void renderBurstJumpUI(bool hasSkill, bool isActive, int remainingUses, int maxUses);
     void renderStar(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     void renderStar3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
     void renderLock3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);

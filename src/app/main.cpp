@@ -58,6 +58,11 @@ float calculateGravityStrength(float baseGravity, float deltaTime, float timeSca
         gravityStrength *= 0.7f;
     }
     
+    // バーストジャンプ中は重力を半分にする
+    if (gameState.isBurstJumpActive && !gameState.hasUsedBurstJump) {
+        gravityStrength *= 0.5f;
+    }
+    
     return gravityStrength;
 }
 
@@ -434,6 +439,31 @@ int main(int argc, char* argv[]) {
             }
         }
         
+        // フリーカメラスキルの更新
+        if (gameState.isFreeCameraActive) {
+            gameState.freeCameraTimer -= deltaTime;
+            if (gameState.freeCameraTimer <= 0.0f) {
+                gameState.isFreeCameraActive = false;
+                gameState.freeCameraTimer = 0.0f;
+                
+                // マウスカーソルを表示に戻す
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                
+                printf("フリーカメラ終了！\n");
+            }
+        }
+        
+        // バーストジャンプ遅延タイマーの更新
+        if (gameState.burstJumpDelayTimer > 0.0f) {
+            gameState.burstJumpDelayTimer -= deltaTime;
+            if (gameState.burstJumpDelayTimer <= 0.0f) {
+                gameState.isInBurstJumpAir = true; // バーストジャンプ空中フラグを設定
+                gameState.burstJumpDelayTimer = 0.0f;
+                printf("バーストジャンプ空中移動速度2倍効果開始！\n");
+                printf("バーストジャンプ空中フラグ設定: isInBurstJumpAir = true\n");
+            }
+        }
+        
         // 制限時間システムの更新（時間停止中は更新しない）
         if (!gameState.isStageCompleted && !gameState.isTimeUp && !gameState.isTimeStopped) {
             gameState.remainingTime -= deltaTime;
@@ -604,6 +634,24 @@ int main(int argc, char* argv[]) {
             printf("Heart Feel Skill: %s\n", gameState.hasHeartFeelSkill ? "ACQUIRED" : "NOT ACQUIRED");
         }
         
+        // フリーカメラスキル取得切り替え処理（Uキー）- ステージ0でのみ有効（テスト用）
+        if (keyStates[GLFW_KEY_U].justPressed() && stageManager.getCurrentStage() == 0) {
+            gameState.hasFreeCameraSkill = !gameState.hasFreeCameraSkill;
+            if (gameState.hasFreeCameraSkill) {
+                gameState.freeCameraRemainingUses = gameState.freeCameraMaxUses; // 使用回数をリセット
+            }
+            printf("Free Camera Skill: %s\n", gameState.hasFreeCameraSkill ? "ACQUIRED" : "NOT ACQUIRED");
+        }
+        
+        // バーストジャンプスキル取得切り替え処理（Iキー）- ステージ0でのみ有効（テスト用）
+        if (keyStates[GLFW_KEY_I].justPressed() && stageManager.getCurrentStage() == 0) {
+            gameState.hasBurstJumpSkill = !gameState.hasBurstJumpSkill;
+            if (gameState.hasBurstJumpSkill) {
+                gameState.burstJumpRemainingUses = gameState.burstJumpMaxUses; // 使用回数をリセット
+            }
+            printf("Burst Jump Skill: %s\n", gameState.hasBurstJumpSkill ? "ACQUIRED" : "NOT ACQUIRED");
+        }
+        
         // 時間停止スキル処理（Qキー）
         if (keyStates[GLFW_KEY_Q].justPressed() && gameState.hasTimeStopSkill && !gameState.isTimeStopped && gameState.timeStopRemainingUses > 0) {
             gameState.isTimeStopped = true;
@@ -618,6 +666,33 @@ int main(int argc, char* argv[]) {
             gameState.heartFeelRemainingUses--;
             printf("ハートフエール！残機が1増加しました。残り使用回数: %d/%d, 残機: %d\n", 
                    gameState.heartFeelRemainingUses, gameState.heartFeelMaxUses, gameState.lives);
+        }
+        
+        // フリーカメラスキル処理（Cキー）- 3人称モードでのみ有効
+        if (keyStates[GLFW_KEY_C].justPressed() && gameState.hasFreeCameraSkill && !gameState.isFreeCameraActive && 
+            gameState.freeCameraRemainingUses > 0 && !gameState.isFirstPersonView) {
+            gameState.isFreeCameraActive = true;
+            gameState.freeCameraTimer = gameState.freeCameraDuration;
+            gameState.freeCameraRemainingUses--;
+            
+            // 現在のカメラ角度を保存（カメラ位置はプレイヤーに対して固定）
+            gameState.freeCameraYaw = gameState.cameraYaw;
+            gameState.freeCameraPitch = gameState.cameraPitch;
+            
+            // マウスカーソルを非表示にして自由に動かせるようにする
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            
+            printf("フリーカメラ開始！残り使用回数: %d/%d\n", gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses);
+        }
+        
+        // バーストジャンプスキル処理（Bキー）
+        if (keyStates[GLFW_KEY_B].justPressed() && gameState.hasBurstJumpSkill && !gameState.isBurstJumpActive && 
+            gameState.burstJumpRemainingUses > 0) {
+            gameState.isBurstJumpActive = true;
+            gameState.hasUsedBurstJump = false;
+            gameState.burstJumpRemainingUses--;
+            
+            printf("バーストジャンプ準備完了！残り使用回数: %d/%d\n", gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses);
         }
         
         // カメラ切り替え処理（Fキー）- ステージ0でのみ有効
@@ -1205,7 +1280,27 @@ int main(int argc, char* argv[]) {
         
         // カメラ設定
         glm::vec3 cameraPos, cameraTarget;
-        if (gameState.isFirstPersonView) {
+        if (gameState.isFreeCameraActive) {
+            // フリーカメラ：プレイヤーを中心にカメラが回転
+            float yaw = glm::radians(gameState.freeCameraYaw);
+            float pitch = glm::radians(gameState.freeCameraPitch);
+            
+            // カメラの位置を計算（プレイヤーからの相対位置）
+            float distance = 15.0f; // カメラとプレイヤーの距離
+            if (stageManager.getCurrentStage() == 0) {
+                distance = 15.0f;
+            } else {
+                distance = 8.0f;
+            }
+            
+            // プレイヤーを中心とした球面座標でカメラ位置を計算
+            cameraPos.x = gameState.playerPosition.x + distance * cos(yaw) * cos(pitch);
+            cameraPos.y = gameState.playerPosition.y + distance * sin(pitch);
+            cameraPos.z = gameState.playerPosition.z + distance * sin(yaw) * cos(pitch);
+            
+            // カメラは常にプレイヤーを見る
+            cameraTarget = gameState.playerPosition;
+        } else if (gameState.isFirstPersonView) {
             // 1人称視点：プレイヤーの目の位置
             cameraPos = gameState.playerPosition + glm::vec3(0, 1.0f, 0); // 目の高さ
             
@@ -1349,6 +1444,14 @@ int main(int argc, char* argv[]) {
         if (stageManager.getCurrentStage() != 0) {
             int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
             renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+            
+            // フリーカメラスキルUIを描画
+            renderer->renderFreeCameraUI(gameState.hasFreeCameraSkill, gameState.isFreeCameraActive, gameState.freeCameraTimer, 
+                                        gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses);
+            
+            // バーストジャンプスキルUIを描画
+            renderer->renderBurstJumpUI(gameState.hasBurstJumpSkill, gameState.isBurstJumpActive, 
+                                       gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses);
             
             // ハートフエールスキルUIを描画
             renderer->renderHeartFeelUI(gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, 
@@ -1501,9 +1604,9 @@ int main(int argc, char* argv[]) {
         }
         
         // 操作説明
-        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control, Q=Time Stop, H=Heart Feel";
+        std::string controlsText = "Controls: WASD=Move, SPACE=Jump, 0-5=Stage Select, LEFT/RIGHT=Next/Prev Stage, T=Speed Control, Q=Time Stop, H=Heart Feel, C=Free Camera, B=Burst Jump";
         if (stageManager.getCurrentStage() == 0) {
-            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle, E=Easy Mode, R=Toggle Time Stop Skill, T=Toggle Double Jump Skill, Y=Toggle Heart Feel Skill";
+            controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle, E=Easy Mode, R=Toggle Time Stop Skill, T=Toggle Double Jump Skill, Y=Toggle Heart Feel Skill, U=Toggle Free Camera Skill, I=Toggle Burst Jump Skill";
         }
         renderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
         

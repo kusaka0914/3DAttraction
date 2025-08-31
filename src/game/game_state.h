@@ -290,6 +290,25 @@ struct GameState {
     int heartFeelMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
     int heartFeelRemainingUses = 3;  // 残り使用回数
     
+    // フリーカメラスキル用
+    bool hasFreeCameraSkill = true;  // フリーカメラスキルを取得しているかどうか
+    bool isFreeCameraActive = false;  // フリーカメラがアクティブかどうか
+    float freeCameraDuration = 20.0f;  // フリーカメラの持続時間（秒）
+    float freeCameraTimer = 0.0f;  // フリーカメラの残り時間
+    int freeCameraMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
+    int freeCameraRemainingUses = 3;  // 残り使用回数
+    float freeCameraYaw = 90.0f;  // フリーカメラのヨー角
+    float freeCameraPitch = 0.0f;  // フリーカメラのピッチ角
+    
+    // バーストジャンプスキル用
+    bool hasBurstJumpSkill = true;  // バーストジャンプスキルを取得しているかどうか
+    bool isBurstJumpActive = false;  // バーストジャンプがアクティブかどうか
+    bool hasUsedBurstJump = false;  // バーストジャンプを使用済みかどうか
+    bool isInBurstJumpAir = false;  // バーストジャンプで空中にいるかどうか
+    float burstJumpDelayTimer = 0.0f;  // バーストジャンプ空中フラグ設定の遅延タイマー
+    int burstJumpMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
+    int burstJumpRemainingUses = 3;  // 残り使用回数
+    
     // 時間停止スキル用
     bool hasTimeStopSkill = true;  // 時間停止スキルを取得しているかどうか
     bool isTimeStopped = false;  // 時間停止中かどうか

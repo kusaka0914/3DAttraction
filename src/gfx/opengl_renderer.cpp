@@ -924,6 +924,64 @@ void OpenGLRenderer::renderHeartFeelUI(bool hasSkill, int remainingUses, int max
     glPopMatrix();
 }
 
+// フリーカメラスキルUI表示
+void OpenGLRenderer::renderFreeCameraUI(bool hasSkill, bool isActive, float timer, int remainingUses, int maxUses) {
+    // スキルを取得していない場合は表示しない
+    if (!hasSkill) {
+        return;
+    }
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // フリーカメラスキルの表示（左下、ハートフエールスキルの上）
+    std::string skillText = "フリーカメラ";
+    glm::vec3 skillColor = glm::vec3(0.8f, 0.8f, 1.0f); // 薄い青色
+    
+    // アクティブ中は明るい青色
+    if (isActive) {
+        skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
+    }
+    
+    renderText(skillText, glm::vec2(30, 470), skillColor, 1.5f);
+    
+    // 使用回数表示
+    std::string usesText = "C: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 使用回数が0の場合は灰色
+    if (remainingUses <= 0) {
+        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+    }
+    
+    renderText(usesText, glm::vec2(30, 500), usesColor, 1.2f);
+    
+    // アクティブ中の残り時間表示
+    if (isActive) {
+        std::string timerText = "残り: " + std::to_string(static_cast<int>(timer)) + "s";
+        renderText(timerText, glm::vec2(30, 440), glm::vec3(1.0f, 0.5f, 0.5f), 1.2f);
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 // 星の描画（塗りつぶし版）
 void OpenGLRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
     glColor3f(color.r, color.g, color.b);
@@ -2373,6 +2431,62 @@ void OpenGLRenderer::renderHeart(const glm::vec2& position, const glm::vec3& col
     glEnd();
 }
 
-
+// バーストジャンプスキルUI表示
+void OpenGLRenderer::renderBurstJumpUI(bool hasSkill, bool isActive, int remainingUses, int maxUses) {
+    // スキルを取得していない場合は表示しない
+    if (!hasSkill) {
+        return;
+    }
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // バーストジャンプスキルの表示（左下、フリーカメラスキルの上）
+    std::string skillText = "バーストジャンプ";
+    glm::vec3 skillColor = glm::vec3(1.0f, 0.8f, 0.2f); // オレンジ色
+    
+    // アクティブ中は明るいオレンジ色
+    if (isActive) {
+        skillColor = glm::vec3(1.0f, 0.6f, 0.0f);
+    }
+    
+    renderText(skillText, glm::vec2(30, 520), skillColor, 1.5f);
+    
+    // 使用回数表示
+    std::string usesText = "B: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 使用回数が0の場合は灰色
+    if (remainingUses <= 0) {
+        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+    }
+    
+    renderText(usesText, glm::vec2(30, 550), usesColor, 1.2f);
+    
+    // アクティブ中の表示
+    if (isActive) {
+        std::string activeText = "準備完了！SPACEで発動";
+        renderText(activeText, glm::vec2(30, 490), glm::vec3(1.0f, 0.5f, 0.5f), 1.2f);
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
 
 } // namespace gfx
