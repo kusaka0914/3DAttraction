@@ -1,12 +1,13 @@
 #include "input_system.h"
 #include "../physics/physics_system.h"
+#include "../app/game_constants.h"
 #include <algorithm>
 
 // ゲームパッド関連の静的変数
 static bool gamepadConnected = false;
-static int gamepadId = GLFW_JOYSTICK_1;
-static bool gamepadButtons[15] = {false}; // ボタンの状態を保存
-static bool gamepadButtonsLast[15] = {false}; // 前フレームのボタン状態
+static int gamepadId = GameConstants::InputConstants::DEFAULT_GAMEPAD_ID;
+static bool gamepadButtons[GameConstants::InputConstants::MAX_GAMEPAD_BUTTONS] = {false}; // ボタンの状態を保存
+static bool gamepadButtonsLast[GameConstants::InputConstants::MAX_GAMEPAD_BUTTONS] = {false}; // 前フレームのボタン状態
 
 // マウスコールバック
 void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -21,20 +22,21 @@ void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     gameState->lastMouseX = float(xpos);
     gameState->lastMouseY = float(ypos);
     
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
+    xoffset *= GameConstants::InputConstants::MOUSE_SENSITIVITY;
+    yoffset *= GameConstants::InputConstants::MOUSE_SENSITIVITY;
     
     if (gameState->isFreeCameraActive) {
         // フリーカメラ中のマウス入力
         gameState->freeCameraYaw += xoffset;
         gameState->freeCameraPitch += yoffset;
-        gameState->freeCameraPitch = std::max(-89.0f, std::min(89.0f, gameState->freeCameraPitch));
+        gameState->freeCameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
+                                             std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->freeCameraPitch));
     } else if (gameState->isFirstPersonView) {
         // 1人称視点中のマウス入力
         gameState->cameraYaw += xoffset;
         gameState->cameraPitch += yoffset;
-        gameState->cameraPitch = std::max(-89.0f, std::min(89.0f, gameState->cameraPitch));
+        gameState->cameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
+                                        std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->cameraPitch));
     }
 }
 
@@ -42,12 +44,13 @@ void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 void InputSystem::scroll_callback(GLFWwindow* window, double, double yoffset) {
     GameState* gameState = static_cast<GameState*>(glfwGetWindowUserPointer(window));
     gameState->cameraDistance -= float(yoffset);
-    gameState->cameraDistance = std::max(1.0f, std::min(50.0f, gameState->cameraDistance));
+    gameState->cameraDistance = std::max(GameConstants::InputConstants::MIN_CAMERA_DISTANCE, 
+                                       std::min(GameConstants::InputConstants::MAX_CAMERA_DISTANCE, gameState->cameraDistance));
 }
 
 // 入力処理
 void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float deltaTime) {
-    float moveSpeed = 6.0f;
+    float moveSpeed = GameConstants::InputConstants::MOVE_SPEED;
     
     // 重力反転エリアのチェック
     glm::vec3 gravityDirection = glm::vec3(0, -1, 0); // デフォルトは下向き

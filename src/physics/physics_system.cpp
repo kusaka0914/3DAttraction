@@ -1,4 +1,5 @@
 #include "physics_system.h"
+#include "../app/game_constants.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
@@ -24,14 +25,14 @@ bool PhysicsSystem::checkPlatformCollisionHorizontal(const GameState& gameState,
         if (platform.size.x <= 0 || platform.size.y <= 0 || platform.size.z <= 0) continue;
         
         // 水平方向の衝突判定のみ（Y軸は少し余裕を持たせる）
-        glm::vec3 platformMin = platform.position - platform.size * 0.5f;
-        glm::vec3 platformMax = platform.position + platform.size * 0.5f;
-        glm::vec3 playerMin = playerPos - playerSize * 0.5f;
-        glm::vec3 playerMax = playerPos + playerSize * 0.5f;
+        glm::vec3 platformMin = platform.position - platform.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
+        glm::vec3 platformMax = platform.position + platform.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
+        glm::vec3 playerMin = playerPos - playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
+        glm::vec3 playerMax = playerPos + playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
         
         // プレイヤーが足場の上にいる場合は水平移動を許可（通常重力）
         // 厳密に判定：プレイヤーが実際に足場の上に乗っているかチェック
-        bool onTopSurface = (std::abs(playerMin.y - platformMax.y) < 0.1f) && 
+        bool onTopSurface = (std::abs(playerMin.y - platformMax.y) < GameConstants::PhysicsConstants::PLATFORM_SURFACE_TOLERANCE) && 
                            (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
         if (onTopSurface) {
@@ -40,7 +41,7 @@ bool PhysicsSystem::checkPlatformCollisionHorizontal(const GameState& gameState,
         
         // プレイヤーが足場の下面にいる場合も水平移動を許可（重力反転時）
         // 厳密に判定：プレイヤーが実際に足場の下面に乗っているかチェック
-        bool onBottomSurface = (std::abs(playerMax.y - platformMin.y) < 0.1f) && 
+        bool onBottomSurface = (std::abs(playerMax.y - platformMin.y) < GameConstants::PhysicsConstants::PLATFORM_SURFACE_TOLERANCE) && 
                               (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                                playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
         if (onBottomSurface) {
@@ -48,7 +49,8 @@ bool PhysicsSystem::checkPlatformCollisionHorizontal(const GameState& gameState,
         }
         
         // プレイヤーが足場の側面高さ範囲にいる場合のみ水平衝突をチェック
-        if (playerMax.y > platformMin.y - 0.1f && playerMin.y < platformMax.y + 0.1f) {
+        if (playerMax.y > platformMin.y - GameConstants::PhysicsConstants::COLLISION_TOLERANCE && 
+            playerMin.y < platformMax.y + GameConstants::PhysicsConstants::COLLISION_TOLERANCE) {
             if (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                 playerMax.z >= platformMin.z && playerMin.z <= platformMax.z) {
                 return true;
@@ -89,19 +91,19 @@ GameState::Platform* PhysicsSystem::checkPlatformCollisionVertical(GameState& ga
 // 重力方向を考慮した足場衝突判定
 bool PhysicsSystem::isPlayerOnPlatformWithGravity(const GameState::Platform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize, const glm::vec3& gravityDirection) {
     // 重力方向が上向き（反転）の場合
-    if (gravityDirection.y > 0.5f) {
+    if (gravityDirection.y > GameConstants::PhysicsConstants::GRAVITY_DIRECTION_THRESHOLD) {
         // 足場の下面に衝突判定
-        glm::vec3 platformMin = platform.position - platform.size * 0.5f;
-        glm::vec3 platformMax = platform.position + platform.size * 0.5f;
-        glm::vec3 playerMin = playerPos - playerSize * 0.5f;
-        glm::vec3 playerMax = playerPos + playerSize * 0.5f;
+        glm::vec3 platformMin = platform.position - platform.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
+        glm::vec3 platformMax = platform.position + platform.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
+        glm::vec3 playerMin = playerPos - playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
+        glm::vec3 playerMax = playerPos + playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
         
         // 水平方向に重なっており、プレイヤーが足場の下面付近にいる
         bool horizontalOverlap = (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                                  playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
         
         if (horizontalOverlap && 
-            std::abs(playerMax.y - platformMin.y) < 0.5f) { // 足場の下面から0.5以内（より緩い判定）
+            std::abs(playerMax.y - platformMin.y) < GameConstants::PhysicsCalculationConstants::PLATFORM_COLLISION_DISTANCE) { // 足場の下面からの判定
             return true;
         }
     } else {
@@ -116,7 +118,7 @@ bool PhysicsSystem::isPlayerOnPlatformWithGravity(const GameState::Platform& pla
 // 重力方向を考慮した足場判定（移動用）
 bool PhysicsSystem::isPlayerOnPlatformWithGravityForMovement(const GameState::Platform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize, const glm::vec3& gravityDirection) {
     // 重力方向が上向き（反転）の場合
-    if (gravityDirection.y > 0.5f) {
+    if (gravityDirection.y > GameConstants::PhysicsConstants::GRAVITY_DIRECTION_THRESHOLD) {
         // 足場の下面に衝突判定
         glm::vec3 platformMin = platform.position - platform.size * 0.5f;
         glm::vec3 platformMax = platform.position + platform.size * 0.5f;

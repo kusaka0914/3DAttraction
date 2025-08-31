@@ -50,20 +50,20 @@ float calculateGravityStrength(float baseGravity, float deltaTime, float timeSca
     if (timeScale > 1.0f) {
         // 速度倍率の2乗に比例して重力を増強（より明確な効果）
         // 2倍速で4倍の重力、3倍速で9倍の重力
-        gravityStrength *= timeScale *1.2f;
+        gravityStrength *= timeScale * GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_TIME_SCALE;
     }
     if(gameState.currentStage==0){
-        gravityStrength *= 2.0f;
+        gravityStrength *= GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_STAGE_0;
     }
     
     // 重力反転時は70%の強度
-    if (gravityDirection.y > 0.5f) {
-        gravityStrength *= 0.7f;
+    if (gravityDirection.y > GameConstants::PhysicsConstants::GRAVITY_DIRECTION_THRESHOLD) {
+        gravityStrength *= GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_INVERTED;
     }
     
     // バーストジャンプ中は重力を半分にする
     if (gameState.isBurstJumpActive && !gameState.hasUsedBurstJump) {
-        gravityStrength *= 0.5f;
+        gravityStrength *= GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_BURST_JUMP;
     }
     
     return gravityStrength;

@@ -1,4 +1,5 @@
 #include "opengl_renderer.h"
+#include "../app/game_constants.h"
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -40,7 +41,9 @@ void OpenGLRenderer::cleanup() {
 }
 
 void OpenGLRenderer::beginFrame() {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.r, 
+                 GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.g, 
+                 GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // プロジェクション行列を設定
@@ -130,15 +133,21 @@ void OpenGLRenderer::renderRealisticBox(const glm::vec3& position, const glm::ve
     glEnable(GL_COLOR_MATERIAL);
     
     // 光源の位置を設定
-    GLfloat lightPosition[] = {10.0f, 20.0f, 10.0f, 1.0f};
+    GLfloat lightPosition[] = {GameConstants::RenderConstants::LIGHT_POSITION.x, 
+                              GameConstants::RenderConstants::LIGHT_POSITION.y, 
+                              GameConstants::RenderConstants::LIGHT_POSITION.z, 1.0f};
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
     
     // 環境光を設定
-    GLfloat ambientLight[] = {0.3f, 0.3f, 0.3f, 1.0f};
+    GLfloat ambientLight[] = {GameConstants::RenderConstants::AMBIENT_LIGHT.r, 
+                             GameConstants::RenderConstants::AMBIENT_LIGHT.g, 
+                             GameConstants::RenderConstants::AMBIENT_LIGHT.b, 1.0f};
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
     
     // 拡散光を設定
-    GLfloat diffuseLight[] = {0.7f, 0.7f, 0.7f, 1.0f};
+    GLfloat diffuseLight[] = {GameConstants::RenderConstants::DIFFUSE_LIGHT.r, 
+                             GameConstants::RenderConstants::DIFFUSE_LIGHT.g, 
+                             GameConstants::RenderConstants::DIFFUSE_LIGHT.b, 1.0f};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
     
     glPushMatrix();
@@ -152,55 +161,65 @@ void OpenGLRenderer::renderRealisticBox(const glm::vec3& position, const glm::ve
     
     // 前面（Z軸正方向）
     glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 背面（Z軸負方向）
     glNormal3f(0.0f, 0.0f, -1.0f);
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 上面（Y軸正方向）- より明るく
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glColor3f(alphaColor.r * 1.2f, alphaColor.g * 1.2f, alphaColor.b * 1.2f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
+    glColor3f(alphaColor.r * GameConstants::RenderConstants::LIGHTING_BRIGHTNESS_MULTIPLIER, 
+              alphaColor.g * GameConstants::RenderConstants::LIGHTING_BRIGHTNESS_MULTIPLIER, 
+              alphaColor.b * GameConstants::RenderConstants::LIGHTING_BRIGHTNESS_MULTIPLIER);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 下面（Y軸負方向）- より暗く
     glNormal3f(0.0f, -1.0f, 0.0f);
-    glColor3f(alphaColor.r * 0.6f, alphaColor.g * 0.6f, alphaColor.b * 0.6f);
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
+    glColor3f(alphaColor.r * GameConstants::RenderConstants::LIGHTING_DARKNESS_MULTIPLIER, 
+              alphaColor.g * GameConstants::RenderConstants::LIGHTING_DARKNESS_MULTIPLIER, 
+              alphaColor.b * GameConstants::RenderConstants::LIGHTING_DARKNESS_MULTIPLIER);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 右面（X軸正方向）- 中間の明るさ
     glNormal3f(1.0f, 0.0f, 0.0f);
-    glColor3f(alphaColor.r * 0.9f, alphaColor.g * 0.9f, alphaColor.b * 0.9f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
+    glColor3f(alphaColor.r * GameConstants::RenderConstants::LIGHTING_MEDIUM_MULTIPLIER, 
+              alphaColor.g * GameConstants::RenderConstants::LIGHTING_MEDIUM_MULTIPLIER, 
+              alphaColor.b * GameConstants::RenderConstants::LIGHTING_MEDIUM_MULTIPLIER);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 左面（X軸負方向）- 中間の明るさ
     glNormal3f(-1.0f, 0.0f, 0.0f);
-    glColor3f(alphaColor.r * 0.9f, alphaColor.g * 0.9f, alphaColor.b * 0.9f);
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
+    glColor3f(alphaColor.r * GameConstants::RenderConstants::LIGHTING_MEDIUM_MULTIPLIER, 
+              alphaColor.g * GameConstants::RenderConstants::LIGHTING_MEDIUM_MULTIPLIER, 
+              alphaColor.b * GameConstants::RenderConstants::LIGHTING_MEDIUM_MULTIPLIER);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     glEnd();
     
     // エッジの強調（ワイヤーフレーム風）
     glDisable(GL_LIGHTING);
-    glColor3f(alphaColor.r * 0.3f, alphaColor.g * 0.3f, alphaColor.b * 0.3f);
+    glColor3f(alphaColor.r * GameConstants::RenderConstants::EDGE_ALPHA_MULTIPLIER, 
+              alphaColor.g * GameConstants::RenderConstants::EDGE_ALPHA_MULTIPLIER, 
+              alphaColor.b * GameConstants::RenderConstants::EDGE_ALPHA_MULTIPLIER);
     glLineWidth(1.0f);
     glBegin(GL_LINES);
     
@@ -250,31 +269,31 @@ void OpenGLRenderer::renderStageBackground(int stageNumber) {
     
     switch (stageNumber) {
         case 0: // ステージ選択画面
-            topColor = glm::vec3(0.5f, 0.7f, 1.0f);    // 青空
-            bottomColor = glm::vec3(0.2f, 0.5f, 0.1f); // 深い緑（草原）
+            topColor = GameConstants::RenderConstants::STAGE_0_TOP_COLOR;
+            bottomColor = GameConstants::RenderConstants::STAGE_0_BOTTOM_COLOR;
             break;
         case 1: // ステージ1 - 青空、白い雲（初心者向けの明るい雰囲気）
-            topColor = glm::vec3(0.5f, 0.7f, 1.0f);    // 青空
-            bottomColor = glm::vec3(0.8f, 0.9f, 1.0f); // 明るい青
+            topColor = GameConstants::RenderConstants::STAGE_1_TOP_COLOR;
+            bottomColor = GameConstants::RenderConstants::STAGE_1_BOTTOM_COLOR;
             break;
         case 2: // ステージ2 - 夕日、オレンジ色の空（中級者向けの暖かい雰囲気）
-            topColor = glm::vec3(1.0f, 0.6f, 0.3f);    // オレンジ
-            bottomColor = glm::vec3(1.0f, 0.8f, 0.5f); // 明るいオレンジ
+            topColor = GameConstants::RenderConstants::STAGE_2_TOP_COLOR;
+            bottomColor = GameConstants::RenderConstants::STAGE_2_BOTTOM_COLOR;
             break;
         case 3: // ステージ3 - 夜、星空（上級者向けの神秘的雰囲気）
-            topColor = glm::vec3(0.1f, 0.1f, 0.3f);    // 深い青
-            bottomColor = glm::vec3(0.3f, 0.2f, 0.5f); // 紫
+            topColor = GameConstants::RenderConstants::STAGE_3_TOP_COLOR;
+            bottomColor = GameConstants::RenderConstants::STAGE_3_BOTTOM_COLOR;
             break;
         case 4: // ステージ4 - 雷雲、稲妻（難易度の高い雰囲気）
-            topColor = glm::vec3(0.2f, 0.2f, 0.3f);    // 暗い青
-            bottomColor = glm::vec3(0.4f, 0.4f, 0.5f); // グレー
+            topColor = GameConstants::RenderConstants::STAGE_4_TOP_COLOR;
+            bottomColor = GameConstants::RenderConstants::STAGE_4_BOTTOM_COLOR;
             break;
         case 5: // ステージ5 - 宇宙、星雲（最終ステージの壮大な雰囲気）
-            topColor = glm::vec3(0.0f, 0.0f, 0.1f);    // 深い黒
-            bottomColor = glm::vec3(0.2f, 0.1f, 0.4f); // 深い紫
+            topColor = GameConstants::RenderConstants::STAGE_5_TOP_COLOR;
+            bottomColor = GameConstants::RenderConstants::STAGE_5_BOTTOM_COLOR;
             break;
         default:
-            topColor = glm::vec3(0.2f, 0.3f, 0.3f);    // デフォルト
+            topColor = GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR;
             bottomColor = glm::vec3(0.4f, 0.5f, 0.5f);
             break;
     }
@@ -569,9 +588,9 @@ void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& positi
     glColor3f(color.r, color.g, color.b);
     
     float currentX = position.x;
-    float charWidth = 8.0f * scale;
-    float charHeight = 12.0f * scale;
-    float spaceWidth = 6.0f * scale;  // スペース幅を増加
+    float charWidth = GameConstants::RenderConstants::CHAR_WIDTH * scale;
+    float charHeight = GameConstants::RenderConstants::CHAR_HEIGHT * scale;
+    float spaceWidth = GameConstants::RenderConstants::SPACE_WIDTH * scale;  // スペース幅を増加
     
     for (size_t i = 0; i < text.length(); i++) {
         char c = text[i];
@@ -583,7 +602,7 @@ void OpenGLRenderer::renderText(const std::string& text, const glm::vec2& positi
         
         // ビットマップフォントで文字を描画
         renderBitmapChar(c, glm::vec2(currentX, position.y), color, scale);
-        currentX += charWidth + 2.0f * scale;  // 文字間隔を増加
+        currentX += charWidth + GameConstants::RenderConstants::CHAR_SPACING * scale;  // 文字間隔を増加
     }
     
     // 3D描画モードに戻す
@@ -616,40 +635,40 @@ void OpenGLRenderer::drawCube(const glm::mat4& model, const glm::vec3& color) {
     glBegin(GL_QUADS);
     
     // 前面
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 背面
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 上面
-    glVertex3f(-0.5f,  0.5f, -0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 下面
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 右面
-    glVertex3f( 0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     // 左面
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
     
     glEnd();
     

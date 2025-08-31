@@ -1,4 +1,5 @@
 #include "switch_system.h"
+#include "../app/game_constants.h"
 #include <iostream>
 
 // スイッチの更新
@@ -37,10 +38,10 @@ bool SwitchSystem::checkSwitchCollision(GameState& gameState, const glm::vec3& p
     for (auto& switch_obj : gameState.switches) {
         if (switch_obj.cooldownTimer > 0.0f) continue; // クールダウン中は無視
         
-        glm::vec3 switchMin = switch_obj.position - switch_obj.size * 0.5f;
-        glm::vec3 switchMax = switch_obj.position + switch_obj.size * 0.5f;
-        glm::vec3 playerMin = playerPos - playerSize * 0.5f;
-        glm::vec3 playerMax = playerPos + playerSize * 0.5f;
+        glm::vec3 switchMin = switch_obj.position - switch_obj.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
+        glm::vec3 switchMax = switch_obj.position + switch_obj.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
+        glm::vec3 playerMin = playerPos - playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
+        glm::vec3 playerMax = playerPos + playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
         
         // 衝突判定
         if (playerMax.x >= switchMin.x && playerMin.x <= switchMax.x &&
@@ -51,7 +52,7 @@ bool SwitchSystem::checkSwitchCollision(GameState& gameState, const glm::vec3& p
             if (!switch_obj.isPressed) {
                 switch_obj.isPressed = true;
                 switch_obj.pressTimer = 0.0f;
-                switch_obj.cooldownTimer = 0.5f; // 0.5秒のクールダウン
+                switch_obj.cooldownTimer = GameConstants::StageConstants::SWITCH_COOLDOWN_TIME; // クールダウン
                 
                 // 単体スイッチの処理
                 if (!switch_obj.isMultiSwitch) {
