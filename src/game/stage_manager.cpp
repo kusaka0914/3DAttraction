@@ -827,69 +827,71 @@ void StageManager::generateStage5(GameState& gameState, PlatformSystem& platform
 void StageManager::generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem) {
     platformSystem.clear();
 
-    glm::vec3 rightSpawnPos = glm::vec3(-50, 0, 0);
+    glm::vec3 rightSpawnPos = glm::vec3(8, 10, 20);
     float speed = 80.0f;
     float detectionRange = 2.5f;
     
     // メインの選択フィールド（画像のような長方形）
     createStaticPlatforms(gameState, platformSystem, {
         // メインフィールド（1つ目）
-        {{6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
+        {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y - 1, GameConstants::STAGE_AREAS[0].z}, {10, 1, 10}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
 
         // ステージ1選択エリア（赤色）
-        {{GameConstants::STAGE_AREAS[0].x, 1, 0}, {1, 1, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 1 Selection Area"},
-        
-        // メインフィールド（間）
-        {{0, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
+        {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z}, {1, 1, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 1 Selection Area"},
+
         // {{-26, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
         
         // メインフィールド（2つ目）
-        {{-6, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+        {{GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y - 1, GameConstants::STAGE_AREAS[1].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ2選択エリア（トータルスター数に応じて色を変更）- GameConstants::STAGE_AREAS[1]と同期
-        {{GameConstants::STAGE_AREAS[1].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 1) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
-        
+        // ステージ2選択エリア（解放済みかどうかで色を変更）
+        {{GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y, GameConstants::STAGE_AREAS[1].z}, {1, 1, 1}, gameState.unlockedStages[2] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
+        {{-7, 0, 19}, {3, 1, 3}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         // メインフィールド（3つ目）
-        {{-20, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+        {{GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y - 1, GameConstants::STAGE_AREAS[2].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
 
-        // ステージ3選択エリア（青色）- GameConstants::STAGE_AREAS[2]と同期
-        {{GameConstants::STAGE_AREAS[2].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 3) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
+        // ステージ3選択エリア（解放済みかどうかで色を変更）
+        {{GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y, GameConstants::STAGE_AREAS[2].z}, {1, 1, 1}, gameState.unlockedStages[3] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
 
         // メインフィールド（4つ目）
-        {{-32, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+        {{GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y - 1, GameConstants::STAGE_AREAS[3].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ4選択エリア（黄色）- GameConstants::STAGE_AREAS[3]と同期
-        {{GameConstants::STAGE_AREAS[3].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 5) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
+        // ステージ4選択エリア（解放済みかどうかで色を変更）
+        {{GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y, GameConstants::STAGE_AREAS[3].z}, {1, 1, 1}, gameState.unlockedStages[4] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
         
         // メインフィールド（5つ目）
-        {{-44, 0, 0}, {6, 1, 4}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
+        {{GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y - 1, GameConstants::STAGE_AREAS[4].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
 
-        // ステージ5選択エリア（マゼンタ）- GameConstants::STAGE_AREAS[4]と同期
-        {{GameConstants::STAGE_AREAS[4].x, 1, 0}, {1, 1, 1}, (gameState.totalStars >= 7) ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
+        // ステージ5選択エリア（解放済みかどうかで色を変更）
+        {{GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z}, {1, 1, 1}, gameState.unlockedStages[5] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
     });
 
     createFlyingPlatforms(gameState, platformSystem, {
         // {{spawn_x, spawn_y, spawn_z}, {size_x, size_y, size_z}, {target_x, target_y, target_z}, color, speed, detection_range, description}
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-36.5, 0, 0}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-39.5, 0, 0}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
+        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 10}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
+        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 13}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
+        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 16}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
+        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 19}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
     });
 
     createPatrolPlatforms(gameState, platformSystem, {
         //{{start_x, start_y, start_z}, {second_point_x, second_point_y, second_point_z}, {third_point_x, third_point_y, third_point_z}, {fourth_point_x, fourth_point_y, fourth_point_z}, {fifth_point_x, fifth_point_y, fifth_point_z}, description}
-        {{{-12, 0, 0}, {-12, 0, 0}, {-14, 0, 0}, {-14, 0, 0}, {-12, 0, 0}}, "ステージ1選択エリア"},
+        {{{14, 0, 10}, {18, 0, 10}, {18, 0, 10}, {18, 0, 10}, {14, 0, 10}}, "ステージ1選択エリア"},
+        {{{22, 0, 14}, {22, 0, 10}, {22, 0, 10}, {22, 0, 10}, {22, 0, 14}}, "ステージ2選択エリア"},
+        {{{22, 0, 18}, {22, 4, 18}, {22, 4, 18}, {22, 4, 18}, {22, 0, 18}}, "ステージ3選択エリア"},
+        {{{18, 4, 22}, {14, 4, 22}, {14, 4, 22}, {14, 4, 22}, {18, 4, 22}}, "ステージ1選択エリア"},
         {{{-26, 0, 100}, {-26, 0, 100}, {-28, 0, 100}, {-28, 0, 100}, {-26, 0, 100}}, "ステージ2選択エリア"},
-        {{{-40, 0, 100}, {-40, 0, 100}, {-42, 0, 100}, {-42, 0, 100}, {-40, 0, 100}}, "ステージ3選択エリア"},
-        {{{-12, 0, 100}, {-12, 0, 100}, {-14, 0, 100}, {-14, 0, 100}, {-12, 0, 100}}, "ステージ1選択エリア"},
-        {{{-26, 0, 100}, {-26, 0, 100}, {-28, 0, 100}, {-28, 0, 100}, {-26, 0, 100}}, "ステージ2選択エリア"},
-        // {{{-40, 0, 0}, {-40, 0, 0}, {-42, 0, 0}, {-42, 0, 0}, {-40, 0, 0}}, "ステージ3選択エリア"},
     });
 
     // 可変長サイクリングディスアピアリングプラットフォーム生成（個別配置）
     createCyclingDisappearingPlatforms(gameState, platformSystem, {
         // {{x, y, z}, {size_x, size_y, size_z}, visible_time, invisible_time, initial_timer, color, description}
-        {{-26, 0, 0}, {3, 1, 3}, 6.0f, 4.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-        // {{-40, 0, 0}, {3, 1, 3}, 6.0f, 4.0f, 1.0f, Colors::PURPLE, "サイクル消える足場2"},
-        // {{-54, 0, 0}, {3, 1, 3}, 6.0f, 4.0f, 1.0f, Colors::CYAN, "サイクル消える足場3"},
+        {{1, 0, 11}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
+        {{-3, 0, 15}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
+        {{-7, 1, 23}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
+        {{-3, 2, 23}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
+        {{-3, 3, 27}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
+        {{1, 3, 23}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
     });
     
 }

@@ -42,7 +42,7 @@ public:
             config.target = gameState.playerPosition;
         } else if (gameState.isFirstPersonView) {
             // 1人称視点：プレイヤーの目の位置
-            config.position = gameState.playerPosition + glm::vec3(0, 1.0f, 0); // 目の高さ
+            config.position = gameState.playerPosition + glm::vec3(0, 2.0f, 0); // 目の高さ
             
             // マウス入力でカメラの向きを制御
             float yaw = glm::radians(gameState.cameraYaw);

@@ -246,11 +246,29 @@ struct GameState {
     // 星数管理システム
     std::map<int, int> stageStars;  // ステージ別の最高星数記録 {ステージ番号, 星数}
     int totalStars = 0;             // トータル星数
+    std::map<int, bool> unlockedStages;  // 解放済みステージ {ステージ番号, 解放済みかどうか}
     
     // ステージクリアUI状態
     bool showStageClearUI = false;
     float stageClearTimer = 0.0f;
     bool stageClearConfirmed = false;
+    
+    // ステージ解放確認UI状態
+    bool showUnlockConfirmUI = false;
+    int unlockTargetStage = 0;
+    int unlockRequiredStars = 0;
+    
+    // 星不足警告UI状態
+    bool showStarInsufficientUI = false;
+    int insufficientTargetStage = 0;
+    int insufficientRequiredStars = 0;
+    
+    // 操作アシストUI状態
+    bool showStageSelectionAssist = false;
+    int assistTargetStage = 0;
+    
+    // 初回ステージ0入場チュートリアルUI状態
+    bool showStage0Tutorial = true; // 初回は表示
     
     // 速度制御システム
     float timeScale = 1.0f;        // 時間倍率（1.0 = 通常速度、2.0 = 2倍速、3.0 = 3倍速）

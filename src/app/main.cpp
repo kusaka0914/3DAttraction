@@ -141,8 +141,8 @@ int main(int argc, char* argv[]) {
     StageManager stageManager;
     
     // 初期ステージ設定
-    int initialStage = 1;
-    gameState.showTutorial = true;
+    int initialStage = gameState.currentStage;  // コマンドライン引数で設定されたステージを使用
+    gameState.showTutorial = (initialStage != 0);  // ステージ0の場合はチュートリアルを表示しない
     
     printf("Starting from stage %d\n", initialStage);
     stageManager.loadStage(initialStage, gameState, platformSystem);
@@ -619,6 +619,15 @@ int main(int argc, char* argv[]) {
             }
         }
         
+        // ステージ0初回入場チュートリアルUIでのキー入力処理
+        if (gameState.showStage0Tutorial && stageManager.getCurrentStage() == 0) {
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                gameState.showStage0Tutorial = false;
+                printf("Stage 0 tutorial dismissed.\n");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        }
+        
         // ステージクリアUIでのキー入力処理
         if (gameState.showStageClearUI) {
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
@@ -682,6 +691,8 @@ int main(int argc, char* argv[]) {
                 gameState.readyScreenSpeedLevel = 0;
             }
         }
+        
+
         
 
         
@@ -783,9 +794,55 @@ int main(int argc, char* argv[]) {
         float airResistance = (gameState.timeScale > 1.0f) ? GameConstants::AIR_RESISTANCE_FAST : GameConstants::AIR_RESISTANCE_NORMAL;
         gameState.playerVelocity *= airResistance;
         
-        // 入力処理
-        InputSystem::processInput(window, gameState, scaledDeltaTime);
-        InputSystem::processJumpAndFloat(window, gameState, scaledDeltaTime, gravityDirection, platformSystem);
+        // ステージ解放確認UIでのキー入力処理
+        if (gameState.showUnlockConfirmUI) {
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                // 確認：星を消費してステージを解放
+                gameState.totalStars -= gameState.unlockRequiredStars;
+                gameState.unlockedStages[gameState.unlockTargetStage] = true;
+                printf("Stage %d unlocked! Cost: %d stars, Remaining: %d stars\n", 
+                       gameState.unlockTargetStage, gameState.unlockRequiredStars, gameState.totalStars);
+                
+                // 解放後すぐにステージに移動
+                resetStageStartTime();
+                gameState.lives = 6;
+                stageManager.goToStage(gameState.unlockTargetStage, gameState, platformSystem);
+                gameState.readyScreenShown = false;
+                gameState.showReadyScreen = true;
+                gameState.readyScreenSpeedLevel = 0;
+                
+                // 確認UIを閉じる
+                gameState.showUnlockConfirmUI = false;
+                gameState.unlockTargetStage = 0;
+                gameState.unlockRequiredStars = 0;
+            }
+            
+            if (keyStates[GLFW_KEY_Q].justPressed()) {
+                // キャンセル：確認UIを閉じる
+                gameState.showUnlockConfirmUI = false;
+                gameState.unlockTargetStage = 0;
+                gameState.unlockRequiredStars = 0;
+                printf("Stage unlock cancelled\n");
+            }
+            
+            // 確認UI中は他の操作を無効化
+            // 入力処理をスキップ
+        } else if (gameState.showStarInsufficientUI) {
+            if (keyStates[GLFW_KEY_Q].justPressed()) {
+                // 星不足警告UIを閉じる
+                gameState.showStarInsufficientUI = false;
+                gameState.insufficientTargetStage = 0;
+                gameState.insufficientRequiredStars = 0;
+                printf("Star insufficient warning closed\n");
+            }
+            
+            // 星不足警告UI中は他の操作を無効化
+            // 入力処理をスキップ
+        } else {
+            // 通常の入力処理
+            InputSystem::processInput(window, gameState, scaledDeltaTime);
+            InputSystem::processJumpAndFloat(window, gameState, scaledDeltaTime, gravityDirection, platformSystem);
+        }
 
         // 垂直位置更新
         gameState.playerPosition.y += gameState.playerVelocity.y * scaledDeltaTime;
@@ -836,58 +893,6 @@ int main(int argc, char* argv[]) {
                 [&](const GameState::StaticPlatform& platform) {
                     if (!PhysicsSystem::checkPlatformCollisionHorizontal(gameState, gameState.playerPosition, playerSize)) {
                         adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
-                    }
-                    
-                    // ステージ選択フィールドでのステージ選択処理
-                    if (stageManager.getCurrentStage() == 0) {
-                        // デバッグ: ステージ3選択エリアにいるプラットフォームをログ出力
-                        if (platform.position.x > -22.5f && platform.position.x < -21.5f && 
-                            platform.position.y > 0.5f && platform.position.y < 1.5f &&
-                            platform.position.z > -0.5f && platform.position.z < 0.5f) {
-                            printf("DEBUG: Platform in Stage 3 selection area - Type: StaticPlatform, Position: (%.1f, %.1f, %.1f)\n", 
-                                   platform.position.x, platform.position.y, platform.position.z);
-                        }
-                        // ステージ選択処理（統一版）
-                        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                            int selectedStage = -1;
-                            
-                            // 各ステージエリアの判定
-                            for (int stage = 0; stage < 5; stage++) {
-                                const auto& stageArea = GameConstants::STAGE_AREAS[stage];
-                                if (platform.position.x > stageArea.x - GameConstants::STAGE_SELECTION_RANGE && 
-                                    platform.position.x < stageArea.x + GameConstants::STAGE_SELECTION_RANGE && 
-                                    platform.position.y > GameConstants::STAGE_SELECTION_HEIGHT_MIN && 
-                                    platform.position.y < GameConstants::STAGE_SELECTION_HEIGHT_MAX &&
-                                    platform.position.z > -GameConstants::STAGE_SELECTION_RANGE && 
-                                    platform.position.z < GameConstants::STAGE_SELECTION_RANGE) {
-                                    selectedStage = stage + 1;
-                                    break;
-                                }
-                            }
-                            
-                            if (selectedStage > 0) {
-                                int existingStars = gameState.stageStars[selectedStage];
-                                printf("Selected Stage %d (Current stars: %d)\n", selectedStage, existingStars);
-                                
-                                // ステージ解禁条件チェック
-                                bool canAccess = true;
-                                switch (selectedStage) {
-                                    case 2: canAccess = gameState.totalStars >= GameConstants::STAGE_2_REQUIRED_STARS; break;
-                                    case 3: canAccess = gameState.totalStars >= GameConstants::STAGE_3_REQUIRED_STARS; break;
-                                    case 4: canAccess = gameState.totalStars >= GameConstants::STAGE_4_REQUIRED_STARS; break;
-                                    case 5: canAccess = gameState.totalStars >= GameConstants::STAGE_5_REQUIRED_STARS; break;
-                                }
-                                
-                                if (canAccess) {
-                                    resetStageStartTime();
-                                    gameState.lives = 6;
-                                    stageManager.goToStage(selectedStage, gameState, platformSystem);
-                                    gameState.readyScreenShown = false;
-                                    gameState.showReadyScreen = true;
-                                    gameState.readyScreenSpeedLevel = 0;
-                                }
-                            }
-                        }
                     }
                     
                     // ゴール判定（黄色い足場の場合）
@@ -983,6 +988,83 @@ int main(int argc, char* argv[]) {
                     adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 }
             }, *currentPlatform);
+        }
+        
+        // ステージ選択エリアの判定と操作アシスト表示
+        if (stageManager.getCurrentStage() == 0) {
+            // プレイヤーの位置でステージ選択エリアの判定
+            int selectedStage = -1;
+            for (int stage = 0; stage < 5; stage++) {
+                const auto& stageArea = GameConstants::STAGE_AREAS[stage];
+                if (gameState.playerPosition.x > stageArea.x - GameConstants::STAGE_SELECTION_RANGE && 
+                    gameState.playerPosition.x < stageArea.x + GameConstants::STAGE_SELECTION_RANGE && 
+                    gameState.playerPosition.z > stageArea.z - GameConstants::STAGE_SELECTION_RANGE && 
+                    gameState.playerPosition.z < stageArea.z + GameConstants::STAGE_SELECTION_RANGE
+                ) {
+                    selectedStage = stage + 1;
+                    break;
+                }
+            }
+            
+            // 操作アシストUIの表示制御
+            if (selectedStage > 0) {
+                gameState.showStageSelectionAssist = true;
+                gameState.assistTargetStage = selectedStage;
+                printf("Player in stage %d selection area, showing assist UI\n", selectedStage);
+            } else {
+                gameState.showStageSelectionAssist = false;
+                gameState.assistTargetStage = 0;
+            }
+            
+            // ステージ選択処理（統一版）
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                
+                if (selectedStage > 0) {
+                    // ステージ1は常に解放済み
+                    if (selectedStage == 1) {
+                        resetStageStartTime();
+                        gameState.lives = 6;
+                        stageManager.goToStage(selectedStage, gameState, platformSystem);
+                        gameState.readyScreenShown = false;
+                        gameState.showReadyScreen = true;
+                        gameState.readyScreenSpeedLevel = 0;
+                    } else {
+                        // ステージ2-5の解放処理
+                        bool isUnlocked = gameState.unlockedStages[selectedStage];
+                        
+                        if (isUnlocked) {
+                            // 既に解放済み：ステージに移動
+                            resetStageStartTime();
+                            gameState.lives = 6;
+                            stageManager.goToStage(selectedStage, gameState, platformSystem);
+                            gameState.readyScreenShown = false;
+                            gameState.showReadyScreen = true;
+                            gameState.readyScreenSpeedLevel = 0;
+                        } else {
+                            // 未解放：星を使用して解放
+                            int requiredStars = 0;
+                            switch (selectedStage) {
+                                case 2: requiredStars = GameConstants::STAGE_2_COST; break;
+                                case 3: requiredStars = GameConstants::STAGE_3_COST; break;
+                                case 4: requiredStars = GameConstants::STAGE_4_COST; break;
+                                case 5: requiredStars = GameConstants::STAGE_5_COST; break;
+                            }
+                            
+                            if (gameState.totalStars >= requiredStars) {
+                                // 確認UIを表示
+                                gameState.showUnlockConfirmUI = true;
+                                gameState.unlockTargetStage = selectedStage;
+                                gameState.unlockRequiredStars = requiredStars;
+                            } else {
+                                // 星不足警告UIを表示
+                                gameState.showStarInsufficientUI = true;
+                                gameState.insufficientTargetStage = selectedStage;
+                                gameState.insufficientRequiredStars = requiredStars;
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // プレイヤー-足場同期処理
@@ -1296,41 +1378,6 @@ int main(int argc, char* argv[]) {
             renderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.earnedStars);
         }
         
-        // ゲームオーバーUI
-        if (gameState.isGameOver) {
-            // 背景とUIを描画
-            renderer->renderGameOverBackground(width, height);
-        }
-        
-        // ステージ選択フィールド用のUI表示
-        if (stageManager.getCurrentStage() == 0) {
-            // 2DモードでUIを描画
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glOrtho(0, width, height, 0, -1, 1);
-            
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-            
-            // 深度テストを無効化（UI表示のため）
-            glDisable(GL_DEPTH_TEST);
-            
-            renderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
-            
-            // 左上に星アイコンとトータル星数を表示
-            renderer->renderStar(glm::vec2(70, 70), glm::vec3(1.0f, 1.0f, 0.0f), 3.0f);
-            renderer->renderText("x " + std::to_string(gameState.totalStars), glm::vec2(72, 27), glm::vec3(1.0f, 1.0f, 0.0f), 1.5f);
-            
-            // 2Dモードを終了
-            glEnable(GL_DEPTH_TEST);
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-            glMatrixMode(GL_MODELVIEW);
-            glPopMatrix();
-        }
-        
         // ステージ0での3D星の描画（ステージ選択エリアの上に固定）
         if (stageManager.getCurrentStage() == 0) {
             // GameConstantsのSTAGE_AREASを使用
@@ -1340,22 +1387,18 @@ int main(int argc, char* argv[]) {
                 const auto& area = GameConstants::STAGE_AREAS[stage];
                 int stageNumber = stage + 1;
                 
-                // ステージ2~5の解禁条件チェック
-                bool isUnlocked = true;
+                // ステージ1は常に解放済み
+                bool isUnlocked = (stageNumber == 1) || gameState.unlockedStages[stageNumber];
                 int requiredStars = 0;
                 
-                if (stageNumber == 2 && gameState.totalStars < 1) {
-                    isUnlocked = false;
-                    requiredStars = 1;
-                } else if (stageNumber == 3 && gameState.totalStars < 3) {
-                    isUnlocked = false;
-                    requiredStars = 3;
-                } else if (stageNumber == 4 && gameState.totalStars < 5) {
-                    isUnlocked = false;
-                    requiredStars = 5;
-                } else if (stageNumber == 5 && gameState.totalStars < 7) {
-                    isUnlocked = false;
-                    requiredStars = 7;
+                if (stageNumber == 2) {
+                    requiredStars = GameConstants::STAGE_2_COST;
+                } else if (stageNumber == 3) {
+                    requiredStars = GameConstants::STAGE_3_COST;
+                } else if (stageNumber == 4) {
+                    requiredStars = GameConstants::STAGE_4_COST;
+                } else if (stageNumber == 5) {
+                    requiredStars = GameConstants::STAGE_5_COST;
                 }
                 
                 if (isUnlocked) {
@@ -1409,6 +1452,69 @@ int main(int argc, char* argv[]) {
                     // renderer->renderLock3D(lockPos, glm::vec3(0.6f, 0.3f, 0.3f), 1.5f);
                 }
             }
+        }
+        
+        // ステージ解放確認UI
+        if (gameState.showUnlockConfirmUI) {
+            // 背景とUIを描画
+            renderer->renderUnlockConfirmBackground(width, height, gameState.unlockTargetStage, gameState.unlockRequiredStars, gameState.totalStars);
+        }
+        
+        // 星不足警告UI
+        if (gameState.showStarInsufficientUI) {
+            // 背景とUIを描画
+            renderer->renderStarInsufficientBackground(width, height, gameState.insufficientTargetStage, gameState.insufficientRequiredStars, gameState.totalStars);
+        }
+        
+
+        
+        // ゲームオーバーUI
+        if (gameState.isGameOver) {
+            // 背景とUIを描画
+            renderer->renderGameOverBackground(width, height);
+        }
+        
+        // ステージ選択フィールド用のUI表示
+        if (stageManager.getCurrentStage() == 0) {
+            // 2DモードでUIを描画
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, width, height, 0, -1, 1);
+            
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            
+            // 深度テストを無効化（UI表示のため）
+            glDisable(GL_DEPTH_TEST);
+            
+            renderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
+            
+            // 左上に星アイコンとトータル星数を表示
+            renderer->renderStar(glm::vec2(70, 70), glm::vec3(1.0f, 1.0f, 0.0f), 3.0f);
+            renderer->renderText("x " + std::to_string(gameState.totalStars), glm::vec2(72, 27), glm::vec3(1.0f, 1.0f, 0.0f), 1.5f);
+            
+            // 初回ステージ0入場チュートリアルUIの表示
+            if (gameState.showStage0Tutorial) {
+                renderer->renderStage0Tutorial(width, height);
+            }
+            
+            // 操作アシストUI（トータルスターのUIと同じタイミングで描画）
+            // UNLOCK確認UIや星不足警告UIが表示されている時は非表示
+            bool shouldShowAssist = gameState.showStageSelectionAssist && 
+                                   !gameState.showUnlockConfirmUI && 
+                                   !gameState.showStarInsufficientUI &&
+                                   !gameState.showStage0Tutorial; // チュートリアル表示中は非表示
+            bool isStageUnlocked = (gameState.assistTargetStage == 1) || gameState.unlockedStages[gameState.assistTargetStage];
+            renderer->renderStageSelectionAssist(width, height, gameState.assistTargetStage, shouldShowAssist, isStageUnlocked);
+            
+            // 2Dモードを終了
+            glEnable(GL_DEPTH_TEST);
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
         }
         
         // 操作説明

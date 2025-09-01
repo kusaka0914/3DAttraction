@@ -2190,6 +2190,86 @@ void OpenGLRenderer::initializeBitmapFont() {
         1,1,1,1,1,1,1,1
     };
     
+    // 疑問符（?）の定義
+    bitmapFont['?'] = {
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,1,1,0,
+        0,0,0,0,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0
+    };
+    
+    // Qの定義（Qの特徴的な尻尾を追加）
+    bitmapFont['Q'] = {
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,0,0,0,1,1,
+        1,1,0,1,1,0,1,1,
+        1,1,0,1,1,1,1,1,
+        1,1,0,0,1,1,1,1,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,1,1
+    };
+    
+    // 感嘆符（!）の定義
+    bitmapFont['!'] = {
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0
+    };
+    
+    // アポストロフィ（'）の定義
+    bitmapFont['\''] = {
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0
+    };
+    
+    // スラッシュ（/）の定義
+    bitmapFont['/'] = {
+        0,0,0,0,0,0,0,1,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,1,1,1,
+        0,0,0,0,1,1,1,1,
+        0,0,0,1,1,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,0,0,0,
+        1,1,1,1,0,0,0,0,
+        1,1,1,0,0,0,0,0,
+        1,1,0,0,0,0,0,0,
+        1,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0
+    };
+    
     fontInitialized = true;
 }
 
@@ -2278,6 +2358,213 @@ void OpenGLRenderer::renderGameOverBackground(int width, int height) {
     glPopMatrix();
 }
 
+// ステージ解放確認UI用の背景描画
+void OpenGLRenderer::renderUnlockConfirmBackground(int width, int height, int targetStage, int requiredStars, int currentStars) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    renderText("UNLOCK STAGE " + std::to_string(targetStage) + " ?", 
+               glm::vec2((width/2 - 250) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 1.0f, 0.0f), 2.0f);
+    
+    // 必要な星数
+    renderText("YOU MUST USE " + std::to_string(requiredStars) + " STARS !", 
+               glm::vec2((width/2 - 200) * scaleX, (height/2 - 50) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.5f);
+    
+    // 確認ボタン
+    renderText("UNLOCK: ENTER", 
+               glm::vec2((width/2 - 300) * scaleX, (height/2+100) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);
+    
+    // キャンセルボタン
+    renderText("CANCEL: Q", 
+               glm::vec2((width/2 +100) * scaleX, (height/2+100) * scaleY), glm::vec3(0.8f, 0.2f, 0.2f), 1.5f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// 星不足警告UI用の背景描画
+void OpenGLRenderer::renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトルd
+    renderText("YOU CAN'T UNLOCK STAGE " + std::to_string(targetStage) + " !", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 0.2f, 0.2f), 2.0f);
+    
+    // 必要な星数
+    renderText("YOU NEED " + std::to_string(requiredStars) + " STARS !", 
+               glm::vec2((width/2 - 200) * scaleX, (height/2 - 70) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    // アドバイス
+    renderText("COLLECT STARS ON OTHER STAGES !", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2 + 50) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    // 閉じるボタン
+    renderText("CLOSE: Q", 
+               glm::vec2((width/2 - 100) * scaleX, (height/2 + 200) * scaleY), glm::vec3(0.2f, 1.0f, 0.2f), 1.5f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// ステージ選択操作アシストUIの描画
+void OpenGLRenderer::renderStageSelectionAssist(int width, int height, int targetStage, bool isVisible, bool isUnlocked) {
+    if (!isVisible) {
+        return; // 非表示の場合は何も描画しない
+    }
+    
+    printf("Rendering stage selection assist UI for stage %d\n", targetStage);
+    
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 座標系を1280x720に正規化（他のUIと同じ方式）
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    
+    // テキストの描画（画面中央少し下）
+    std::string assistText;
+    if (targetStage == 1 || isUnlocked) {
+        // ステージ1は常に解放済み、または解放済みのステージ
+        assistText = "ENTER STAGE " + std::to_string(targetStage) + " : SPACE";
+    } else {
+        // 未解放のステージ
+        assistText = "UNLOCK STAGE " + std::to_string(targetStage) + " : SPACE";
+    }
+    
+    renderText(assistText, 
+               glm::vec2((width/2 - 200) * scaleX, (height/2 + 100) * scaleY), 
+               glm::vec3(1.0f, 1.0f, 1.0f), 1.3f); // 白色で表示
+    
+    glDisable(GL_BLEND);
+}
+
+// ステージ0初回入場チュートリアルUIの描画
+void OpenGLRenderer::renderStage0Tutorial(int width, int height) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 座標系を1280x720に正規化（他のUIと同じ方式）
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 背景の四角形（画面全体）
+    glColor4f(0.0f, 0.0f, 0.0f, 0.9f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // テキストの描画
+    renderText("THIS IS THE WORLD.", 
+               glm::vec2((width/2 - 250) * scaleX, (height/2 - 250) * scaleY), 
+               glm::vec3(1.0f, 1.0f, 1.0f), 2.0f);
+    
+    renderText("THERE ARE ENTRANCES TO EACH STAGE.", 
+               glm::vec2((width/2 - 380) * scaleX, (height/2 - 120) * scaleY), 
+               glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    renderText("EACH STAGE IS LOCKED AT FIRST", 
+               glm::vec2((width/2 - 320) * scaleX, (height/2 - 20) * scaleY), 
+               glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    renderText("SO YOU NEED TO UNLOCK IT USING STARS YOU'VE EARNED.", 
+                glm::vec2((width/2 - 580) * scaleX, (height/2 + 80) * scaleY), 
+                glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    renderText("COLLECT LOTS OF STARS TO PROGRESS!", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2 + 180) * scaleY), 
+               glm::vec3(1.0f, 0.8f, 0.2f), 1.5f); // 金色で強調
+    
+    renderText("ENTER", 
+               glm::vec2((width/2 - 80) * scaleX, (height/2 + 280) * scaleY), 
+               glm::vec3(0.2f, 0.8f, 0.2f), 1.5f); // 緑色でENTERボタン
+    
+    glDisable(GL_BLEND);
+}
+
 // Ready画面の描画
 void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode) {
     // フォントの初期化を確実に行う
@@ -2314,7 +2601,7 @@ void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel, bo
     
     // "Ready?"メッセージ
     renderText("READY", glm::vec2((width/2 - 230) * scaleX, (height/2 - 300) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 5.0f);
-    renderText("PLAY SPEED", glm::vec2((width/2 - 150) * scaleX, (height/2 - 70) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    renderText("PLAY SPEED", glm::vec2((width/2 - 400) * scaleX, (height/2 - 70) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
     
     // 速度選択（1x, 2x, 3x）
     std::vector<std::string> speedTexts = {"1x", "2x", "3x"};
@@ -2326,22 +2613,22 @@ void OpenGLRenderer::renderReadyScreen(int width, int height, int speedLevel, bo
             color = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未選択）
         }
         
-        float xPos = (width/2 - 200 + i * 150) * scaleX;
+        float xPos = (width/2 - 450 + i * 150) * scaleX;
         float yPos = (height/2) * scaleY;
         renderText(speedTexts[i], glm::vec2(xPos, yPos), color, 2.0f);
     }
-    renderText("PRESS T", glm::vec2((width/2 - 100) * scaleX, (height/2 + 100) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
-    
+    renderText("PRESS T", glm::vec2((width/2 - 350) * scaleX, (height/2 + 100) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    renderText("TPS FPS", glm::vec2((width/2 + 190) * scaleX, (height/2 - 70) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
     // モード選択
-    renderText("3RD PERSON", glm::vec2((width/2 - 200) * scaleX, (height/2 + 150) * scaleY), 
-               isFirstPersonMode ? glm::vec3(0.5f, 0.5f, 0.5f) : glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
-    renderText("1ST PERSON", glm::vec2((width/2 + 50) * scaleX, (height/2 + 150) * scaleY), 
-               isFirstPersonMode ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), 1.2f);
+    renderText("TPS", glm::vec2((width/2 + 130) * scaleX, (height/2) * scaleY), 
+               isFirstPersonMode ? glm::vec3(0.5f, 0.5f, 0.5f) : glm::vec3(1.0f, 0.8f, 0.2f), 2.0f);
+renderText("FPS", glm::vec2((width/2 + 320) * scaleX, (height/2) * scaleY), 
+               isFirstPersonMode ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), 2.0f);
     
-    renderText("PRESS F", glm::vec2((width/2 - 100) * scaleX, (height/2 + 200) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    renderText("PRESS F", glm::vec2((width/2 + 210) * scaleX, (height/2 + 100) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
     
     // "Enter"メッセージ
-    renderText("ENTER", glm::vec2((width/2 + 60) * scaleX, (height/2 + 300) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
+    renderText("ENTER", glm::vec2((width/2- 50) * scaleX, (height/2 + 250) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);

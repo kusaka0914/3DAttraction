@@ -39,23 +39,21 @@ namespace GameConstants {
     };
     
     constexpr StageArea STAGE_AREAS[] = {
-        {6.0f, 0.0f, 0.0f, 1.0f},    // ステージ1
-        {-8.0f, 0.0f, 0.0f, 1.0f},   // ステージ2
-        {-22.0f, 0.0f, 0.0f, 1.0f},  // ステージ3
-        {-34.0f, 0.0f, 0.0f, 1.0f},  // ステージ4
-        {-46.0f, 0.0f, 0.0f, 1.0f}   // ステージ5
+        {8.0f, 1.0f, 4.0f, 1.0f},    // ステージ1
+        {23.0f, 4.0f, 23.0f, 1.0f},   // ステージ2
+        {-3, 4, 32, 1.0f},  // ステージ3
+        {8, 1, 23, 1.0f},  // ステージ4
+        {8, 5, 33, 1.0f}   // ステージ5
     };
     
     // ステージ選択エリアの判定範囲
     constexpr float STAGE_SELECTION_RANGE = 0.5f;  // 選択範囲の半径
-    constexpr float STAGE_SELECTION_HEIGHT_MIN = 0.5f;  // 選択範囲の高さ下限
-    constexpr float STAGE_SELECTION_HEIGHT_MAX = 1.5f;  // 選択範囲の高さ上限
     
-    // ステージ解禁条件
-    constexpr int STAGE_2_REQUIRED_STARS = 1;
-    constexpr int STAGE_3_REQUIRED_STARS = 3;
-    constexpr int STAGE_4_REQUIRED_STARS = 5;
-    constexpr int STAGE_5_REQUIRED_STARS = 7;
+    // ステージ解放に必要な星数
+    constexpr int STAGE_2_COST = 1;
+    constexpr int STAGE_3_COST = 1;
+    constexpr int STAGE_4_COST = 4;
+    constexpr int STAGE_5_COST = 3;
     
     // 星獲得基準時間
     constexpr float STAR_3_TIME_LONG = 20.0f;

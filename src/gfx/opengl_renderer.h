@@ -55,6 +55,10 @@ public:
     void renderXMark3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
     void renderTutorialUI(int width, int height);
     void renderStageClearBackground(int width, int height, float clearTime, int earnedStars);
+    void renderUnlockConfirmBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
+    void renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
+    void renderStageSelectionAssist(int width, int height, int targetStage, bool isVisible, bool isUnlocked);
+    void renderStage0Tutorial(int width, int height);
     void renderGameOverBackground(int width, int height);
     void renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode);
     void renderCountdown(int width, int height, int count);
