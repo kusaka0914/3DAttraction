@@ -645,22 +645,22 @@ int main(int argc, char* argv[]) {
                 
                 switch (clearedStage) {
                     case 1: // ステージ1クリア後
-                        returnPosition = glm::vec3(7, 2.0f, 0); // 赤色エリア +1
+                        returnPosition = glm::vec3(GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z-1);
                         break;
-                    case 2: // ステージ2クリア後
-                        returnPosition = glm::vec3(-7, 2.0f, 0); // 緑色エリア +1
+                    case 2: // ステージ2クリア後    
+                        returnPosition = glm::vec3(GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y, GameConstants::STAGE_AREAS[1].z-1);
                         break;
                     case 3: // ステージ3クリア後
-                        returnPosition = glm::vec3(-3, 2.0f, 0); // 青色エリア +1
+                        returnPosition = glm::vec3(GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y, GameConstants::STAGE_AREAS[2].z-1); // 青色エリア +1
                         break;
                     case 4: // ステージ4クリア後
-                        returnPosition = glm::vec3(5, 2.0f, 0); // 黄色エリア +1
+                        returnPosition = glm::vec3(GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y, GameConstants::STAGE_AREAS[3].z-1); // 黄色エリア +1
                         break;
                     case 5: // ステージ5クリア後
-                        returnPosition = glm::vec3(1, 2.0f, -5); // マゼンタエリア +1
+                        returnPosition = glm::vec3(GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z-1); // マゼンタエリア +1
                         break;
                     default:
-                        returnPosition = glm::vec3(0, 2.0f, 0); // デフォルト位置
+                        returnPosition = glm::vec3(GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z-1); // デフォルト位置
                         break;
                 }
                 
@@ -708,7 +708,7 @@ int main(int argc, char* argv[]) {
                 gameState.remainingTime = gameState.timeLimit;  // 残り時間をリセット
                 
                 // ステージ選択フィールドの中央にプレイヤーを配置
-                gameState.playerPosition = glm::vec3(0, 2.0f, 0);
+                gameState.playerPosition = glm::vec3(8, 2.0f, 0);
                 gameState.playerVelocity = glm::vec3(0, 0, 0);
                 
                 printf("Returning to stage selection field after game over.\n");
@@ -1196,6 +1196,11 @@ int main(int argc, char* argv[]) {
                            gameState.lastPlatformPosition.x, gameState.lastPlatformPosition.y, gameState.lastPlatformPosition.z);
                 }
                 gameState.playerVelocity = glm::vec3(0, 0, 0);
+            } else if (stageManager.getCurrentStage() == 0) {
+                // ステージ0：ライフを減らさずに中央にリスポーン
+                gameState.playerPosition = glm::vec3(8, 2.0f, 0); // ステージ0の中央にリスポーン
+                gameState.playerVelocity = glm::vec3(0, 0, 0);
+                printf("Stage 0: Fell off but no life lost. Respawned at center.\n");
             } else {
                 // 通常モード：残機を減らす
                 gameState.lives--; // 残機を1つ減らす

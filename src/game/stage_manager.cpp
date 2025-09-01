@@ -131,6 +131,18 @@ void createPatrolPlatforms(PlatformSystem& platformSystem, const std::vector<Pat
     }
 }
 
+// Flying-like overload: accept only paths and auto-generate descriptions
+void createPatrolPlatforms(GameState& gameState, PlatformSystem& platformSystem,
+                          const std::vector<std::vector<glm::vec3>>& paths,
+                          const std::string& baseDescription = "巡回足場") {
+    std::vector<PatrolConfig> patrolConfigs;
+    patrolConfigs.reserve(paths.size());
+    for (size_t i = 0; i < paths.size(); i++) {
+        patrolConfigs.push_back({ paths[i], baseDescription + std::to_string(i + 1) });
+    }
+    createPatrolPlatforms(platformSystem, patrolConfigs);
+}
+
 // 可変長のパトロールプラットフォーム生成用のヘルパー関数
 void createPatrolPlatforms(GameState& gameState, PlatformSystem& platformSystem,
                           std::initializer_list<std::tuple<std::vector<std::tuple<float, float, float>>, std::string>> patrols) {
@@ -192,30 +204,32 @@ void createMovingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
 }
 
 // 可変長のFlyingPlatform生成用のヘルパー関数
+// ターゲット位置の配列から飛行足場を自動生成する関数
 void createFlyingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
-                          std::initializer_list<std::tuple<std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, glm::vec3, float, float, std::string>> platforms) {
-    for (const auto& platform : platforms) {
-        const auto& spawnPos = std::get<0>(platform);
-        const auto& size = std::get<1>(platform);
-        const auto& targetPos = std::get<2>(platform);
-        glm::vec3 color = std::get<3>(platform);
-        float speed = std::get<4>(platform);
-        float detectionRange = std::get<5>(platform);
-        std::string description = std::get<6>(platform);
+                          const std::vector<glm::vec3>& targetPositions, 
+                          const glm::vec3& size, const glm::vec3& color, 
+                          const std::string& baseDescription = "飛行足場") {
+    for (size_t i = 0; i < targetPositions.size(); i++) {
+        const auto& target = targetPositions[i];
         
-        glm::vec3 spawnPosition = glm::vec3(std::get<0>(spawnPos), std::get<1>(spawnPos), std::get<2>(spawnPos));
-        glm::vec3 sizeVec = glm::vec3(std::get<0>(size), std::get<1>(size), std::get<2>(size));
-        glm::vec3 targetPosition = glm::vec3(std::get<0>(targetPos), std::get<1>(targetPos), std::get<2>(targetPos));
+        // spawn_x, spawn_zはtargetと同じ、spawn_yはtarget.y + 10
+        glm::vec3 spawnPosition = glm::vec3(target.x, target.y -1, target.z);
         
+        // 説明文を生成（番号付き）
+        std::string description = baseDescription + std::to_string(i + 1);
+        
+        const float kSpeed = 20.0f;
+        const float kDetectionRange = 2.5f;
         platformSystem.addPlatform(GameState::FlyingPlatform(
-            targetPosition, sizeVec, color,
-            spawnPosition, targetPosition, speed, detectionRange
+            target, size, color,
+            spawnPosition, target, kSpeed, kDetectionRange
         ));
+        
         printf("Created %s from spawn (%.1f, %.1f, %.1f) to target (%.1f, %.1f, %.1f) with speed %.1f, range %.1f\n",
                description.c_str(),
                spawnPosition.x, spawnPosition.y, spawnPosition.z,
-               targetPosition.x, targetPosition.y, targetPosition.z,
-               speed, detectionRange);
+               target.x, target.y, target.z,
+               kSpeed, kDetectionRange);
     }
 }
 
@@ -673,12 +687,6 @@ void StageManager::generateStage3(GameState& gameState, PlatformSystem& platform
 }
 
 void StageManager::generateStage4(GameState& gameState, PlatformSystem& platformSystem) {
-    // ステージ4用の共通スポーン位置を定義
-    glm::vec3 leftSpawnPos = glm::vec3(-15, 0, -10);   // 左側のスポーン位置
-    glm::vec3 rightSpawnPos = glm::vec3(15, 0, -10);   // 右側のスポーン位置
-    float detectionRange = 2.5f;
-    float speed = 80.0f;
-    
     // アイテム生成
     createItems(gameState, platformSystem, {
         // {{x, y, z}, color, description}
@@ -694,142 +702,141 @@ void StageManager::generateStage4(GameState& gameState, PlatformSystem& platform
         {{-9, 12, 15}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
     });
     
+    // 飛行足場のターゲット位置を定義
+    std::vector<glm::vec3> stage1TargetPositions = {
+        {0, 5, -21}, {0, 5, -18}, {3, 5, -18}, {3, 5, -15}, {3, 5, -12},
+        {0, 5, -12}, {-3, 5, -12}, {-3, 5, -9}, {-3, 6, -6}, {-6, 7, -6},
+        {-9, 8, -6}, {-9, 9, -9}, {-9, 10, -12}, {-6, 11, -12}, {-3, 12, -12},
+        {-12, 11, -12}, {-15, 12, -12}, {-15, 12, -9}, {-15, 12, -6}, {-12, 12, -3},
+        {-15, 12, 0}, {-12, 12, 3}, {-9, 12, 3}, {-15, 12, 6}, {-15, 12, 9}
+    };
+    
     // FlyingPlatform生成（近づくと飛んでくる足場）
-    createFlyingPlatforms(gameState, platformSystem, {
-        // {{spawn_x, spawn_y, spawn_z}, {size_x, size_y, size_z}, {target_x, target_y, target_z}, color, speed, detection_range, description}
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {0, 5, -21}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {0, 5, -18}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場2"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {3, 5, -18}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {3, 5, -15}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場4"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {3, 5, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {0, 5, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-3, 5, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-3, 5, -9}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-3, 6, -6}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-6, 7, -6}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-9, 8, -6}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-9, 9, -9}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-9, 10, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-6, 11, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-3, 12, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-12, 11, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, -12}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, -9}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, -6}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-12, 12, -3}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, 0}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-12, 12, 3}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-9, 12, 3}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, 6}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {-15, 12, 9}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場3"},
-    });
+    createFlyingPlatforms(gameState, platformSystem, stage1TargetPositions,
+                         glm::vec3(3, 1, 3), Colors::ORANGE, "右から飛んでくる足場");
 }
 
 void StageManager::generateStage5(GameState& gameState, PlatformSystem& platformSystem) {
-    // スタート足場
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(0, 5, -25), glm::vec3(4, 1, 4), glm::vec3(0.2f, 0.8f, 0.2f)
-    ));
-    
-    // 重力反転エリア
-    // gameState.gravityZones.clear();
-    // GameState::GravityZone gravityZone;
-    // gravityZone.position = glm::vec3(0, 8, -20);
-    // gravityZone.size = glm::vec3(6, 2, 6);
-    // gravityZone.gravityDirection = glm::vec3(0, 1, 0);
-    // gravityZone.radius = 3.0f;
-    // gravityZone.isActive = true;
-    // gameState.gravityZones.push_back(gravityZone);
-    
-    // // 重力反転エリア内の足場
-    // platformSystem.addPlatform(GameState::StaticPlatform(
-    //     glm::vec3(0, 12, -20), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.2f)
-    // ));
-    
-    // // 複数スイッチ
-    // gameState.switches.clear();
-    // GameState::Switch multiSwitch1;
-    // multiSwitch1.position = glm::vec3(-1, 6.5, -15);
-    // multiSwitch1.size = glm::vec3(1, 0.5, 1);
-    // multiSwitch1.color = glm::vec3(0.2f, 1.0f, 0.2f);
-    // multiSwitch1.isPressed = false;
-    // multiSwitch1.isToggle = false;
-    // multiSwitch1.targetPlatformIndices = {};
-    // multiSwitch1.targetStates = {};
-    // multiSwitch1.pressTimer = 0.0f;
-    // multiSwitch1.cooldownTimer = 0.0f;
-    // multiSwitch1.isMultiSwitch = true;
-    // multiSwitch1.multiSwitchGroup = 0;
-    // gameState.switches.push_back(multiSwitch1);
-    
-    // GameState::Switch multiSwitch2;
-    // multiSwitch2.position = glm::vec3(-1, 8.5, -10);
-    // multiSwitch2.size = glm::vec3(1, 0.5, 1);
-    // multiSwitch2.color = glm::vec3(1.0f, 1.0f, 0.2f);
-    // multiSwitch2.isPressed = false;
-    // multiSwitch2.isToggle = false;
-    // multiSwitch2.targetPlatformIndices = {};
-    // multiSwitch2.targetStates = {};
-    // multiSwitch2.pressTimer = 0.0f;
-    // multiSwitch2.cooldownTimer = 0.0f;
-    // multiSwitch2.isMultiSwitch = true;
-    // multiSwitch2.multiSwitchGroup = 0;
-    // gameState.switches.push_back(multiSwitch2);
-    
-    // // 大砲
-    // gameState.cannons.clear();
-    // GameState::Cannon cannon1;
-    // cannon1.position = glm::vec3(5, 5, -15);
-    // cannon1.size = glm::vec3(2, 2, 2);
-    // cannon1.color = glm::vec3(0.8f, 0.4f, 0.2f);
-    // cannon1.targetPosition = glm::vec3(20, 8, -5);
-    // cannon1.power = 15.0f;
-    // cannon1.isActive = true;
-    // cannon1.hasPlayerInside = false;
-    // cannon1.cooldownTimer = 0.0f;
-    // cannon1.cooldownTime = 2.0f;
-    
-    // glm::vec3 direction = glm::normalize(cannon1.targetPosition - cannon1.position);
-    // float distance = glm::length(cannon1.targetPosition - cannon1.position);
-    // float gravity = 9.8f;
-    // float timeToTarget = sqrt(2.0f * distance / gravity);
-    // cannon1.launchDirection = direction * cannon1.power;
-    // cannon1.launchDirection.y = (cannon1.targetPosition.y - cannon1.position.y) / timeToTarget + 0.5f * gravity * timeToTarget;
-    
-    // gameState.cannons.push_back(cannon1);
-    
-    // // 複雑な移動要素
-    // platformSystem.addPlatform(GameState::MovingPlatform(
-    //     glm::vec3(-5, 5, -10), glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.4f, 0.8f),
-    //     glm::vec3(5, 8, -10), 2.0f
-    // ));
-    
-    // platformSystem.addPlatform(GameState::RotatingPlatform(
-    //     glm::vec3(0, 5, -5), glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.2f, 0.8f),
-    //     glm::vec3(1, 0, 0), 90.0f
-    // ));
-    
-    // // 順次出現・消失する足場
-    // for (int i = 0; i < 5; i++) {
-    //     platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
-    //         glm::vec3(0, 5, 5 + i * 4), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.8f),
-    //         8.0f, 4.0f, 0.5f, i * 1.0f
-    //     ));
-    // }
-    
-    // ゴール足場
-    platformSystem.addPlatform(GameState::StaticPlatform(
-        glm::vec3(0, 25, 45), glm::vec3(4, 1, 4), glm::vec3(1.0f, 1.0f, 0.0f)
-    ));
+    std::vector<std::vector<glm::vec3>> patrolPaths={
+        {{-10, 5, -21}, {10, 5, -21}, {10, 5, -2}, {-10, 5, -2}, {-10, 5, -21}},
+        {{7, 5, -8}, {7, 5, -13}, {-7, 5, -13}, {-7, 5, -8}, {7, 5, -8}},
+        {{4, 10, 16}, {0, 10, 16}, {0, 14, 16}, {0, 10, 16}, {4, 10, 16}},
+        {{4, 14, 18}, {8, 14, 22}, {8, 14, 22}, {4, 14, 18}, {4, 14, 18}},
+        {{0, 14, 76}, {6, 14, 80}, {0, 14, 84}, {-6, 14, 80}, {0, 14, 76}},
+        {{-18, 14, 88}, {-12, 14, 92}, {-6, 14, 88}, {-12, 14, 84}, {-18, 14, 88}},
+    };
+    std::vector<glm::vec3> targetPositions = {
+        {0, 3, 10},
+        {0, 3, 13},
+        {0, 9, 36},
+        {0, 9, 39},
+        {0, 9, 42},
+        {0, 9, 45},
+        {3, 10, 45},
+        {6, 11, 45},
+        {6, 12, 42},
+        {6, 13, 39},
+        {-12, 16, 107},
+        {-12, 16, 110},
+        {-12, 16, 113},
+        {-12, 16, 116},
+        {-12, 16, 119},
+        {-12, 16, 122},
+        {-12, 16, 125},
+        {-12, 16, 128},
+        {-12, 16, 131},
+        {-12, 16, 134},
+        {-12, 16, 137},
+        {-12, 16, 140},
+        {-12, 16, 143},
+        {-12, 16, 146},
+        {-12, 16, 149},
+        {-9, 16, 149},
+        {-9, 16, 151},
+        {-9, 16, 154},
+        {-9, 16, 157},
+        {-12, 16, 157},
+        {-12, 16, 160},
+        {-12, 16, 163},
+        {-12, 16, 166},
+        {-12, 16, 169},
+    };
+    std::vector<CyclingDisappearingConfig> cycleConfigs;
+    cycleConfigs.push_back({ {0, 5, 16},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {4, 7, 20}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {8, 9, 16}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {0, 14, 28}, {3, 1, 3}, Colors::ORANGE, 4.0f, 2.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-3, 3, 27}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+
+    cycleConfigs.push_back({ {0, 14, 46}, {3, 1, 3}, Colors::ORANGE, 6.0f, 3.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {5, 14, 46}, {3, 1, 3}, Colors::ORANGE, 7.0f, 3.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-5, 14, 46}, {3, 1, 3}, Colors::ORANGE, 8.0f, 3.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {0, 14, 52}, {3, 1, 3}, Colors::ORANGE, 6.0f, 4.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {5, 14, 52}, {3, 1, 3}, Colors::ORANGE, 7.0f, 4.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-5, 14, 52}, {3, 1, 3}, Colors::ORANGE, 8.0f, 4.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {0, 14, 58}, {3, 1, 3}, Colors::ORANGE, 6.0f, 5.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {5, 14, 58}, {3, 1, 3}, Colors::ORANGE, 7.0f, 5.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-5, 14, 58}, {3, 1, 3}, Colors::ORANGE, 8.0f, 5.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {0, 14, 64}, {3, 1, 3}, Colors::ORANGE, 6.0f, 3.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {5, 14, 64}, {3, 1, 3}, Colors::ORANGE, 7.0f, 4.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-5, 14, 64}, {3, 1, 3}, Colors::ORANGE, 8.0f, 5.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {0, 14, 70}, {3, 1, 3}, Colors::ORANGE, 6.0f, 5.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {5, 14, 70}, {3, 1, 3}, Colors::ORANGE, 7.0f, 3.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-5, 14, 70}, {3, 1, 3}, Colors::ORANGE, 8.0f, 4.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-12, 14, 98}, {3, 1, 3}, Colors::ORANGE, 4.0f, 2.0f, 1.0f, "サイクル消える足場1" });
+    // アイテム生成
+    createItems(gameState, platformSystem, {
+        // {{x, y, z}, color, description}
+        {{0, 5, 3}, Colors::RED, "アイテム1: スタート足場の右側"},
+        {{0, 14, 40}, Colors::GREEN, "アイテム2: スタート足場の左側"},
+        {{-12, 16, 104}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
+    });
+    createStaticPlatforms(gameState, platformSystem, {
+        // {{x, y, z}, {size_x, size_y, size_z}, color, description}
+        {{0, 5, -25}, {4, 1, 4}, Colors::GRAY, "スタート足場"},
+        {{10, 5, -15}, {3, 5, 1}, Colors::GRAY, "スタート足場"},
+        {{-12, 16, 170}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
+    });
+    createPatrolPlatforms(gameState, platformSystem, patrolPaths, "ステージ選択エリア");
+    createCyclingDisappearingPlatforms(platformSystem, cycleConfigs);
+    createFlyingPlatforms(gameState, platformSystem, targetPositions, 
+                         glm::vec3(3, 1, 3), Colors::ORANGE, "右から飛んでくる足場");
 }
 
 // ステージ選択フィールドの生成
 void StageManager::generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem) {
     platformSystem.clear();
+    std::vector<std::vector<glm::vec3>> patrolPaths={
+        {{14, 0, 10}, {18, 0, 10}, {18, 0, 10}, {18, 0, 10}, {14, 0, 10}},
+        {{22, 0, 14}, {22, 0, 10}, {22, 0, 10}, {22, 0, 10}, {22, 0, 14}},
+        {{22, 0, 18}, {22, 4, 18}, {22, 4, 18}, {22, 4, 18}, {22, 0, 18}},
+    };
+    if (gameState.stageStars.count(2) && gameState.stageStars.at(2) > 0) {
+        patrolPaths.push_back({{18, 4, 22}, {14, 4, 22}, {14, 4, 22}, {14, 4, 22}, {18, 4, 22}});
+        patrolPaths.push_back({ {8, 0, 28}, {8, 0, 32}, {8, 0, 32}, {8, 0, 32}, {8, 0, 28} });
+    }
+    // ターゲット位置を冒頭で定義
+    std::vector<glm::vec3> targetPositions = {
+        {8, 0, 10},
+        {8, 0, 13},
+        {8, 0, 16},
+        {8, 0, 19}
+    };
+    // ステージ4クリア時のみ最後の足場を出現
+    if ((gameState.stageStars.count(4) && gameState.stageStars.at(4) > 0)) {
+        targetPositions.push_back({8, 0, 39});
+    }
 
-    glm::vec3 rightSpawnPos = glm::vec3(8, 10, 20);
-    float speed = 80.0f;
-    float detectionRange = 2.5f;
+    std::vector<CyclingDisappearingConfig> cycleConfigs;
+    cycleConfigs.push_back({ {1, 0, 11},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-3, 0, 15}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-7, 1, 23}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-3, 2, 23}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    cycleConfigs.push_back({ {-3, 3, 27}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+   if (gameState.stageStars.count(3) && gameState.stageStars.at(3) > 0) {
+        cycleConfigs.push_back({ {1, 3, 23},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+        cycleConfigs.push_back({ {8, 0, 36},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
+    }
     
     // メインの選択フィールド（画像のような長方形）
     createStaticPlatforms(gameState, platformSystem, {
@@ -866,33 +873,15 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
         {{GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z}, {1, 1, 1}, gameState.unlockedStages[5] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
     });
 
-    createFlyingPlatforms(gameState, platformSystem, {
-        // {{spawn_x, spawn_y, spawn_z}, {size_x, size_y, size_z}, {target_x, target_y, target_z}, color, speed, detection_range, description}
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 10}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 13}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 16}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
-        {{rightSpawnPos.x, rightSpawnPos.y, rightSpawnPos.z}, {3, 1, 3}, {8, 0, 19}, Colors::ORANGE, speed, detectionRange, "右から飛んでくる足場1"},
-    });
-
-    createPatrolPlatforms(gameState, platformSystem, {
-        //{{start_x, start_y, start_z}, {second_point_x, second_point_y, second_point_z}, {third_point_x, third_point_y, third_point_z}, {fourth_point_x, fourth_point_y, fourth_point_z}, {fifth_point_x, fifth_point_y, fifth_point_z}, description}
-        {{{14, 0, 10}, {18, 0, 10}, {18, 0, 10}, {18, 0, 10}, {14, 0, 10}}, "ステージ1選択エリア"},
-        {{{22, 0, 14}, {22, 0, 10}, {22, 0, 10}, {22, 0, 10}, {22, 0, 14}}, "ステージ2選択エリア"},
-        {{{22, 0, 18}, {22, 4, 18}, {22, 4, 18}, {22, 4, 18}, {22, 0, 18}}, "ステージ3選択エリア"},
-        {{{18, 4, 22}, {14, 4, 22}, {14, 4, 22}, {14, 4, 22}, {18, 4, 22}}, "ステージ1選択エリア"},
-        {{{-26, 0, 100}, {-26, 0, 100}, {-28, 0, 100}, {-28, 0, 100}, {-26, 0, 100}}, "ステージ2選択エリア"},
-    });
-
-    // 可変長サイクリングディスアピアリングプラットフォーム生成（個別配置）
-    createCyclingDisappearingPlatforms(gameState, platformSystem, {
-        // {{x, y, z}, {size_x, size_y, size_z}, visible_time, invisible_time, initial_timer, color, description}
-        {{1, 0, 11}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-        {{-3, 0, 15}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-        {{-7, 1, 23}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-        {{-3, 2, 23}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-        {{-3, 3, 27}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-        {{1, 3, 23}, {3, 1, 3}, 8.0f, 6.0f, 1.0f, Colors::ORANGE, "サイクル消える足場1"},
-    });
+    // ターゲット位置を元に飛行足場を自動生成
+    createFlyingPlatforms(gameState, platformSystem, targetPositions, 
+                         glm::vec3(3, 1, 3), Colors::ORANGE, "右から飛んでくる足場");
+    
+    createPatrolPlatforms(gameState, platformSystem, patrolPaths, "ステージ選択エリア");
+ 
+    // 可変長サイクリングディスアピアリングプラットフォーム生成（個別配置）    
+    createCyclingDisappearingPlatforms(platformSystem, cycleConfigs);
+    
     
 }
 

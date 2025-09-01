@@ -803,32 +803,27 @@ void OpenGLRenderer::renderTimeStopUI(bool hasSkill, bool isTimeStopped, float t
     glDisable(GL_DEPTH_TEST);
     
     // 時間停止スキルの表示（左下）
-    std::string skillText = "時間よ止まれ";
-    glm::vec3 skillColor = glm::vec3(0.8f, 0.8f, 1.0f); // 薄い青色
+    std::string skillText = "TIME STOP";
+    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f); // 薄い青色
     
+    
+    // 使用回数表示
+    std::string usesText = "PRESS Q";
+    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    if (remainingUses <= 0) {
+        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
+    }
     // 時間停止中は明るい青色
     if (isTimeStopped) {
         skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
+        usesColor = glm::vec3(0.5f, 0.5f, 1.0f);
     }
-    
+    std::string countText = std::to_string(remainingUses);
     renderText(skillText, glm::vec2(30, 650), skillColor, 1.5f);
+    renderText(countText, glm::vec2(80, 600), usesColor, 3.0f);
     
-    // 使用回数表示
-    std::string usesText = "Q: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
-    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数が0の場合は灰色
-    if (remainingUses <= 0) {
-        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
-    }
-    
-    renderText(usesText, glm::vec2(30, 680), usesColor, 1.2f);
-    
-    // 時間停止中の残り時間表示
-    if (isTimeStopped) {
-        std::string timerText = "残り: " + std::to_string(static_cast<int>(timeStopTimer)) + "s";
-        renderText(timerText, glm::vec2(30, 620), glm::vec3(1.0f, 0.5f, 0.5f), 1.2f);
-    }
+    renderText(usesText, glm::vec2(50, 680), usesColor, 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -866,21 +861,26 @@ void OpenGLRenderer::renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int rema
     glDisable(GL_DEPTH_TEST);
     
     // 二段ジャンプスキルの表示（左下、時間停止スキルの上）
-    std::string skillText = "二段ジャンプ";
-    glm::vec3 skillColor = glm::vec3(0.8f, 1.0f, 0.8f); // 薄い緑色
+    std::string skillText = "DOUBLE JUMP";
+    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f); // 薄い緑色
     
-    renderText(skillText, glm::vec2(30, 590), skillColor, 1.5f);
+    
+    
     
     // 使用回数表示
-    std::string usesText = "SPACE: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    std::string usesText = "PRESS SPACE IN AIR";
     glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
     
     // 使用回数が0の場合は灰色
     if (remainingUses <= 0) {
         usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
     }
-    
-    renderText(usesText, glm::vec2(30, 620), usesColor, 1.2f);
+    std::string countText = std::to_string(remainingUses);
+
+    renderText(skillText, glm::vec2(230, 650), skillColor, 1.5f);
+    renderText(countText, glm::vec2(300, 600), usesColor, 3.0f);
+    renderText(usesText, glm::vec2(205, 680), usesColor, 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -913,25 +913,24 @@ void OpenGLRenderer::renderHeartFeelUI(bool hasSkill, int remainingUses, int max
     glDisable(GL_DEPTH_TEST);
     
     // ハートフエールスキルの表示（左下、二段ジャンプスキルの上）
-    std::string skillText = "ハートフエール";
-    glm::vec3 skillColor = glm::vec3(1.0f, 0.8f, 0.8f); // 薄い赤色
+    std::string skillText = "HEART FEEL";
+    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f); // 薄い赤色
     
-    renderText(skillText, glm::vec2(30, 530), skillColor, 1.5f);
+    renderText(skillText, glm::vec2(460, 650), skillColor, 1.5f);
     
     // 使用回数表示
-    std::string usesText = "H: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    std::string usesText = "PRESS H";
     glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
     
     // 使用回数が0の場合は灰色
     if (remainingUses <= 0) {
         usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
     }
-    
-    renderText(usesText, glm::vec2(30, 560), usesColor, 1.2f);
-    
-    // 現在の残機数表示
-    std::string livesText = "残機: " + std::to_string(currentLives) + "/6";
-    renderText(livesText, glm::vec2(30, 500), glm::vec3(1.0f, 0.3f, 0.3f), 1.2f);
+    std::string countText = std::to_string(remainingUses);
+    renderText(skillText, glm::vec2(460, 650), skillColor, 1.5f);
+    renderText(countText, glm::vec2(520, 600), usesColor, 3.0f);
+    renderText(usesText, glm::vec2(490, 680), usesColor, 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -964,32 +963,30 @@ void OpenGLRenderer::renderFreeCameraUI(bool hasSkill, bool isActive, float time
     glDisable(GL_DEPTH_TEST);
     
     // フリーカメラスキルの表示（左下、ハートフエールスキルの上）
-    std::string skillText = "フリーカメラ";
-    glm::vec3 skillColor = glm::vec3(0.8f, 0.8f, 1.0f); // 薄い青色
-    
-    // アクティブ中は明るい青色
-    if (isActive) {
-        skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
-    }
-    
-    renderText(skillText, glm::vec2(30, 470), skillColor, 1.5f);
+    std::string skillText = "FREE CAMERA";
+    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f); // 薄い青色
     
     // 使用回数表示
-    std::string usesText = "C: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    std::string usesText = "PRESS C";
     glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
     
     // 使用回数が0の場合は灰色
     if (remainingUses <= 0) {
         usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
     }
+    std::string countText = std::to_string(remainingUses);
     
-    renderText(usesText, glm::vec2(30, 500), usesColor, 1.2f);
     
     // アクティブ中の残り時間表示
     if (isActive) {
-        std::string timerText = "残り: " + std::to_string(static_cast<int>(timer)) + "s";
-        renderText(timerText, glm::vec2(30, 440), glm::vec3(1.0f, 0.5f, 0.5f), 1.2f);
+        usesColor = glm::vec3(0.5f, 0.5f, 1.0f);
+        skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
     }
+
+    renderText(skillText, glm::vec2(850, 650), skillColor, 1.5f);
+    renderText(countText, glm::vec2(910, 600), usesColor, 3.0f);
+    renderText(usesText, glm::vec2(890, 680), usesColor, 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -2758,32 +2755,35 @@ void OpenGLRenderer::renderBurstJumpUI(bool hasSkill, bool isActive, int remaini
     glDisable(GL_DEPTH_TEST);
     
     // バーストジャンプスキルの表示（左下、フリーカメラスキルの上）
-    std::string skillText = "バーストジャンプ";
-    glm::vec3 skillColor = glm::vec3(1.0f, 0.8f, 0.2f); // オレンジ色
+    std::string skillText = "BURST JUMP";
+    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f); // オレンジ色
     
-    // アクティブ中は明るいオレンジ色
-    if (isActive) {
-        skillColor = glm::vec3(1.0f, 0.6f, 0.0f);
-    }
     
-    renderText(skillText, glm::vec2(30, 520), skillColor, 1.5f);
     
     // 使用回数表示
-    std::string usesText = "B: " + std::to_string(remainingUses) + "/" + std::to_string(maxUses);
+    std::string usesText = "PRESS B";
     glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
     
     // 使用回数が0の場合は灰色
     if (remainingUses <= 0) {
         usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
     }
-    
-    renderText(usesText, glm::vec2(30, 550), usesColor, 1.2f);
+
+    std::string countText = std::to_string(remainingUses);
     
     // アクティブ中の表示
     if (isActive) {
-        std::string activeText = "準備完了！SPACEで発動";
-        renderText(activeText, glm::vec2(30, 490), glm::vec3(1.0f, 0.5f, 0.5f), 1.2f);
+        std::string activeText = "PRESS SPACE!";
+        renderText(activeText, glm::vec2(550, 490), glm::vec3(1.0f, 0.5f, 0.5f), 2.0f);
+        usesColor = glm::vec3(1.0f, 0.5f, 0.5f);
+        skillColor = glm::vec3(1.0f, 0.5f, 0.5f);
     }
+    renderText(skillText, glm::vec2(650, 650), skillColor, 1.5f);
+
+    renderText(countText, glm::vec2(700, 600), usesColor, 3.0f);
+    
+    renderText(usesText, glm::vec2(675, 680), usesColor, 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);

@@ -98,7 +98,7 @@ struct CycleDisappearingPlatform : public BasePlatform {
     CycleDisappearingPlatform(const glm::vec3& pos, const glm::vec3& siz, const glm::vec3& col,
                               float cycle, float visible, float blink, float initial = 0.0f)
         : BasePlatform(pos, siz, col), cycleTime(cycle), visibleTime(visible), 
-          blinkTime(blink), cycleTimer(initial), originalSize(siz), 
+          blinkTime(blink), cycleTimer(cycle - initial), originalSize(siz), 
           isCurrentlyVisible(initial < visible) {}
 };
 
