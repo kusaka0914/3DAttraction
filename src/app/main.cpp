@@ -122,10 +122,43 @@ int main(int argc, char* argv[]) {
     GameState gameState;
     
     // コマンドライン引数で初期ステージを指定
+    int initialStage = 6;  // デフォルトはチュートリアルステージ
+    bool debugEnding = false;  // デバッグ用エンドロール表示フラグ
+    
     if (argc > 1) {
-        int requestedStage = std::atoi(argv[1]);
-        if (requestedStage >= 0 && requestedStage <= 5) {  // ステージ0を許可
-            gameState.currentStage = requestedStage;
+        // エンドロール表示フラグのチェック
+        if (strcmp(argv[1], "-e") == 0 || strcmp(argv[1], "--ending") == 0) {
+            debugEnding = true;
+            printf("Debug mode: Showing ending sequence\n");
+        } else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+            printf("Usage: %s [stage_number] [options]\n", argv[0]);
+            printf("  stage_number: 0-5 (default: 6 for tutorial)\n");
+            printf("  options:\n");
+            printf("    -e, --ending: Show ending sequence (debug mode)\n");
+            printf("    -h, --help: Show this help message\n");
+            printf("Examples:\n");
+            printf("  %s          # Start tutorial stage\n", argv[0]);
+            printf("  %s 5        # Start stage 5\n", argv[0]);
+            printf("  %s -e       # Show ending sequence\n", argv[0]);
+            printf("  %s 5 -e     # Start stage 5 and show ending\n", argv[0]);
+            return 0;
+        } else {
+            // ステージ番号の処理
+            int requestedStage = std::atoi(argv[1]);
+            if (requestedStage >= 0 && requestedStage <= 5) {  // ステージ0-5を許可
+                initialStage = requestedStage;
+                printf("Command line argument: Starting at stage %d\n", initialStage);
+            } else {
+                printf("Invalid stage number: %d. Using default stage %d\n", requestedStage, initialStage);
+            }
+        }
+        
+        // 2番目の引数でエンドロール表示フラグをチェック
+        if (argc > 2) {
+            if (strcmp(argv[2], "-e") == 0 || strcmp(argv[2], "--ending") == 0) {
+                debugEnding = true;
+                printf("Debug mode: Showing ending sequence\n");
+            }
         }
     }
     
@@ -140,10 +173,17 @@ int main(int argc, char* argv[]) {
     StageManager stageManager;
     
     // 初期ステージ設定
-    int initialStage = 6;  // チュートリアルステージから開始
     gameState.showTutorial = false;  // チュートリアルステージでは通常のチュートリアルUIは表示しない
     
-    stageManager.loadStage(initialStage, gameState, platformSystem);
+    // デバッグ用エンドロール表示フラグが設定されている場合
+    if (debugEnding) {
+        gameState.isEndingSequence = true;
+        gameState.showStaffRoll = true;
+        gameState.staffRollTimer = 0.0f;
+        printf("Debug: Starting ending sequence immediately\n");
+    } else {
+        stageManager.loadStage(initialStage, gameState, platformSystem);
+    }
 
     // ゲームパッド初期化
     InputSystem::initializeGamepad();
@@ -465,6 +505,86 @@ int main(int argc, char* argv[]) {
             
             glfwPollEvents();
             continue; // カウントダウン中は他の処理をスキップ
+        }
+        
+        // エンディングシーケンスの処理
+        if (gameState.isEndingSequence) {
+            // エンディングシーケンス中はゲームを一時停止
+            renderer->beginFrameWithBackground(stageManager.getCurrentStage());
+            
+            // カメラ設定
+            auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
+            CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
+            
+            // ウィンドウサイズを取得
+            auto [width, height] = CameraSystem::getWindowSize(window);
+            
+            // スタッフロールの表示
+            if (gameState.showStaffRoll) {
+                gameState.staffRollTimer += deltaTime;
+                
+                // スタッフロールが15秒間表示されたら、エンディングメッセージに切り替え
+                if (gameState.staffRollTimer >= 14.0f) {
+                    gameState.showStaffRoll = false;
+                    gameState.showEndingMessage = true;
+                    gameState.endingMessageTimer = 0.0f;
+                    printf("Staff roll finished, showing ending message...\n");
+                } else {
+                    renderer->renderStaffRoll(width, height, gameState.staffRollTimer);
+                }
+            }
+            
+            // エンディングメッセージの表示
+            if (gameState.showEndingMessage) {
+                gameState.endingMessageTimer += deltaTime;
+                
+                // エンディングメッセージが5秒間表示されたら、フィールドに戻る
+                if (gameState.endingMessageTimer >= 5.0f) {
+                    // エンディングシーケンス終了
+                    gameState.isEndingSequence = false;
+                    gameState.showStaffRoll = false;
+                    gameState.showEndingMessage = false;
+                    gameState.staffRollTimer = 0.0f;
+                    gameState.endingMessageTimer = 0.0f;
+                    
+                    // フィールドに戻る
+                    stageManager.goToStage(0, gameState, platformSystem);
+                    gameState.playerPosition = glm::vec3(8, 0, 0);
+                    gameState.playerVelocity = glm::vec3(0, 0, 0);
+                    printf("Ending sequence finished, returning to field...\n");
+                } else {
+                    renderer->renderEndingMessage(width, height, gameState.endingMessageTimer);
+                }
+            }
+            
+            // スキッププロンプトは各描画関数内で統合表示されるため、個別呼び出しは不要
+            
+            // Enterキーでスキップ処理
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                printf("Ending sequence skipped by user\n");
+                
+                // エンディングシーケンス終了
+                gameState.isEndingSequence = false;
+                gameState.showStaffRoll = false;
+                gameState.showEndingMessage = false;
+                gameState.staffRollTimer = 0.0f;
+                gameState.endingMessageTimer = 0.0f;
+                
+                // フィールドに戻る
+                stageManager.goToStage(0, gameState, platformSystem);
+                gameState.playerPosition = glm::vec3(8, 0, 0);
+                gameState.playerVelocity = glm::vec3(0, 0, 0);
+            }
+            
+            renderer->endFrame();
+            
+            // キー状態更新（エンディング中でも必要）
+            for (auto& [key, state] : keyStates) {
+                state.update(glfwGetKey(window, key) == GLFW_PRESS);
+            }
+            
+            glfwPollEvents();
+            continue; // エンディングシーケンス中は他の処理をスキップ
         }
         
         // 時間停止スキルの更新
@@ -1107,7 +1227,17 @@ int main(int argc, char* argv[]) {
                             
 
                             
-                            gameState.showStageClearUI = true;
+                            // ステージ5クリア後の特別処理
+                            if (currentStage == 5) {
+                                // エンディングシーケンス開始
+                                gameState.isEndingSequence = true;
+                                gameState.showStaffRoll = true;
+                                gameState.staffRollTimer = 0.0f;
+                                printf("Stage 5 completed! Starting ending sequence...\n");
+                            } else {
+                                // 通常のステージクリアUI表示
+                                gameState.showStageClearUI = true;
+                            }
                             printf("Stage %d completed! All items collected (%d/%d) in %.1f seconds - %d stars earned!\n", 
                                    currentStage, gameState.collectedItems, gameState.requiredItems,
                                    gameState.clearTime, gameState.earnedStars);
@@ -1554,29 +1684,31 @@ int main(int argc, char* argv[]) {
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
                     renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
                 } else {
-                    // 通常のステージでは全てのUIを表示
-                    int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                    renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
-                    
-                    // フリーカメラスキルUIを描画
-                    renderer->renderFreeCameraUI(gameState.hasFreeCameraSkill, gameState.isFreeCameraActive, gameState.freeCameraTimer, 
-                                                gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses);
-                    
-                    // バーストジャンプスキルUIを描画
-                    renderer->renderBurstJumpUI(gameState.hasBurstJumpSkill, gameState.isBurstJumpActive, 
-                                               gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses);
-                    
-                    // ハートフエールスキルUIを描画
-                    renderer->renderHeartFeelUI(gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, 
-                                               gameState.heartFeelMaxUses, gameState.lives);
-                    
-                    // 二段ジャンプスキルUIを描画
-                    renderer->renderDoubleJumpUI(gameState.hasDoubleJumpSkill, gameState.isEasyMode, 
-                                                gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses);
-                    
-                    // 時間停止スキルUIを描画
-                    renderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
-                                              gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
+                    // 通常のステージでは全てのUIを表示（エンディングシーケンス中は非表示）
+                    if (!gameState.isEndingSequence) {
+                        int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
+                        renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+                        
+                        // フリーカメラスキルUIを描画
+                        renderer->renderFreeCameraUI(gameState.hasFreeCameraSkill, gameState.isFreeCameraActive, gameState.freeCameraTimer, 
+                                                    gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses);
+                        
+                        // バーストジャンプスキルUIを描画
+                        renderer->renderBurstJumpUI(gameState.hasBurstJumpSkill, gameState.isBurstJumpActive, 
+                                                   gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses);
+                        
+                        // ハートフエールスキルUIを描画
+                        renderer->renderHeartFeelUI(gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, 
+                                                   gameState.heartFeelMaxUses, gameState.lives);
+                        
+                        // 二段ジャンプスキルUIを描画
+                        renderer->renderDoubleJumpUI(gameState.hasDoubleJumpSkill, gameState.isEasyMode, 
+                                                    gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses);
+                        
+                        // 時間停止スキルUIを描画
+                        renderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
+                                                  gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
+                    }
                 }
             }
         }
@@ -1587,8 +1719,8 @@ int main(int argc, char* argv[]) {
         
 
         
-        // ステージクリアUI
-        if (gameState.showStageClearUI) {
+        // ステージクリアUI（エンディングシーケンス中は非表示）
+        if (gameState.showStageClearUI && !gameState.isEndingSequence) {
             // 背景とボックスを描画
             renderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.earnedStars);
         }

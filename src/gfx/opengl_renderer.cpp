@@ -3254,4 +3254,117 @@ void OpenGLRenderer::renderBurstJumpUI(bool hasSkill, bool isActive, int remaini
     glPopMatrix();
 }
 
+// スタッフロール描画関数
+void OpenGLRenderer::renderStaffRoll(int width, int height, float timer) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 黒い背景で暗転
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // スタッフロールの表示（画面中央から開始して上にスクロール）
+    float scrollOffset = timer * 100.0f; // 1秒で50ピクセル上にスクロール
+    glm::vec3 textColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    glm::vec3 skipColor = glm::vec3(1.0f, 1.0f, 1.0f); // 薄いグレー
+    renderText("SKIP : ENTER", glm::vec2(width/2 - 70, height/2 -650), skipColor, 1.5f);
+    
+    // タイトル（画面中央から開始）
+    renderText("STAFF ROLL", glm::vec2(width/2 - 600, height/2 - scrollOffset), textColor, 2.5f);
+    
+    // 各スタッフ項目（画面中央から開始）
+    renderText("DIRECTOR", glm::vec2(width/2 - 750, height/2 - scrollOffset + 100), textColor, 2.0f);
+    renderText("TAKUMI KUSAKA", glm::vec2(width/2 - 500, height/2 - scrollOffset + 100), textColor, 2.0f);
+    
+    renderText("PROGRAMMER", glm::vec2(width/2 - 750, height/2 - scrollOffset + 200), textColor, 2.0f);
+    renderText("TAKUMI KUSAKA", glm::vec2(width/2 - 500, height/2 - scrollOffset + 200), textColor, 2.0f);
+    
+    renderText("GRAPHICS", glm::vec2(width/2 - 750, height/2 - scrollOffset + 300), textColor, 2.0f);
+    renderText("TAKUMI KUSAKA", glm::vec2(width/2 - 500, height/2 - scrollOffset + 300), textColor, 2.0f);
+    
+    renderText("SOUND", glm::vec2(width/2 - 750, height/2 - scrollOffset + 400), textColor, 2.0f);
+    renderText("TAKUMI KUSAKA", glm::vec2(width/2 - 500, height/2 - scrollOffset + 400), textColor, 2.0f);
+    
+    renderText("GAMEDESIGN", glm::vec2(width/2 - 750, height/2 - scrollOffset + 500), textColor, 2.0f);
+    renderText("TAKUMI KUSAKA", glm::vec2(width/2 - 500, height/2 - scrollOffset + 500), textColor, 2.0f);
+    
+    renderText("DEBUG", glm::vec2(width/2 - 750, height/2 - scrollOffset + 600), textColor, 2.0f);
+    renderText("TAKUMI KUSAKA", glm::vec2(width/2 - 500, height/2 - scrollOffset + 600), textColor, 2.0f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// エンディングメッセージ描画関数
+void OpenGLRenderer::renderEndingMessage(int width, int height, float timer) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 黒い背景で暗転
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // エンディングメッセージの表示
+    glm::vec3 textColor = glm::vec3(1.0f, 1.0f, 0.0f); // 黄色
+    
+    // メッセージ1
+    renderText("THANK YOU FOR PLAYING!", glm::vec2(width/2 - 700, height/2 - 400), textColor, 2.0f);
+    
+    // メッセージ2
+    renderText("AND CONGRATULATIONS ON CONQUERING WORLD 1!", glm::vec2(width/2 - 850, height/2 - 300), textColor, 1.8f);
+    
+    // メッセージ3
+    renderText("SEE YOU AGAIN SOMEWHERE!", glm::vec2(width/2 - 700, height/2 - 200), textColor, 2.0f);
+    
+    // スキッププロンプトを右上に表示
+    glm::vec3 skipColor = glm::vec3(0.7f, 0.7f, 0.7f); // 薄いグレー
+    renderText("SKIP : ENTER", glm::vec2(width - 400, 30), skipColor, 1.2f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// スキッププロンプト表示関数は統合されたため削除
+
 } // namespace gfx

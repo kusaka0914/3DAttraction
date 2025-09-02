@@ -70,6 +70,10 @@ public:
     void renderCountdown(int width, int height, int count);
     void renderHeart(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     
+    // エンディング関連描画関数
+    void renderStaffRoll(int width, int height, float timer);
+    void renderEndingMessage(int width, int height, float timer);
+    
     void setCamera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up = glm::vec3(0, 1, 0));
     void setProjection(float fov, float aspect, float near, float far);
 

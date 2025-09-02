@@ -257,6 +257,13 @@ struct GameState {
     float stageClearTimer = 0.0f;
     bool stageClearConfirmed = false;
     
+    // エンディング関連状態
+    bool showStaffRoll = false;        // スタッフロール表示フラグ
+    bool showEndingMessage = false;    // エンディングメッセージ表示フラグ
+    float staffRollTimer = 0.0f;      // スタッフロールタイマー
+    float endingMessageTimer = 0.0f;  // エンディングメッセージタイマー
+    bool isEndingSequence = false;     // エンディングシーケンス中フラグ
+    
     // ステージ解放確認UI状態
     bool showUnlockConfirmUI = false;
     int unlockTargetStage = 0;
@@ -303,7 +310,7 @@ struct GameState {
     bool isTrackingPlatform = false;  // 足場を追跡中かどうか
     
     // 二段ジャンプスキル用
-    bool hasDoubleJumpSkill = false;  // 二段ジャンプスキルを取得しているかどうか
+    bool hasDoubleJumpSkill = true;  // 二段ジャンプスキルを取得しているかどうか
     int doubleJumpMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
     int doubleJumpRemainingUses = 3;  // 残り使用回数
     
@@ -323,7 +330,7 @@ struct GameState {
     float freeCameraPitch = 0.0f;  // フリーカメラのピッチ角
     
     // バーストジャンプスキル用
-    bool hasBurstJumpSkill = false;  // バーストジャンプスキルを取得しているかどうか
+    bool hasBurstJumpSkill = true;  // バーストジャンプスキルを取得しているかどうか
     bool isBurstJumpActive = false;  // バーストジャンプがアクティブかどうか
     bool hasUsedBurstJump = false;  // バーストジャンプを使用済みかどうか
     bool isInBurstJumpAir = false;  // バーストジャンプで空中にいるかどうか
