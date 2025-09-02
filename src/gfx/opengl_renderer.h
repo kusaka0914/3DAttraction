@@ -43,6 +43,11 @@ public:
     
     // UI表示関数
     void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives);
+    void renderLivesOnly(int lives);
+    void renderLivesWithExplanation(int lives);
+    void renderTimeUIOnly(float remainingTime, float timeLimit, int earnedStars, int existingStars);
+    void renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
+    void renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
     void renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses);
     void renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int remainingUses, int maxUses);
     void renderHeartFeelUI(bool hasSkill, int remainingUses, int maxUses, int currentLives);
@@ -54,6 +59,7 @@ public:
     void renderNumber3D(const glm::vec3& position, int number, const glm::vec3& color, float scale = 1.0f);
     void renderXMark3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
     void renderTutorialUI(int width, int height);
+    void renderTutorialStageUI(int width, int height, const std::string& message, int currentStep, bool stepCompleted);
     void renderStageClearBackground(int width, int height, float clearTime, int earnedStars);
     void renderUnlockConfirmBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
     void renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars);

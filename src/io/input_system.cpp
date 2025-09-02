@@ -249,8 +249,6 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
                 gameState.hasUsedBurstJump = true;
                 gameState.isBurstJumpActive = false; // バーストジャンプを使用したので非アクティブに
                 gameState.burstJumpDelayTimer = 0.01f; // 1秒後に空中フラグを設定
-                printf("バーストジャンプ発動！1秒後に空中移動速度2倍効果が開始されます！\n");
-                printf("バーストジャンプ遅延タイマー開始: %.1f秒\n", gameState.burstJumpDelayTimer);
             } else {
                 // 通常のジャンプ
                 if (gravityDirection.y > 0.5f) {
@@ -263,7 +261,6 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
             gameState.canDoubleJump = true;
             if (gameState.isInBurstJumpAir) {
                 gameState.isInBurstJumpAir = false; // バーストジャンプ空中フラグをリセット
-                printf("足場着地！バーストジャンプ空中フラグリセット: isInBurstJumpAir = false\n");
             }
         } else if ((gameState.isEasyMode && gameState.canDoubleJump) || 
                    (!gameState.isEasyMode && gameState.hasDoubleJumpSkill && gameState.doubleJumpRemainingUses > 0 && gameState.canDoubleJump)) {
@@ -278,9 +275,7 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
             // 通常モードの場合は使用回数を減らす
             if (!gameState.isEasyMode) {
                 gameState.doubleJumpRemainingUses--;
-                printf("Double jump used! Remaining uses: %d/%d\n", gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses);
-            } else {
-                printf("Double jump used! (Easy mode - unlimited)\n");
+                
             }
         } else if (gameState.isBurstJumpActive && !gameState.hasUsedBurstJump) {
             // バーストジャンプ：空中でジャンプボタンを押した場合

@@ -35,7 +35,8 @@ void initializeGameState(GameState& gameState) {
     gameState.countdownTimer = 3.0f;
     
     // ステージ解放状態の初期化
-    gameState.unlockedStages[1] = true;  // ステージ1は常に解放済み
+    gameState.unlockedStages[0] = true;  // ステージ0（ステージ選択フィールド）は常に解放済み
+    gameState.unlockedStages[1] = false; // ステージ1はロック済み（1スター必要）
     gameState.unlockedStages[2] = false; // ステージ2-5は未解放
     gameState.unlockedStages[3] = false;
     gameState.unlockedStages[4] = false;

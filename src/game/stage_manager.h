@@ -59,4 +59,5 @@ private:
     static void generateStage3(GameState& gameState, PlatformSystem& platformSystem);
     static void generateStage4(GameState& gameState, PlatformSystem& platformSystem);
     static void generateStage5(GameState& gameState, PlatformSystem& platformSystem);
+    static void generateTutorialStage(GameState& gameState, PlatformSystem& platformSystem);
 };

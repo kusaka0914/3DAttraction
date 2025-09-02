@@ -50,6 +50,7 @@ namespace GameConstants {
     constexpr float STAGE_SELECTION_RANGE = 0.5f;  // 選択範囲の半径
     
     // ステージ解放に必要な星数
+    constexpr int STAGE_1_COST = 1;
     constexpr int STAGE_2_COST = 1;
     constexpr int STAGE_3_COST = 1;
     constexpr int STAGE_4_COST = 4;

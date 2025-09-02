@@ -32,9 +32,6 @@ void CannonSystem::checkCannonCollision(GameState& gameState, const glm::vec3& p
             // プレイヤーが大砲の中にいる
             if (!cannon.hasPlayerInside) {
                 cannon.hasPlayerInside = true;
-                printf("Player entered cannon at (%.1f, %.1f, %.1f), target: (%.1f, %.1f, %.1f)\n",
-                       cannon.position.x, cannon.position.y, cannon.position.z,
-                       cannon.targetPosition.x, cannon.targetPosition.y, cannon.targetPosition.z);
                 
                 // プレイヤーを発射
                 gameState.playerPosition = cannon.position;

@@ -379,6 +379,17 @@ void StageManager::initializeStages() {
         GameConstants::STAGE_5_TIME_LIMIT
     });
     
+    // ステージ6: チュートリアル専用ステージ
+    stages.push_back({
+        6, "チュートリアル",
+        glm::vec3(0, 2.0f, 0),  // 中央に配置
+        glm::vec3(0, 2.0f, 0),  // ゴール位置（使用しない）
+        generateTutorialStage,
+        true,  // 最初からアンロック
+        false,
+        999.0f  // 制限時間なし
+    });
+    
     printf("StageManager initialized with %zu stages\n", stages.size());
 }
 
@@ -439,6 +450,30 @@ void StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.isGameOver = false;       // ゲームオーバーフラグをリセット
     gameState.isTimeUp = false;         // 時間切れフラグをリセット
     gameState.readyScreenShown = false; // Ready画面表示フラグをリセット
+    
+    // スキルの使用回数を最大値にリセット
+    gameState.doubleJumpRemainingUses = gameState.doubleJumpMaxUses;
+    gameState.heartFeelRemainingUses = gameState.heartFeelMaxUses;
+    gameState.freeCameraRemainingUses = gameState.freeCameraMaxUses;
+    gameState.burstJumpRemainingUses = gameState.burstJumpMaxUses;
+    gameState.timeStopRemainingUses = gameState.timeStopMaxUses;
+    
+    // スキルのアクティブ状態をリセット
+    gameState.isFreeCameraActive = false;
+    gameState.freeCameraTimer = 0.0f;
+    gameState.isBurstJumpActive = false;
+    gameState.hasUsedBurstJump = false;
+    gameState.isInBurstJumpAir = false;
+    gameState.burstJumpDelayTimer = 0.0f;
+    gameState.isTimeStopped = false;
+    gameState.timeStopTimer = 0.0f;
+    
+    // チュートリアルステージの状態をリセット
+    gameState.isTutorialStage = false;
+    gameState.tutorialStep = 0;
+    gameState.tutorialStepCompleted = false;
+    gameState.showTutorialUI = false;
+    gameState.tutorialInputEnabled = false;
     
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;
@@ -843,8 +878,8 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
         // メインフィールド（1つ目）
         {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y - 1, GameConstants::STAGE_AREAS[0].z}, {10, 1, 10}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
 
-        // ステージ1選択エリア（赤色）
-        {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z}, {1, 1, 1}, glm::vec3(0.2f, 1.0f, 0.2f), "Stage 1 Selection Area"},
+        // ステージ1選択エリア（解放済みかどうかで色を変更）
+        {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z}, {1, 1, 1}, gameState.unlockedStages[1] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 1 Selection Area"},
 
         // {{-26, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
         
@@ -904,4 +939,35 @@ void StageManager::updateStageStars(int stageNumber, int newStars) {
 int StageManager::calculateStarDifference(int stageNumber, int newStars) const {
     // この実装は後で修正が必要
     return newStars;
+}
+
+// チュートリアルステージの生成関数
+void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& platformSystem) {
+
+    // チュートリアルステージの初期化
+    gameState.isTutorialStage = true;
+    gameState.tutorialStep = 0;
+    gameState.tutorialStepCompleted = false;
+    gameState.tutorialStartPosition = gameState.playerPosition;
+    gameState.tutorialRequiredDistance = 5.0f;  // 移動距離を小さくする
+    gameState.showTutorialUI = true;
+    gameState.tutorialInputEnabled = true;
+    gameState.tutorialMessage = "MOVING FORWARD: PRESS W";
+    
+    // チュートリアル用のアイテム管理を初期化
+    gameState.earnedItems = 0;
+    gameState.totalItems = 3;
+
+    createItems(gameState, platformSystem, {
+        {{2, 0, 9.5}, Colors::RED, "Tutorial Item1"},
+        {{8.5, 0, 3}, Colors::GREEN, "Tutorial Item2"},
+        {{-4.5, 0, 3}, Colors::BLUE, "Tutorial Item3"},
+    });
+    
+    // チュートリアル用の簡単な足場を作成
+    createStaticPlatforms(gameState, platformSystem, {
+        {{2, 0, 3}, {10, 1, 10}, glm::vec3(0.3f, 0.3f, 0.3f), "Tutorial Platform"},
+        {{2, 0, 16}, {4, 1, 4}, Colors::YELLOW, "Tutorial Platform"},
+    });
+    
 }

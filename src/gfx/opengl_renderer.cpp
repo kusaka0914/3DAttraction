@@ -58,8 +58,16 @@ void OpenGLRenderer::beginFrame() {
 void OpenGLRenderer::beginFrameWithBackground(int stageNumber) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // ステージ別背景を描画
-    renderStageBackground(stageNumber);
+    // ステージ6（チュートリアル）の場合は黒背景を設定
+    if (stageNumber == 6) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // ステージ別背景を描画（黒背景の上に）
+        renderStageBackground(stageNumber);
+    } else {
+        // ステージ別背景を描画
+        renderStageBackground(stageNumber);
+    }
     
     // プロジェクション行列を設定
     glMatrixMode(GL_PROJECTION);
@@ -783,6 +791,330 @@ void OpenGLRenderer::renderTimeUI(float remainingTime, float timeLimit, int earn
     glPopMatrix();
 }
 
+// ライフのUIと説明テキストを表示する関数
+void OpenGLRenderer::renderLivesWithExplanation(int lives) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // ハートを6個表示（右から消えていく）
+    for (int i = 0; i < 6; i++) {
+        glm::vec3 heartColor;
+        if (i < lives) {
+            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
+        } else {
+            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
+        }
+        
+        // STAGEテキストの右側にハートを配置
+        float heartX = 200.0f + i * 40.0f; // STAGEテキストの右側から40px間隔
+        float heartY = 45.0f; // STAGEテキストと同じY座標
+        
+        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
+    }
+    
+    // 説明テキストを表示（ライフのUIの下）
+    std::string explanation1 = "THESE ARE YOUR LIVES !";
+    std::string explanation2 = "THEY DECREASE AS YOU FALL !";
+    std::string explanation3 = "IF THEY'RE ALL GONE, IT'S GAME OVER !";
+    std::string explanation4 = "SO BE CAREFUL !";
+    
+    // 中央に配置（ライフのUIの下）
+    float centerX = 640.0f;  // 1280/2
+    float centerY = 200.0f;  // ライフのUIの下に配置
+    
+    renderText(explanation1, glm::vec2(centerX - 460, centerY-100), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    renderText(explanation2, glm::vec2(centerX - 480, centerY -60), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    renderText(explanation3, glm::vec2(centerX - 520, centerY - 20), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    renderText(explanation4, glm::vec2(centerX - 420, centerY + 20), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// 制限時間UIのみを表示する関数
+void OpenGLRenderer::renderTimeUIOnly(float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 残り時間表示（右上、より見やすい位置に調整）
+    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
+    glm::vec3 timeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 時間が少なくなったら赤色で警告
+    if (remainingTime <= 5.0f) {
+        timeColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    }
+    
+    renderText(timeText, glm::vec2(1170, 30), timeColor, 3.0f);
+    std::string goalText = "GOAL";
+    glm::vec3 goalColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    renderText(goalText, glm::vec2(962, 65), goalColor, 1.0f);
+    if(timeLimit<=20){
+    std::string goalText2 = "5s";
+        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        std::string goalText3 = "10s";
+        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+    }
+
+    if(timeLimit>20){
+        std::string goalText2 = "10s";
+        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        std::string goalText3 = "20s";
+        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+    }
+    
+
+    if(existingStars==0){
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
+            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            renderStar(starPos, starColor, 1.5f);
+        }
+    }else{
+    // 星の表示（右上、時間の下）
+        for (int i = 0; i < existingStars; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
+            glm::vec3 starColor;
+            
+            if (i < existingStars) {
+                // 既に取得している星（黄色で点灯）
+                starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            } else if (i < existingStars + earnedStars) {
+                // 今回新しく獲得した星（明るい黄色で点灯）
+                // starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            } else {
+                // まだ取得していない星（灰色）
+                starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            }
+            
+            renderStar(starPos, starColor, 1.5f);
+        }
+        for (int i = existingStars; i<3; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
+            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            renderStar(starPos, starColor, 1.5f);
+        }
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// ライフと制限時間UIを両方表示する関数
+void OpenGLRenderer::renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 残り時間表示（右上、より見やすい位置に調整）
+    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
+    glm::vec3 timeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 時間が少なくなったら赤色で警告
+    if (remainingTime <= 5.0f) {
+        timeColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    }
+    
+    renderText(timeText, glm::vec2(1170, 30), timeColor, 3.0f);
+    glm::vec3 timeLimitColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    std::string timeLimitText = "THIS IS THE TIME LIMIT!";
+    std::string timeLimitText2 = "IF IT REACHES 0, THE GAME IS OVER!";
+    std::string timeLimitText3 = "AIM FOR THE GOAL WITHIN THE TIME LIMIT!";
+
+    renderText(timeLimitText, glm::vec2(800, 120), timeLimitColor, 1.2f);
+    renderText(timeLimitText2, glm::vec2(800, 170), timeLimitColor, 1.2f);
+    renderText(timeLimitText3, glm::vec2(800, 220), timeLimitColor, 1.2f);
+
+    
+    
+    // ハートを6個表示（右から消えていく）
+    for (int i = 0; i < 6; i++) {
+        glm::vec3 heartColor;
+        if (i < lives) {
+            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
+        } else {
+            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
+        }
+        
+        // STAGEテキストの右側にハートを配置
+        float heartX = 200.0f + i * 40.0f; // STAGEテキストの右側から40px間隔
+        float heartY = 45.0f; // STAGEテキストと同じY座標
+        
+        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// ライフ、制限時間、星を全て表示する関数
+void OpenGLRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 残り時間表示（右上、より見やすい位置に調整）
+    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
+    glm::vec3 timeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    // 時間が少なくなったら赤色で警告
+    if (remainingTime <= 5.0f) {
+        timeColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    }
+    
+    renderText(timeText, glm::vec2(1170, 30), timeColor, 3.0f);
+    std::string goalText = "GOAL";
+    glm::vec3 goalColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    renderText(goalText, glm::vec2(962, 65), goalColor, 1.0f);
+    if(timeLimit<=20){
+    std::string goalText2 = "5s";
+        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        std::string goalText3 = "10s";
+        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+    }
+
+    if(timeLimit>20){
+        std::string goalText2 = "10s";
+        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
+        std::string goalText3 = "20s";
+        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
+        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
+    }
+    
+
+    if(existingStars==0){
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
+            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            renderStar(starPos, starColor, 1.5f);
+        }
+    }else{
+    // 星の表示（右上、時間の下）
+        for (int i = 0; i < existingStars; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
+            glm::vec3 starColor;
+            
+            if (i < existingStars) {
+                // 既に取得している星（黄色で点灯）
+                starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            } else if (i < existingStars + earnedStars) {
+                // 今回新しく獲得した星（明るい黄色で点灯）
+                // starColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            } else {
+                // まだ取得していない星（灰色）
+                starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            }
+            
+            renderStar(starPos, starColor, 1.5f);
+        }
+        for (int i = existingStars; i<3; i++) {
+            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
+            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            renderStar(starPos, starColor, 1.5f);
+        }
+    }
+    
+    // ハートを6個表示（右から消えていく）
+    for (int i = 0; i < 6; i++) {
+        glm::vec3 heartColor;
+        if (i < lives) {
+            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
+        } else {
+            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
+        }
+        
+        // STAGEテキストの右側にハートを配置
+        float heartX = 200.0f + i * 40.0f; // STAGEテキストの右側から40px間隔
+        float heartY = 45.0f; // STAGEテキストと同じY座標
+        
+        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
+    }
+
+    std::string starsText = "THESE ARE STARS !";
+    std::string starsText2 = "YOU CAN GET THEM BY CLEARING A STAGE !";
+    std::string starsText3 = "THE MORE TIME YOU HAVE LEFT, THE MORE STARS YOU'LL GET !";
+    std::string starsText4 = "CLEAR THE STAGE QUICKLY TO COLLECT AS MANY STARS AS POSSIBLE !";
+    glm::vec3 starsColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    renderText(starsText, glm::vec2(590, 100), starsColor, 1.2f);
+    renderText(starsText2, glm::vec2(590, 150), starsColor, 1.2f);
+    renderText(starsText3, glm::vec2(590, 200), starsColor, 1.2f);
+    renderText(starsText4, glm::vec2(590, 250), starsColor, 1.2f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 // 時間停止スキルUI表示
 void OpenGLRenderer::renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses) {
     // スキルを取得していない場合は表示しない
@@ -1347,6 +1679,94 @@ void OpenGLRenderer::renderTutorialUI(int width, int height) {
     
     // 注意事項
     renderText("ENTER", glm::vec2((boxX + boxWidth/2 +200) * scaleX, (boxY + 500) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.3f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+// チュートリアルステージ用のUI描画
+void OpenGLRenderer::renderTutorialStageUI(int width, int height, const std::string& message, int currentStep, bool stepCompleted) {
+    // フォントの初期化を確実に行う
+    initializeBitmapFont();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // 画面中央より少し下に表示
+    float centerX = 640.0f;  // 1280/2
+    float centerY = 500.0f;  // 画面中央より少し下
+    
+    // ステップ表示
+    std::string stepText = "STEP " + std::to_string(currentStep + 1) + "/11";
+    renderText(stepText, glm::vec2(centerX - 70, centerY - 50), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+
+    std::string explainText = "";
+    std::string explainText2 = "";
+    std::string explainText3 = "";
+    std::string explainText4 = "";
+    if(currentStep == 5){
+        std::string explainText = "YOUR SPEED AND THE SPEED OF THE GIMMICK WILL CHANGE !";
+        renderText(explainText, glm::vec2(centerX - 50, centerY - 400), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    }else if(currentStep == 9){
+        std::string explainText = "THERE ARE THREE ITEMS ON THE STAGE !";
+        std::string explainText2 = "RED, BLUE, AND GREEN !";
+        std::string explainText3 = "COLLECT THEM ALL TO REACH THE GOAL !";
+        std::string explainText4 = "LET'S GO AND COLLECT THEM !";
+        renderText(explainText, glm::vec2(centerX - 200, centerY + 50), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+        renderText(explainText2, glm::vec2(centerX - 120, centerY + 90), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+        renderText(explainText3, glm::vec2(centerX - 200, centerY + 130), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+        renderText(explainText4, glm::vec2(centerX - 150, centerY + 170), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    }else if(currentStep == 10){
+        std::string explainText = "THE YELLOW BLOCK IS THE GOAL !";
+        std::string explainText2 = "TOUCH THE GOAL WITH THREE ITEMS TO CLEAR THE STAGE !";
+        std::string explainText3 = "LET'S TRY IT!";
+        renderText(explainText, glm::vec2(centerX - 190, centerY + 50), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+        renderText(explainText2, glm::vec2(centerX - 300, centerY + 90), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+        renderText(explainText3, glm::vec2(centerX - 90, centerY + 130), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    }
+    
+    // メッセージ表示
+    glm::vec3 messageColor = stepCompleted ? glm::vec3(0.2f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
+    if(currentStep < 6 ){
+        renderText(message, glm::vec2(centerX - 200, centerY), messageColor, 1.5f);
+    }else if(currentStep == 6){
+        renderText(message, glm::vec2(centerX-50, centerY), messageColor, 1.5f);
+    }else if(currentStep == 7){
+        renderText(message, glm::vec2(centerX-90, centerY), messageColor, 1.5f);
+    }else if(currentStep == 8){
+        renderText(message, glm::vec2(centerX-50, centerY), messageColor, 1.5f);
+    }else if(currentStep == 9){
+        renderText(message, glm::vec2(centerX-50, centerY), messageColor, 1.5f);
+    }else if(currentStep == 10){
+        renderText(message, glm::vec2(centerX-50, centerY), messageColor, 1.5f);
+    }
+    
+    // ステップ完了時のメッセージ
+    if (stepCompleted && currentStep != 9) {
+        renderText("PRESS ENTER TO CONTINUE", glm::vec2(centerX - 150, centerY + 50), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
+    }else if(stepCompleted && currentStep == 9){
+        renderText("PRESS ENTER TO CONTINUE", glm::vec2(centerX + 50, centerY +5), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
+    }
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -2415,6 +2835,47 @@ void OpenGLRenderer::renderUnlockConfirmBackground(int width, int height, int ta
     glPopMatrix();
 }
 
+// ライフのUIのみを表示する関数
+void OpenGLRenderer::renderLivesOnly(int lives) {
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, 1280, 720, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // ハートを6個表示（右から消えていく）
+    for (int i = 0; i < 6; i++) {
+        glm::vec3 heartColor;
+        if (i < lives) {
+            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
+        } else {
+            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
+        }
+        
+        // STAGEテキストの右側にハートを配置
+        float heartX = 200.0f + i * 40.0f; // STAGEテキストの右側から40px間隔
+        float heartY = 45.0f; // STAGEテキストと同じY座標
+        
+        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
+    }
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 // 星不足警告UI用の背景描画
 void OpenGLRenderer::renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars) {
     // フォントの初期化を確実に行う
@@ -2481,8 +2942,6 @@ void OpenGLRenderer::renderStageSelectionAssist(int width, int height, int targe
         return; // 非表示の場合は何も描画しない
     }
     
-    printf("Rendering stage selection assist UI for stage %d\n", targetStage);
-    
     // フォントの初期化を確実に行う
     initializeBitmapFont();
     
@@ -2497,10 +2956,10 @@ void OpenGLRenderer::renderStageSelectionAssist(int width, int height, int targe
     
     // テキストの描画（画面中央少し下）
     std::string assistText;
-    if (targetStage == 1 || isUnlocked) {
+    if (targetStage == 6 || isUnlocked) {
         // ステージ1は常に解放済み、または解放済みのステージ
         assistText = "ENTER STAGE " + std::to_string(targetStage) + " : SPACE";
-    } else {
+    } else { 
         // 未解放のステージ
         assistText = "UNLOCK STAGE " + std::to_string(targetStage) + " : SPACE";
     }

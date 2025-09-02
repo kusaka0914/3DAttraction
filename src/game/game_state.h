@@ -248,6 +248,10 @@ struct GameState {
     int totalStars = 0;             // トータル星数
     std::map<int, bool> unlockedStages;  // 解放済みステージ {ステージ番号, 解放済みかどうか}
     
+    // アイテム管理システム
+    int earnedItems = 0;            // 今回獲得したアイテムの数
+    int totalItems = 3;             // ステージ内のアイテム総数（チュートリアル用）
+    
     // ステージクリアUI状態
     bool showStageClearUI = false;
     float stageClearTimer = 0.0f;
@@ -299,17 +303,17 @@ struct GameState {
     bool isTrackingPlatform = false;  // 足場を追跡中かどうか
     
     // 二段ジャンプスキル用
-    bool hasDoubleJumpSkill = true;  // 二段ジャンプスキルを取得しているかどうか
+    bool hasDoubleJumpSkill = false;  // 二段ジャンプスキルを取得しているかどうか
     int doubleJumpMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
     int doubleJumpRemainingUses = 3;  // 残り使用回数
     
     // ハートフエールスキル用
-    bool hasHeartFeelSkill = true;  // ハートフエールスキルを取得しているかどうか
+    bool hasHeartFeelSkill = false;  // ハートフエールスキルを取得しているかどうか
     int heartFeelMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
     int heartFeelRemainingUses = 3;  // 残り使用回数
     
     // フリーカメラスキル用
-    bool hasFreeCameraSkill = true;  // フリーカメラスキルを取得しているかどうか
+    bool hasFreeCameraSkill = false;  // フリーカメラスキルを取得しているかどうか
     bool isFreeCameraActive = false;  // フリーカメラがアクティブかどうか
     float freeCameraDuration = 20.0f;  // フリーカメラの持続時間（秒）
     float freeCameraTimer = 0.0f;  // フリーカメラの残り時間
@@ -319,7 +323,7 @@ struct GameState {
     float freeCameraPitch = 0.0f;  // フリーカメラのピッチ角
     
     // バーストジャンプスキル用
-    bool hasBurstJumpSkill = true;  // バーストジャンプスキルを取得しているかどうか
+    bool hasBurstJumpSkill = false;  // バーストジャンプスキルを取得しているかどうか
     bool isBurstJumpActive = false;  // バーストジャンプがアクティブかどうか
     bool hasUsedBurstJump = false;  // バーストジャンプを使用済みかどうか
     bool isInBurstJumpAir = false;  // バーストジャンプで空中にいるかどうか
@@ -328,12 +332,22 @@ struct GameState {
     int burstJumpRemainingUses = 3;  // 残り使用回数
     
     // 時間停止スキル用
-    bool hasTimeStopSkill = true;  // 時間停止スキルを取得しているかどうか
+    bool hasTimeStopSkill = false;  // 時間停止スキルを取得しているかどうか
     bool isTimeStopped = false;  // 時間停止中かどうか
     float timeStopDuration = 5.0f;  // 時間停止の持続時間（秒）
     float timeStopTimer = 0.0f;  // 時間停止の残り時間
     int timeStopMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
     int timeStopRemainingUses = 3;  // 残り使用回数
+    
+    // チュートリアル専用ステージ用
+    bool isTutorialStage = false;  // チュートリアルステージかどうか
+    int tutorialStep = 0;  // 現在のチュートリアルステップ（0=W, 1=A, 2=S, 3=D, 4=SPACE, 5=T）
+    bool tutorialStepCompleted = false;  // 現在のステップが完了したかどうか
+    glm::vec3 tutorialStartPosition = glm::vec3(0, 0, 0);  // チュートリアル開始位置
+    float tutorialRequiredDistance = 5.0f;  // チュートリアルで必要な移動距離
+    bool showTutorialUI = false;  // チュートリアルUI表示フラグ
+    std::string tutorialMessage = "";  // チュートリアルメッセージ
+    bool tutorialInputEnabled = false;  // チュートリアル入力有効フラグ
 };
 
 // ゲーム状態の初期化関数
