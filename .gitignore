@@ -77,4 +77,6 @@ Thumbs.db
 # Dependencies (if using package managers)
 node_modules/
 vendor/
-.cursor/rules/
+
+# Cursor IDE files
+.cursor/
