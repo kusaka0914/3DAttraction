@@ -22,7 +22,6 @@ void UIRenderer::begin2DMode() {
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -38,26 +37,14 @@ void UIRenderer::end2DMode() {
 }
 
 void UIRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
-    // 2D描画モードに切り替え
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, 1280, 720, 0, -1, 1);
+    begin2DMode();
     
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    
-    // 深度テストを無効化（UI表示のため）
-    glDisable(GL_DEPTH_TEST);
-    
-    // 色を設定
     glColor3f(color.r, color.g, color.b);
     
     float currentX = position.x;
     float charWidth = GameConstants::RenderConstants::CHAR_WIDTH * scale;
     float charHeight = GameConstants::RenderConstants::CHAR_HEIGHT * scale;
-    float spaceWidth = GameConstants::RenderConstants::SPACE_WIDTH * scale;  // スペース幅を増加
+    float spaceWidth = GameConstants::RenderConstants::SPACE_WIDTH * scale;
     
     for (size_t i = 0; i < text.length(); i++) {
         char c = text[i];
@@ -67,24 +54,15 @@ void UIRenderer::renderText(const std::string& text, const glm::vec2& position, 
             continue;
         }
         
-        // ビットマップフォントで文字を描画
         renderBitmapChar(c, glm::vec2(currentX, position.y), color, scale);
         currentX += charWidth + GameConstants::RenderConstants::CHAR_SPACING * scale;  // 文字間隔を増加
     }
     
-    // 3D描画モードに戻す
-    glEnable(GL_DEPTH_TEST);
-    
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    end2DMode();
 }
 
 void UIRenderer::renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale) {
     if (!font.hasCharacter(c)) {
-        // 文字が見つからない場合は空白として扱う
         return;
     }
     
@@ -111,520 +89,285 @@ void UIRenderer::renderBitmapChar(char c, const glm::vec2& position, const glm::
     }
 }
 
+// 統合されたUI描画関数
+void UIRenderer::renderGameUI(const GameUIState& state) {
+    begin2DMode();
+    
+    // 時間表示
+    if (state.showTime) {
+        renderTimeDisplay(state.remainingTime, state.timeLimit);
+    }
+    
+    // ゴール表示
+    if (state.showGoal) {
+        renderGoalDisplay(state.timeLimit);
+    }
+    
+    // 星表示
+    if (state.showStars) {
+        renderStarsDisplay(state.existingStars);
+    }
+    
+    // ライフ表示
+    if (state.showLives) {
+        renderLivesDisplay(state.lives);
+    }
+    
+    end2DMode();
+}
+
 void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives) {
-    begin2DMode();
+    GameUIState state;
+    state.showTime = true;
+    state.showGoal = true;
+    state.showStars = true;
+    state.showLives = true;
+    state.remainingTime = remainingTime;
+    state.timeLimit = timeLimit;
+    state.existingStars = existingStars;
+    state.lives = lives;
     
-    // 残り時間表示（右上、より見やすい位置に調整）
-    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
-    glm::vec3 timeColor = GameConstants::UI_TEXT_COLOR;
-    
-    // 時間が少なくなったら赤色で警告
-    if (remainingTime <= 5.0f) {
-        timeColor = GameConstants::UI_WARNING_COLOR;
-    }
-    
-    renderText(timeText, glm::vec2(GameConstants::RenderConstants::UILayout::TIME_UI_X, 
-                                   GameConstants::RenderConstants::UILayout::TIME_UI_Y), timeColor, 3.0f);
-    
-    std::string goalText = "GOAL";
-    glm::vec3 goalColor = GameConstants::UI_TEXT_COLOR;
-    
-    renderText(goalText, glm::vec2(GameConstants::RenderConstants::UILayout::GOAL_UI_X, 
-                                   GameConstants::RenderConstants::UILayout::GOAL_UI_Y), goalColor, 1.0f);
-    
-    if(timeLimit <= 20) {
-        std::string goalText2 = "5s";
-        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
-        std::string goalText3 = "10s";
-        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
-    }
-
-    if(timeLimit > 20) {
-        std::string goalText2 = "10s";
-        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
-        std::string goalText3 = "20s";
-        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
-    }
-
-    if(existingStars == 0) {
-        for (int i = 0; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(GameConstants::RenderConstants::UILayout::RIGHT_UI_X + 
-                                          i * GameConstants::RenderConstants::UILayout::STAR_SPACING, 
-                                          GameConstants::RenderConstants::UILayout::STAR_UI_Y);
-            glm::vec3 starColor = GameConstants::STAR_INACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
-    } else {
-        // 星の表示（右上、時間の下）
-        for (int i = 0; i < existingStars; i++) {
-            glm::vec2 starPos = glm::vec2(GameConstants::RenderConstants::UILayout::RIGHT_UI_X + 
-                                          i * GameConstants::RenderConstants::UILayout::STAR_SPACING, 
-                                          GameConstants::RenderConstants::UILayout::STAR_UI_Y);
-            glm::vec3 starColor = GameConstants::STAR_ACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
-        
-        for (int i = existingStars; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(GameConstants::RenderConstants::UILayout::RIGHT_UI_X + 
-                                          i * GameConstants::RenderConstants::UILayout::STAR_SPACING, 
-                                          GameConstants::RenderConstants::UILayout::STAR_UI_Y);
-            glm::vec3 starColor = GameConstants::STAR_INACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
-    }
-    
-    // ハートを6個表示（右から消えていく）
-    for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor;
-        if (i < lives) {
-            heartColor = GameConstants::LIFE_ACTIVE; // 赤色（残っているライフ）
-        } else {
-            heartColor = GameConstants::LIFE_INACTIVE; // 灰色（失ったライフ）
-        }
-        
-        // STAGEテキストの右側にハートを配置
-        float heartX = GameConstants::RenderConstants::UILayout::LEFT_UI_X + 
-                      i * GameConstants::RenderConstants::UILayout::LIFE_SPACING;
-        float heartY = GameConstants::RenderConstants::UILayout::LEFT_UI_Y;
-        
-        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
-    }
-    
-    end2DMode();
+    renderGameUI(state);
 }
 
-void UIRenderer::renderLivesOnly(int lives) {
-    begin2DMode();
+// 時間表示の描画
+void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
+    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
+    glm::vec3 timeColor = (remainingTime <= 5.0f) ? GameConstants::UI_WARNING_COLOR : GameConstants::UI_TEXT_COLOR;
     
-    // ハートを6個表示（右から消えていく）
-    for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor;
-        if (i < lives) {
-            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
-        } else {
-            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
-        }
-        
-        // STAGEテキストの右側にハートを配置
-        float heartX = 200.0f + i * 40.0f;
-        float heartY = 45.0f;
-        
-        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
-    }
-    
-    end2DMode();
+    renderText(timeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
+                                   GameConstants::Colors::UILayout::TIME_UI_Y), timeColor, GameConstants::Colors::UILayout::TIME_UI_SCALE);
 }
 
-void UIRenderer::renderTimeUIOnly(float remainingTime, float timeLimit, int earnedStars, int existingStars) {
-    begin2DMode();
-    
-    // 残り時間表示（右上、より見やすい位置に調整）
-    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
-    glm::vec3 timeColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 時間が少なくなったら赤色で警告
-    if (remainingTime <= 5.0f) {
-        timeColor = glm::vec3(1.0f, 0.0f, 0.0f);
-    }
-    
-    renderText(timeText, glm::vec2(1170, 30), timeColor, 3.0f);
+// ゴール表示の描画
+void UIRenderer::renderGoalDisplay(float timeLimit) {
     std::string goalText = "GOAL";
-    glm::vec3 goalColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    renderText(goalText, glm::vec2(GameConstants::Colors::UILayout::GOAL_UI_X, 
+                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
     
-    renderText(goalText, glm::vec2(962, 65), goalColor, 1.0f);
-    
-    if(timeLimit <= 20) {
-        std::string goalText2 = "5s";
-        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
-        std::string goalText3 = "10s";
-        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
-    }
-
-    if(timeLimit > 20) {
-        std::string goalText2 = "10s";
-        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
-        std::string goalText3 = "20s";
-        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
-    }
-
-    if(existingStars == 0) {
-        for (int i = 0; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(GameConstants::RenderConstants::UILayout::RIGHT_UI_X + 
-                                          i * GameConstants::RenderConstants::UILayout::STAR_SPACING, 
-                                          GameConstants::RenderConstants::UILayout::STAR_UI_Y);
-            glm::vec3 starColor = GameConstants::STAR_INACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
+    if (timeLimit <= 20) {
+        renderText("5s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_5S_X, 
+                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+        renderText("10s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_10S_X, 
+                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
     } else {
-        // 星の表示（右上、時間の下）
-        for (int i = 0; i < existingStars; i++) {
-            glm::vec2 starPos = glm::vec2(GameConstants::RenderConstants::UILayout::RIGHT_UI_X + 
-                                          i * GameConstants::RenderConstants::UILayout::STAR_SPACING, 
-                                          GameConstants::RenderConstants::UILayout::STAR_UI_Y);
-            glm::vec3 starColor = GameConstants::STAR_ACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
-        
-        for (int i = existingStars; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(GameConstants::RenderConstants::UILayout::RIGHT_UI_X + 
-                                          i * GameConstants::RenderConstants::UILayout::STAR_SPACING, 
-                                          GameConstants::RenderConstants::UILayout::STAR_UI_Y);
-            glm::vec3 starColor = GameConstants::STAR_INACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
+        renderText("10s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_5S_X, 
+                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+        renderText("20s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_20S_X, 
+                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
     }
-    
-    end2DMode();
+}
+
+// 星表示の描画
+void UIRenderer::renderStarsDisplay(int existingStars) {
+    for (int i = 0; i < 3; i++) {
+        glm::vec2 starPos = glm::vec2(GameConstants::Colors::UILayout::STARS_START_X + 
+                                      i * GameConstants::Colors::UILayout::STARS_SPACING, 
+                                      GameConstants::Colors::UILayout::STARS_Y);
+        glm::vec3 starColor = (i < existingStars) ? GameConstants::STAR_ACTIVE : GameConstants::STAR_INACTIVE;
+        renderStar(starPos, starColor, GameConstants::Colors::UILayout::STARS_SCALE);
+    }
+}
+
+// ライフ表示の描画
+void UIRenderer::renderLivesDisplay(int lives) {
+    for (int i = 0; i < 6; i++) {
+        glm::vec3 heartColor = (i < lives) ? GameConstants::LIFE_ACTIVE : GameConstants::LIFE_INACTIVE;
+        float heartX = GameConstants::Colors::UILayout::HEART_START_X + i * GameConstants::Colors::UILayout::HEART_SPACING;
+        renderHeart(glm::vec2(heartX, GameConstants::Colors::UILayout::HEART_Y), heartColor, GameConstants::Colors::UILayout::HEART_SCALE);
+    }
+}
+
+// 説明テキストの共通化関数
+void UIRenderer::renderExplanationText(const std::string& type, const glm::vec2& position) {
+    if (type == "lives") {
+        std::string explanation1 = "THESE ARE YOUR LIVES !";
+        std::string explanation2 = "THEY DECREASE AS YOU FALL !";
+        std::string explanation3 = "IF THEY'RE ALL GONE, IT'S GAME OVER !";
+        std::string explanation4 = "SO BE CAREFUL !";
+
+        int offsetY = position.y - 100;
+        int interval = 40;
+        
+        renderText(explanation1, glm::vec2(position.x - 460, offsetY), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation2, glm::vec2(position.x - 480, offsetY + interval), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation3, glm::vec2(position.x - 520, offsetY + interval * 2), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation4, glm::vec2(position.x - 420, offsetY + interval * 3), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+    }
+    else if (type == "time") {
+        std::string timeLimitText = "THIS IS THE TIME LIMIT!";
+        std::string timeLimitText2 = "IF IT REACHES 0, THE GAME IS OVER!";
+        std::string timeLimitText3 = "AIM FOR THE GOAL WITHIN THE TIME LIMIT!";
+
+        int offsetY = position.y;
+        int interval = 40;
+        
+        renderText(timeLimitText, glm::vec2(position.x, offsetY), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(timeLimitText2, glm::vec2(position.x, offsetY + interval), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(timeLimitText3, glm::vec2(position.x, offsetY + interval * 2), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+    }
+    else if (type == "stars") {
+        std::string starsText = "THESE ARE STARS !";
+        std::string starsText2 = "YOU CAN GET THEM BY CLEARING A STAGE !";
+        std::string starsText3 = "THE MORE TIME YOU HAVE LEFT, THE MORE STARS YOU'LL GET !";
+        std::string starsText4 = "CLEAR THE STAGE QUICKLY TO COLLECT AS MANY STARS AS POSSIBLE !";
+
+        int offsetY = position.y;
+        int interval = 40;
+        
+        renderText(starsText, glm::vec2(position.x, offsetY), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText2, glm::vec2(position.x, offsetY + interval), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText3, glm::vec2(position.x, offsetY + interval * 2), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText4, glm::vec2(position.x, offsetY + interval * 3), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+    }
 }
 
 void UIRenderer::renderLivesWithExplanation(int lives) {
-    begin2DMode();
+    GameUIState state;
+    state.showLives = true;
+    state.showTime = false;
+    state.showGoal = false;
+    state.showStars = false;
+    state.lives = lives;
     
-    // ハートを6個表示（右から消えていく）
-    for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor;
-        if (i < lives) {
-            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
-        } else {
-            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
-        }
-        
-        // STAGEテキストの右側にハートを配置
-        float heartX = 200.0f + i * 40.0f;
-        float heartY = 45.0f;
-        
-        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
-    }
+    renderGameUI(state);
     
-    // 説明テキストを表示（ライフのUIの下）
-    std::string explanation1 = "THESE ARE YOUR LIVES !";
-    std::string explanation2 = "THEY DECREASE AS YOU FALL !";
-    std::string explanation3 = "IF THEY'RE ALL GONE, IT'S GAME OVER !";
-    std::string explanation4 = "SO BE CAREFUL !";
-    
-    // 中央に配置（ライフのUIの下）
-    float centerX = 640.0f;  // 1280/2
-    float centerY = 200.0f;  // ライフのUIの下に配置
-    
-    renderText(explanation1, glm::vec2(centerX - 460, centerY-100), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
-    renderText(explanation2, glm::vec2(centerX - 480, centerY -60), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
-    renderText(explanation3, glm::vec2(centerX - 520, centerY - 20), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
-    renderText(explanation4, glm::vec2(centerX - 420, centerY + 20), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
-    
-    end2DMode();
+    // 説明テキストのみ追加
+    renderExplanationText("lives", glm::vec2(640.0f, 200.0f));
 }
 
 void UIRenderer::renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars) {
-    begin2DMode();
+    GameUIState state;
+    state.showTime = true;
+    state.showLives = true;
+    state.remainingTime = remainingTime;
+    state.timeLimit = timeLimit;
+    state.lives = lives;
+    state.showStars = false;
+    state.showGoal = false;
     
-    // 残り時間表示（右上、より見やすい位置に調整）
-    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
-    glm::vec3 timeColor = GameConstants::UI_TEXT_COLOR;
+    renderGameUI(state);
     
-    // 時間が少なくなったら赤色で警告
-    if (remainingTime <= 5.0f) {
-        timeColor = GameConstants::UI_WARNING_COLOR;
-    }
-    
-    renderText(timeText, glm::vec2(GameConstants::RenderConstants::UILayout::TIME_UI_X, 
-                                   GameConstants::RenderConstants::UILayout::TIME_UI_Y), timeColor, 3.0f);
-    
-    glm::vec3 timeLimitColor = GameConstants::UI_TEXT_COLOR;
-    std::string timeLimitText = "THIS IS THE TIME LIMIT!";
-    std::string timeLimitText2 = "IF IT REACHES 0, THE GAME IS OVER!";
-    std::string timeLimitText3 = "AIM FOR THE GOAL WITHIN THE TIME LIMIT!";
-
-    renderText(timeLimitText, glm::vec2(800, 120), timeLimitColor, 1.2f);
-    renderText(timeLimitText2, glm::vec2(800, 170), timeLimitColor, 1.2f);
-    renderText(timeLimitText3, glm::vec2(800, 220), timeLimitColor, 1.2f);
-    
-    // ハートを6個表示（右から消えていく）
-    for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor;
-        if (i < lives) {
-            heartColor = GameConstants::LIFE_ACTIVE; // 赤色（残っているライフ）
-        } else {
-            heartColor = GameConstants::LIFE_INACTIVE; // 灰色（失ったライフ）
-        }
-        
-        // STAGEテキストの右側にハートを配置
-        float heartX = GameConstants::RenderConstants::UILayout::LEFT_UI_X + 
-                      i * GameConstants::RenderConstants::UILayout::LIFE_SPACING;
-        float heartY = GameConstants::RenderConstants::UILayout::LEFT_UI_Y;
-        
-        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
-    }
-    
-    end2DMode();
+    // 説明テキストのみ追加
+    renderExplanationText("time", glm::vec2(800, 120));
 }
 
 void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+    GameUIState state;
+    state.showTime = true;
+    state.showGoal = true;
+    state.showStars = true;
+    state.showLives = true;
+    state.remainingTime = remainingTime;
+    state.timeLimit = timeLimit;
+    state.existingStars = existingStars;
+    state.lives = lives;
+    
+    renderGameUI(state);
+    
+    // 説明テキストのみ追加
+    renderExplanationText("stars", glm::vec2(590, 100));
+}
+
+// 統合されたスキルUI描画関数
+void UIRenderer::renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool isActive, 
+                               int remainingUses, int maxUses, bool isEasyMode) {
+    if (!hasSkill) return;
+    
     begin2DMode();
     
-    // 残り時間表示（右上、より見やすい位置に調整）
-    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
-    glm::vec3 timeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    std::string skillText = config.skillName;
+    glm::vec3 skillColor = GameConstants::UI_TEXT_COLOR;
+    glm::vec3 usesColor = GameConstants::UI_TEXT_COLOR;
     
-    // 時間が少なくなったら赤色で警告
-    if (remainingTime <= 5.0f) {
-        timeColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    // 使用回数が0の場合は灰色
+    if (remainingUses <= 0) {
+        usesColor = GameConstants::UI_DISABLED_COLOR;
+        skillColor = GameConstants::UI_DISABLED_COLOR;
     }
     
-    renderText(timeText, glm::vec2(1170, 30), timeColor, 3.0f);
-    std::string goalText = "GOAL";
-    glm::vec3 goalColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    renderText(goalText, glm::vec2(962, 65), goalColor, 1.0f);
-    
-    if(timeLimit <= 20) {
-        std::string goalText2 = "5s";
-        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
-        std::string goalText3 = "10s";
-        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
-    }
-
-    if(timeLimit > 20) {
-        std::string goalText2 = "10s";
-        glm::vec3 goalColor2 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText2, glm::vec2(1040, 65), goalColor2, 1.0f);
-        std::string goalText3 = "20s";
-        glm::vec3 goalColor3 = glm::vec3(1.0f, 1.0f, 1.0f);
-        renderText(goalText3, glm::vec2(1110, 65), goalColor3, 1.0f);
-    }
-
-    if(existingStars == 0) {
-        for (int i = 0; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
-            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
-            renderStar(starPos, starColor, 1.5f);
-        }
-    } else {
-        // 星の表示（右上、時間の下）
-        for (int i = 0; i < existingStars; i++) {
-            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
-            glm::vec3 starColor = GameConstants::STAR_ACTIVE;
-            renderStar(starPos, starColor, 1.5f);
-        }
-        
-        for (int i = existingStars; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(980 + i * 70, 40);
-            glm::vec3 starColor = glm::vec3(0.5f, 0.5f, 0.5f);
-            renderStar(starPos, starColor, 1.5f);
-        }
+    // アクティブ状態の場合は青色
+    if (isActive) {
+        usesColor = GameConstants::UI_ACTIVE_COLOR;
+        skillColor = GameConstants::UI_ACTIVE_COLOR;
     }
     
-    // ハートを6個表示（右から消えていく）
-    for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor;
-        if (i < lives) {
-            heartColor = glm::vec3(1.0f, 0.3f, 0.3f); // 赤色（残っているライフ）
-        } else {
-            heartColor = glm::vec3(0.3f, 0.3f, 0.3f); // 灰色（失ったライフ）
-        }
-        
-        // STAGEテキストの右側にハートを配置
-        float heartX = 200.0f + i * 40.0f;
-        float heartY = 45.0f;
-        
-        renderHeart(glm::vec2(heartX, heartY), heartColor, 1.0f);
+    // スキル名を描画
+    renderText(skillText, glm::vec2(config.skillX, GameConstants::Colors::UILayout::SKILL_START_Y), skillColor, GameConstants::Colors::UILayout::SKILL_SCALE);
+    
+    // 使用回数を描画
+    renderText(std::to_string(remainingUses), glm::vec2(config.skillX + config.countOffset, GameConstants::Colors::UILayout::SKILL_COUNT_Y), usesColor, GameConstants::Colors::UILayout::SKILL_COUNT_SCALE);
+    
+    // 操作説明を描画
+    renderText(config.instructionText, glm::vec2(config.skillX + config.instructionOffset, GameConstants::Colors::UILayout::SKILL_INSTRUCTION_Y), usesColor, GameConstants::Colors::UILayout::SKILL_INSTRUCTION_SCALE);
+    
+    // アクティブ状態の特別表示
+    if (config.hasActiveState && isActive) {
+        renderText(config.activeText, config.activePosition, GameConstants::UI_ACTIVE_COLOR, GameConstants::Colors::UILayout::SKILL_ACTIVE_SCALE);
     }
-
-    std::string starsText = "THESE ARE STARS !";
-    std::string starsText2 = "YOU CAN GET THEM BY CLEARING A STAGE !";
-    std::string starsText3 = "THE MORE TIME YOU HAVE LEFT, THE MORE STARS YOU'LL GET !";
-    std::string starsText4 = "CLEAR THE STAGE QUICKLY TO COLLECT AS MANY STARS AS POSSIBLE !";
-    glm::vec3 starsColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    renderText(starsText, glm::vec2(590, 100), starsColor, 1.2f);
-    renderText(starsText2, glm::vec2(590, 150), starsColor, 1.2f);
-    renderText(starsText3, glm::vec2(590, 200), starsColor, 1.2f);
-    renderText(starsText4, glm::vec2(590, 250), starsColor, 1.2f);
     
     end2DMode();
 }
 
+// 個別スキルUI描画関数（後方互換性のため）
 void UIRenderer::renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses) {
-    // スキルを取得していない場合は表示しない
-    if (!hasSkill) {
-        return;
-    }
+    if (!hasSkill) return;
     
-    begin2DMode();
+    SkillUIConfig config("TIME STOP", "PRESS Q", 
+                        GameConstants::Colors::UILayout::TIME_STOP_SKILL_X,
+                        GameConstants::Colors::UILayout::TIME_STOP_COUNT_OFFSET,
+                        GameConstants::Colors::UILayout::TIME_STOP_INSTRUCTION_OFFSET,
+                        true, "TIME STOPPED", glm::vec2(0, 0)); // アクティブ状態あり
     
-    // 時間停止スキルの表示（左下）
-    std::string skillText = "TIME STOP";
-    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数表示
-    std::string usesText = "PRESS Q";
-    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    if (remainingUses <= 0) {
-        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
-        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
-    }
-    // 時間停止中は明るい青色
-    if (isTimeStopped) {
-        skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
-        usesColor = glm::vec3(0.5f, 0.5f, 1.0f);
-    }
-    std::string countText = std::to_string(remainingUses);
-    renderText(skillText, glm::vec2(30, 650), skillColor, 1.5f);
-    renderText(countText, glm::vec2(80, 600), usesColor, 3.0f);
-    
-    renderText(usesText, glm::vec2(50, 680), usesColor, 1.2f);
-    
-    end2DMode();
+    renderSkillUI(config, hasSkill, isTimeStopped, remainingUses, maxUses);
 }
 
 void UIRenderer::renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int remainingUses, int maxUses) {
-    // お助けモードの場合は表示しない（無制限のため）
-    if (isEasyMode) {
-        return;
-    }
+    if (isEasyMode || !hasSkill) return;
     
-    // スキルを取得していない場合は表示しない
-    if (!hasSkill) {
-        return;
-    }
+    SkillUIConfig config("DOUBLE JUMP", "PRESS SPACE IN AIR", 
+                        GameConstants::Colors::UILayout::DOUBLE_JUMP_SKILL_X,
+                        GameConstants::Colors::UILayout::DOUBLE_JUMP_COUNT_OFFSET,
+                        GameConstants::Colors::UILayout::DOUBLE_JUMP_INSTRUCTION_OFFSET);
     
-    begin2DMode();
-    
-    // 二段ジャンプスキルの表示（左下、時間停止スキルの上）
-    std::string skillText = "DOUBLE JUMP";
-    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数表示
-    std::string usesText = "PRESS SPACE IN AIR";
-    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数が0の場合は灰色
-    if (remainingUses <= 0) {
-        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
-        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
-    }
-    std::string countText = std::to_string(remainingUses);
-
-    renderText(skillText, glm::vec2(230, 650), skillColor, 1.5f);
-    renderText(countText, glm::vec2(300, 600), usesColor, 3.0f);
-    renderText(usesText, glm::vec2(205, 680), usesColor, 1.2f);
-    
-    end2DMode();
+    renderSkillUI(config, hasSkill, false, remainingUses, maxUses);
 }
 
 void UIRenderer::renderHeartFeelUI(bool hasSkill, int remainingUses, int maxUses, int currentLives) {
-    // スキルを取得していない場合は表示しない
-    if (!hasSkill) {
-        return;
-    }
+    if (!hasSkill) return;
     
-    begin2DMode();
+    SkillUIConfig config("HEART FEEL", "PRESS H", 
+                        GameConstants::Colors::UILayout::HEART_FEEL_SKILL_X,
+                        GameConstants::Colors::UILayout::HEART_FEEL_COUNT_OFFSET,
+                        GameConstants::Colors::UILayout::HEART_FEEL_INSTRUCTION_OFFSET);
     
-    // ハートフエールスキルの表示（左下、二段ジャンプスキルの上）
-    std::string skillText = "HEART FEEL";
-    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    renderText(skillText, glm::vec2(460, 650), skillColor, 1.5f);
-    
-    // 使用回数表示
-    std::string usesText = "PRESS H";
-    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数が0の場合は灰色
-    if (remainingUses <= 0) {
-        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
-        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
-    }
-    std::string countText = std::to_string(remainingUses);
-    renderText(skillText, glm::vec2(460, 650), skillColor, 1.5f);
-    renderText(countText, glm::vec2(520, 600), usesColor, 3.0f);
-    renderText(usesText, glm::vec2(490, 680), usesColor, 1.2f);
-    
-    end2DMode();
+    renderSkillUI(config, hasSkill, false, remainingUses, maxUses);
 }
 
 void UIRenderer::renderFreeCameraUI(bool hasSkill, bool isActive, float timer, int remainingUses, int maxUses) {
-    // スキルを取得していない場合は表示しない
-    if (!hasSkill) {
-        return;
-    }
+    if (!hasSkill) return;
     
-    begin2DMode();
+    SkillUIConfig config("FREE CAMERA", "PRESS C", 
+                        GameConstants::Colors::UILayout::FREE_CAMERA_SKILL_X,
+                        GameConstants::Colors::UILayout::FREE_CAMERA_COUNT_OFFSET,
+                        GameConstants::Colors::UILayout::FREE_CAMERA_INSTRUCTION_OFFSET,
+                        true, "FREE CAMERA ACTIVE", glm::vec2(0, 0)); // アクティブ状態あり
     
-    // フリーカメラスキルの表示（左下、ハートフエールスキルの上）
-    std::string skillText = "FREE CAMERA";
-    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数表示
-    std::string usesText = "PRESS C";
-    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数が0の場合は灰色
-    if (remainingUses <= 0) {
-        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
-        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
-    }
-    std::string countText = std::to_string(remainingUses);
-    
-    // アクティブ中の残り時間表示
-    if (isActive) {
-        usesColor = glm::vec3(0.5f, 0.5f, 1.0f);
-        skillColor = glm::vec3(0.5f, 0.5f, 1.0f);
-    }
-
-    renderText(skillText, glm::vec2(850, 650), skillColor, 1.5f);
-    renderText(countText, glm::vec2(910, 600), usesColor, 3.0f);
-    renderText(usesText, glm::vec2(890, 680), usesColor, 1.2f);
-    
-    end2DMode();
+    renderSkillUI(config, hasSkill, isActive, remainingUses, maxUses);
 }
 
 void UIRenderer::renderBurstJumpUI(bool hasSkill, bool isActive, int remainingUses, int maxUses) {
-    // スキルを取得していない場合は表示しない
-    if (!hasSkill) {
-        return;
-    }
+    if (!hasSkill) return;
     
-    begin2DMode();
+    SkillUIConfig config("BURST JUMP", "PRESS B", 
+                        GameConstants::Colors::UILayout::BURST_JUMP_SKILL_X,
+                        GameConstants::Colors::UILayout::BURST_JUMP_COUNT_OFFSET,
+                        GameConstants::Colors::UILayout::BURST_JUMP_INSTRUCTION_OFFSET,
+                        true, "PRESS SPACE!", 
+                        glm::vec2(GameConstants::Colors::UILayout::BURST_JUMP_ACTIVE_X, 
+                                 GameConstants::Colors::UILayout::BURST_JUMP_ACTIVE_Y)); // アクティブ状態あり
     
-    // バーストジャンプスキルの表示（左下、フリーカメラスキルの上）
-    std::string skillText = "BURST JUMP";
-    glm::vec3 skillColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数表示
-    std::string usesText = "PRESS B";
-    glm::vec3 usesColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    
-    // 使用回数が0の場合は灰色
-    if (remainingUses <= 0) {
-        usesColor = glm::vec3(0.5f, 0.5f, 0.5f);
-        skillColor = glm::vec3(0.5f, 0.5f, 0.5f);
-    }
-
-    std::string countText = std::to_string(remainingUses);
-    
-    // アクティブ中の表示
-    if (isActive) {
-        std::string activeText = "PRESS SPACE!";
-        renderText(activeText, glm::vec2(550, 490), glm::vec3(1.0f, 0.5f, 0.5f), 2.0f);
-        usesColor = glm::vec3(1.0f, 0.5f, 0.5f);
-        skillColor = glm::vec3(1.0f, 0.5f, 0.5f);
-    }
-    renderText(skillText, glm::vec2(650, 650), skillColor, 1.5f);
-
-    renderText(countText, glm::vec2(700, 600), usesColor, 3.0f);
-    
-    renderText(usesText, glm::vec2(675, 680), usesColor, 1.2f);
-    
-    end2DMode();
+    renderSkillUI(config, hasSkill, isActive, remainingUses, maxUses);
 }
 
 void UIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {

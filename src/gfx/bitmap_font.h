@@ -22,14 +22,6 @@ public:
     
     // 指定文字の存在確認
     bool hasCharacter(char c) const;
-    
-    // フォントの幅と高さ（ピクセル単位）
-    static constexpr int CHAR_WIDTH = 8;
-    static constexpr int CHAR_HEIGHT = 12;
-    
-    // 文字間隔とスペース幅
-    static constexpr float CHAR_SPACING = 2.0f;
-    static constexpr float SPACE_WIDTH = 8.0f;
 
 private:
     // 文字データの格納

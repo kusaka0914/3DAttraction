@@ -29,6 +29,7 @@ add_executable(Vulkan3D
     src/gfx/background_renderer.cpp
     src/gfx/ui_renderer.cpp
     src/gfx/game_state_ui_renderer.cpp
+    src/gfx/renderer_3d.cpp
     src/game/game_state.cpp
     src/game/stage_generator.cpp
     src/game/stage_manager.cpp

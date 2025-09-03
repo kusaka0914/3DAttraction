@@ -305,14 +305,14 @@ int main(int argc, char* argv[]) {
                 if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
                 
                 if (isRotating[i]) {
-                    renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+                    renderer->renderer3D.renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
                 } else {
-                    renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                    renderer->renderer3D.renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
                 }
             }
             
             // プレイヤーの描画
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
+            renderer->renderer3D.renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
             
             // Ready画面UIを描画
             gameStateUIRenderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel, gameState.isFirstPersonMode);
@@ -398,14 +398,14 @@ int main(int argc, char* argv[]) {
                 if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
                 
                 if (isRotating[i]) {
-                    renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+                    renderer->renderer3D.renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
                 } else {
-                    renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                    renderer->renderer3D.renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
                 }
             }
             
             // プレイヤーの描画
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
+            renderer->renderer3D.renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
             
             // カウントダウンUIを描画
             int count = (int)gameState.countdownTimer + 1;
@@ -1461,37 +1461,17 @@ int main(int argc, char* argv[]) {
             if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
             
             if (isRotating[i]) {
-                renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+                renderer->renderer3D.renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
             } else {
-                renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+                renderer->renderer3D.renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
             }
         }
         
         // 重力反転エリアの描画
         for (const auto& zone : gameState.gravityZones) {
             if (zone.isActive) {
-                renderer->renderBoxWithAlpha(zone.position, GameConstants::Colors::GRAVITY_ZONE_COLOR, 
+                renderer->renderer3D.renderBoxWithAlpha(zone.position, GameConstants::Colors::GRAVITY_ZONE_COLOR, 
                                            zone.size, GameConstants::Colors::GRAVITY_ZONE_ALPHA);
-            }
-        }
-        
-        // スイッチの描画
-        for (const auto& switch_obj : gameState.switches) {
-            glm::vec3 switchColor = switch_obj.color;
-            if (switch_obj.isPressed) {
-                switchColor *= 0.7f;
-            }
-            renderer->renderBox(switch_obj.position, switchColor, switch_obj.size);
-        }
-        
-        // 大砲の描画
-        for (const auto& cannon : gameState.cannons) {
-            if (cannon.isActive) {
-                glm::vec3 color = cannon.color;
-                if (cannon.cooldownTimer > 0.0f) {
-                    color *= 0.5f;
-                }
-                renderer->renderBox(cannon.position, color, cannon.size);
             }
         }
         
@@ -1499,13 +1479,13 @@ int main(int argc, char* argv[]) {
         for (const auto& item : gameState.items) {
             if (!item.isCollected) {
                 glm::vec3 itemPos = item.position + glm::vec3(0, item.bobHeight, 0);
-                renderer->renderRotatedBox(itemPos, item.color, item.size, glm::vec3(0, 1, 0), item.rotationAngle);
+                renderer->renderer3D.renderRotatedBox(itemPos, item.color, item.size, glm::vec3(0, 1, 0), item.rotationAngle);
             }
         }
         
         // プレイヤーの描画（1人称視点時は描画しない）
         if (!gameState.isFirstPersonView) {
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
+            renderer->renderer3D.renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
         }
         
         // チュートリアルステージのUI描画
@@ -1518,7 +1498,7 @@ int main(int argc, char* argv[]) {
         
         // ステージ情報
         const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
-        if (currentStageData && stageManager.getCurrentStage()!=0) {
+        if (currentStageData && stageManager.getCurrentStage()!=0 && stageManager.getCurrentStage()!=6) {
             // STAGEテキストを表示
             uiRenderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
                                glm::vec2(30, 30), glm::vec3(1, 1, 0), 2.0f);
@@ -1673,7 +1653,7 @@ int main(int argc, char* argv[]) {
                             area.z
                         );
                         
-                        renderer->renderStar3D(starPos, starColor, 1.0f);
+                        renderer->renderer3D.renderStar3D(starPos, starColor, 1.0f);
                     }
                 } else {
                     // 未解禁：数値×星鍵穴の順番で横並びに表示
@@ -1683,7 +1663,7 @@ int main(int argc, char* argv[]) {
                         area.y + area.height + 1.5f,  // エリアの上に配置
                         area.z
                     );
-                    renderer->renderNumber3D(numberPos, requiredStars, glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
+                    renderer->renderer3D.renderNumber3D(numberPos, requiredStars, glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
                     
                     // ×記号を中央に表示
                     glm::vec3 xMarkPos = glm::vec3(
@@ -1691,7 +1671,7 @@ int main(int argc, char* argv[]) {
                         area.y + area.height + 1.5f,  // エリアの上に配置
                         area.z
                     );
-                    renderer->renderXMark3D(xMarkPos, glm::vec3(1.0f, 1.0f, 0.0f), 0.5f);
+                    renderer->renderer3D.renderXMark3D(xMarkPos, glm::vec3(1.0f, 1.0f, 0.0f), 0.5f);
                     
                     // 星1個を右側に表示
                     glm::vec3 starPos = glm::vec3(
@@ -1699,15 +1679,7 @@ int main(int argc, char* argv[]) {
                         area.y + area.height + 1.5f,  // エリアの上に配置
                         area.z
                     );
-                    renderer->renderStar3D(starPos, glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
-                    
-                    // 鍵穴マークを最右側に表示
-                    // glm::vec3 lockPos = glm::vec3(
-                    //     area.x + 1.0f,  // 星の右側
-                    //     area.y + area.height + 1.5f,  // エリアの上に配置
-                    //     area.z
-                    // );
-                    // renderer->renderLock3D(lockPos, glm::vec3(0.6f, 0.3f, 0.3f), 1.5f);
+                    renderer->renderer3D.renderStar3D(starPos, glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
                 }
             }
         }
