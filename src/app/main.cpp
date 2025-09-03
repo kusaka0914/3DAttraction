@@ -118,6 +118,10 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
+    // UI描画クラスのインスタンス
+    auto uiRenderer = std::make_unique<gfx::UIRenderer>();
+    auto gameStateUIRenderer = std::make_unique<gfx::GameStateUIRenderer>();
+    
     // ゲーム状態
     GameState gameState;
     
@@ -129,7 +133,6 @@ int main(int argc, char* argv[]) {
         // エンドロール表示フラグのチェック
         if (strcmp(argv[1], "-e") == 0 || strcmp(argv[1], "--ending") == 0) {
             debugEnding = true;
-            printf("Debug mode: Showing ending sequence\n");
         } else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Usage: %s [stage_number] [options]\n", argv[0]);
             printf("  stage_number: 0-5 (default: 6 for tutorial)\n");
@@ -147,7 +150,6 @@ int main(int argc, char* argv[]) {
             int requestedStage = std::atoi(argv[1]);
             if (requestedStage >= 0 && requestedStage <= 5) {  // ステージ0-5を許可
                 initialStage = requestedStage;
-                printf("Command line argument: Starting at stage %d\n", initialStage);
             } else {
                 printf("Invalid stage number: %d. Using default stage %d\n", requestedStage, initialStage);
             }
@@ -157,7 +159,7 @@ int main(int argc, char* argv[]) {
         if (argc > 2) {
             if (strcmp(argv[2], "-e") == 0 || strcmp(argv[2], "--ending") == 0) {
                 debugEnding = true;
-                printf("Debug mode: Showing ending sequence\n");
+                
             }
         }
     }
@@ -172,15 +174,11 @@ int main(int argc, char* argv[]) {
     PlatformSystem platformSystem;
     StageManager stageManager;
     
-    // 初期ステージ設定
-    gameState.showTutorial = false;  // チュートリアルステージでは通常のチュートリアルUIは表示しない
-    
     // デバッグ用エンドロール表示フラグが設定されている場合
     if (debugEnding) {
         gameState.isEndingSequence = true;
         gameState.showStaffRoll = true;
         gameState.staffRollTimer = 0.0f;
-        printf("Debug: Starting ending sequence immediately\n");
     } else {
         stageManager.loadStage(initialStage, gameState, platformSystem);
     }
@@ -192,7 +190,7 @@ int main(int argc, char* argv[]) {
     std::map<int, KeyState> keyStates;
     for (int key : {GLFW_KEY_0, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5, GLFW_KEY_6, 
                     GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_ENTER, GLFW_KEY_R, GLFW_KEY_T,
-                    GLFW_KEY_F, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE}) {  // チュートリアル用キーも追加
+                    GLFW_KEY_F, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE}) {
         keyStates[key] = KeyState();
     }
 
@@ -217,22 +215,6 @@ int main(int argc, char* argv[]) {
             gameState.tutorialStepCompleted = false;
             gameState.tutorialStartPosition = gameState.playerPosition;
             
-            // ステップ6以降の処理
-            if (gameState.tutorialStep > 5) {
-                
-                
-                // ステップ6-9のメッセージを設定
-                switch (gameState.tutorialStep) {
-                    case 6: gameState.tutorialMessage = "LIFE"; break;
-                    case 7: gameState.tutorialMessage = "TIME LIMIT"; break;
-                    case 8: gameState.tutorialMessage = "STAR"; break;
-                    case 9: gameState.tutorialMessage = "ITEM"; break;
-                    case 10: gameState.tutorialMessage = "GOAL"; break;
-                    default: gameState.tutorialMessage = "LIFE"; break;
-                }
-                return;
-            }
-            
             // 次のステップのメッセージを設定
             switch (gameState.tutorialStep) {
                 case 1: gameState.tutorialMessage = "MOVING LEFT: PRESS A"; break;
@@ -240,6 +222,12 @@ int main(int argc, char* argv[]) {
                 case 3: gameState.tutorialMessage = "MOVING RIGHT: PRESS D"; break;
                 case 4: gameState.tutorialMessage = "JUMPING: PRESS SPACE"; break;
                 case 5: gameState.tutorialMessage = "SPEED UP: PRESS T"; break;
+                case 6: gameState.tutorialMessage = "LIFE"; break;
+                case 7: gameState.tutorialMessage = "TIME LIMIT"; break;
+                case 8: gameState.tutorialMessage = "STAR"; break;
+                case 9: gameState.tutorialMessage = "ITEM"; break;
+                case 10: gameState.tutorialMessage = "GOAL"; break;
+                default: gameState.tutorialMessage = ""; break;
             }
         }
         
@@ -278,10 +266,6 @@ int main(int argc, char* argv[]) {
     //         ゲームループ
     // --------------------------
     while (!glfwWindowShouldClose(window) && gameRunning) {
-        // デバッグ：フレーム開始時の状態を確認
-        if (gameState.showUnlockConfirmUI) {
-            printf("DEBUG: Start of frame - unlockRequiredStars: %d\n", gameState.unlockRequiredStars);
-        }
         auto currentTime = std::chrono::high_resolution_clock::now();
         float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
         
@@ -294,61 +278,6 @@ int main(int argc, char* argv[]) {
         
         // 速度倍率を適用したdeltaTimeを計算（全ステージで有効）
         float scaledDeltaTime = deltaTime * gameState.timeScale;
-        
-        // チュートリアル表示中の処理
-        if (gameState.showTutorial) {
-            // チュートリアル表示中はゲームを一時停止
-            if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-                gameState.showTutorial = false;
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                
-                // チュートリアル終了後にReady画面を表示
-                if (!gameState.readyScreenShown) {
-                    gameState.showReadyScreen = true;
-                    gameState.readyScreenShown = false;
-                    gameState.readyScreenSpeedLevel = 0;
-                }
-            }
-            // チュートリアル表示中は他の処理をスキップ
-            renderer->beginFrameWithBackground(stageManager.getCurrentStage());
-            
-            // カメラ設定
-            auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
-            CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
-            
-            // ウィンドウサイズを取得
-            auto [width, height] = CameraSystem::getWindowSize(window);
-            
-            // 通常のゲーム要素を描画（背景として）
-            auto positions = platformSystem.getPositions();
-            auto sizes = platformSystem.getSizes();
-            auto colors = platformSystem.getColors();
-            auto visibility = platformSystem.getVisibility();
-            auto isRotating = platformSystem.getIsRotating();
-            auto rotationAngles = platformSystem.getRotationAngles();
-            auto rotationAxes = platformSystem.getRotationAxes();
-            auto blinkAlphas = platformSystem.getBlinkAlphas();
-            
-            for (size_t i = 0; i < positions.size(); i++) {
-                if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
-                
-                if (isRotating[i]) {
-                    renderer->renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
-                } else {
-                    renderer->renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
-                }
-            }
-            
-            // プレイヤーの描画
-            renderer->renderCube(gameState.playerPosition, gameState.playerColor, 0.5f);
-            
-            // チュートリアルUIを描画
-            renderer->renderTutorialUI(width, height);
-            
-            renderer->endFrame();
-            glfwPollEvents();
-            continue; // チュートリアル表示中は他の処理をスキップ
-        }
         
         // Ready画面表示中の処理
         if (gameState.showReadyScreen) {
@@ -386,7 +315,7 @@ int main(int argc, char* argv[]) {
             renderer->renderCube(gameState.playerPosition, gameState.playerColor, GameConstants::PLAYER_SCALE);
             
             // Ready画面UIを描画
-            renderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel, gameState.isFirstPersonMode);
+            gameStateUIRenderer->renderReadyScreen(width, height, gameState.readyScreenSpeedLevel, gameState.isFirstPersonMode);
             
             renderer->endFrame();
             
@@ -481,7 +410,7 @@ int main(int argc, char* argv[]) {
             // カウントダウンUIを描画
             int count = (int)gameState.countdownTimer + 1;
             if (count > 0) {
-                renderer->renderCountdown(width, height, count);
+                gameStateUIRenderer->renderCountdown(width, height, count);
             }
             
             renderer->endFrame();
@@ -530,7 +459,7 @@ int main(int argc, char* argv[]) {
                     gameState.endingMessageTimer = 0.0f;
                     printf("Staff roll finished, showing ending message...\n");
                 } else {
-                    renderer->renderStaffRoll(width, height, gameState.staffRollTimer);
+                    gameStateUIRenderer->renderStaffRoll(width, height, gameState.staffRollTimer);
                 }
             }
             
@@ -553,11 +482,9 @@ int main(int argc, char* argv[]) {
                     gameState.playerVelocity = glm::vec3(0, 0, 0);
                     printf("Ending sequence finished, returning to field...\n");
                 } else {
-                    renderer->renderEndingMessage(width, height, gameState.endingMessageTimer);
+                    gameStateUIRenderer->renderEndingMessage(width, height, gameState.endingMessageTimer);
                 }
             }
-            
-            // スキッププロンプトは各描画関数内で統合表示されるため、個別呼び出しは不要
             
             // Enterキーでスキップ処理
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
@@ -587,38 +514,32 @@ int main(int argc, char* argv[]) {
             continue; // エンディングシーケンス中は他の処理をスキップ
         }
         
-        // 時間停止スキルの更新
+        // 時間停止スキル発動時の処理
         if (gameState.isTimeStopped) {
             gameState.timeStopTimer -= deltaTime;
             if (gameState.timeStopTimer <= 0.0f) {
                 gameState.isTimeStopped = false;
                 gameState.timeStopTimer = 0.0f;
-                printf("時間停止終了！\n");
             }
         }
         
-        // フリーカメラスキルの更新
+        // フリーカメラスキル発動時の処理
         if (gameState.isFreeCameraActive) {
             gameState.freeCameraTimer -= deltaTime;
             if (gameState.freeCameraTimer <= 0.0f) {
                 gameState.isFreeCameraActive = false;
                 gameState.freeCameraTimer = 0.0f;
-                
-                // マウスカーソルを表示に戻す
+                // マウスカーソルを表示する
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                
-                printf("フリーカメラ終了！\n");
             }
         }
         
-        // バーストジャンプ遅延タイマーの更新
+        // バーストジャンプ遅延タイマーの更新（バーストジャンプ中の処理）
         if (gameState.burstJumpDelayTimer > 0.0f) {
             gameState.burstJumpDelayTimer -= deltaTime;
             if (gameState.burstJumpDelayTimer <= 0.0f) {
-                gameState.isInBurstJumpAir = true; // バーストジャンプ空中フラグを設定
+                gameState.isInBurstJumpAir = true;
                 gameState.burstJumpDelayTimer = 0.0f;
-                printf("バーストジャンプ空中移動速度2倍効果開始！\n");
-                printf("バーストジャンプ空中フラグ設定: isInBurstJumpAir = true\n");
             }
         }
         
@@ -630,9 +551,14 @@ int main(int argc, char* argv[]) {
             if (gameState.remainingTime <= 0.0f) {
                 gameState.remainingTime = 0.0f;
                 gameState.isTimeUp = true;
-                gameState.isGameOver = true;  // ゲームオーバーフラグを設定
-                printf("Time's up! Stage failed.\n");
+                gameState.isGameOver = true;
+                gameState.gameOverTimer = 0.0f;
             }
+        }
+        
+        // ゲームオーバータイマーの更新
+        if (gameState.isGameOver) {
+            gameState.gameOverTimer += deltaTime;
         }
         
         // システム更新（速度倍率を適用）
@@ -641,7 +567,7 @@ int main(int argc, char* argv[]) {
         SwitchSystem::updateSwitches(gameState, scaledDeltaTime);
         CannonSystem::updateCannons(gameState, scaledDeltaTime);
         
-        // 入力処理
+        // エスケープキーでゲームを終了
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             gameRunning = false;
         }
@@ -688,12 +614,7 @@ int main(int argc, char* argv[]) {
             state.update(glfwGetKey(window, key) == GLFW_PRESS);
         }
         
-        // デバッグ：ステージ選択処理前の状態を確認
-        if (gameState.showUnlockConfirmUI) {
-            printf("DEBUG: Before stage selection loop - unlockRequiredStars=%d\n", gameState.unlockRequiredStars);
-        }
-        
-        // ステージ切り替え処理（統一版）
+        // ステージ切り替え処理
         for (int key = GLFW_KEY_0; key <= GLFW_KEY_6; key++) {
             if (keyStates[key].justPressed()) {
                 int stageNumber = key - GLFW_KEY_0;
@@ -752,11 +673,6 @@ int main(int argc, char* argv[]) {
                     gameState.lives = 6;
                 }
             }
-        }
-        
-        // デバッグ：ステージ選択処理後の状態を確認
-        if (gameState.showUnlockConfirmUI) {
-            printf("DEBUG: After stage selection loop - unlockRequiredStars=%d\n", gameState.unlockRequiredStars);
         }
         
         // 速度制御処理（Tキー）- 全ステージで有効
@@ -951,10 +867,6 @@ int main(int argc, char* argv[]) {
                 gameState.readyScreenSpeedLevel = 0;
             }
         }
-        
-
-        
-
         
         // ゲームオーバーUIでのキー入力処理
         if (gameState.isGameOver) {
@@ -1503,6 +1415,7 @@ int main(int argc, char* argv[]) {
                 if (gameState.lives <= 0) {
                     // ゲームオーバー
                     gameState.isGameOver = true;
+                    gameState.gameOverTimer = 0.0f;  // ゲームオーバータイマーを初期化
                     printf("Game Over! No lives remaining.\n");
                 } else {
                     // 残機がある場合はチェックポイントにリセット（アイテムは保持）
@@ -1597,13 +1510,9 @@ int main(int argc, char* argv[]) {
         
         // チュートリアルステージのUI描画
         if (gameState.isTutorialStage && gameState.showTutorialUI) {
-            renderer->renderTutorialStageUI(width, height, gameState.tutorialMessage, gameState.tutorialStep, gameState.tutorialStepCompleted);
+            gameStateUIRenderer->renderTutorialStageUI(width, height, gameState.tutorialMessage, gameState.tutorialStep, gameState.tutorialStepCompleted);
         }
-        
-        // ステップ7以降のチュートリアルUI描画（通常のUIと重複しないように）
-        if (gameState.isTutorialStage && gameState.tutorialStep >= 6) {
-            renderer->renderTutorialStageUI(width, height, gameState.tutorialMessage, gameState.tutorialStep, gameState.tutorialStepCompleted);
-        }
+    
 
         // UI（時間表示はrenderTimeUI関数で行うため削除）
         
@@ -1611,7 +1520,7 @@ int main(int argc, char* argv[]) {
         const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
         if (currentStageData && stageManager.getCurrentStage()!=0) {
             // STAGEテキストを表示
-            renderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
+            uiRenderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
                                glm::vec2(30, 30), glm::vec3(1, 1, 0), 2.0f);
         }
         
@@ -1644,11 +1553,11 @@ int main(int argc, char* argv[]) {
             if (shouldShowSpeedUI) {
                 std::string speedText = std::to_string((int)gameState.timeScale) + "x";
                 glm::vec3 speedColor = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-                renderer->renderText(speedText, glm::vec2(880, 25), speedColor, 2.0f);
+                uiRenderer->renderText(speedText, glm::vec2(880, 25), speedColor, 2.0f);
 
                 std::string speedText2 =  "PRESS T";
                 glm::vec3 speedColor2 = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-                renderer->renderText(speedText2, glm::vec2(870, 65), speedColor2, 1.0f);
+                uiRenderer->renderText(speedText2, glm::vec2(870, 65), speedColor2, 1.0f);
             }
         }
         // // 重力倍率の表示（速度倍率が1倍より大きい時のみ）
@@ -1670,43 +1579,43 @@ int main(int argc, char* argv[]) {
             if (shouldShowUI) {
                 if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep == 6) {
                     // チュートリアルステージでステップ6はライフのUIと説明を表示
-                    renderer->renderLivesWithExplanation(gameState.lives);
+                    uiRenderer->renderLivesWithExplanation(gameState.lives);
                 } else if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep == 7) {
                     // チュートリアルステージでステップ7はライフと制限時間UIを表示
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                    renderer->renderLivesAndTimeUI(gameState.lives, gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
+                    uiRenderer->renderLivesAndTimeUI(gameState.lives, gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
                 } else if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep == 8) {
                     // チュートリアルステージでステップ8はライフ、制限時間、星を表示
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                    renderer->renderLivesTimeAndStarsUI(gameState.lives, gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
+                    uiRenderer->renderLivesTimeAndStarsUI(gameState.lives, gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
                 } else if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep >= 9) {
                     // チュートリアルステージでステップ9以降は通常のUIを表示（全部あるやつ）
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                    renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+                    uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
                 } else {
                     // 通常のステージでは全てのUIを表示（エンディングシーケンス中は非表示）
                     if (!gameState.isEndingSequence) {
                         int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                        renderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+                        uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
                         
                         // フリーカメラスキルUIを描画
-                        renderer->renderFreeCameraUI(gameState.hasFreeCameraSkill, gameState.isFreeCameraActive, gameState.freeCameraTimer, 
+                        uiRenderer->renderFreeCameraUI(gameState.hasFreeCameraSkill, gameState.isFreeCameraActive, gameState.freeCameraTimer, 
                                                     gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses);
                         
                         // バーストジャンプスキルUIを描画
-                        renderer->renderBurstJumpUI(gameState.hasBurstJumpSkill, gameState.isBurstJumpActive, 
+                        uiRenderer->renderBurstJumpUI(gameState.hasBurstJumpSkill, gameState.isBurstJumpActive, 
                                                    gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses);
                         
                         // ハートフエールスキルUIを描画
-                        renderer->renderHeartFeelUI(gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, 
+                        uiRenderer->renderHeartFeelUI(gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, 
                                                    gameState.heartFeelMaxUses, gameState.lives);
                         
                         // 二段ジャンプスキルUIを描画
-                        renderer->renderDoubleJumpUI(gameState.hasDoubleJumpSkill, gameState.isEasyMode, 
+                        uiRenderer->renderDoubleJumpUI(gameState.hasDoubleJumpSkill, gameState.isEasyMode, 
                                                     gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses);
                         
                         // 時間停止スキルUIを描画
-                        renderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
+                        uiRenderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
                                                   gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
                     }
                 }
@@ -1722,7 +1631,7 @@ int main(int argc, char* argv[]) {
         // ステージクリアUI（エンディングシーケンス中は非表示）
         if (gameState.showStageClearUI && !gameState.isEndingSequence) {
             // 背景とボックスを描画
-            renderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.earnedStars);
+            gameStateUIRenderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.stageStars[stageManager.getCurrentStage()]);
         }
         
         // ステージ0での3D星の描画（ステージ選択エリアの上に固定）
@@ -1806,13 +1715,13 @@ int main(int argc, char* argv[]) {
         // ステージ解放確認UI
         if (gameState.showUnlockConfirmUI) {
             // 背景とUIを描画
-            renderer->renderUnlockConfirmBackground(width, height, gameState.unlockTargetStage, gameState.unlockRequiredStars, gameState.totalStars);
+            gameStateUIRenderer->renderUnlockConfirmBackground(width, height, gameState.unlockTargetStage, gameState.unlockRequiredStars, gameState.totalStars);
         }
         
         // 星不足警告UI
         if (gameState.showStarInsufficientUI) {
             // 背景とUIを描画
-            renderer->renderStarInsufficientBackground(width, height, gameState.insufficientTargetStage, gameState.insufficientRequiredStars, gameState.totalStars);
+            gameStateUIRenderer->renderStarInsufficientBackground(width, height, gameState.insufficientTargetStage, gameState.insufficientRequiredStars, gameState.totalStars);
         }
         
 
@@ -1820,7 +1729,7 @@ int main(int argc, char* argv[]) {
         // ゲームオーバーUI
         if (gameState.isGameOver) {
             // 背景とUIを描画
-            renderer->renderGameOverBackground(width, height);
+            gameStateUIRenderer->renderGameOverBackground(width, height);
         }
         
         // ステージ選択フィールド用のUI表示
@@ -1838,15 +1747,15 @@ int main(int argc, char* argv[]) {
             // 深度テストを無効化（UI表示のため）
             glDisable(GL_DEPTH_TEST);
             
-            renderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
+            uiRenderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
             
             // 左上に星アイコンとトータル星数を表示
-            renderer->renderStar(glm::vec2(70, 70), glm::vec3(1.0f, 1.0f, 0.0f), 3.0f);
-            renderer->renderText("x " + std::to_string(gameState.totalStars), glm::vec2(72, 27), glm::vec3(1.0f, 1.0f, 0.0f), 1.5f);
+            uiRenderer->renderStar(glm::vec2(70, 70), glm::vec3(1.0f, 1.0f, 0.0f), 3.0f);
+            uiRenderer->renderText("x " + std::to_string(gameState.totalStars), glm::vec2(72, 27), glm::vec3(1.0f, 1.0f, 0.0f), 1.5f);
             
             // 初回ステージ0入場チュートリアルUIの表示
             if (gameState.showStage0Tutorial) {
-                renderer->renderStage0Tutorial(width, height);
+                gameStateUIRenderer->renderStage0Tutorial(width, height);
             }
             
             // 操作アシストUI（トータルスターのUIと同じタイミングで描画）
@@ -1856,7 +1765,7 @@ int main(int argc, char* argv[]) {
                                    !gameState.showStarInsufficientUI &&
                                    !gameState.showStage0Tutorial; // チュートリアル表示中は非表示
             bool isStageUnlocked = gameState.unlockedStages[gameState.assistTargetStage];
-            renderer->renderStageSelectionAssist(width, height, gameState.assistTargetStage, shouldShowAssist, isStageUnlocked);
+            gameStateUIRenderer->renderStageSelectionAssist(width, height, gameState.assistTargetStage, shouldShowAssist, isStageUnlocked);
             
             // 2Dモードを終了
             glEnable(GL_DEPTH_TEST);
@@ -1871,7 +1780,7 @@ int main(int argc, char* argv[]) {
         if (stageManager.getCurrentStage() == 0) {
             controlsText = "Controls: WASD=Move, SPACE=Select Stage, F=Camera Toggle, E=Easy Mode, R=Toggle Time Stop Skill, T=Toggle Double Jump Skill, Y=Toggle Heart Feel Skill, U=Toggle Free Camera Skill, I=Toggle Burst Jump Skill";
         }
-        renderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
+        uiRenderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
         
         renderer->endFrame();
         

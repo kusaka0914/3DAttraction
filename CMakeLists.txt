@@ -25,6 +25,10 @@ find_package(OpenGL REQUIRED)
 add_executable(Vulkan3D 
     src/app/main.cpp
     src/gfx/opengl_renderer.cpp
+    src/gfx/bitmap_font.cpp
+    src/gfx/background_renderer.cpp
+    src/gfx/ui_renderer.cpp
+    src/gfx/game_state_ui_renderer.cpp
     src/game/game_state.cpp
     src/game/stage_generator.cpp
     src/game/stage_manager.cpp

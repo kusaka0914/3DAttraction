@@ -4,6 +4,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "bitmap_font.h"
+#include "background_renderer.h"
+#include "ui_renderer.h"
+#include "game_state_ui_renderer.h"
 #include <vector>
 #include <string>
 #include <map>
@@ -32,54 +36,21 @@ public:
     void renderRotatedBoxWithAlpha(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, 
                                   const glm::vec3& rotationAxis, float rotationAngle, float alpha);
     void renderRealisticBox(const glm::vec3& position, const glm::vec3& color, const glm::vec3& size, float alpha = 1.0f);
-    void renderStageBackground(int stageNumber);
-    void renderGrassland();
-    void renderClouds();
-    void renderSunset();
-    void renderStars();
-    void renderThunderClouds();
-    void renderNebula();
-    void renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
+    // 背景描画関数はBackgroundRendererクラスに移動済み
+    // UI表示関数はUIRendererクラスに移動済み
+    // ゲーム状態UI関数はGameStateUIRendererクラスに移動済み
     
-    // UI表示関数
-    void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives);
-    void renderLivesOnly(int lives);
-    void renderLivesWithExplanation(int lives);
-    void renderTimeUIOnly(float remainingTime, float timeLimit, int earnedStars, int existingStars);
-    void renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
-    void renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
-    void renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses);
-    void renderDoubleJumpUI(bool hasSkill, bool isEasyMode, int remainingUses, int maxUses);
-    void renderHeartFeelUI(bool hasSkill, int remainingUses, int maxUses, int currentLives);
-    void renderFreeCameraUI(bool hasSkill, bool isActive, float timer, int remainingUses, int maxUses);
-    void renderBurstJumpUI(bool hasSkill, bool isActive, int remainingUses, int maxUses);
-    void renderStar(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
+    // 3D描画関数（残存）
     void renderStar3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
     void renderLock3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
     void renderNumber3D(const glm::vec3& position, int number, const glm::vec3& color, float scale = 1.0f);
     void renderXMark3D(const glm::vec3& position, const glm::vec3& color, float scale = 1.0f);
-    void renderTutorialUI(int width, int height);
-    void renderTutorialStageUI(int width, int height, const std::string& message, int currentStep, bool stepCompleted);
-    void renderStageClearBackground(int width, int height, float clearTime, int earnedStars);
-    void renderUnlockConfirmBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
-    void renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
-    void renderStageSelectionAssist(int width, int height, int targetStage, bool isVisible, bool isUnlocked);
-    void renderStage0Tutorial(int width, int height);
-    void renderGameOverBackground(int width, int height);
-    void renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode);
-    void renderCountdown(int width, int height, int count);
-    void renderHeart(const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
-    
-    // エンディング関連描画関数
-    void renderStaffRoll(int width, int height, float timer);
-    void renderEndingMessage(int width, int height, float timer);
     
     void setCamera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up = glm::vec3(0, 1, 0));
     void setProjection(float fov, float aspect, float near, float far);
 
 private:
     void drawCube(const glm::mat4& model, const glm::vec3& color);
-    void initializeBitmapFont();
     void renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale);
     
     GLFWwindow* window;
@@ -87,12 +58,12 @@ private:
     // Matrices
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
-    
-    // ビットマップフォント用のデータ
-    std::map<char, std::vector<bool>> bitmapFont;
-    bool fontInitialized;
-    
 
+    // 分離された描画クラス
+    BitmapFont font;
+    BackgroundRenderer backgroundRenderer;
+    UIRenderer uiRenderer;
+    GameStateUIRenderer gameStateUIRenderer;
 };
 
 } // namespace gfx

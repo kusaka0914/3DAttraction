@@ -147,7 +147,70 @@ namespace GameConstants {
         // フォント設定
         constexpr int FONT_WIDTH = 8;
         constexpr int FONT_HEIGHT = 12;
+        
+        // UIレイアウト設定
+        namespace UILayout {
+            // 画面サイズ
+            constexpr float SCREEN_WIDTH = 1280.0f;
+            constexpr float SCREEN_HEIGHT = 720.0f;
+            
+            // 右上UIエリア
+            constexpr float RIGHT_UI_X = 980.0f;
+            constexpr float TOP_UI_Y = 30.0f;
+            constexpr float TIME_UI_X = 1170.0f;
+            constexpr float TIME_UI_Y = 30.0f;
+            constexpr float GOAL_UI_X = 962.0f;
+            constexpr float GOAL_UI_Y = 65.0f;
+            constexpr float GOAL_TIME_1_X = 1040.0f;
+            constexpr float GOAL_TIME_2_X = 1110.0f;
+            constexpr float GOAL_TIME_Y = 65.0f;
+            constexpr float STAR_UI_Y = 40.0f;
+            constexpr float STAR_SPACING = 70.0f;
+            
+            // 左上UIエリア
+            constexpr float LEFT_UI_X = 200.0f;
+            constexpr float LEFT_UI_Y = 45.0f;
+            constexpr float LIFE_SPACING = 40.0f;
+            
+            // チュートリアルUI
+            constexpr float TUTORIAL_BOX_X = 100.0f;
+            constexpr float TUTORIAL_BOX_Y = 100.0f;
+            constexpr float TUTORIAL_BOX_WIDTH = 600.0f;
+            constexpr float TUTORIAL_BOX_HEIGHT = 500.0f;
+            constexpr float TUTORIAL_TITLE_X_OFFSET = -130.0f;
+            constexpr float TUTORIAL_TITLE_Y = 40.0f;
+            constexpr float TUTORIAL_SECTION_X = 60.0f;
+            constexpr float TUTORIAL_SECTION_Y = 120.0f;
+            constexpr float TUTORIAL_ITEM_X = 100.0f;
+            constexpr float TUTORIAL_ITEM_SPACING = 40.0f;
+            constexpr float TUTORIAL_ENTER_X_OFFSET = 200.0f;
+            constexpr float TUTORIAL_ENTER_Y = 500.0f;
+        }
     }
+
+    // UI色
+    constexpr glm::vec3 UI_TEXT_COLOR = glm::vec3(1.0f, 1.0f, 1.0f);         // 白
+    constexpr glm::vec3 UI_WARNING_COLOR = glm::vec3(1.0f, 0.0f, 0.0f);       // 赤（警告）
+    constexpr glm::vec3 UI_SUCCESS_COLOR = glm::vec3(0.2f, 0.8f, 0.2f);       // 緑（成功）
+    constexpr glm::vec3 UI_DISABLED_COLOR = glm::vec3(0.5f, 0.5f, 0.5f);      // 灰色（無効）
+    constexpr glm::vec3 UI_ACCENT_COLOR = glm::vec3(0.2f, 0.4f, 1.0f);        // 青（アクセント）
+    
+    // 装飾オブジェクト色
+    constexpr glm::vec3 FLOWER_RED = glm::vec3(1.0f, 0.3f, 0.3f);             // 花の赤
+    constexpr glm::vec3 FLOWER_YELLOW = glm::vec3(1.0f, 0.8f, 0.2f);          // 花の黄
+    constexpr glm::vec3 FLOWER_PINK = glm::vec3(0.8f, 0.2f, 0.8f);            // 花のピンク
+    constexpr glm::vec3 FLOWER_WHITE = glm::vec3(1.0f, 1.0f, 1.0f);           // 花の白
+    constexpr glm::vec3 TREE_TRUNK = glm::vec3(0.4f, 0.2f, 0.1f);             // 木の幹
+    constexpr glm::vec3 TREE_LEAVES = glm::vec3(0.2f, 0.5f, 0.1f);            // 木の葉
+    constexpr glm::vec3 HILL_COLOR = glm::vec3(0.3f, 0.6f, 0.2f);             // 丘の色
+    constexpr glm::vec3 CLOUD_COLOR = glm::vec3(1.0f, 1.0f, 1.0f);            // 雲の色
+    constexpr glm::vec3 SUNSET_COLOR = glm::vec3(1.0f, 0.8f, 0.3f);           // 夕日の色
+    
+    // ライフ・スター色
+    constexpr glm::vec3 LIFE_ACTIVE = glm::vec3(1.0f, 0.3f, 0.3f);            // ライフ（有効）
+    constexpr glm::vec3 LIFE_INACTIVE = glm::vec3(0.3f, 0.3f, 0.3f);          // ライフ（無効）
+    constexpr glm::vec3 STAR_ACTIVE = glm::vec3(1.0f, 1.0f, 0.0f);            // スター（有効）
+    constexpr glm::vec3 STAR_INACTIVE = glm::vec3(0.5f, 0.5f, 0.5f);          // スター（無効）
     
     // 入力システム設定
     namespace InputConstants {

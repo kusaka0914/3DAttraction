@@ -20,10 +20,6 @@ void initializeGameState(GameState& gameState) {
     // 例：大砲のクリア
     gameState.cannons.clear();
     
-    // チュートリアルシステムの初期化
-    gameState.showTutorial = false;
-    gameState.tutorialShown = false;
-    
     // ゴール後の移動制限の初期化
     gameState.isGoalReached = false;
     
