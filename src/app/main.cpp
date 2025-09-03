@@ -19,9 +19,9 @@
 #include "../game/gravity_system.h"
 #include "../physics/physics_system.h"
 #include "../io/input_system.h"
-#include "game_constants.h"
-#include "error_handler.h"
-#include "camera_system.h"
+#include "../game/game_constants.h"
+#include "../core/error_handler.h"
+#include "../game/camera_system.h"
 
 // ======================================================
 //                        ヘルパー関数

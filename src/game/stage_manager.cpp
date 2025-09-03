@@ -1,6 +1,6 @@
 #include "stage_manager.h"
 #include "stage_generator.h"
-#include "../app/game_constants.h"
+#include "game_constants.h"
 #include <iostream>
 #include <algorithm>
 #include <tuple>

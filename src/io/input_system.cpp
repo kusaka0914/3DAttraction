@@ -1,6 +1,6 @@
 #include "input_system.h"
 #include "../physics/physics_system.h"
-#include "../app/game_constants.h"
+#include "../game/game_constants.h"
 #include <algorithm>
 
 // ゲームパッド関連の静的変数

@@ -488,4 +488,16 @@ namespace GameConstants {
     constexpr float STAR_MAX_Y = 300.0f;
     constexpr float STAR_SIZE_BASE = 2.0f;
     constexpr int STAR_SIZE_VARIATION = 3;
+    
+    // 3D描画の定数
+    constexpr float STAR_ANGLE_STEP = 72.0f;        // 星の角度ステップ（360度/5）
+    constexpr float STAR_INNER_ANGLE_OFFSET = 36.0f; // 星の内側角度オフセット
+    constexpr float STAR_OUTER_RADIUS = 0.3f;       // 星の外側半径
+    constexpr float STAR_INNER_RADIUS = 0.12f;      // 星の内側半径
+    constexpr float NUMBER_CHAR_SPACING = 0.6f;     // 数字の文字間隔
+    constexpr float NUMBER_WIDTH = 0.4f;            // 数字の幅
+    constexpr float NUMBER_HEIGHT = 0.6f;           // 数字の高さ
+    constexpr float NUMBER_THICKNESS = 0.1f;        // 数字の太さ
+    constexpr float X_MARK_SIZE = 0.3f;             // ×記号のサイズ
+    constexpr float X_MARK_THICKNESS = 0.1f;        // ×記号の太さ
 }

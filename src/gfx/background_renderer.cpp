@@ -211,9 +211,6 @@ void BackgroundRenderer::renderGrassland() {
     
     // 木を描画
     renderTrees();
-    
-    // 小さな丘を描画
-    renderHills();
 }
 
 void BackgroundRenderer::renderFlowers() {
@@ -263,20 +260,6 @@ void BackgroundRenderer::renderTrees() {
                     GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_RADIUS, 
                     GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_SEGMENTS, 
                     GameConstants::TREE_LEAVES, 1.0f);
-    }
-}
-
-void BackgroundRenderer::renderHills() {
-    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::HILL_COUNT; i++) {
-        float x = GameConstants::RenderConstants::BackgroundLayout::HILL_START_X + 
-                  i * GameConstants::RenderConstants::BackgroundLayout::HILL_SPACING;
-        float y = GameConstants::RenderConstants::BackgroundLayout::SCREEN_HEIGHT - 
-                  GameConstants::RenderConstants::BackgroundLayout::HILL_BASE_Y;
-        
-        renderCircle(x, y - GameConstants::RenderConstants::BackgroundLayout::HILL_HEIGHT, 
-                    GameConstants::RenderConstants::BackgroundLayout::HILL_WIDTH, 
-                    GameConstants::RenderConstants::BackgroundLayout::HILL_SEGMENTS, 
-                    GameConstants::HILL_COLOR, 1.0f);
     }
 }
 

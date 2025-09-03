@@ -1,5 +1,5 @@
 #include "opengl_renderer.h"
-#include "../app/game_constants.h"
+#include "../game/game_constants.h"
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 

@@ -1,5 +1,5 @@
 #include "renderer_3d.h"
-#include "../app/game_constants.h"
+#include "../game/game_constants.h"
 #include <iostream>
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
@@ -245,20 +245,20 @@ void Renderer3D::renderStar3D(const glm::vec3& position, const glm::vec3& color,
     // 星の5つの角を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < 5; i++) {
-        float angle1 = i * 72.0f * 3.14159f / 180.0f;
-        float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
+        float angle1 = i * GameConstants::STAR_ANGLE_STEP * M_PI / 180.0f;
+        float angle2 = (i + 2) * GameConstants::STAR_ANGLE_STEP * M_PI / 180.0f;
         
         // 外側の点
-        float x1 = centerX + cos(angle1) * 0.3f * scale;
-        float y1 = centerY + sin(angle1) * 0.3f * scale;
+        float x1 = centerX + cos(angle1) * GameConstants::STAR_OUTER_RADIUS * scale;
+        float y1 = centerY + sin(angle1) * GameConstants::STAR_OUTER_RADIUS * scale;
         
         // 内側の点
-        float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 0.12f * scale;
-        float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 0.12f * scale;
+        float x2 = centerX + cos(angle1 + GameConstants::STAR_INNER_ANGLE_OFFSET * M_PI / 180.0f) * GameConstants::STAR_INNER_RADIUS * scale;
+        float y2 = centerY + sin(angle1 + GameConstants::STAR_INNER_ANGLE_OFFSET * M_PI / 180.0f) * GameConstants::STAR_INNER_RADIUS * scale;
         
         // 次の外側の点
-        float x3 = centerX + cos(angle2) * 0.3f * scale;
-        float y3 = centerY + sin(angle2) * 0.3f * scale;
+        float x3 = centerX + cos(angle2) * GameConstants::STAR_OUTER_RADIUS * scale;
+        float y3 = centerY + sin(angle2) * GameConstants::STAR_OUTER_RADIUS * scale;
         
         // 中心から各点への三角形を描画（塗りつぶし）
         glVertex3f(centerX, centerY, centerZ);  // 中心点
@@ -286,12 +286,12 @@ void Renderer3D::renderNumber3D(const glm::vec3& position, int number, const glm
     // 各文字を描画
     for (size_t i = 0; i < numStr.length(); i++) {
         char digit = numStr[i];
-        float charX = centerX + i * 0.6f * scale;
+        float charX = centerX + i * GameConstants::NUMBER_CHAR_SPACING * scale;
         
         // 数字の形状を定義（実際の数字の形状）
-        float width = 0.4f * scale;
-        float height = 0.6f * scale;
-        float thickness = 0.1f * scale;
+        float width = GameConstants::NUMBER_WIDTH * scale;
+        float height = GameConstants::NUMBER_HEIGHT * scale;
+        float thickness = GameConstants::NUMBER_THICKNESS * scale;
         
         // 数字の形状を定義（各数字のセグメント）
         std::vector<std::vector<glm::vec2>> segments;
@@ -407,20 +407,20 @@ void Renderer3D::renderXMark3D(const glm::vec3& position, const glm::vec3& color
     float centerZ = position.z;
     
     // ×記号を2つの交差する線で表現
-    float halfSize = 0.3f * scale;
+    float halfSize = GameConstants::X_MARK_SIZE * scale;
     
     glBegin(GL_QUADS);
     // 左上から右下への線
     glVertex3f(centerX - halfSize, centerY + halfSize, centerZ);
-    glVertex3f(centerX - halfSize + 0.1f * scale, centerY + halfSize, centerZ);
+    glVertex3f(centerX - halfSize + GameConstants::X_MARK_THICKNESS * scale, centerY + halfSize, centerZ);
     glVertex3f(centerX + halfSize, centerY - halfSize, centerZ);
-    glVertex3f(centerX + halfSize - 0.1f * scale, centerY - halfSize, centerZ);
+    glVertex3f(centerX + halfSize - GameConstants::X_MARK_THICKNESS * scale, centerY - halfSize, centerZ);
     
     // 右上から左下への線
     glVertex3f(centerX + halfSize, centerY + halfSize, centerZ);
-    glVertex3f(centerX + halfSize - 0.1f * scale, centerY + halfSize, centerZ);
+    glVertex3f(centerX + halfSize - GameConstants::X_MARK_THICKNESS * scale, centerY + halfSize, centerZ);
     glVertex3f(centerX - halfSize, centerY - halfSize, centerZ);
-    glVertex3f(centerX - halfSize + 0.1f * scale, centerY - halfSize, centerZ);
+    glVertex3f(centerX - halfSize + GameConstants::X_MARK_THICKNESS * scale, centerY - halfSize, centerZ);
     glEnd();
 }
 

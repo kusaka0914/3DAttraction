@@ -1,5 +1,5 @@
 #include "physics_system.h"
-#include "../app/game_constants.h"
+#include "../game/game_constants.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
