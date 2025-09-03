@@ -32,11 +32,13 @@ Makefile
 *.a
 *.lib
 
-# Executables
+# Executables (platform-specific)
 *.exe
 *.out
 *.app
 Vulkan3D
+Vulkan3D.exe
+Vulkan3D.app
 
 # IDE files
 .vscode/
@@ -61,9 +63,11 @@ Thumbs.db
 *.tmp
 *.temp
 
-# Asset files (if you want to exclude them)
-# assets/
-# shaders/
+# Asset files - uncomment if you want to exclude generated assets
+# assets/shaders/*.spv
+# assets/textures/*.ktx
+# assets/meshes/*.obj
+# assets/levels/*.json
 
 # Backup files
 *.bak
