@@ -1,5 +1,6 @@
 #include "background_renderer.h"
 #include <iostream>
+#include <cmath>
 
 namespace gfx {
 
@@ -127,39 +128,82 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
     end2DMode();
 }
 
+// 共通描画関数
+void BackgroundRenderer::renderCircle(float x, float y, float radius, int segments, 
+                                     const glm::vec3& color, float aspectRatio) {
+    glColor3f(color.r, color.g, color.b);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(x, y);
+    for (int j = 0; j <= segments; j++) {
+        float angle = 2.0f * M_PI * j / segments;
+        float drawX = x + cos(angle) * radius;
+        float drawY = y + sin(angle) * (radius * aspectRatio);
+        glVertex2f(drawX, drawY);
+    }
+    glEnd();
+}
+
+void BackgroundRenderer::renderTriangleFan(float x, float y, float radius, int segments, 
+                                         const glm::vec3& color, float aspectRatio) {
+    renderCircle(x, y, radius, segments, color, aspectRatio);
+}
+
+void BackgroundRenderer::renderSquare(float x, float y, float size, const glm::vec3& color) {
+    glColor3f(color.r, color.g, color.b);
+    glBegin(GL_QUADS);
+    glVertex2f(x - size, y - size);
+    glVertex2f(x + size, y - size);
+    glVertex2f(x + size, y + size);
+    glVertex2f(x - size, y + size);
+    glEnd();
+}
+
+void BackgroundRenderer::renderTriangle(float x, float y, float width, float height, const glm::vec3& color) {
+    glColor3f(color.r, color.g, color.b);
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x, y);
+    glVertex2f(x - width, y - height);
+    glVertex2f(x + width, y - height);
+    glEnd();
+}
+
+// 2Dモード管理の統一関数
+void BackgroundRenderer::renderWith2DMode(std::function<void()> renderFunc) {
+    begin2DMode();
+    renderFunc();
+    end2DMode();
+}
+
 void BackgroundRenderer::renderGrassland() {
     // 雲を描画（空の部分）
-    glColor3f(1.0f, 1.0f, 1.0f);
-    for (int i = 0; i < 4; i++) {
-        float x = fmod(i * 350.0f + (i * 30.0f), 1280.0f);
-        float y = 80.0f + (i * 25.0f);
-        float size = 70.0f + (i * 15.0f);
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::CLOUD_COUNT_STAGE_0; i++) {
+        float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SPACING + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SPACING_OFFSET), 
+                       GameConstants::RenderConstants::BackgroundLayout::SCREEN_WIDTH);
+        float y = GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_Y + 
+                  (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_Y_OFFSET);
+        float size = GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SIZE + 
+                     (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SIZE_OFFSET);
         
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y);
-        for (int j = 0; j <= 12; j++) {
-            float angle = 2.0f * 3.14159f * j / 12;
-            float cloudX = x + cos(angle) * size;
-            float cloudY = y + sin(angle) * (size * 0.6f);
-            glVertex2f(cloudX, cloudY);
-        }
-        glEnd();
+        renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::CLOUD_SEGMENTS, 
+                    glm::vec3(1.0f, 1.0f, 1.0f), 
+                    GameConstants::RenderConstants::BackgroundLayout::CLOUD_ASPECT_RATIO);
     }
     
     // 草を描画
-    glColor3f(0.1f, 0.6f, 0.1f); // 濃い緑
-    for (int i = 0; i < 100; i++) {
-        float x = fmod(i * 12.0f + (i * 7.0f), 1280.0f);
-        float y = 720.0f - fmod(i * 8.0f + (i * 13.0f), 200.0f); // 画面下部から
-        float height = 15.0f + (i % 5) * 3.0f;
-        float width = 2.0f + (i % 3);
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::GRASS_COUNT; i++) {
+        float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::GRASS_SPACING + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::GRASS_SPACING_OFFSET), 
+                       GameConstants::RenderConstants::BackgroundLayout::SCREEN_WIDTH);
+        float y = GameConstants::RenderConstants::BackgroundLayout::SCREEN_HEIGHT - 
+                  fmod(i * GameConstants::RenderConstants::BackgroundLayout::GRASS_BASE_Y_OFFSET + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::GRASS_Y_OFFSET), 200.0f);
+        float height = GameConstants::RenderConstants::BackgroundLayout::GRASS_HEIGHT_BASE + 
+                       (i % 5) * GameConstants::RenderConstants::BackgroundLayout::GRASS_HEIGHT_VARIATION;
+        float width = GameConstants::RenderConstants::BackgroundLayout::GRASS_WIDTH_BASE + 
+                      (i % GameConstants::RenderConstants::BackgroundLayout::GRASS_WIDTH_VARIATION);
         
-        // 草の葉を描画
-        glBegin(GL_TRIANGLES);
-        glVertex2f(x, y);
-        glVertex2f(x - width, y - height);
-        glVertex2f(x + width, y - height);
-        glEnd();
+        renderTriangle(x, y, width, height, glm::vec3(0.1f, 0.6f, 0.1f));
     }
     
     // 花を描画
@@ -173,10 +217,15 @@ void BackgroundRenderer::renderGrassland() {
 }
 
 void BackgroundRenderer::renderFlowers() {
-    for (int i = 0; i < 20; i++) {
-        float x = fmod(i * 60.0f + (i * 23.0f), 1280.0f);
-        float y = 720.0f - fmod(i * 15.0f + (i * 37.0f), 150.0f);
-        float size = 8.0f + (i % 3) * 2.0f;
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::FLOWER_COUNT; i++) {
+        float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::FLOWER_SPACING + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::FLOWER_SPACING_OFFSET), 
+                       GameConstants::RenderConstants::BackgroundLayout::SCREEN_WIDTH);
+        float y = GameConstants::RenderConstants::BackgroundLayout::SCREEN_HEIGHT - 
+                  fmod(i * GameConstants::RenderConstants::BackgroundLayout::FLOWER_BASE_Y_OFFSET + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::FLOWER_Y_OFFSET), 150.0f);
+        float size = GameConstants::RenderConstants::BackgroundLayout::FLOWER_SIZE_BASE + 
+                     (i % 3) * GameConstants::RenderConstants::BackgroundLayout::FLOWER_SIZE_VARIATION;
         
         // 花の色（ランダム）
         glm::vec3 flowerColors[] = {
@@ -187,172 +236,128 @@ void BackgroundRenderer::renderFlowers() {
         };
         glm::vec3 flowerColor = flowerColors[i % 4];
         
-        glColor3f(flowerColor.r, flowerColor.g, flowerColor.b);
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y);
-        for (int j = 0; j <= 8; j++) {
-            float angle = 2.0f * 3.14159f * j / 8;
-            float flowerX = x + cos(angle) * size;
-            float flowerY = y + sin(angle) * size;
-            glVertex2f(flowerX, flowerY);
-        }
-        glEnd();
+        renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::FLOWER_SEGMENTS, flowerColor, 1.0f);
     }
 }
 
 void BackgroundRenderer::renderTrees() {
-    for (int i = 0; i < 8; i++) {
-        float x = 100.0f + i * 150.0f;
-        float y = 720.0f - 80.0f;
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::TREE_COUNT; i++) {
+        float x = GameConstants::RenderConstants::BackgroundLayout::TREE_START_X + 
+                  i * GameConstants::RenderConstants::BackgroundLayout::TREE_SPACING;
+        float y = GameConstants::RenderConstants::BackgroundLayout::SCREEN_HEIGHT - 
+                  GameConstants::RenderConstants::BackgroundLayout::TREE_BASE_Y;
         
         // 木の幹
         glColor3f(GameConstants::TREE_TRUNK.r, 
                   GameConstants::TREE_TRUNK.g, 
-                  GameConstants::TREE_TRUNK.b); // 茶色
+                  GameConstants::TREE_TRUNK.b);
         glBegin(GL_QUADS);
-        glVertex2f(x - 8, y);
-        glVertex2f(x + 8, y);
-        glVertex2f(x + 8, y - 60);
-        glVertex2f(x - 8, y - 60);
+        glVertex2f(x - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y);
+        glVertex2f(x + GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y);
+        glVertex2f(x + GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_HEIGHT);
+        glVertex2f(x - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_HEIGHT);
         glEnd();
         
         // 木の葉
-        glColor3f(GameConstants::TREE_LEAVES.r, 
-                  GameConstants::TREE_LEAVES.g, 
-                  GameConstants::TREE_LEAVES.b); // 濃い緑
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y - 60);
-        for (int j = 0; j <= 12; j++) {
-            float angle = 2.0f * 3.14159f * j / 12;
-            float leafX = x + cos(angle) * 40;
-            float leafY = y - 60 + sin(angle) * 40;
-            glVertex2f(leafX, leafY);
-        }
-        glEnd();
+        renderCircle(x, y - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_HEIGHT, 
+                    GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_RADIUS, 
+                    GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_SEGMENTS, 
+                    GameConstants::TREE_LEAVES, 1.0f);
     }
 }
 
 void BackgroundRenderer::renderHills() {
-    glColor3f(GameConstants::HILL_COLOR.r, 
-               GameConstants::HILL_COLOR.g, 
-               GameConstants::HILL_COLOR.b); // 明るい緑
-    for (int i = 0; i < 3; i++) {
-        float x = 200.0f + i * 400.0f;
-        float y = 720.0f - 50.0f;
-        float width = 200.0f;
-        float height = 80.0f;
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::HILL_COUNT; i++) {
+        float x = GameConstants::RenderConstants::BackgroundLayout::HILL_START_X + 
+                  i * GameConstants::RenderConstants::BackgroundLayout::HILL_SPACING;
+        float y = GameConstants::RenderConstants::BackgroundLayout::SCREEN_HEIGHT - 
+                  GameConstants::RenderConstants::BackgroundLayout::HILL_BASE_Y;
         
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y - height);
-        for (int j = 0; j <= 16; j++) {
-            float angle = 3.14159f * j / 16;
-            float hillX = x + cos(angle) * width;
-            float hillY = y - height + sin(angle) * height;
-            glVertex2f(hillX, hillY);
-        }
-        glEnd();
+        renderCircle(x, y - GameConstants::RenderConstants::BackgroundLayout::HILL_HEIGHT, 
+                    GameConstants::RenderConstants::BackgroundLayout::HILL_WIDTH, 
+                    GameConstants::RenderConstants::BackgroundLayout::HILL_SEGMENTS, 
+                    GameConstants::HILL_COLOR, 1.0f);
     }
 }
 
 void BackgroundRenderer::renderClouds() {
     // 雲を描画
-    glColor3f(GameConstants::CLOUD_COLOR.r, 
-               GameConstants::CLOUD_COLOR.g, 
-               GameConstants::CLOUD_COLOR.b);
-    for (int i = 0; i < 5; i++) {
-        float x = fmod(i * 300.0f + (i * 50.0f), 1280.0f);
-        float y = 100.0f + (i * 20.0f);
-        float size = 80.0f + (i * 10.0f);
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::CLOUD_COUNT_STAGE_1; i++) {
+        float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SPACING + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SPACING_OFFSET), 
+                       GameConstants::RenderConstants::BackgroundLayout::SCREEN_WIDTH);
+        float y = GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_Y + 
+                  (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_Y_OFFSET);
+        float size = GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SIZE + 
+                     (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SIZE_OFFSET);
         
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y);
-        for (int j = 0; j <= 12; j++) {
-            float angle = 2.0f * 3.14159f * j / 12;
-            float cloudX = x + cos(angle) * size;
-            float cloudY = y + sin(angle) * (size * 0.6f);
-            glVertex2f(cloudX, cloudY);
-        }
-        glEnd();
+        renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::CLOUD_SEGMENTS, 
+                    GameConstants::CLOUD_COLOR, 
+                    GameConstants::RenderConstants::BackgroundLayout::CLOUD_ASPECT_RATIO);
     }
 }
 
 void BackgroundRenderer::renderSunset() {
     // 夕日を描画
-    glColor3f(GameConstants::SUNSET_COLOR.r, 
-               GameConstants::SUNSET_COLOR.g, 
-               GameConstants::SUNSET_COLOR.b);
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(1000, 150);
-    for (int i = 0; i <= 20; i++) {
-        float angle = 3.14159f * i / 20;
-        float x = 1000 + cos(angle) * 80;
-        float y = 150 + sin(angle) * 80;
-        glVertex2f(x, y);
-    }
-    glEnd();
+    renderCircle(GameConstants::RenderConstants::BackgroundLayout::SUNSET_X, 
+                GameConstants::RenderConstants::BackgroundLayout::SUNSET_Y, 
+                GameConstants::RenderConstants::BackgroundLayout::SUNSET_RADIUS, 
+                GameConstants::RenderConstants::BackgroundLayout::SUNSET_SEGMENTS, 
+                GameConstants::SUNSET_COLOR, 1.0f);
 }
 
 void BackgroundRenderer::renderStars() {
     // 星を描画
-    glColor3f(1.0f, 1.0f, 1.0f);
-    for (int i = 0; i < 50; i++) {
-        float x = fmod(i * 25.0f + (i * 17.0f), 1280.0f);
-        float y = fmod(i * 15.0f + (i * 23.0f), 300.0f);
-        float size = 2.0f + (i % 3);
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::STAR_COUNT; i++) {
+        float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::STAR_SPACING_X + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::STAR_SPACING_X_OFFSET), 
+                       GameConstants::RenderConstants::BackgroundLayout::SCREEN_WIDTH);
+        float y = fmod(i * GameConstants::RenderConstants::BackgroundLayout::STAR_SPACING_Y + 
+                       (i * GameConstants::RenderConstants::BackgroundLayout::STAR_SPACING_Y_OFFSET), 
+                       GameConstants::RenderConstants::BackgroundLayout::STAR_MAX_Y);
+        float size = GameConstants::RenderConstants::BackgroundLayout::STAR_SIZE_BASE + 
+                     (i % GameConstants::RenderConstants::BackgroundLayout::STAR_SIZE_VARIATION);
         
-        glBegin(GL_QUADS);
-        glVertex2f(x - size, y - size);
-        glVertex2f(x + size, y - size);
-        glVertex2f(x + size, y + size);
-        glVertex2f(x - size, y + size);
-        glEnd();
+        renderSquare(x, y, size, glm::vec3(1.0f, 1.0f, 1.0f));
     }
 }
 
 void BackgroundRenderer::renderThunderClouds() {
     // 雷雲を描画
-    glColor3f(0.3f, 0.3f, 0.4f);
-    for (int i = 0; i < 3; i++) {
-        float x = 200.0f + i * 400.0f;
-        float y = 80.0f + i * 30.0f;
-        float size = 120.0f + i * 20.0f;
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_COUNT; i++) {
+        float x = GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_START_X + 
+                  i * GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_SPACING;
+        float y = GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_BASE_Y + 
+                  i * GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_Y_OFFSET;
+        float size = GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_BASE_SIZE + 
+                     i * GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_SIZE_OFFSET;
         
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y);
-        for (int j = 0; j <= 12; j++) {
-            float angle = 2.0f * 3.14159f * j / 12;
-            float cloudX = x + cos(angle) * size;
-            float cloudY = y + sin(angle) * (size * 0.8f);
-            glVertex2f(cloudX, cloudY);
-        }
-        glEnd();
+        renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_SEGMENTS, 
+                    glm::vec3(0.3f, 0.3f, 0.4f), 
+                    GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_ASPECT_RATIO);
     }
 }
 
 void BackgroundRenderer::renderNebula() {
     // 星雲を描画
-    for (int i = 0; i < 3; i++) {
-        float x = 300.0f + i * 300.0f;
-        float y = 200.0f + i * 100.0f;
-        float size = 150.0f + i * 50.0f;
+    for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::NEBULA_COUNT; i++) {
+        float x = GameConstants::RenderConstants::BackgroundLayout::NEBULA_START_X + 
+                  i * GameConstants::RenderConstants::BackgroundLayout::NEBULA_SPACING;
+        float y = GameConstants::RenderConstants::BackgroundLayout::NEBULA_BASE_Y + 
+                  i * GameConstants::RenderConstants::BackgroundLayout::NEBULA_Y_OFFSET;
+        float size = GameConstants::RenderConstants::BackgroundLayout::NEBULA_BASE_SIZE + 
+                     i * GameConstants::RenderConstants::BackgroundLayout::NEBULA_SIZE_OFFSET;
         
         // 星雲の色（紫、青、ピンク）
         glm::vec3 colors[] = {
-            glm::vec3(0.8f, 0.2f, 0.8f), // 紫
-            glm::vec3(0.2f, 0.4f, 0.8f), // 青
-            glm::vec3(0.8f, 0.3f, 0.6f)  // ピンク
+            GameConstants::RenderConstants::BackgroundLayout::NEBULA_PURPLE,  // 紫
+            GameConstants::RenderConstants::BackgroundLayout::NEBULA_BLUE,    // 青
+            GameConstants::RenderConstants::BackgroundLayout::NEBULA_PINK     // ピンク
         };
         
-        glColor3f(colors[i].r, colors[i].g, colors[i].b);
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y);
-        for (int j = 0; j <= 16; j++) {
-            float angle = 2.0f * 3.14159f * j / 16;
-            float nebulaX = x + cos(angle) * size;
-            float nebulaY = y + sin(angle) * (size * 0.7f);
-            glVertex2f(nebulaX, nebulaY);
-        }
-        glEnd();
+        renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::NEBULA_SEGMENTS, 
+                    colors[i], 
+                    GameConstants::RenderConstants::BackgroundLayout::NEBULA_ASPECT_RATIO);
     }
 }
 
