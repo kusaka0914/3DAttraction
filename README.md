@@ -1,144 +1,45 @@
-# Vulkan3D - Portal Physics Puzzle
+## ゲームを開始する手順
 
-C++20 + Vulkan 1.3 を使用した3D物理パズルアクションゲームです。Portalライクなポータルシステムと物理ギミックを実装しています。
+### 1. 依存関係のインストール
 
-## 機能
-
-- **ポータルシステム**: 2つのリンクされたゲート間での瞬間移動
-- **物理エンジン**: Jolt Physicsを使用したリアルな物理シミュレーション
-- **ECSアーキテクチャ**: エンティティ・コンポーネント・システムによるモジュラー設計
-- **Vulkan 1.3**: 最新のグラフィックスAPIを使用した高性能レンダリング
-- **クロスプラットフォーム**: Windows 10/11, macOS 13+ 対応
-
-## 操作
-
-- **WASD**: 移動
-- **Space**: ジャンプ
-- **Mouse**: 視点操作
-- **E**: オブジェクトを掴む/放す
-- **Q**: ポータルA/B切替
-- **P**: 一時停止
-- **Escape**: 終了
-
-## ビルド要件
-
-- **CMake**: 3.20以上
-- **C++20対応コンパイラ**: 
-  - Windows: Visual Studio 2019/2022
-  - macOS: Xcode 12.0以上
-- **Vulkan SDK**: 1.3.0以上
-- **Git**: 依存関係の取得用
-
-## ビルド手順
-
-### 1. リポジトリのクローン
-
+#### macOS
 ```bash
-git clone <repository-url>
-cd Vulkan3D
+# Xcode Command Line Tools (必須)
+xcode-select --install
+
+# Homebrewでライブラリをインストール
+brew install cmake glfw glm
 ```
 
-### 2. ビルドディレクトリの作成
-
+#### Ubuntu/Debian
 ```bash
-mkdir build
-cd build
+sudo apt update
+sudo apt install build-essential cmake libglfw3-dev libglm-dev libgl1-mesa-dev
 ```
 
-### 3. CMakeの実行
+#### Windows
+```cmd
+# Chocolateyを使用する場合
+choco install cmake glfw glm
 
+# または、手動でインストール
+# 1. CMake: https://cmake.org/download/ からダウンロード
+# 2. GLFW: https://www.glfw.org/download.html からダウンロード
+# 3. GLM: https://github.com/g-truc/glm/releases からダウンロード
+
+# ビルドツール（必須）
+# Visual Studio Build Tools または MinGW-w64 をインストール
+# https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
+```
+
+### 2. ゲームの起動
+
+#### macOS/Linux
 ```bash
-cmake ..
+./start_game.sh
 ```
 
-### 4. ビルドの実行
-
-```bash
-cmake --build . --config Release
+#### Windows
+```cmd
+start_game.bat
 ```
-
-### 5. 実行
-
-```bash
-./Vulkan3D
-```
-
-## プロジェクト構造
-
-```
-Vulkan3D/
-├── CMakeLists.txt          # メインCMake設定
-├── src/
-│   ├── app/               # アプリケーション層
-│   │   ├── main.cpp       # エントリーポイント
-│   │   └── game_app.cpp   # メインゲームクラス
-│   ├── core/              # コアシステム
-│   │   ├── time.h/cpp     # 時間管理
-│   │   ├── log.h/cpp      # ログシステム
-│   │   └── math_utils.h/cpp # 数学ユーティリティ
-│   ├── game/              # ゲームロジック
-│   │   ├── components.h   # ECSコンポーネント
-│   │   ├── ecs.h/cpp      # ECSシステム
-│   │   └── systems.h/cpp  # ゲームシステム
-│   ├── gfx/               # グラフィックス
-│   │   └── vulkan_device.h/cpp # Vulkanデバイス管理
-│   ├── physics/           # 物理エンジン
-│   ├── io/                # 入出力
-│   └── ui/                # ユーザーインターフェース
-├── assets/                # ゲームアセット
-│   ├── meshes/           # 3Dモデル
-│   ├── textures/         # テクスチャ
-│   ├── shaders/          # シェーダー
-│   └── levels/           # レベルデータ
-└── shaders/              # HLSLシェーダー
-```
-
-## 依存関係
-
-このプロジェクトは以下のライブラリを使用しています（FetchContentで自動取得）:
-
-- **GLFW**: ウィンドウ管理と入力
-- **Vulkan**: グラフィックスAPI
-- **GLM**: 数学ライブラリ
-- **spdlog**: ログシステム
-- **Dear ImGui**: デバッグUI
-- **stb**: 画像/音声ローダー
-- **cgltf**: glTFローダー
-- **miniaudio**: オーディオ
-- **Jolt Physics**: 物理エンジン
-
-## 開発状況
-
-### 実装済み
-- [x] プロジェクト構造とCMake設定
-- [x] コアシステム（時間、ログ、数学）
-- [x] ECSアーキテクチャ
-- [x] 基本的なゲームシステム
-- [x] Vulkanデバイス初期化
-- [x] GLFWウィンドウと入力処理
-- [x] 基本的なエンティティ作成
-
-### 実装予定
-- [ ] Vulkanレンダラーの完全実装
-- [ ] ポータルシステムの詳細実装
-- [ ] 物理エンジンとの統合
-- [ ] シェーダーシステム
-- [ ] アセットローダー
-- [ ] UIシステム
-- [ ] オーディオシステム
-- [ ] レベルエディタ
-
-## 既知の制限
-
-- 現在は基本的なフレームワークのみ実装
-- Vulkanレンダラーは未実装
-- 物理エンジンとの統合は未完了
-- ポータルシステムの詳細ロジックは未実装
-
-## ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
-
-## 貢献
-
-プルリクエストやイシューの報告を歓迎します。開発に参加する前に、コーディング規約とコミットメッセージの形式を確認してください。
