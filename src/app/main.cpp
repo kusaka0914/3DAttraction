@@ -11,7 +11,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "../gfx/opengl_renderer.h"
 #include "../game/game_state.h"
-#include "../game/stage_generator.h"
 #include "../game/stage_manager.h"
 #include "../game/platform_system.h"
 #include "../game/cannon_system.h"
