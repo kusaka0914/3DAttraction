@@ -24,6 +24,8 @@ find_package(OpenGL REQUIRED)
 # メインアプリケーション
 add_executable(Vulkan3D 
     src/app/main.cpp
+    src/app/game_loop.cpp
+    src/app/tutorial_manager.cpp
     src/gfx/opengl_renderer.cpp
     src/gfx/bitmap_font.cpp
     src/gfx/background_renderer.cpp

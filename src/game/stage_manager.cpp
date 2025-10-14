@@ -1,5 +1,6 @@
 #include "stage_manager.h"
 #include "../core/constants/game_constants.h"
+#include "../core/constants/debug_config.h"
 #include "../core/utils/stage_utils.h"
 #include <iostream>
 #include <algorithm>
@@ -131,7 +132,7 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.collectedItems = 0;
     gameState.gameWon = false;
     gameState.score = 0;
-    gameState.gameTime = 0.0f;  // ステージ開始時にゲーム時間をリセット
+    // gameTimeはstartTimeのリセットによって自動的に0から開始される
     
     // 制限時間システムをリセット（ステージ固有の制限時間を適用）
     float baseTimeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
@@ -155,6 +156,7 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     printf("Final time limit: %.1f seconds\n", gameState.timeLimit);
     gameState.earnedStars = 0;          // 星をリセット
     gameState.clearTime = 0.0f;         // クリア時間をリセット
+    DEBUG_PRINTF("DEBUG: clearTime reset to 0.0f for stage %d\n", stageNumber);
     gameState.isTimeUp = false;         // 時間切れフラグをリセット
     gameState.isStageCompleted = false; // ステージ完了フラグをリセット
     gameState.showStageClearUI = false; // UIをリセット

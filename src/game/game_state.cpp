@@ -23,6 +23,9 @@ void initializeGameState(GameState& gameState) {
     // ゴール後の移動制限の初期化
     gameState.isGoalReached = false;
     
+    // クリアタイムの初期化
+    gameState.clearTime = 0.0f;
+    
     // Ready画面システムの初期化
     gameState.showReadyScreen = false;
     gameState.readyScreenShown = false;
