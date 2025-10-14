@@ -79,7 +79,7 @@ struct GameState {
     bool gameWon = false;
     
     // 分離された足場データ（platform_types.hで定義）
-    #include "platform_types.h"
+    #include "../core/types/platform_types.h"
     
     // 後方互換性のための古いPlatform構造体（段階的に移行予定）
     struct Platform {

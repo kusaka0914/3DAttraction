@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <string>
-#include "../game/game_constants.h"
+#include "../core/constants/game_constants.h"
 #include "bitmap_font.h"
 
 namespace gfx {

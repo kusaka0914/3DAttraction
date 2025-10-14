@@ -18,69 +18,11 @@
 #include "../game/gravity_system.h"
 #include "../physics/physics_system.h"
 #include "../io/input_system.h"
-#include "../game/game_constants.h"
+#include "../core/constants/game_constants.h"
 #include "../core/error_handler.h"
-#include "../game/camera_system.h"
-
-// ======================================================
-//                        ヘルパー関数
-// ======================================================
-
-// 重力方向に応じたプレイヤー位置調整
-void adjustPlayerPositionForGravity(GameState& gameState, const glm::vec3& platformPosition, 
-                                   const glm::vec3& platformSize, const glm::vec3& playerSize, 
-                                   const glm::vec3& gravityDirection) {
-    if (gravityDirection.y > 0.5f) {
-        // 重力反転時：足場の下面に配置
-        gameState.playerPosition.y = platformPosition.y - platformSize.y * 0.5f - playerSize.y * 0.5f;
-    } else {
-        // 通常重力：足場の上面に配置
-        gameState.playerPosition.y = platformPosition.y + platformSize.y * 0.5f + playerSize.y * 0.5f;
-    }
-    gameState.playerVelocity.y = 0.0f;
-}
-
-// 速度倍率に応じた重力強度を計算
-float calculateGravityStrength(float baseGravity, float deltaTime, float timeScale, const glm::vec3& gravityDirection, GameState& gameState) {
-    // 基本重力強度
-    float gravityStrength = baseGravity * deltaTime;
-    
-    // 速度倍率に応じて重力を増強（地面につくスピードを上げる）
-    if (timeScale > 1.0f) {
-        // 速度倍率の2乗に比例して重力を増強（より明確な効果）
-        // 2倍速で4倍の重力、3倍速で9倍の重力
-        gravityStrength *= timeScale * GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_TIME_SCALE;
-    }
-    if(gameState.currentStage==0){
-        gravityStrength *= GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_STAGE_0;
-    }
-    
-    // 重力反転時は70%の強度
-    if (gravityDirection.y > GameConstants::PhysicsConstants::GRAVITY_DIRECTION_THRESHOLD) {
-        gravityStrength *= GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_INVERTED;
-    }
-    
-    // バーストジャンプ中は重力を半分にする
-    if (gameState.isBurstJumpActive && !gameState.hasUsedBurstJump) {
-        gravityStrength *= GameConstants::PhysicsCalculationConstants::GRAVITY_MULTIPLIER_BURST_JUMP;
-    }
-    
-    return gravityStrength;
-}
-
-// キー入力の状態管理
-struct KeyState {
-    bool isPressed = false;
-    bool wasPressed = false;
-    
-    void update(bool currentlyPressed) {
-        wasPressed = isPressed;
-        isPressed = currentlyPressed;
-    }
-    
-    bool justPressed() const { return isPressed && !wasPressed; }
-    bool justReleased() const { return !isPressed && wasPressed; }
-};
+#include "../gfx/camera_system.h"
+#include "../core/utils/physics_utils.h"
+#include "../core/utils/input_utils.h"
 
 // ======================================================
 //                        main
@@ -952,7 +894,7 @@ int main(int argc, char* argv[]) {
         bool inGravityZone = PhysicsSystem::isPlayerInGravityZone(gameState, gameState.playerPosition, gravityDirection);
         
         // 物理演算
-        float gravityStrength = calculateGravityStrength(GameConstants::BASE_GRAVITY, deltaTime, gameState.timeScale, gravityDirection, gameState);
+        float gravityStrength = PhysicsUtils::calculateGravityStrength(GameConstants::BASE_GRAVITY, deltaTime, gameState.timeScale, gravityDirection, gameState);
         glm::vec3 gravityForce = gravityDirection * gravityStrength;
 
         // デバッグ: 重力値を出力（速度倍率が1倍より大きい時）
@@ -1086,7 +1028,7 @@ int main(int argc, char* argv[]) {
             std::visit(overloaded{
                 [&](const GameState::StaticPlatform& platform) {
                     if (!PhysicsSystem::checkPlatformCollisionHorizontal(gameState, gameState.playerPosition, playerSize)) {
-                        adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                        PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
                     
                     // ゴール判定（黄色い足場の場合）
@@ -1158,17 +1100,17 @@ int main(int argc, char* argv[]) {
                     }
                 },
                 [&](const GameState::MovingPlatform& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     const_cast<GameState::MovingPlatform&>(platform).hasPlayerOnBoard = true;
                 },
                 [&](const GameState::RotatingPlatform& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 },
                 [&](const GameState::PatrollingPlatform& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 },
                 [&](const GameState::TeleportPlatform& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     
                     if (!platform.hasTeleported && platform.cooldownTimer <= 0.0f) {
                         gameState.playerPosition = platform.teleportDestination;
@@ -1177,19 +1119,19 @@ int main(int argc, char* argv[]) {
                     }
                 },
                 [&](const GameState::JumpPad& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     gameState.playerVelocity.y = platform.jumpPower;
                 },
                 [&](const GameState::CycleDisappearingPlatform& platform) {
                     if (platform.isCurrentlyVisible) {
-                        adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                        PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
                 },
                 [&](const GameState::DisappearingPlatform& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 },
                 [&](const GameState::FlyingPlatform& platform) {
-                    adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                    PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 }
             }, *currentPlatform);
         }
@@ -1280,7 +1222,7 @@ int main(int argc, char* argv[]) {
                 },
                 [&](GameState::MovingPlatform& platform) {
                     if (platform.hasPlayerOnBoard) {
-                        adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                        PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                         
                         // プレイヤーのX座標とZ座標を足場の移動に合わせて更新
                         glm::vec3 platformMovement = platform.position - platform.previousPosition;
@@ -1324,7 +1266,7 @@ int main(int argc, char* argv[]) {
                             gameState.playerPosition = platform.position + glm::vec3(localPlayerPos.x, newY, newZ);
                         }
                         
-                        adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                        PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
                 },
                 [&](GameState::PatrollingPlatform& platform) {
@@ -1344,7 +1286,7 @@ int main(int argc, char* argv[]) {
                                            gameState.playerPosition.z >= extendedMin.z && gameState.playerPosition.z <= extendedMax.z);
                     
                     if (onPlatform || inExtendedRange) {
-                        adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
+                        PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                         
                         // プレイヤーのX座標とZ座標を足場の移動に合わせて更新
                         glm::vec3 platformMovement = platform.position - platform.previousPosition;

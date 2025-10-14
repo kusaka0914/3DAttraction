@@ -25,8 +25,9 @@ public:
     
     // ステージ管理
     void initializeStages();
-    void loadStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem);
-    void unlockStage(int stageNumber);
+    bool loadStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem);
+    bool unlockStage(int stageNumber, GameState* gameState = nullptr);
+    bool unlockStageWithStars(int stageNumber, int requiredStars, GameState& gameState);
     void completeStage(int stageNumber);
     void resetStageProgress();
     
@@ -60,4 +61,7 @@ private:
     static void generateStage4(GameState& gameState, PlatformSystem& platformSystem);
     static void generateStage5(GameState& gameState, PlatformSystem& platformSystem);
     static void generateTutorialStage(GameState& gameState, PlatformSystem& platformSystem);
+    
+    // 設定ファイルからステージを生成する関数
+    bool generateStageFromConfig(int stageNumber, GameState& gameState, PlatformSystem& platformSystem);
 };

@@ -133,7 +133,7 @@ void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedSt
 // 時間表示の描画
 void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
     std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
-    glm::vec3 timeColor = (remainingTime <= 5.0f) ? GameConstants::UI_WARNING_COLOR : GameConstants::UI_TEXT_COLOR;
+    glm::vec3 timeColor = (remainingTime <= 5.0f) ? GameConstants::Colors::UI_WARNING_COLOR : GameConstants::Colors::UI_TEXT_COLOR;
     
     renderText(timeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
                                    GameConstants::Colors::UILayout::TIME_UI_Y), timeColor, GameConstants::Colors::UILayout::TIME_UI_SCALE);
@@ -143,18 +143,18 @@ void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
 void UIRenderer::renderGoalDisplay(float timeLimit) {
     std::string goalText = "GOAL";
     renderText(goalText, glm::vec2(GameConstants::Colors::UILayout::GOAL_UI_X, 
-                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
     
     if (timeLimit <= 20) {
         renderText("5s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_5S_X, 
-                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
         renderText("10s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_10S_X, 
-                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
     } else {
         renderText("10s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_5S_X, 
-                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
         renderText("20s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_20S_X, 
-                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
     }
 }
 
@@ -164,7 +164,7 @@ void UIRenderer::renderStarsDisplay(int existingStars) {
         glm::vec2 starPos = glm::vec2(GameConstants::Colors::UILayout::STARS_START_X + 
                                       i * GameConstants::Colors::UILayout::STARS_SPACING, 
                                       GameConstants::Colors::UILayout::STARS_Y);
-        glm::vec3 starColor = (i < existingStars) ? GameConstants::STAR_ACTIVE : GameConstants::STAR_INACTIVE;
+        glm::vec3 starColor = (i < existingStars) ? GameConstants::Colors::STAR_ACTIVE : GameConstants::Colors::STAR_INACTIVE;
         renderStar(starPos, starColor, GameConstants::Colors::UILayout::STARS_SCALE);
     }
 }
@@ -172,7 +172,7 @@ void UIRenderer::renderStarsDisplay(int existingStars) {
 // ライフ表示の描画
 void UIRenderer::renderLivesDisplay(int lives) {
     for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor = (i < lives) ? GameConstants::LIFE_ACTIVE : GameConstants::LIFE_INACTIVE;
+        glm::vec3 heartColor = (i < lives) ? GameConstants::Colors::LIFE_ACTIVE : GameConstants::Colors::LIFE_INACTIVE;
         float heartX = GameConstants::Colors::UILayout::HEART_START_X + i * GameConstants::Colors::UILayout::HEART_SPACING;
         renderHeart(glm::vec2(heartX, GameConstants::Colors::UILayout::HEART_Y), heartColor, GameConstants::Colors::UILayout::HEART_SCALE);
     }
@@ -189,10 +189,10 @@ void UIRenderer::renderExplanationText(const std::string& type, const glm::vec2&
         int offsetY = position.y - 100;
         int interval = 40;
         
-        renderText(explanation1, glm::vec2(position.x - 460, offsetY), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(explanation2, glm::vec2(position.x - 480, offsetY + interval), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(explanation3, glm::vec2(position.x - 520, offsetY + interval * 2), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(explanation4, glm::vec2(position.x - 420, offsetY + interval * 3), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation1, glm::vec2(position.x - 460, offsetY), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation2, glm::vec2(position.x - 480, offsetY + interval), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation3, glm::vec2(position.x - 520, offsetY + interval * 2), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(explanation4, glm::vec2(position.x - 420, offsetY + interval * 3), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
     }
     else if (type == "time") {
         std::string timeLimitText = "THIS IS THE TIME LIMIT!";
@@ -202,9 +202,9 @@ void UIRenderer::renderExplanationText(const std::string& type, const glm::vec2&
         int offsetY = position.y;
         int interval = 40;
         
-        renderText(timeLimitText, glm::vec2(position.x, offsetY), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(timeLimitText2, glm::vec2(position.x, offsetY + interval), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(timeLimitText3, glm::vec2(position.x, offsetY + interval * 2), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(timeLimitText, glm::vec2(position.x, offsetY), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(timeLimitText2, glm::vec2(position.x, offsetY + interval), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(timeLimitText3, glm::vec2(position.x, offsetY + interval * 2), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
     }
     else if (type == "stars") {
         std::string starsText = "THESE ARE STARS !";
@@ -215,10 +215,10 @@ void UIRenderer::renderExplanationText(const std::string& type, const glm::vec2&
         int offsetY = position.y;
         int interval = 40;
         
-        renderText(starsText, glm::vec2(position.x, offsetY), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(starsText2, glm::vec2(position.x, offsetY + interval), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(starsText3, glm::vec2(position.x, offsetY + interval * 2), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
-        renderText(starsText4, glm::vec2(position.x, offsetY + interval * 3), GameConstants::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText, glm::vec2(position.x, offsetY), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText2, glm::vec2(position.x, offsetY + interval), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText3, glm::vec2(position.x, offsetY + interval * 2), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
+        renderText(starsText4, glm::vec2(position.x, offsetY + interval * 3), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::EXPLANATION_SCALE);
     }
 }
 
@@ -277,19 +277,19 @@ void UIRenderer::renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool 
     begin2DMode();
     
     std::string skillText = config.skillName;
-    glm::vec3 skillColor = GameConstants::UI_TEXT_COLOR;
-    glm::vec3 usesColor = GameConstants::UI_TEXT_COLOR;
+    glm::vec3 skillColor = GameConstants::Colors::UI_TEXT_COLOR;
+    glm::vec3 usesColor = GameConstants::Colors::UI_TEXT_COLOR;
     
     // 使用回数が0の場合は灰色
     if (remainingUses <= 0) {
-        usesColor = GameConstants::UI_DISABLED_COLOR;
-        skillColor = GameConstants::UI_DISABLED_COLOR;
+        usesColor = GameConstants::Colors::UI_DISABLED_COLOR;
+        skillColor = GameConstants::Colors::UI_DISABLED_COLOR;
     }
     
     // アクティブ状態の場合は青色
     if (isActive) {
-        usesColor = GameConstants::UI_ACTIVE_COLOR;
-        skillColor = GameConstants::UI_ACTIVE_COLOR;
+        usesColor = GameConstants::Colors::UI_ACTIVE_COLOR;
+        skillColor = GameConstants::Colors::UI_ACTIVE_COLOR;
     }
     
     // スキル名を描画
@@ -303,7 +303,7 @@ void UIRenderer::renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool 
     
     // アクティブ状態の特別表示
     if (config.hasActiveState && isActive) {
-        renderText(config.activeText, config.activePosition, GameConstants::UI_ACTIVE_COLOR, GameConstants::Colors::UILayout::SKILL_ACTIVE_SCALE);
+        renderText(config.activeText, config.activePosition, GameConstants::Colors::UI_ACTIVE_COLOR, GameConstants::Colors::UILayout::SKILL_ACTIVE_SCALE);
     }
     
     end2DMode();

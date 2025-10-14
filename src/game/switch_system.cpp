@@ -1,5 +1,5 @@
 #include "switch_system.h"
-#include "game_constants.h"
+#include "../core/constants/game_constants.h"
 #include <iostream>
 
 // スイッチの更新

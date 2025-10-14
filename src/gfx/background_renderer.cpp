@@ -226,10 +226,10 @@ void BackgroundRenderer::renderFlowers() {
         
         // 花の色（ランダム）
         glm::vec3 flowerColors[] = {
-            GameConstants::FLOWER_RED,     // 赤
-            GameConstants::FLOWER_YELLOW,  // 黄色
-            GameConstants::FLOWER_PINK,    // ピンク
-            GameConstants::FLOWER_WHITE    // 白
+            GameConstants::Colors::FLOWER_RED,     // 赤
+            GameConstants::Colors::FLOWER_YELLOW,  // 黄色
+            GameConstants::Colors::FLOWER_PINK,    // ピンク
+            GameConstants::Colors::FLOWER_WHITE    // 白
         };
         glm::vec3 flowerColor = flowerColors[i % 4];
         
@@ -245,9 +245,9 @@ void BackgroundRenderer::renderTrees() {
                   GameConstants::RenderConstants::BackgroundLayout::TREE_BASE_Y;
         
         // 木の幹
-        glColor3f(GameConstants::TREE_TRUNK.r, 
-                  GameConstants::TREE_TRUNK.g, 
-                  GameConstants::TREE_TRUNK.b);
+        glColor3f(GameConstants::Colors::TREE_TRUNK.r, 
+                  GameConstants::Colors::TREE_TRUNK.g, 
+                  GameConstants::Colors::TREE_TRUNK.b);
         glBegin(GL_QUADS);
         glVertex2f(x - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y);
         glVertex2f(x + GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y);
@@ -259,7 +259,7 @@ void BackgroundRenderer::renderTrees() {
         renderCircle(x, y - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_HEIGHT, 
                     GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_RADIUS, 
                     GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_SEGMENTS, 
-                    GameConstants::TREE_LEAVES, 1.0f);
+                    GameConstants::Colors::TREE_LEAVES, 1.0f);
     }
 }
 
@@ -274,8 +274,8 @@ void BackgroundRenderer::renderClouds() {
         float size = GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SIZE + 
                      (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SIZE_OFFSET);
         
-        renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::CLOUD_SEGMENTS, 
-                    GameConstants::CLOUD_COLOR, 
+                renderCircle(x, y, size, GameConstants::RenderConstants::BackgroundLayout::CLOUD_SEGMENTS, 
+                    GameConstants::Colors::CLOUD_COLOR, 
                     GameConstants::RenderConstants::BackgroundLayout::CLOUD_ASPECT_RATIO);
     }
 }
@@ -286,7 +286,7 @@ void BackgroundRenderer::renderSunset() {
                 GameConstants::RenderConstants::BackgroundLayout::SUNSET_Y, 
                 GameConstants::RenderConstants::BackgroundLayout::SUNSET_RADIUS, 
                 GameConstants::RenderConstants::BackgroundLayout::SUNSET_SEGMENTS, 
-                GameConstants::SUNSET_COLOR, 1.0f);
+                GameConstants::Colors::SUNSET_COLOR, 1.0f);
 }
 
 void BackgroundRenderer::renderStars() {

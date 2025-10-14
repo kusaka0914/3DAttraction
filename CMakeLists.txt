@@ -38,6 +38,8 @@ add_executable(Vulkan3D
     src/game/gravity_system.cpp
     src/physics/physics_system.cpp
     src/io/input_system.cpp
+    src/core/utils/physics_utils.cpp
+    src/core/utils/stage_utils.cpp
 )
 
 # インクルードディレクトリ

@@ -2,10 +2,10 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include "../gfx/opengl_renderer.h"
+#include "opengl_renderer.h"
 #include "../game/game_state.h"
 #include "../game/stage_manager.h"
-#include "game_constants.h"
+#include "../core/constants/game_constants.h"
 
 struct CameraConfig {
     glm::vec3 position;

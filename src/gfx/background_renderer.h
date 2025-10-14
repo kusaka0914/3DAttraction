@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <functional>
-#include "../game/game_constants.h"
+#include "../core/constants/game_constants.h"
 
 namespace gfx {
 
