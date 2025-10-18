@@ -207,4 +207,67 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
     }
 }
 
+// std::vector版のオーバーロード
+void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
+                                      const std::vector<std::tuple<std::tuple<float, float, float>, int, float, std::tuple<float, float, float>, glm::vec3, float, float, float, float, std::tuple<float, float, float>, bool>>& platforms) {
+    for (const auto& platform : platforms) {
+        const auto& startPos = std::get<0>(platform);
+        int count = std::get<1>(platform);
+        float spacing = std::get<2>(platform);
+        const auto& size = std::get<3>(platform);
+        glm::vec3 color = std::get<4>(platform);
+        float visibleTime = std::get<5>(platform);
+        float invisibleTime = std::get<6>(platform);
+        float blinkTime = std::get<7>(platform);
+        float delay = std::get<8>(platform);
+        const auto& direction = std::get<9>(platform);
+        bool reverseTimer = std::get<10>(platform);
+        
+        glm::vec3 startPosition = glm::vec3(std::get<0>(startPos), std::get<1>(startPos), std::get<2>(startPos));
+        glm::vec3 sizeVec = glm::vec3(std::get<0>(size), std::get<1>(size), std::get<2>(size));
+        glm::vec3 directionVec = glm::vec3(std::get<0>(direction), std::get<1>(direction), std::get<2>(direction));
+        
+        for (int i = 0; i < count; i++) {
+            glm::vec3 position = startPosition + directionVec * (i * spacing);
+            float initialTimer;
+            if (reverseTimer) {
+                initialTimer = (count - 1 - i) * delay;  // 逆順のタイマー
+            } else {
+                initialTimer = i * delay;  // 通常のタイマー
+            }
+            platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
+                position, sizeVec, color,
+                visibleTime + invisibleTime, visibleTime, blinkTime, initialTimer
+            ));
+        }
+        printf("Created %d consecutive cycling platforms from (%.1f, %.1f, %.1f) in direction (%.1f, %.1f, %.1f) with %.1f spacing (reverse timer: %s)\n",
+               count, startPosition.x, startPosition.y, startPosition.z, directionVec.x, directionVec.y, directionVec.z, spacing, reverseTimer ? "true" : "false");
+    }
+}
+
+// JSON用のプラットフォーム生成関数
+void createStaticPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<StaticPlatformConfig>& configs) {
+    for (const auto& config : configs) {
+        platformSystem.addPlatform(GameState::StaticPlatform(
+            config.position, config.size, config.color
+        ));
+        printf("Created %s at position (%.1f, %.1f, %.1f)\n", 
+               config.description.c_str(), 
+               config.position.x, config.position.y, config.position.z);
+    }
+}
+
+void createPatrolPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<PatrolPlatformConfig>& configs) {
+    for (const auto& config : configs) {
+        if (config.points.size() >= 2) {
+            platformSystem.addPlatform(GameState::PatrollingPlatform(
+                config.points[0], glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.4f, 0.2f),
+                config.points, 2.0f
+            ));
+            printf("Created %s with %zu patrol points\n", 
+                   config.description.c_str(), config.points.size());
+        }
+    }
+}
+
 } // namespace StageUtils

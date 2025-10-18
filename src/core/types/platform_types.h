@@ -3,9 +3,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-// グローバル名前空間で定義
-
-// 基底Platform構造体（共通プロパティのみ）
+// 基底Platform構造体
 struct BasePlatform {
     glm::vec3 position;
     glm::vec3 size;
@@ -16,7 +14,7 @@ struct BasePlatform {
         : position(pos), size(siz), color(col) {}
 };
 
-// 静的足場（基本プロパティのみ）
+// 静的足場
 struct StaticPlatform : public BasePlatform {
     StaticPlatform(const glm::vec3& pos, const glm::vec3& siz, const glm::vec3& col)
         : BasePlatform(pos, siz, col) {}
@@ -129,9 +127,8 @@ struct FlyingPlatform : public BasePlatform {
     }
 };
 
-// バリアント型で全ての足場タイプを管理
+// 全ての足場タイプを管理
 #include <variant>
-
 using PlatformVariant = std::variant<
     StaticPlatform,
     MovingPlatform,

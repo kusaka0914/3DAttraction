@@ -1,0 +1,268 @@
+{
+  "stageInfo": {
+    "stageNumber": 4,
+    "stageName": "複雑な移動プラットフォーム",
+    "playerStartPosition": [0, 6.0, -25.0],
+    "goalPosition": [0, 18.0, 35.0],
+    "timeLimit": 90.0,
+    "isUnlocked": true
+  },
+  "items": [
+    {
+      "position": [-9, 5, -12],
+      "color": [1.0, 0.0, 0.0],
+      "description": "アイテム1: スタート足場の右側"
+    },
+    {
+      "position": [3, 12, -12],
+      "color": [0.0, 1.0, 0.0],
+      "description": "アイテム2: スタート足場の左側"
+    },
+    {
+      "position": [-3, 12, 3],
+      "color": [0.0, 0.0, 1.0],
+      "description": "アイテム3: スタート足場の後ろ側"
+    }
+  ],
+  "staticPlatforms": [
+    {
+      "position": [0, 5, -25],
+      "size": [4, 1, 4],
+      "color": [0.0, 1.0, 0.0],
+      "description": "スタート足場"
+    },
+    {
+      "position": [-9, 12, 15],
+      "size": [4, 1, 4],
+      "color": [1.0, 1.0, 0.0],
+      "description": "ゴール足場"
+    }
+  ],
+  "flyingPlatforms": [
+    {
+      "position": [0, 5, -21],
+      "size": [3, 1, 3],
+      "spawnPosition": [0, 4, -21],
+      "targetPosition": [0, 5, -21],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [0, 5, -18],
+      "size": [3, 1, 3],
+      "spawnPosition": [0, 4, -18],
+      "targetPosition": [0, 5, -18],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [3, 5, -18],
+      "size": [3, 1, 3],
+      "spawnPosition": [3, 4, -18],
+      "targetPosition": [3, 5, -18],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [3, 5, -15],
+      "size": [3, 1, 3],
+      "spawnPosition": [3, 4, -15],
+      "targetPosition": [3, 5, -15],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [3, 5, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [3, 4, -12],
+      "targetPosition": [3, 5, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [0, 5, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [0, 4, -12],
+      "targetPosition": [0, 5, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-3, 5, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [-3, 4, -12],
+      "targetPosition": [-3, 5, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-3, 5, -9],
+      "size": [3, 1, 3],
+      "spawnPosition": [-3, 4, -9],
+      "targetPosition": [-3, 5, -9],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-3, 6, -6],
+      "size": [3, 1, 3],
+      "spawnPosition": [-3, 5, -6],
+      "targetPosition": [-3, 6, -6],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-6, 7, -6],
+      "size": [3, 1, 3],
+      "spawnPosition": [-6, 6, -6],
+      "targetPosition": [-6, 7, -6],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-9, 8, -6],
+      "size": [3, 1, 3],
+      "spawnPosition": [-9, 7, -6],
+      "targetPosition": [-9, 8, -6],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-9, 9, -9],
+      "size": [3, 1, 3],
+      "spawnPosition": [-9, 8, -9],
+      "targetPosition": [-9, 9, -9],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-9, 10, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [-9, 9, -12],
+      "targetPosition": [-9, 10, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-6, 11, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [-6, 10, -12],
+      "targetPosition": [-6, 11, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-3, 12, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [-3, 11, -12],
+      "targetPosition": [-3, 12, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-12, 11, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [-12, 10, -12],
+      "targetPosition": [-12, 11, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-15, 12, -12],
+      "size": [3, 1, 3],
+      "spawnPosition": [-15, 11, -12],
+      "targetPosition": [-15, 12, -12],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-15, 12, -9],
+      "size": [3, 1, 3],
+      "spawnPosition": [-15, 11, -9],
+      "targetPosition": [-15, 12, -9],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-15, 12, -6],
+      "size": [3, 1, 3],
+      "spawnPosition": [-15, 11, -6],
+      "targetPosition": [-15, 12, -6],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-12, 12, -3],
+      "size": [3, 1, 3],
+      "spawnPosition": [-12, 11, -3],
+      "targetPosition": [-12, 12, -3],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-15, 12, 0],
+      "size": [3, 1, 3],
+      "spawnPosition": [-15, 11, 0],
+      "targetPosition": [-15, 12, 0],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-12, 12, 3],
+      "size": [3, 1, 3],
+      "spawnPosition": [-12, 11, 3],
+      "targetPosition": [-12, 12, 3],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-9, 12, 3],
+      "size": [3, 1, 3],
+      "spawnPosition": [-9, 11, 3],
+      "targetPosition": [-9, 12, 3],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-15, 12, 6],
+      "size": [3, 1, 3],
+      "spawnPosition": [-15, 11, 6],
+      "targetPosition": [-15, 12, 6],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    },
+    {
+      "position": [-15, 12, 9],
+      "size": [3, 1, 3],
+      "spawnPosition": [-15, 11, 9],
+      "targetPosition": [-15, 12, 9],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "右から飛んでくる足場"
+    }
+  ]
+}

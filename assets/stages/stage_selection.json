@@ -1,0 +1,266 @@
+{
+  "stageInfo": {
+    "stageNumber": 0,
+    "stageName": "ステージ選択フィールド",
+    "playerStartPosition": [8, 0, 0],
+    "goalPosition": [0, 5, -25],
+    "timeLimit": 999.0,
+    "isUnlocked": true
+  },
+  "staticPlatforms": [
+    {
+      "position": [8, 0, 4],
+      "size": [10, 1, 10],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Main Field Right"
+    },
+    {
+      "position": [23, 3, 23],
+      "size": [6, 1, 6],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Main Field Left"
+    },
+    {
+      "position": [-7, 0, 19],
+      "size": [3, 1, 3],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Main Field Left"
+    },
+    {
+      "position": [-3, 3, 32],
+      "size": [6, 1, 6],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Main Field Left"
+    },
+    {
+      "position": [8, 0, 23],
+      "size": [6, 1, 6],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Main Field Left"
+    },
+    {
+      "position": [8, -1, 48],
+      "size": [6, 1, 6],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Main Field Left"
+    }
+  ],
+  "stageSelectionAreas": [
+    {
+      "stageNumber": 1,
+      "position": [8, 1, 4],
+      "size": [1, 1, 1],
+      "description": "ステージ1選択エリア"
+    },
+    {
+      "stageNumber": 2,
+      "position": [23, 4, 23],
+      "size": [1, 1, 1],
+      "description": "ステージ2選択エリア"
+    },
+    {
+      "stageNumber": 3,
+      "position": [-3, 4, 32],
+      "size": [1, 1, 1],
+      "description": "ステージ3選択エリア"
+    },
+    {
+      "stageNumber": 4,
+      "position": [8, 1, 23],
+      "size": [1, 1, 1],
+      "description": "ステージ4選択エリア"
+    },
+    {
+      "stageNumber": 5,
+      "position": [8, 0, 48],
+      "size": [1, 1, 1],
+      "description": "ステージ5選択エリア"
+    }
+  ],
+  "patrolPlatforms": [
+    {
+      "patrolPoints": [
+        [15, 0, 10],
+        [18, 0, 10],
+        [18, 0, 10],
+        [18, 0, 10],
+        [15, 0, 10]
+      ],
+      "description": "巡回足場1つ目"
+    },
+    {
+      "patrolPoints": [
+        [22, 0, 14],
+        [22, 0, 10],
+        [22, 0, 10],
+        [22, 0, 10],
+        [22, 0, 14]
+      ],
+      "description": "巡回足場2つ目"
+    },
+    {
+      "patrolPoints": [
+        [22, 0, 18],
+        [22, 4, 18],
+        [22, 4, 18],
+        [22, 4, 18],
+        [22, 0, 18]
+      ],
+      "description": "巡回足場3つ目"
+    }
+  ],
+  "conditionalPatrolPlatforms": [
+    {
+      "condition": "stage2Cleared",
+      "platforms": [
+        {
+          "patrolPoints": [
+            [18, 4, 22],
+            [14, 4, 22],
+            [14, 4, 22],
+            [14, 4, 22],
+            [18, 4, 22]
+          ],
+          "description": "巡回足場4つ目（条件付き）"
+        },
+        {
+          "patrolPoints": [
+            [8, 0, 28],
+            [8, 0, 32],
+            [8, 0, 32],
+            [8, 0, 32],
+            [8, 0, 28]
+          ],
+          "description": "巡回足場5つ目（条件付き）"
+        }
+      ]
+    }
+  ],
+  "cyclingDisappearingPlatforms": [
+  {
+    "position": [1, 0, 11],
+    "size": [3, 1, 3],
+    "color": [1.0, 0.5, 0.0],
+    "visibleTime": 8.0,
+    "invisibleTime": 6.0,
+    "initialTimer": 1.0,
+    "description": "サイクル消える足場1"
+  },
+  {
+    "position": [-3, 0, 15],
+    "size": [3, 1, 3],
+    "color": [1.0, 0.5, 0.0],
+    "visibleTime": 8.0,
+    "invisibleTime": 6.0,
+    "initialTimer": 1.0,
+    "description": "サイクル消える足場1"
+  },
+  {
+    "position": [-7, 1, 23],
+    "size": [3, 1, 3],
+    "color": [1.0, 0.5, 0.0],
+    "visibleTime": 8.0,
+    "invisibleTime": 6.0,
+    "initialTimer": 1.0,
+    "description": "サイクル消える足場1"
+  },
+  {
+    "position": [-3, 2, 23],
+    "size": [3, 1, 3],
+    "color": [1.0, 0.5, 0.0],
+    "visibleTime": 8.0,
+    "invisibleTime": 6.0,
+    "initialTimer": 1.0,
+    "description": "サイクル消える足場1"
+  },
+  {
+    "position": [-3, 3, 27],
+    "size": [3, 1, 3],
+    "color": [1.0, 0.5, 0.0],
+    "visibleTime": 8.0,
+    "invisibleTime": 6.0,
+    "initialTimer": 1.0,
+    "description": "サイクル消える足場1"
+  }
+],
+  "conditionalCyclingDisappearingPlatforms": [
+    {
+      "condition": "stage3Cleared",
+      "platforms": [
+        {
+          "position": [1, 3, 23],
+          "size": [3, 1, 3],
+          "color": [1.0, 0.5, 0.0],
+          "visibleTime": 8.0,
+          "invisibleTime": 6.0,
+          "initialTimer": 1.0,
+          "description": "サイクル消える足場1"
+        },
+        {
+          "position": [8, 0, 36],
+          "size": [3, 1, 3],
+          "color": [1.0, 0.5, 0.0],
+          "visibleTime": 8.0,
+          "invisibleTime": 6.0,
+          "initialTimer": 1.0,
+          "description": "サイクル消える足場1"
+        }
+      ]
+    }
+  ],
+  "conditionalFlyingPlatforms": [
+    {
+      "condition": "stage4Cleared",
+      "platforms": [
+        {
+          "position": [8, 0, 39],
+          "size": [3, 1, 3],
+          "spawnPosition": [8, -1, 39],
+          "targetPosition": [8, 0, 39],
+          "speed": 20.0,
+          "range": 2.5,
+          "description": "飛んでくる足場（条件付き）"
+        }
+      ]
+    }
+  ],
+  "flyingPlatforms": [
+    {
+      "position": [8, 0, 10],
+      "size": [3, 1, 3],
+      "spawnPosition": [8, -1, 10],
+      "targetPosition": [8, 0, 10],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "飛んでくる足場最前"
+    },
+    {
+      "position": [8, 0, 13],
+      "size": [3, 1, 3],
+      "spawnPosition": [8, -1, 13],
+      "targetPosition": [8, 0, 13],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "飛んでくる足場2番目"
+    },
+    {
+      "position": [8, 0, 16],
+      "size": [3, 1, 3],
+      "spawnPosition": [8, -1, 16],
+      "targetPosition": [8, 0, 16],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "飛んでくる足場3番目"
+    },
+    {
+      "position": [8, 0, 19],
+      "size": [3, 1, 3],
+      "spawnPosition": [8, -1, 19],
+      "targetPosition": [8, 0, 19],
+      "speed": 20.0,
+      "range": 2.5,
+      "description": "飛んでくる足場最後"
+    }
+  ]
+}
+

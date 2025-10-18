@@ -11,6 +11,7 @@
 #include "../game/platform_system.h"
 #include "../physics/physics_system.h"
 #include "../io/input_system.h"
+#include "../io/audio_manager.h"
 #include "../core/constants/game_constants.h"
 #include "../core/error_handler.h"
 #include "../gfx/camera_system.h"
@@ -24,19 +25,19 @@
 // ======================================================
 int main(int argc, char* argv[]) {
     
-    // GLFW初期化
+    // GLFW初期化を行う
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
     
-    // OpenGL 2.1設定
+    // OpenGL 2.1に設定する
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     
-    // ウィンドウ作成
+    // ウィンドウの作成
     GLFWwindow* window = glfwCreateWindow(GameConstants::WINDOW_WIDTH, GameConstants::WINDOW_HEIGHT, 
                                          GameConstants::WINDOW_TITLE, nullptr, nullptr);
     if (!window) {
@@ -44,6 +45,9 @@ int main(int argc, char* argv[]) {
         glfwTerminate();
         return -1;
     }
+    
+    // 文字入力を無効化（ゲーム中にテキストが表示されないようにする）
+    glfwSetCharCallback(window, nullptr);
     
     // OpenGLレンダラー初期化
     auto renderer = std::make_unique<gfx::OpenGLRenderer>();
@@ -54,17 +58,17 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
-    // UI描画クラスのインスタンス
+    // UI描画クラス系のインスタンス作成
     auto uiRenderer = std::make_unique<gfx::UIRenderer>();
     auto gameStateUIRenderer = std::make_unique<gfx::GameStateUIRenderer>();
     
-    // ゲーム状態
+    // ゲーム状態の管理
     GameState gameState;
     
     // ゲーム状態の初期化
     initializeGameState(gameState);
     
-    // コマンドライン引数で初期ステージを指定
+    // コマンドライン引数で初期ステージを指定することができる
     int initialStage = 6;  // デフォルトはチュートリアルステージ
     bool debugEnding = false;  // デバッグ用エンドロール表示フラグ
     
@@ -72,6 +76,7 @@ int main(int argc, char* argv[]) {
         // エンドロール表示フラグのチェック
         if (strcmp(argv[1], "-e") == 0 || strcmp(argv[1], "--ending") == 0) {
             debugEnding = true;
+            //コマンドに関するヘルプ
         } else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Usage: %s [stage_number] [options]\n", argv[0]);
             printf("  stage_number: 0-5 (default: 6 for tutorial)\n");
@@ -94,7 +99,7 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        // 2番目の引数でエンドロール表示フラグをチェック
+        // 2番目の引数でもエンドロール表示フラグをチェック
         if (argc > 2) {
             if (strcmp(argv[2], "-e") == 0 || strcmp(argv[2], "--ending") == 0) {
                 debugEnding = true;
@@ -102,10 +107,9 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    
     glfwSetWindowUserPointer(window, &gameState);
     
-    // マウスコールバックを設定（1人称視点用）
+    // マウスコールバックとスクロールコールバックを設定（1人称視点用）
     glfwSetCursorPosCallback(window, InputSystem::mouse_callback);
     glfwSetScrollCallback(window, InputSystem::scroll_callback);
     
@@ -113,7 +117,14 @@ int main(int argc, char* argv[]) {
     PlatformSystem platformSystem;
     StageManager stageManager;
     
-    // デバッグ用エンドロール表示フラグが設定されている場合
+    // 音声システム初期化
+    io::AudioManager audioManager;
+    if (!audioManager.initialize()) {
+        std::cerr << "Failed to initialize audio system" << std::endl;
+        // 音声システムの初期化に失敗してもゲームは続行
+    }
+    
+    // デバッグ用エンドロール表示フラグがtrueの時は開始時にエンドロールが流れる
     if (debugEnding) {
         gameState.isEndingSequence = true;
         gameState.showStaffRoll = true;
@@ -133,20 +144,18 @@ int main(int argc, char* argv[]) {
         keyStates[key] = InputUtils::KeyState();
     }
 
-    // ゲーム開始準備完了
-    bool gameRunning = true;
-    
+    //開始時間を現在に設定
     auto startTime = std::chrono::high_resolution_clock::now();
     
-    // ステージ開始時間を管理する関数
-    auto resetStageStartTime = [&startTime]() {
+    // ステージ開始時間を管理するラムダ関数
+    auto resetStageStartTime = [&startTime, &gameState]() {
         startTime = std::chrono::high_resolution_clock::now();
-        DEBUG_PRINTF("DEBUG: resetStageStartTime called, startTime reset to current time\n");
-        DEBUG_PRINTF("DEBUG: Next gameTime calculation should start from 0.00\n");
+        gameState.timeLimitApplied = false; // カウントダウン時の時間設定フラグをリセット
+        DEBUG_PRINTF("DEBUG: timeLimitApplied reset to false\n");
     };
     
-    // ゲームループ実行
-    GameLoop::run(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, resetStageStartTime, startTime);
+    // ゲームループ開始
+    GameLoop::run(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, resetStageStartTime, startTime, audioManager);
     
     // クリーンアップ
     renderer->cleanup();

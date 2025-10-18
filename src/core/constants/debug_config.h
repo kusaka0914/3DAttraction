@@ -4,7 +4,7 @@
 // デバッグ出力の制御フラグ
 // 0 = デバッグ無効（リリース用）
 // 1 = デバッグ有効（開発用）
-#define ENABLE_DEBUG_OUTPUT 0
+#define ENABLE_DEBUG_OUTPUT 1
 
 // デバッグ出力マクロ
 #if ENABLE_DEBUG_OUTPUT

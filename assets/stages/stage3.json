@@ -1,0 +1,135 @@
+{
+  "stageInfo": {
+    "stageNumber": 3,
+    "stageName": "スイッチと大砲",
+    "playerStartPosition": [0, 6.0, -25.0],
+    "goalPosition": [0, 18.0, 35.0],
+    "timeLimit": 70.0,
+    "isUnlocked": true
+  },
+  "items": [
+    {
+      "position": [-8, 5, -8],
+      "color": [1.0, 0.0, 0.0],
+      "description": "アイテム1: スタート足場の右側"
+    },
+    {
+      "position": [13, 11, 8],
+      "color": [0.0, 1.0, 0.0],
+      "description": "アイテム2: スタート足場の左側"
+    },
+    {
+      "position": [18, 11, 32],
+      "color": [0.0, 0.0, 1.0],
+      "description": "アイテム3: スタート足場の後ろ側"
+    }
+  ],
+  "staticPlatforms": [
+    {
+      "position": [0, 5, -25],
+      "size": [4, 1, 4],
+      "color": [0.0, 1.0, 0.0],
+      "description": "スタート足場"
+    },
+    {
+      "position": [5, 5, 4],
+      "size": [4, 1, 4],
+      "color": [0.0, 1.0, 0.0],
+      "description": "スタート足場"
+    },
+    {
+      "position": [0, 11, 15],
+      "size": [4, 1, 4],
+      "color": [0.0, 1.0, 0.0],
+      "description": "スタート足場"
+    },
+    {
+      "position": [2, 11, 53],
+      "size": [4, 1, 4],
+      "color": [1.0, 1.0, 0.0],
+      "description": "ゴール足場"
+    }
+  ],
+  "cyclingDisappearingPlatforms": [
+    {
+      "position": [7, 7, 8],
+      "size": [3, 1, 3],
+      "color": [1.0, 0.5, 0.0],
+      "visibleTime": 6.0,
+      "invisibleTime": 4.0,
+      "initialTimer": 1.0,
+      "description": "サイクル消える足場1"
+    },
+    {
+      "position": [3, 9, 8],
+      "size": [3, 1, 3],
+      "color": [0.5, 0.0, 1.0],
+      "visibleTime": 6.0,
+      "invisibleTime": 4.0,
+      "initialTimer": 1.0,
+      "description": "サイクル消える足場2"
+    },
+    {
+      "position": [7, 11, 8],
+      "size": [3, 1, 3],
+      "color": [0.5, 0.0, 1.0],
+      "visibleTime": 6.0,
+      "invisibleTime": 4.0,
+      "initialTimer": 1.0,
+      "description": "サイクル消える足場2"
+    },
+    {
+      "position": [7, 11, 15],
+      "size": [3, 1, 3],
+      "color": [0.5, 0.0, 1.0],
+      "visibleTime": 6.0,
+      "invisibleTime": 4.0,
+      "initialTimer": 1.0,
+      "description": "サイクル消える足場2"
+    }
+  ],
+  "consecutiveCyclingPlatforms": [
+    {
+      "startPosition": [0, 5, -20],
+      "count": 5,
+      "spacing": 6.0,
+      "size": [3, 1, 3],
+      "color": [0.0, 1.0, 1.0],
+      "visibleTime": 12.0,
+      "invisibleTime": 6.0,
+      "blinkTime": 0.5,
+      "delay": 1.0,
+      "direction": [0, 0, 1],
+      "reverseTimer": true,
+      "description": "連続サイクル足場1"
+    },
+    {
+      "startPosition": [0, 11, 20],
+      "count": 3,
+      "spacing": 6.0,
+      "size": [3, 1, 3],
+      "color": [0.0, 1.0, 1.0],
+      "visibleTime": 12.0,
+      "invisibleTime": 6.0,
+      "blinkTime": 0.5,
+      "delay": 1.0,
+      "direction": [1, 0, 1],
+      "reverseTimer": true,
+      "description": "連続サイクル足場2"
+    },
+    {
+      "startPosition": [8, 11, 40],
+      "count": 2,
+      "spacing": 6.0,
+      "size": [3, 1, 3],
+      "color": [0.0, 1.0, 1.0],
+      "visibleTime": 12.0,
+      "invisibleTime": 6.0,
+      "blinkTime": 0.5,
+      "delay": 1.0,
+      "direction": [-1, 0, 1],
+      "reverseTimer": true,
+      "description": "連続サイクル足場3"
+    }
+  ]
+}

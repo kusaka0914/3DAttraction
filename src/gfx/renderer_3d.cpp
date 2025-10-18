@@ -1,5 +1,7 @@
+#include <GL/glew.h>
 #include "renderer_3d.h"
 #include "../core/constants/game_constants.h"
+#include "texture_manager.h"
 #include <iostream>
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
@@ -181,6 +183,39 @@ void Renderer3D::renderRealisticBox(const glm::vec3& position, const glm::vec3& 
     glDisable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glDisable(GL_COLOR_MATERIAL);
+}
+
+void Renderer3D::renderTexturedBox(const glm::vec3& position, const glm::vec3& size, GLuint textureID) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::scale(model, size);
+    drawTexturedCube(model, textureID, 1.0f);
+}
+
+void Renderer3D::renderTexturedBoxWithAlpha(const glm::vec3& position, const glm::vec3& size, GLuint textureID, float alpha) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::scale(model, size);
+    
+    drawTexturedCube(model, textureID, alpha);
+}
+
+void Renderer3D::renderTexturedBox(const glm::vec3& position, const glm::vec3& size, GLuint frontTextureID, GLuint otherTextureID) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::scale(model, size);
+    
+    drawTexturedCubeWithFrontFace(model, frontTextureID, otherTextureID);
+}
+
+void Renderer3D::renderTexturedRotatedBox(const glm::vec3& position, const glm::vec3& size, GLuint textureID, 
+                                         const glm::vec3& rotationAxis, float rotationAngle) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::rotate(model, glm::radians(rotationAngle), rotationAxis);
+    model = glm::scale(model, size);
+    
+    drawTexturedCube(model, textureID);
 }
 
 void Renderer3D::drawCube(const glm::mat4& model, const glm::vec3& color) {
@@ -422,6 +457,145 @@ void Renderer3D::renderXMark3D(const glm::vec3& position, const glm::vec3& color
     glVertex3f(centerX - halfSize, centerY - halfSize, centerZ);
     glVertex3f(centerX - halfSize + GameConstants::X_MARK_THICKNESS * scale, centerY - halfSize, centerZ);
     glEnd();
+}
+
+void Renderer3D::drawTexturedCube(const glm::mat4& model, GLuint textureID, float alpha) {
+    glPushMatrix();
+    glMultMatrixf(glm::value_ptr(model));
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(textureID);
+    
+    // アルファブレンディングを有効化（透過処理用）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // アルファテストを有効化（完全に透明な部分を描画しない）
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+    
+    // テクスチャの色を白に設定（テクスチャの色をそのまま使用）
+    glColor4f(1.0f, 1.0f, 1.0f, alpha);
+    
+    // テクスチャ座標と頂点を設定してキューブの各面を描画
+    glBegin(GL_QUADS);
+    
+    // 前面（統一された向き）
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 背面（統一された向き）
+    glTexCoord2f(0.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 上面（統一された向き）
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 下面（統一された向き）
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 右面（統一された向き）
+    glTexCoord2f(0.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 左面（統一された向き）
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    glEnd();
+    
+    // OpenGLの状態をリセット
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    
+    glPopMatrix();
+}
+
+void Renderer3D::drawTexturedCubeWithFrontFace(const glm::mat4& model, GLuint frontTextureID, GLuint otherTextureID) {
+    glPushMatrix();
+    glMultMatrixf(glm::value_ptr(model));
+    
+    // アルファブレンディングを有効化（透過処理用）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // アルファテストを有効化（完全に透明な部分を描画しない）
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+    
+    // テクスチャの色を白に設定（テクスチャの色をそのまま使用）
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    
+    // 背面（特別なテクスチャ）
+    TextureManager::bindTexture(frontTextureID);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glEnd();
+    
+    // 他の面（通常のテクスチャ）
+    TextureManager::bindTexture(otherTextureID);
+    glBegin(GL_QUADS);
+
+    // 前面
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 上面
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 下面
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 右面
+    glTexCoord2f(0.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f( GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    // 左面
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE, -GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE,  GameConstants::RenderConstants::CUBE_HALF_SIZE);
+    
+    glEnd();
+    
+    // OpenGLの状態をリセット
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    
+    glPopMatrix();
 }
 
 } // namespace gfx

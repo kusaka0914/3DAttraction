@@ -26,6 +26,9 @@ bool OpenGLRenderer::initialize(GLFWwindow* window) {
     // 深度テスト有効化
     glEnable(GL_DEPTH_TEST);
     
+    // テクスチャ機能を有効化
+    glEnable(GL_TEXTURE_2D);
+    
     // ビットマップフォント初期化
     font.initialize();
     
@@ -33,7 +36,8 @@ bool OpenGLRenderer::initialize(GLFWwindow* window) {
 }
 
 void OpenGLRenderer::cleanup() {
-    
+    // テクスチャをクリーンアップ
+    TextureManager::cleanup();
 }
 
 void OpenGLRenderer::beginFrame() {

@@ -24,10 +24,16 @@ struct StaticConfig {
     std::string description;
 };
 
+// JSON用の構造体（StaticConfigの別名）
+using StaticPlatformConfig = StaticConfig;
+
 struct PatrolConfig {
     std::vector<glm::vec3> points;
     std::string description;
 };
+
+// JSON用の構造体（PatrolConfigの別名）
+using PatrolPlatformConfig = PatrolConfig;
 
 struct MovingConfig {
     glm::vec3 startPosition;
@@ -64,6 +70,10 @@ void createItems(GameState& gameState, PlatformSystem& platformSystem,
 void createStaticPlatforms(GameState& gameState, PlatformSystem& platformSystem,
                           std::initializer_list<std::tuple<std::tuple<float, float, float>, std::tuple<float, float, float>, glm::vec3, std::string>> platforms);
 
+// JSON用のプラットフォーム生成関数
+void createStaticPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<StaticPlatformConfig>& configs);
+void createPatrolPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<PatrolPlatformConfig>& configs);
+
 void createPatrolPlatforms(PlatformSystem& platformSystem, const std::vector<PatrolConfig>& patrolConfigs);
 void createPatrolPlatforms(GameState& gameState, PlatformSystem& platformSystem,
                           const std::vector<std::vector<glm::vec3>>& paths,
@@ -82,5 +92,8 @@ void createCyclingDisappearingPlatforms(GameState& gameState, PlatformSystem& pl
 
 void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
                                       std::initializer_list<std::tuple<std::tuple<float, float, float>, int, float, std::tuple<float, float, float>, glm::vec3, float, float, float, float, std::tuple<float, float, float>, bool>> platforms);
+
+void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
+                                      const std::vector<std::tuple<std::tuple<float, float, float>, int, float, std::tuple<float, float, float>, glm::vec3, float, float, float, float, std::tuple<float, float, float>, bool>>& platforms);
 
 } // namespace StageUtils

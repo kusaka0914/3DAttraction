@@ -1,0 +1,83 @@
+{
+  "stageInfo": {
+    "stageNumber": 2,
+    "stageName": "重力反転エリア",
+    "playerStartPosition": [0, 6.0, -25.0],
+    "goalPosition": [0, 20.0, 30.0],
+    "timeLimit": 40.0,
+    "isUnlocked": true
+  },
+  "items": [
+    {
+      "position": [10, 5, -12],
+      "color": [1.0, 0.0, 0.0],
+      "description": "アイテム1: スタート足場の右側"
+    },
+    {
+      "position": [-8, 3, -5],
+      "color": [0.0, 1.0, 0.0],
+      "description": "アイテム2: スタート足場の左側"
+    },
+    {
+      "position": [0, 12, 15],
+      "color": [0.0, 0.0, 1.0],
+      "description": "アイテム3: スタート足場の後ろ側"
+    }
+  ],
+  "staticPlatforms": [
+    {
+      "position": [0, 5, -25],
+      "size": [4, 1, 4],
+      "color": [0.0, 1.0, 0.0],
+      "description": "スタート足場"
+    },
+    {
+      "position": [8, 10, 15],
+      "size": [4, 1, 4],
+      "color": [1.0, 1.0, 0.0],
+      "description": "ゴール足場"
+    }
+  ],
+  "patrolPlatforms": [
+    {
+      "patrolPoints": [
+        [0, 5, -20],
+        [4, 5, -15],
+        [0, 5, -10],
+        [-4, 5, -15],
+        [0, 5, -20]
+      ],
+      "description": "巡回足場1: 水平移動"
+    },
+    {
+      "patrolPoints": [
+        [0, 5, -5],
+        [4, 5, -5],
+        [0, 5, -5],
+        [-4, 5, -5],
+        [0, 5, -5]
+      ],
+      "description": "巡回足場2: 水平移動"
+    },
+    {
+      "patrolPoints": [
+        [0, 5, 0],
+        [0, 5, 0],
+        [0, 10, 0],
+        [0, 10, 0],
+        [0, 5, 0]
+      ],
+      "description": "巡回足場3: 垂直移動"
+    },
+    {
+      "patrolPoints": [
+        [0, 10, 5],
+        [4, 10, 10],
+        [0, 10, 5],
+        [-4, 10, 10],
+        [0, 10, 5]
+      ],
+      "description": "巡回足場4: 複合移動"
+    }
+  ]
+}

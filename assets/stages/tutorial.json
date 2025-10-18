@@ -1,0 +1,41 @@
+{
+  "stageInfo": {
+    "stageNumber": 6,
+    "stageName": "チュートリアル",
+    "playerStartPosition": [-1, 1.5, -1],
+    "goalPosition": [2, 1.5, 16],
+    "timeLimit": 999.0,
+    "isUnlocked": true
+  },
+  "items": [
+    {
+      "position": [2, 0, 9.5],
+      "color": [1.0, 0.0, 0.0],
+      "description": "Tutorial Item1"
+    },
+    {
+      "position": [8.5, 0, 3],
+      "color": [0.0, 1.0, 0.0],
+      "description": "Tutorial Item2"
+    },
+    {
+      "position": [-4.5, 0, 3],
+      "color": [0.0, 0.0, 1.0],
+      "description": "Tutorial Item3"
+    }
+  ],
+  "staticPlatforms": [
+    {
+      "position": [2, 0, 3],
+      "size": [10, 1, 10],
+      "color": [0.3, 0.3, 0.3],
+      "description": "Tutorial Platform"
+    },
+    {
+      "position": [2, 0, 16],
+      "size": [4, 1, 4],
+      "color": [1.0, 1.0, 0.0],
+      "description": "Tutorial Platform"
+    }
+  ]
+}

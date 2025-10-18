@@ -4,84 +4,26 @@
 #include <map>
 #include <glm/glm.hpp>
 
-// =========================
-//  カービィの能力タイプ
-// =========================
-enum class KirbyAbility {
-    None,
-    Fire,
-    Ice,
-    Electric,
-    Sword,
-    Hammer
-};
-
-// =========================
-//  敵の種類
-// =========================
-enum class EnemyType {
-    WaddleDee,
-    WaddleDoo,
-    BrontoBurt,
-    Scarfy
-};
-
-// =========================
-//  敵の構造体
-// =========================
-struct Enemy {
-    glm::vec3 position;
-    glm::vec3 velocity;
-    EnemyType type;
-    KirbyAbility ability;
-    bool isAlive;
-    float health;
-    float size;
-    
-    // 視野システム
-    float viewRange;        // 視野範囲
-    float viewAngle;        // 視野角度（度）
-    glm::vec3 viewDirection; // 現在向いている方向
-    bool isChasing;         // プレイヤーを追いかけているか
-    glm::vec3 initialPosition; // 初期位置（パトロール用）
-    float patrolTimer;      // パトロールタイマー
-};
-
-// =========================
-//  ゲーム状態
-// =========================
 struct GameState {
-    // カービィ（プレイヤー）
-    glm::vec3 playerPosition = glm::vec3(0, 30.0f, 0); // 空中に配置
+    // プレイヤー
+    glm::vec3 playerPosition = glm::vec3(0, 30.0f, 0);
     glm::vec3 playerVelocity = glm::vec3(0, 0, 0);
-    glm::vec3 playerColor = glm::vec3(1, 0.8f, 0.9f); // ピンク色
-    bool isFloating = false;
-    bool isInflated = false;
-    bool isSucking = false;
-    KirbyAbility currentAbility = KirbyAbility::None;
-    float abilityTimer = 0.0f;
-    float floatTimer = 0.0f;
-    float suckTimer = 0.0f;
-    int floatCount = 0; // 浮遊回数カウンター
-    int currentPlatformIndex = -1; // 現在乗っている足場のインデックス
-    
-    // レンダリング準備状態
-    bool renderingReady = true;  // 即座に準備完了
-    float initializationTimer = 0.0f;
-    float initializationDelay = 0.0f;  // 遅延なし
+    glm::vec3 playerColor = glm::vec3(1, 0.8f, 0.9f);
+    bool isMovingBackward = false;
+    bool isShowingFrontTexture = false;  // Sキーを押した後、他の移動キーを押すまでtrue
 
-    // 敵
-    std::vector<Enemy> enemies;
+    // 現在の足場
+    int currentPlatformIndex = -1;
     
-    // ステージ要素
-    glm::vec3 goalPosition = glm::vec3(0, 2.0f, 20); // 空中に配置
+    // ゴール
+    glm::vec3 goalPosition = glm::vec3(0, 2.0f, 20);
     glm::vec3 goalColor = glm::vec3(1, 1, 0);
     bool gameWon = false;
     
-    // 分離された足場データ（platform_types.hで定義）
+    // 分離された足場データ
     #include "../core/types/platform_types.h"
     
-    // 後方互換性のための古いPlatform構造体（段階的に移行予定）
+    // 足場
     struct Platform {
         glm::vec3 position;
         glm::vec3 size;
@@ -110,80 +52,78 @@ struct GameState {
         
         // 周期的な消失機能
         bool isCycleDisappearing;
-        float cycleTime;           // 1サイクルの時間
-        float visibleTime;         // 見える時間
-        float cycleTimer;          // サイクルタイマー
-        bool isCurrentlyVisible;   // 現在見えているか
-        glm::vec3 originalSize;    // 元のサイズ（復元用）
-        float blinkTime;           // 点滅時間
-        float blinkTimer;          // 点滅タイマー
-        bool isBlinking;           // 点滅中かどうか
-        float blinkAlpha;          // 点滅の透明度（1.0=完全に見える、0.0=透明）
+        float cycleTime;          
+        float visibleTime;        
+        float cycleTimer;         
+        bool isCurrentlyVisible;  
+        glm::vec3 originalSize;    
+        float blinkTime;           
+        float blinkTimer;          
+        bool isBlinking;          
+        float blinkAlpha;         
         
         // プレイヤー接近で飛んでくる足場
-        bool isFlyingPlatform;     // 飛んでくる足場かどうか
-        glm::vec3 spawnPosition;   // 出現位置（遠くの空）
-        glm::vec3 targetPosition;  // 目標位置（プレイヤー近く）
-        float flySpeed;            // 飛行速度
-        bool isFlying;             // 飛行中かどうか
-        bool hasSpawned;           // 出現済みかどうか
-        float detectionRange;      // プレイヤー検知範囲
-        bool isReturning;          // 元の場所に戻り中かどうか
+        bool isFlyingPlatform;    
+        glm::vec3 spawnPosition;  
+        glm::vec3 targetPosition; 
+        float flySpeed;           
+        bool isFlying;            
+        bool hasSpawned;          
+        float detectionRange;     
+        bool isReturning;         
         
         // テレポート機能
-        bool isTeleportPlatform;   // テレポート足場かどうか
-        glm::vec3 teleportDestination; // テレポート先の位置
-        bool hasTeleported;        // テレポート済みかどうか
-        float teleportCooldown;    // テレポートのクールダウン時間
-        float teleportCooldownTimer; // テレポートのクールダウンタイマー
+        bool isTeleportPlatform;  
+        glm::vec3 teleportDestination;
+        bool hasTeleported;       
+        float teleportCooldown;   
+        float teleportCooldownTimer; 
         
         // 移動足場機能
-        bool isMovingPlatform;     // 移動足場かどうか
-        glm::vec3 moveTargetPosition; // 移動先の位置
-        bool hasPlayerOnBoard;     // プレイヤーが乗っているかどうか
-        glm::vec3 originalPosition; // 元の位置
-        bool returnToOriginal;     // 元の位置に戻るかどうか
+        bool isMovingPlatform;    
+        glm::vec3 moveTargetPosition; 
+        bool hasPlayerOnBoard;    
+        glm::vec3 originalPosition;
+        bool returnToOriginal;    
     };
     
     // 大砲システム
     struct Cannon {
-        glm::vec3 position;        // 大砲の位置
-        glm::vec3 size;           // 大砲のサイズ
-        glm::vec3 color;          // 大砲の色
-        glm::vec3 targetPosition; // 発射先の位置
-        float power;              // 発射パワー
-        bool isActive;            // 大砲が有効かどうか
-        bool hasPlayerInside;     // プレイヤーが大砲の中にいるか
-        float cooldownTimer;      // クールダウンタイマー
-        float cooldownTime;       // クールダウン時間
-        glm::vec3 launchDirection; // 発射方向（計算済み）
+        glm::vec3 position;    
+        glm::vec3 size;        
+        glm::vec3 color;       
+        glm::vec3 targetPosition;
+        float power;
+        bool isActive;
+        bool hasPlayerInside;
+        float cooldownTimer;
+        float cooldownTime;
+        glm::vec3 launchDirection;
     };
     
-    std::vector<Cannon> cannons;  // 大砲のリスト
-    
+    std::vector<Cannon> cannons;
     std::vector<Platform> platforms;
-    float terrainScale = 1.0f;
 
-    // カメラ制御（動的：今回は固定寄り）
-    float cameraYaw = 90.0f;    // 90度 = 右を向く
-    float cameraPitch = 0.0f;  // 1人称視点用：水平方向
+    // カメラ制御
+    float cameraYaw = 90.0f;
+    float cameraPitch = 0.0f;
     float cameraDistance = 30.0f;
     bool firstMouse = true;
     float lastMouseX = 640.0f;
     float lastMouseY = 360.0f;
     
     // カメラモード制御
-    bool isFirstPersonView = false;  // 1人称視点フラグ
-    bool isFirstPersonMode = false;  // 1人称モードフラグ（Ready画面で選択）
+    bool isFirstPersonView = false;
+    bool isFirstPersonMode = false;
     
     // 難易度モード制御
-    bool isEasyMode = false;  // お助けモードフラグ
+    bool isEasyMode = false;
 
     // 重力反転エリア
     struct GravityZone {
         glm::vec3 position;
         glm::vec3 size;
-        glm::vec3 gravityDirection;  // 重力の方向
+        glm::vec3 gravityDirection;
         float radius;
         bool isActive;
     };
@@ -196,13 +136,13 @@ struct GameState {
         glm::vec3 size;
         glm::vec3 color;
         bool isPressed;
-        bool isToggle;  // トグルスイッチかどうか
-        std::vector<int> targetPlatformIndices;  // 操作する足場のインデックス
-        std::vector<bool> targetStates;  // 目標状態（true=出現、false=消失）
-        float pressTimer;  // 押されている時間
-        float cooldownTimer;  // クールダウン時間
-        bool isMultiSwitch;  // 複数スイッチの一部かどうか
-        int multiSwitchGroup;  // 複数スイッチのグループID
+        bool isToggle;
+        std::vector<int> targetPlatformIndices;
+        std::vector<bool> targetStates;
+        float pressTimer;
+        float cooldownTimer;
+        bool isMultiSwitch;
+        int multiSwitchGroup;
     };
     
     std::vector<Switch> switches;
@@ -213,44 +153,39 @@ struct GameState {
         glm::vec3 size;
         glm::vec3 color;
         bool isCollected;
-        int itemId;  // アイテムの識別ID
-        float rotationAngle;  // 回転角度（視覚効果用）
-        float bobHeight;  // 上下の揺れ（視覚効果用）
-        float bobTimer;  // 揺れのタイマー
+        int itemId;
+        float rotationAngle;
+        float bobHeight;
+        float bobTimer;
     };
     
     std::vector<Item> items;
-    int collectedItems = 0;  // 収集したアイテム数
-    int requiredItems = 3;   // ステージクリアに必要なアイテム数
+    int collectedItems = 0;
+    int requiredItems = 3;
     
     // チェックポイントシステム
-    glm::vec3 lastCheckpoint = glm::vec3(0, 30.0f, 0);  // 最後のチェックポイント位置
-    int lastCheckpointItemId = -1;  // 最後のチェックポイントのアイテムID
+    glm::vec3 lastCheckpoint = glm::vec3(0, 30.0f, 0);
+    int lastCheckpointItemId = -1;
     
-    // デコ（道路マーカーや草パッチ）
-    std::vector<glm::vec3> roadMarkers; // 細いグレーの目印（簡易道路表現）
-    std::vector<glm::vec3> grassDecos;  // 小さな緑ブロック
-    
-    int score = 0;
     float gameTime = 0.0f;
-    int currentStage = 0;  // 初期ステージをステージ選択フィールドに変更
+    int currentStage = 0;
     
     // 制限時間システム
-    float timeLimit = 20.0f;        // 制限時間（秒）
-    float remainingTime = 20.0f;    // 残り時間（秒）
-    int earnedStars = 0;            // 今回獲得した星の数（0-3）
-    float clearTime = 0.0f;         // クリア時間（秒）
-    bool isTimeUp = false;          // 時間切れフラグ
-    bool isStageCompleted = false;  // ステージ完了フラグ
+    float timeLimit = 20.0f;
+    float remainingTime = 20.0f;
+    int earnedStars = 0;
+    float clearTime = 0.0f;
+    bool isTimeUp = false;
+    bool isStageCompleted = false;
     
     // 星数管理システム
-    std::map<int, int> stageStars;  // ステージ別の最高星数記録 {ステージ番号, 星数}
-    int totalStars = 0;             // トータル星数
-    std::map<int, bool> unlockedStages;  // 解放済みステージ {ステージ番号, 解放済みかどうか}
+    std::map<int, int> stageStars;
+    int totalStars = 0;
+    std::map<int, bool> unlockedStages;
     
     // アイテム管理システム
-    int earnedItems = 0;            // 今回獲得したアイテムの数
-    int totalItems = 3;             // ステージ内のアイテム総数（チュートリアル用）
+    int earnedItems = 0;
+    int totalItems = 3;
     
     // ステージクリアUI状態
     bool showStageClearUI = false;
@@ -258,11 +193,11 @@ struct GameState {
     bool stageClearConfirmed = false;
     
     // エンディング関連状態
-    bool showStaffRoll = false;        // スタッフロール表示フラグ
-    bool showEndingMessage = false;    // エンディングメッセージ表示フラグ
-    float staffRollTimer = 0.0f;      // スタッフロールタイマー
-    float endingMessageTimer = 0.0f;  // エンディングメッセージタイマー
-    bool isEndingSequence = false;     // エンディングシーケンス中フラグ
+    bool showStaffRoll = false;
+    bool showEndingMessage = false;
+    float staffRollTimer = 0.0f;
+    float endingMessageTimer = 0.0f;
+    bool isEndingSequence = false;
     
     // ステージ解放確認UI状態
     bool showUnlockConfirmUI = false;
@@ -274,84 +209,102 @@ struct GameState {
     int insufficientTargetStage = 0;
     int insufficientRequiredStars = 0;
     
+    // ワープ機能説明UI状態
+    bool showWarpTutorialUI = false;
+    int warpTutorialStage = 0;
+    bool blockEnterUntilReleased = false; // ワープUIで直前のENTERを無視するためのフラグ
+    
     // 操作アシストUI状態
     bool showStageSelectionAssist = false;
     int assistTargetStage = 0;
     
     // 初回ステージ0入場チュートリアルUI状態
-    bool showStage0Tutorial = true; // 初回は表示
+    bool showStage0Tutorial = true;
+    
+    // EASYモード説明UI状態
+    bool showEasyModeExplanationUI = false;
+    
+    // モード選択UI状態
+    bool showModeSelectionUI = false;
+    // カウントダウン時の時間設定フラグ
+    bool timeLimitApplied = false;
     
     // 速度制御システム
-    float timeScale = 1.0f;        // 時間倍率（1.0 = 通常速度、2.0 = 2倍速、3.0 = 3倍速）
-    int timeScaleLevel = 0;        // 速度レベル（0 = 1倍、1 = 2倍、2 = 3倍）
+    float timeScale = 1.0f;
+    int timeScaleLevel = 0;
     
     // 残機システム
-    int lives = 6;                 // 残機数（最大6個）
-    bool isGameOver = false;       // ゲームオーバーフラグ
-    float gameOverTimer = 0.0f;    // ゲームオーバー画面タイマー
+    int lives = 6;
+    bool isGameOver = false;
+    float gameOverTimer = 0.0f;
     
     // ゴール後の移動制限
-    bool isGoalReached = false;    // ゴール到達フラグ（移動制限用）
+    bool isGoalReached = false;
     
     // Ready画面システム
-    bool showReadyScreen = false;  // Ready画面表示フラグ
-    bool readyScreenShown = false; // Ready画面が既に表示されたかどうか
-    int readyScreenSpeedLevel = 0; // Ready画面での速度レベル（0=1x, 1=2x, 2=3x）
-    bool isCountdownActive = false; // カウントダウン中フラグ
-    float countdownTimer = 3.0f;   // カウントダウンタイマー（3秒から開始）
+    bool showReadyScreen = false;
+    bool readyScreenShown = false;
+    int readyScreenSpeedLevel = 0;
+    bool isCountdownActive = false;
+    float countdownTimer = 3.0f;
     
     // お助けモード用
-    bool canDoubleJump = true;  // 二段ジャンプ可能フラグ
-    glm::vec3 lastPlatformPosition = glm::vec3(0, 0, 0);  // 最後に乗っていた床の位置
-    int lastPlatformIndex = -1;  // 最後に乗っていた床のインデックス
-    bool isTrackingPlatform = false;  // 足場を追跡中かどうか
+    bool canDoubleJump = true;
+    glm::vec3 lastPlatformPosition = glm::vec3(0, 0, 0);
+    int lastPlatformIndex = -1;
+    bool isTrackingPlatform = false;
     
     // 二段ジャンプスキル用
-    bool hasDoubleJumpSkill = true;  // 二段ジャンプスキルを取得しているかどうか
-    int doubleJumpMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
-    int doubleJumpRemainingUses = 3;  // 残り使用回数
+    bool hasDoubleJumpSkill = true;
+    int doubleJumpMaxUses = 3;
+    int doubleJumpRemainingUses = 3;
     
     // ハートフエールスキル用
-    bool hasHeartFeelSkill = false;  // ハートフエールスキルを取得しているかどうか
-    int heartFeelMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
-    int heartFeelRemainingUses = 3;  // 残り使用回数
+    bool hasHeartFeelSkill = false;
+    int heartFeelMaxUses = 3;
+    int heartFeelRemainingUses = 3;
     
     // フリーカメラスキル用
-    bool hasFreeCameraSkill = false;  // フリーカメラスキルを取得しているかどうか
-    bool isFreeCameraActive = false;  // フリーカメラがアクティブかどうか
-    float freeCameraDuration = 20.0f;  // フリーカメラの持続時間（秒）
-    float freeCameraTimer = 0.0f;  // フリーカメラの残り時間
-    int freeCameraMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
-    int freeCameraRemainingUses = 3;  // 残り使用回数
-    float freeCameraYaw = 90.0f;  // フリーカメラのヨー角
-    float freeCameraPitch = 0.0f;  // フリーカメラのピッチ角
+    bool hasFreeCameraSkill = false;
+    bool isFreeCameraActive = false;
+    float freeCameraDuration = 20.0f;
+    float freeCameraTimer = 0.0f;
+    int freeCameraMaxUses = 3;
+    int freeCameraRemainingUses = 3;
+    float freeCameraYaw = 90.0f;
+    float freeCameraPitch = 0.0f;
     
     // バーストジャンプスキル用
-    bool hasBurstJumpSkill = true;  // バーストジャンプスキルを取得しているかどうか
-    bool isBurstJumpActive = false;  // バーストジャンプがアクティブかどうか
-    bool hasUsedBurstJump = false;  // バーストジャンプを使用済みかどうか
-    bool isInBurstJumpAir = false;  // バーストジャンプで空中にいるかどうか
-    float burstJumpDelayTimer = 0.0f;  // バーストジャンプ空中フラグ設定の遅延タイマー
-    int burstJumpMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
-    int burstJumpRemainingUses = 3;  // 残り使用回数
+    bool hasBurstJumpSkill = true;
+    bool isBurstJumpActive = false;
+    bool hasUsedBurstJump = false;
+    bool isInBurstJumpAir = false;
+    float burstJumpDelayTimer = 0.0f;
+    int burstJumpMaxUses = 3;
+    int burstJumpRemainingUses = 3;
     
     // 時間停止スキル用
-    bool hasTimeStopSkill = false;  // 時間停止スキルを取得しているかどうか
-    bool isTimeStopped = false;  // 時間停止中かどうか
-    float timeStopDuration = 5.0f;  // 時間停止の持続時間（秒）
-    float timeStopTimer = 0.0f;  // 時間停止の残り時間
-    int timeStopMaxUses = 3;  // 最大使用回数（レベルに応じて変更）
-    int timeStopRemainingUses = 3;  // 残り使用回数
+    bool hasTimeStopSkill = false;
+    bool isTimeStopped = false;
+    float timeStopDuration = 5.0f;
+    float timeStopTimer = 0.0f;
+    int timeStopMaxUses = 3;
+    int timeStopRemainingUses = 3;
     
     // チュートリアル専用ステージ用
-    bool isTutorialStage = false;  // チュートリアルステージかどうか
-    int tutorialStep = 0;  // 現在のチュートリアルステップ（0=W, 1=A, 2=S, 3=D, 4=SPACE, 5=T）
-    bool tutorialStepCompleted = false;  // 現在のステップが完了したかどうか
-    glm::vec3 tutorialStartPosition = glm::vec3(0, 0, 0);  // チュートリアル開始位置
-    float tutorialRequiredDistance = 5.0f;  // チュートリアルで必要な移動距離
-    bool showTutorialUI = false;  // チュートリアルUI表示フラグ
-    std::string tutorialMessage = "";  // チュートリアルメッセージ
-    bool tutorialInputEnabled = false;  // チュートリアル入力有効フラグ
+    bool isTutorialStage = false;
+    int tutorialStep = 0;
+    bool tutorialStepCompleted = false;
+    glm::vec3 tutorialStartPosition = glm::vec3(0, 0, 0);
+    float tutorialRequiredDistance = 5.0f;
+    bool showTutorialUI = false;
+    std::string tutorialMessage = "";
+    bool tutorialInputEnabled = false;
+    
+    // 音声管理
+    bool audioEnabled = true;
+    std::string currentBGM = "";
+    bool bgmPlaying = false;
 };
 
 // ゲーム状態の初期化関数

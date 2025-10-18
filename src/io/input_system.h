@@ -4,6 +4,11 @@
 #include "../game/game_state.h"
 #include "../game/platform_system.h"
 
+// 前方宣言
+namespace io {
+    class AudioManager;
+}
+
 // 入力システム
 class InputSystem {
 public:
@@ -15,7 +20,7 @@ public:
     static void processInput(GLFWwindow* window, GameState& gameState, float deltaTime);
     
     // ジャンプと浮遊の処理
-    static void processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem);
+    static void processJumpAndFloat(GLFWwindow* window, GameState& gameState, float deltaTime, const glm::vec3& gravityDirection, PlatformSystem& platformSystem, io::AudioManager& audioManager);
     
     // ゲームパッド関連
     static void initializeGamepad();

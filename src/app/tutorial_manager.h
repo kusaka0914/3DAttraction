@@ -15,3 +15,4 @@ namespace TutorialManager {
     bool isTutorialInputEnabled(const GameState& gameState, GLFWwindow* window, 
                                const std::map<int, InputUtils::KeyState>& keyStates);
 }
+

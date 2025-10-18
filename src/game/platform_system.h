@@ -19,14 +19,8 @@ public:
     // プラットフォームの更新
     void update(float deltaTime, const glm::vec3& playerPos = glm::vec3(0));
     
-    // 衝突判定
-    GameState::PlatformVariant* checkCollision(const glm::vec3& playerPos, const glm::vec3& playerSize);
-    
     // 衝突判定（インデックス付き）
     std::pair<GameState::PlatformVariant*, int> checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize);
-    
-    // プレイヤーが乗っている足場の取得
-    GameState::PlatformVariant* getCurrentPlatform(const glm::vec3& playerPos, const glm::vec3& playerSize);
     
     // 全てのプラットフォームの取得
     const std::vector<GameState::PlatformVariant>& getPlatforms() const { return platforms; }
@@ -44,10 +38,8 @@ public:
     std::vector<glm::vec3> getRotationAxes() const;
     std::vector<float> getBlinkAlphas() const;
     
-    // 古い設計との互換性のための静的メソッド
-    static void updatePlatforms(GameState& gameState, float deltaTime);
-    static void checkTeleportPlatformCollision(GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize);
-    static void checkMovingPlatformCollision(GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize);
+    // 足場タイプの取得（テクスチャ描画用）
+    std::vector<std::string> getPlatformTypes() const;
     
     // MovingPlatformのhasPlayerOnBoardフラグをリセット
     void resetMovingPlatformFlags();

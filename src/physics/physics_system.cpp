@@ -21,43 +21,31 @@ bool PhysicsSystem::isPlayerInGravityZone(const GameState& gameState, const glm:
 // 水平方向の足場衝突判定
 bool PhysicsSystem::checkPlatformCollisionHorizontal(const GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (const auto& platform : gameState.platforms) {
-        // プラットフォームが存在するかチェック（消えた足場は無視）
         if (platform.size.x <= 0 || platform.size.y <= 0 || platform.size.z <= 0) continue;
         
-        // 水平方向の衝突判定のみ（Y軸は少し余裕を持たせる）
-        glm::vec3 platformMin = platform.position - platform.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
-        glm::vec3 platformMax = platform.position + platform.size * GameConstants::PhysicsCalculationConstants::PLATFORM_HALF_SIZE_MULTIPLIER;
-        glm::vec3 playerMin = playerPos - playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
-        glm::vec3 playerMax = playerPos + playerSize * GameConstants::PhysicsCalculationConstants::PLAYER_HALF_SIZE_MULTIPLIER;
+        glm::vec3 platformMin = platform.position - platform.size * 0.5f;
+        glm::vec3 platformMax = platform.position + platform.size * 0.5f;
+        glm::vec3 playerMin = playerPos - playerSize * 0.5f;
+        glm::vec3 playerMax = playerPos + playerSize * 0.5f;
         
-        // プレイヤーが足場の上にいる場合は水平移動を許可（通常重力）
-        // 厳密に判定：プレイヤーが実際に足場の上に乗っているかチェック
-        bool onTopSurface = (std::abs(playerMin.y - platformMax.y) < GameConstants::PhysicsConstants::PLATFORM_SURFACE_TOLERANCE) && 
+        // 基本的な衝突判定
+        bool basicCollision = (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                              playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
+                              playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+        
+        if (!basicCollision) continue;
+        
+        // 足場の上に乗っているかチェック
+        bool onTopSurface = (std::abs(playerMin.y - platformMax.y) < 0.1f) && 
                            (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
-        if (onTopSurface) {
-            continue; // 足場の上にいる場合は水平衝突を無視
-        }
         
-        // プレイヤーが足場の下面にいる場合も水平移動を許可（重力反転時）
-        // 厳密に判定：プレイヤーが実際に足場の下面に乗っているかチェック
-        bool onBottomSurface = (std::abs(playerMax.y - platformMin.y) < GameConstants::PhysicsConstants::PLATFORM_SURFACE_TOLERANCE) && 
-                              (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
-                               playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
-        if (onBottomSurface) {
-            continue; // 足場の下面にいる場合も水平衝突を無視
-        }
-        
-        // プレイヤーが足場の側面高さ範囲にいる場合のみ水平衝突をチェック
-        if (playerMax.y > platformMin.y - GameConstants::PhysicsConstants::COLLISION_TOLERANCE && 
-            playerMin.y < platformMax.y + GameConstants::PhysicsConstants::COLLISION_TOLERANCE) {
-            if (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
-                playerMax.z >= platformMin.z && playerMin.z <= platformMax.z) {
-                return true;
-            }
+        // 足場の上にいない場合、水平衝突として扱う
+        if (!onTopSurface) {
+            return true; // 水平衝突あり → 移動を阻止
         }
     }
-    return false;
+    return false; // 水平衝突なし → 移動を許可
 }
 
 // 重力方向を考慮した足場衝突をチェック（回転対応）

@@ -22,10 +22,10 @@ namespace GameConstants {
     
     // ステージ解放に必要な星数
     constexpr int STAGE_1_COST = 1;
-    constexpr int STAGE_2_COST = 1;
-    constexpr int STAGE_3_COST = 1;
-    constexpr int STAGE_4_COST = 4;
-    constexpr int STAGE_5_COST = 3;
+    constexpr int STAGE_2_COST = 2;
+    constexpr int STAGE_3_COST = 3;
+    constexpr int STAGE_4_COST = 3;
+    constexpr int STAGE_5_COST = 4;
     
     // 星獲得基準時間
     constexpr float STAR_3_TIME_LONG = 20.0f;

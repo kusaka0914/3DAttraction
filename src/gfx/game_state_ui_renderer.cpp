@@ -182,6 +182,63 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     glPopMatrix();
 }
 
+void GameStateUIRenderer::renderWarpTutorialBackground(int width, int height, int targetStage) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    renderText("STAGE " + std::to_string(targetStage) + " HAS BEEN UNLOCKED.", 
+               glm::vec2((width/2 - 350) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 1.0f, 0.0f), 2.0f);
+    
+    // ワープ機能の説明
+    renderText("YOU CAN WARP TO THE STAGE", 
+               glm::vec2((width/2 - 300) * scaleX, (height/2 - 70) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    renderText("BY PRESSING KEY " + std::to_string(targetStage) + ".", 
+               glm::vec2((width/2 - 200) * scaleX, (height/2 + 20) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    // ステージに入るボタン
+    renderText("ENTER STAGE: ENTER", 
+               glm::vec2((width/2 - 200) * scaleX, (height/2 + 150) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 void GameStateUIRenderer::renderGameOverBackground(int width, int height) {
     // フォントの初期化を確実に行う
     font.initialize();
@@ -323,14 +380,14 @@ void GameStateUIRenderer::renderUnlockConfirmBackground(int width, int height, i
     
     // 必要な星数
     renderText("YOU MUST USE " + std::to_string(requiredStars) + " STARS !", 
-               glm::vec2((width/2 - 200) * scaleX, (height/2 - 50) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.5f);
+               glm::vec2((width/2 - 250) * scaleX, (height/2 - 50) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.5f);
     
     // 確認ボタン
     renderText("UNLOCK: ENTER", 
                glm::vec2((width/2 - 300) * scaleX, (height/2+100) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);
     
     // キャンセルボタン
-    renderText("CANCEL: Q", 
+    renderText("CANCEL: SPACE", 
                glm::vec2((width/2 +100) * scaleX, (height/2+100) * scaleY), glm::vec3(0.8f, 0.2f, 0.2f), 1.5f);
     
     // 3D描画モードに戻す
@@ -389,7 +446,7 @@ void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height
                glm::vec2((width/2 - 400) * scaleX, (height/2 + 50) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
     
     // 閉じるボタン
-    renderText("CLOSE: Q", 
+    renderText("OK: SPACE", 
                glm::vec2((width/2 - 100) * scaleX, (height/2 + 200) * scaleY), glm::vec3(0.2f, 1.0f, 0.2f), 1.5f);
     
     // 3D描画モードに戻す
@@ -464,7 +521,7 @@ void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLeve
     renderText("PRESS F", glm::vec2((width/2 + 210) * scaleX, (height/2 + 100) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
     
     // "Enter"メッセージ
-    renderText("ENTER", glm::vec2((width/2- 50) * scaleX, (height/2 + 250) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
+    renderText("CONFIRM: ENTER", glm::vec2((width/2- 150) * scaleX, (height/2 + 250) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.2f);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -536,7 +593,7 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // 背景の四角形（画面全体）
-    glColor4f(0.0f, 0.0f, 0.0f, 0.9f);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
     glBegin(GL_QUADS);
     glVertex2f(0, 0);
     glVertex2f(width, 0);
@@ -565,7 +622,7 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
                glm::vec2((width/2 - 400) * scaleX, (height/2 + 180) * scaleY), 
                glm::vec3(1.0f, 0.8f, 0.2f), 1.5f); // 金色で強調
     
-    renderText("ENTER", 
+    renderText("OK : ENTER", 
                glm::vec2((width/2 - 80) * scaleX, (height/2 + 280) * scaleY), 
                glm::vec3(0.2f, 0.8f, 0.2f), 1.5f); // 緑色でENTERボタン
     
@@ -593,10 +650,10 @@ void GameStateUIRenderer::renderStageSelectionAssist(int width, int height, int 
     std::string assistText;
     if (targetStage == 6 || isUnlocked) {
         // ステージ1は常に解放済み、または解放済みのステージ
-        assistText = "ENTER STAGE " + std::to_string(targetStage) + " : SPACE";
+        assistText = "ENTER STAGE " + std::to_string(targetStage) + " : ENTER";
     } else { 
         // 未解放のステージ
-        assistText = "UNLOCK STAGE " + std::to_string(targetStage) + " : SPACE";
+        assistText = "UNLOCK STAGE " + std::to_string(targetStage) + " : ENTER";
     }
     
     renderText(assistText, 
@@ -801,6 +858,136 @@ void GameStateUIRenderer::renderStar(const glm::vec2& position, const glm::vec3&
         glVertex2f(x3, y3);            // 外側の点2
     }
     glEnd();
+}
+
+void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    renderText("DIFFICULTY SELECTION", 
+               glm::vec2((width/2 - 350) * scaleX, (height/2 - 300) * scaleY), glm::vec3(1.0f, 1.0f, 0.0f), 2.0f);
+    
+    // 説明文
+    renderText("YOU CAN CHOOSE BETWEEN EASY AND NORMAL MODES.", 
+               glm::vec2((width/2 - 550) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    renderText("IN EASY MODE,", 
+               glm::vec2((width/2 - 150) * scaleX, (height/2 - 80) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    renderText("1. NO LIVES ARE LOST.", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    renderText("2. THE TIME LIMIT IS INCREASED BY 20 SECONDS.", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2 + 60) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    renderText("3. PRESS SPACE TWICE TO JUMP AGAIN IN THE AIR.", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2 + 120) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    renderText("4. IF YOU FALL, YOU CAN RESUME FROM THE PLATFORM", 
+               glm::vec2((width/2 - 400) * scaleX, (height/2 + 180) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    renderText("   YOU WERE LAST STANDING ON.", 
+               glm::vec2((width/2 - 380) * scaleX, (height/2 + 240) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.2f);
+    
+    // 続行ボタン
+    renderText("OK : ENTER", 
+               glm::vec2((width/2 - 150) * scaleX, (height/2 + 320) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void GameStateUIRenderer::renderModeSelectionUI(int width, int height, bool isEasyMode) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // 座標系を1280x720に正規化
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    renderText("SELECT DIFFICULTY", 
+               glm::vec2((width/2 - 300) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 1.0f, 0.0f), 2.0f);
+    
+    // EASY/NORMALの表示（選択された方がオレンジ色、選択されていない方がグレー）
+    renderText("EASY", glm::vec2((width/2 - 200) * scaleX, (height/2-50) * scaleY), 
+               isEasyMode ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), 2.0f);
+    renderText("NORMAL", glm::vec2((width/2 + 20) * scaleX, (height/2-50) * scaleY), 
+               isEasyMode ? glm::vec3(0.5f, 0.5f, 0.5f) : glm::vec3(1.0f, 0.8f, 0.2f), 2.0f);
+    
+    // PRESS E表示
+    renderText("PRESS E", glm::vec2((width/2 - 80) * scaleX, (height/2 + 50) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    
+    renderText("CONFIRM: ENTER", 
+               glm::vec2((width/2 - 200) * scaleX, (height/2 + 150) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 } // namespace gfx

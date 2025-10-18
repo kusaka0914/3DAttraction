@@ -319,6 +319,7 @@ int main(int argc, char* argv[]) {
             
             renderer->endFrame();
             
+            
             // キー状態更新（Ready画面中でも必要）
             for (auto& [key, state] : keyStates) {
                 state.update(glfwGetKey(window, key) == GLFW_PRESS);

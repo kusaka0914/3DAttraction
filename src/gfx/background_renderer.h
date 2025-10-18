@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <functional>
 #include "../core/constants/game_constants.h"
+#include "texture_manager.h"
 
 namespace gfx {
 
@@ -20,6 +21,15 @@ public:
     void renderThunderClouds();
     void renderNebula();
     void renderStageBackground(int stageNumber);
+    
+    // 画像ベースの背景描画
+    void renderStage1WithTexture();
+    void renderStage2WithTexture();
+    void renderStage3WithTexture();
+    void renderStage4WithTexture();
+    void renderStage5WithTexture();
+    void renderStageSelectionWithTexture();
+    void renderTutorialWithTexture();
     
     // 2D描画モードの設定
     void begin2DMode();

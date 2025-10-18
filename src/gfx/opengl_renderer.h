@@ -9,6 +9,7 @@
 #include "ui_renderer.h"
 #include "game_state_ui_renderer.h"
 #include "renderer_3d.h"
+#include "texture_manager.h"
 #include <vector>
 #include <string>
 #include <map>
@@ -29,8 +30,6 @@ public:
     void beginFrameWithBackground(int stageNumber);
     void endFrame();
     
-    // 3D描画関数はRenderer3Dクラスに移動
-    
     void setCamera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up = glm::vec3(0, 1, 0));
     void setProjection(float fov, float aspect, float near, float far);
 
@@ -39,11 +38,9 @@ private:
     
     GLFWwindow* window;
     
-    // Matrices
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
 
-    // 分離された描画クラス
     BitmapFont font;
     BackgroundRenderer backgroundRenderer;
     UIRenderer uiRenderer;

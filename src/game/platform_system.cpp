@@ -19,24 +19,6 @@ void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos) {
     }
 }
 
-GameState::PlatformVariant* PlatformSystem::checkCollision(const glm::vec3& playerPos, const glm::vec3& playerSize) {
-    for (auto& platform : platforms) {
-        bool collision = std::visit(overloaded{
-            [this, &playerPos, &playerSize](const GameState::RotatingPlatform& p) {
-                return checkCollisionWithRotatingPlatform(p, playerPos, playerSize);
-            },
-            [this, &playerPos, &playerSize](const auto& p) {
-                return checkCollisionWithBase(p, playerPos, playerSize);
-            }
-        }, platform);
-        
-        if (collision) {
-            return &platform;
-        }
-    }
-    return nullptr;
-}
-
 std::pair<GameState::PlatformVariant*, int> PlatformSystem::checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (int i = 0; i < platforms.size(); i++) {
         auto& platform = platforms[i];
@@ -54,24 +36,6 @@ std::pair<GameState::PlatformVariant*, int> PlatformSystem::checkCollisionWithIn
         }
     }
     return {nullptr, -1};
-}
-
-GameState::PlatformVariant* PlatformSystem::getCurrentPlatform(const glm::vec3& playerPos, const glm::vec3& playerSize) {
-    for (auto& platform : platforms) {
-        bool collision = std::visit(overloaded{
-            [this, &playerPos, &playerSize](const GameState::RotatingPlatform& p) {
-                return checkCollisionWithRotatingPlatform(p, playerPos, playerSize);
-            },
-            [this, &playerPos, &playerSize](const auto& p) {
-                return checkCollisionWithBase(p, playerPos, playerSize);
-            }
-        }, platform);
-        
-        if (collision) {
-            return &platform;
-        }
-    }
-    return nullptr;
 }
 
 std::vector<glm::vec3> PlatformSystem::getPositions() const {
@@ -194,17 +158,38 @@ std::vector<float> PlatformSystem::getBlinkAlphas() const {
     return blinkAlphas;
 }
 
-// 古い設計との互換性のための静的メソッド
-void PlatformSystem::updatePlatforms(GameState& gameState, float deltaTime) {
-    // 古い設計の実装をここに追加
-}
-
-void PlatformSystem::checkTeleportPlatformCollision(GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize) {
-    // 古い設計の実装をここに追加
-}
-
-void PlatformSystem::checkMovingPlatformCollision(GameState& gameState, const glm::vec3& playerPos, const glm::vec3& playerSize) {
-    // 古い設計の実装をここに追加
+std::vector<std::string> PlatformSystem::getPlatformTypes() const {
+    std::vector<std::string> platformTypes;
+    platformTypes.reserve(platforms.size());
+    
+    for (const auto& platform : platforms) {
+        std::visit([&platformTypes](const auto& p) {
+            using T = std::decay_t<decltype(p)>;
+            if constexpr (std::is_same_v<T, GameState::StaticPlatform>) {
+                platformTypes.push_back("static");
+            } else if constexpr (std::is_same_v<T, GameState::MovingPlatform>) {
+                platformTypes.push_back("moving");
+            } else if constexpr (std::is_same_v<T, GameState::RotatingPlatform>) {
+                platformTypes.push_back("rotating");
+            } else if constexpr (std::is_same_v<T, GameState::PatrollingPlatform>) {
+                platformTypes.push_back("patrolling");
+            } else if constexpr (std::is_same_v<T, GameState::TeleportPlatform>) {
+                platformTypes.push_back("teleport");
+            } else if constexpr (std::is_same_v<T, GameState::JumpPad>) {
+                platformTypes.push_back("jumppad");
+            } else if constexpr (std::is_same_v<T, GameState::CycleDisappearingPlatform>) {
+                platformTypes.push_back("cycle_disappearing");
+            } else if constexpr (std::is_same_v<T, GameState::DisappearingPlatform>) {
+                platformTypes.push_back("disappearing");
+            } else if constexpr (std::is_same_v<T, GameState::FlyingPlatform>) {
+                platformTypes.push_back("flying");
+            } else {
+                platformTypes.push_back("unknown");
+            }
+        }, platform);
+    }
+    
+    return platformTypes;
 }
 
 // 各足場タイプの更新処理

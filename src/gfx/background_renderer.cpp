@@ -38,6 +38,49 @@ void BackgroundRenderer::end2DMode() {
 void BackgroundRenderer::renderStageBackground(int stageNumber) {
     begin2DMode();
     
+    // ステージ0（選択フィールド）、1、2、3、4、5、6（チュートリアル）は画像ベースの背景を使用
+    if (stageNumber == 0) {
+        renderStageSelectionWithTexture();
+        end2DMode();
+        return;
+    }
+    
+    if (stageNumber == 1) {
+        renderStage1WithTexture();
+        end2DMode();
+        return;
+    }
+    
+    if (stageNumber == 2) {
+        renderStage2WithTexture();
+        end2DMode();
+        return;
+    }
+    
+    if (stageNumber == 3) {
+        renderStage3WithTexture();
+        end2DMode();
+        return;
+    }
+    
+    if (stageNumber == 4) {
+        renderStage4WithTexture();
+        end2DMode();
+        return;
+    }
+    
+    if (stageNumber == 5) {
+        renderStage5WithTexture();
+        end2DMode();
+        return;
+    }
+    
+    if (stageNumber == 6) {
+        renderTutorialWithTexture();
+        end2DMode();
+        return;
+    }
+    
     // ステージ別の背景色とグラデーション
     glm::vec3 topColor, bottomColor;
     
@@ -45,10 +88,6 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
         case 0: // ステージ選択画面
             topColor = GameConstants::RenderConstants::STAGE_0_TOP_COLOR;
             bottomColor = GameConstants::RenderConstants::STAGE_0_BOTTOM_COLOR;
-            break;
-        case 1: // ステージ1 - 青空、白い雲（初心者向けの明るい雰囲気）
-            topColor = GameConstants::RenderConstants::STAGE_1_TOP_COLOR;
-            bottomColor = GameConstants::RenderConstants::STAGE_1_BOTTOM_COLOR;
             break;
         case 2: // ステージ2 - 夕日、オレンジ色の空（中級者向けの暖かい雰囲気）
             topColor = GameConstants::RenderConstants::STAGE_2_TOP_COLOR;
@@ -342,6 +381,298 @@ void BackgroundRenderer::renderNebula() {
                     colors[i], 
                     GameConstants::RenderConstants::BackgroundLayout::NEBULA_ASPECT_RATIO);
     }
+}
+
+void BackgroundRenderer::renderStage1WithTexture() {
+    // ステージ1の背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage1_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load stage1 background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画
+        glm::vec3 topColor = GameConstants::RenderConstants::STAGE_1_TOP_COLOR;
+        glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_1_BOTTOM_COLOR;
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        
+        // 雲を描画
+        renderClouds();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
+}
+
+void BackgroundRenderer::renderStage2WithTexture() {
+    // ステージ2の背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage2_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load stage2 background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画
+        glm::vec3 topColor = GameConstants::RenderConstants::STAGE_2_TOP_COLOR;
+        glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_2_BOTTOM_COLOR;
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        
+        // 夕日の雲を描画
+        renderSunset();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
+}
+
+void BackgroundRenderer::renderStage3WithTexture() {
+    // ステージ3の背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage3_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load stage3 background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画
+        glm::vec3 topColor = GameConstants::RenderConstants::STAGE_3_TOP_COLOR;
+        glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_3_BOTTOM_COLOR;
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        
+        // 星空を描画
+        renderStars();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
+}
+
+void BackgroundRenderer::renderStage4WithTexture() {
+    // ステージ4の背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage4_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load stage4 background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画
+        glm::vec3 topColor = GameConstants::RenderConstants::STAGE_4_TOP_COLOR;
+        glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_4_BOTTOM_COLOR;
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        
+        // 雷雲を描画
+        renderThunderClouds();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
+}
+
+void BackgroundRenderer::renderStage5WithTexture() {
+    // ステージ5の背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage5_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load stage5 background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画
+        glm::vec3 topColor = GameConstants::RenderConstants::STAGE_5_TOP_COLOR;
+        glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_5_BOTTOM_COLOR;
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        
+        // 星雲を描画
+        renderNebula();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
+}
+
+void BackgroundRenderer::renderStageSelectionWithTexture() {
+    // ステージ選択フィールドの背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage_selection_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load stage selection background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画
+        glm::vec3 topColor = GameConstants::RenderConstants::STAGE_0_TOP_COLOR;
+        glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_0_BOTTOM_COLOR;
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        
+        // 草原と雲を描画
+        renderGrassland();
+        renderClouds();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
+}
+
+void BackgroundRenderer::renderTutorialWithTexture() {
+    // チュートリアルステージの背景画像を読み込んで表示
+    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/tutorial_bg.png");
+    
+    if (backgroundTexture == 0) {
+        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
+        std::cerr << "WARNING: Failed to load tutorial background texture, using fallback" << std::endl;
+        
+        // 従来の色ベース背景を描画（チュートリアル用のデフォルト色）
+        glm::vec3 topColor = glm::vec3(0.2f, 0.1f, 0.3f);  // 暗い紫
+        glm::vec3 bottomColor = glm::vec3(0.1f, 0.05f, 0.2f);  // より暗い紫
+        
+        glBegin(GL_QUADS);
+        glColor3f(topColor.r, topColor.g, topColor.b);
+        glVertex2f(0, 0);
+        glVertex2f(1280, 0);
+        glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
+        glVertex2f(1280, 720);
+        glVertex2f(0, 720);
+        glEnd();
+        return;
+    }
+    
+    // テクスチャを有効化
+    glEnable(GL_TEXTURE_2D);
+    TextureManager::bindTexture(backgroundTexture);
+    
+    // 背景画像を画面全体に描画
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(1280, 720);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
+    glEnd();
+    
+    // テクスチャを無効化
+    glDisable(GL_TEXTURE_2D);
 }
 
 } // namespace gfx

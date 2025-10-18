@@ -1,4 +1,5 @@
 #include "stage_manager.h"
+#include "json_stage_loader.h"
 #include "../core/constants/game_constants.h"
 #include "../core/constants/debug_config.h"
 #include "../core/utils/stage_utils.h"
@@ -6,56 +7,45 @@
 #include <algorithm>
 #include <tuple>
 
-// 色の定数定義（GameConstants::Colorsを使用）
 namespace Colors = GameConstants::Colors;
-
-// 構造体定義はstage_utils.hに移動済み
 
 StageManager::StageManager() : currentStage(1) {
     initializeStages();
 }
 
-// ヘルパー関数はstage_utils.hに移動済み
-
-// ヘルパー関数はstage_utils.cppに移動済み
-
 void StageManager::initializeStages() {
     stages.clear();
     
-    // ステージ0: ステージ選択フィールド
     stages.push_back({
         0, "ステージ選択フィールド",
-        glm::vec3(8, 2.0f, 0),  // 中央に配置
-        glm::vec3(0, 2.0f, 0),  // ゴール位置（使用しない）
+        glm::vec3(8, 2.0f, 0),  
+        glm::vec3(0, 2.0f, 0),  
         generateStageSelectionField,
-        true,  // 最初からアンロック
+        true,
         false,
-        GameConstants::STAGE_0_TIME_LIMIT  // 制限時間なし
+        GameConstants::STAGE_0_TIME_LIMIT
     });
     
-    // ステージ1: 基本的なジャンプとプラットフォーム
     stages.push_back({
         1, "基本的なジャンプ",
         glm::vec3(0, 6.0f, -25.0f),
         glm::vec3(0, 16.0f, 25.0f),
         generateStage1,
-        true,  // 最初からアンロック
+        true,
         false,
         GameConstants::STAGE_1_TIME_LIMIT
     });
     
-    // ステージ2: 重力反転エリア
     stages.push_back({
         2, "重力反転エリア",
         glm::vec3(0, 6.0f, -25.0f),
         glm::vec3(0, 20.0f, 30.0f),
         generateStage2,
-        true,  // テスト用にアンロック
+        true,
         false,
         GameConstants::STAGE_2_TIME_LIMIT
     });
     
-    // ステージ3: スイッチと大砲
     stages.push_back({
         3, "スイッチと大砲",
         glm::vec3(0, 6.0f, -25.0f),
@@ -66,7 +56,6 @@ void StageManager::initializeStages() {
         GameConstants::STAGE_3_TIME_LIMIT
     });
     
-    // ステージ4: 複雑な移動プラットフォーム
     stages.push_back({
         4, "移動プラットフォーム",
         glm::vec3(0, 6.0f, -25.0f),
@@ -77,7 +66,6 @@ void StageManager::initializeStages() {
         GameConstants::STAGE_4_TIME_LIMIT
     });
     
-    // ステージ5: 最終ステージ
     stages.push_back({
         5, "最終ステージ",
         glm::vec3(0, 6.0f, -25.0f),
@@ -87,23 +75,21 @@ void StageManager::initializeStages() {
         false,
         GameConstants::STAGE_5_TIME_LIMIT
     });
-    
-    // ステージ6: チュートリアル専用ステージ
+
     stages.push_back({
         6, "チュートリアル",
-        glm::vec3(0, 2.0f, 0),  // 中央に配置
-        glm::vec3(0, 2.0f, 0),  // ゴール位置（使用しない）
+        glm::vec3(0, 2.0f, 0),  
+        glm::vec3(0, 2.0f, 0),  
         generateTutorialStage,
-        true,  // 最初からアンロック
+        true,
         false,
-        999.0f  // 制限時間なし
+        999.0f
     });
     
     printf("StageManager initialized with %zu stages\n", stages.size());
 }
 
 bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem) {
-    // ステージ番号の範囲チェック
     if (stageNumber < 0 || stageNumber >= static_cast<int>(stages.size())) {
         printf("ERROR: Invalid stage number %d (valid range: 0-%zu)\n", stageNumber, stages.size() - 1);
         return false;
@@ -127,33 +113,13 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.gravityZones.clear();
     gameState.switches.clear();
     gameState.cannons.clear();
-    gameState.enemies.clear();
     gameState.items.clear();
     gameState.collectedItems = 0;
     gameState.gameWon = false;
-    gameState.score = 0;
-    // gameTimeはstartTimeのリセットによって自動的に0から開始される
     
-    // 制限時間システムをリセット（ステージ固有の制限時間を適用）
-    float baseTimeLimit = stageIt->timeLimit;        // ステージ固有の制限時間
-    printf("Stage %d base time limit: %.1f, isFirstPersonMode: %s, isEasyMode: %s\n", 
-           stageNumber, baseTimeLimit, gameState.isFirstPersonMode ? "true" : "false", 
-           gameState.isEasyMode ? "true" : "false");
-    
-    // 制限時間の計算
-    float finalTimeLimit = baseTimeLimit;
-    if (gameState.isFirstPersonMode) {
-        finalTimeLimit += GameConstants::FIRST_PERSON_TIME_BONUS;  // 1人称モードボーナス
-        printf("1ST PERSON MODE: +%.1fs\n", GameConstants::FIRST_PERSON_TIME_BONUS);
-    }
-    if (gameState.isEasyMode) {
-        finalTimeLimit += GameConstants::EASY_MODE_TIME_BONUS;  // お助けモードボーナス
-        printf("EASY MODE: +%.1fs\n", GameConstants::EASY_MODE_TIME_BONUS);
-    }
-    
-    gameState.timeLimit = finalTimeLimit;
+    gameState.timeLimit = stageIt->timeLimit;
     gameState.remainingTime = gameState.timeLimit;    // 残り時間を設定
-    printf("Final time limit: %.1f seconds\n", gameState.timeLimit);
+    printf("Time limit: %.1f seconds\n", gameState.timeLimit);
     gameState.earnedStars = 0;          // 星をリセット
     gameState.clearTime = 0.0f;         // クリア時間をリセット
     DEBUG_PRINTF("DEBUG: clearTime reset to 0.0f for stage %d\n", stageNumber);
@@ -173,6 +139,9 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.freeCameraRemainingUses = gameState.freeCameraMaxUses;
     gameState.burstJumpRemainingUses = gameState.burstJumpMaxUses;
     gameState.timeStopRemainingUses = gameState.timeStopMaxUses;
+
+    gameState.isFirstPersonMode = false;
+    gameState.isFirstPersonView = false;        
     
     // スキルのアクティブ状態をリセット
     gameState.isFreeCameraActive = false;
@@ -189,7 +158,6 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.tutorialStep = 0;
     gameState.tutorialStepCompleted = false;
     gameState.showTutorialUI = false;
-    gameState.tutorialInputEnabled = false;
     
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;
@@ -207,7 +175,6 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     stageIt->generateFunction(gameState, platformSystem);
     
     currentStage = stageNumber;
-    printf("Successfully loaded stage %d: %s (Time Limit: %.1f seconds)\n", stageNumber, stageIt->stageName.c_str(), stageIt->timeLimit);
     return true;
 }
 
@@ -367,289 +334,63 @@ bool StageManager::goToStage(int stageNumber, GameState& gameState, PlatformSyst
 // ======================================================
 
 void StageManager::generateStage1(GameState& gameState, PlatformSystem& platformSystem) {
-    StageUtils::createItems(gameState, platformSystem, {
-        // {{x, y, z}, color, description}
-        {{7, 5, -15}, Colors::RED, "アイテム1: スタート足場の右側"},
-        {{-7, 7, -10}, Colors::GREEN, "アイテム2: スタート足場の左側"},
-        {{5, 9, 3}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
-    });
-    
-    StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        // {{x, y, z}, {size_x, size_y, size_z}, color, description}
-        {{0, 5, -25}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        {{0, 5, -15}, {3, 1, 3}, Colors::BLUE, "基本的なジャンプセクション"},
-        {{0, 7, -10}, {3, 1, 3}, Colors::BLUE, "少し高いジャンプ"},
-        {{0, 7, 0}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
-    });
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage1.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load stage1 from JSON\n");
+        return;
+    }
+    printf("Successfully loaded stage1 from JSON\n");
 }
 
-void StageManager::generateStage2(GameState& gameState, PlatformSystem& platformSystem) {    
-    StageUtils::createItems(gameState, platformSystem, {
-        // {{x, y, z}, color, description}
-        {{10, 5, -12}, Colors::RED, "アイテム1: スタート足場の右側"},
-        {{-8, 3, -5}, Colors::GREEN, "アイテム2: スタート足場の左側"},
-        {{0, 12, 15}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
-    });
-    
-    StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        // {{x, y, z}, {size_x, size_y, size_z}, color, description}
-        {{0, 5, -25}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        {{8, 10, 15}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
-    });
-    
-    // 可変長パトロールプラットフォーム生成（パトロールポイント、説明を指定）
-    StageUtils::createPatrolPlatforms(gameState, platformSystem, {
-        //{{start_x, start_y, start_z}, {second_point_x, second_point_y, second_point_z}, {third_point_x, third_point_y, third_point_z}, {fourth_point_x, fourth_point_y, fourth_point_z}, {fifth_point_x, fifth_point_y, fifth_point_z}, description}
-        {{{0, 5, -20}, {4, 5, -15}, {0, 5, -10}, {-4, 5, -15}, {0, 5, -20}}, "巡回足場1: 水平移動"},
-        {{{0, 5, -5}, {4, 5, -5}, {0, 5, -5}, {-4, 5, -5}, {0, 5, -5}}, "巡回足場2: 水平移動"},
-        {{{0, 5, 0}, {0, 5, 0}, {0, 10, 0}, {0, 10, 0}, {0, 5, 0}}, "巡回足場3: 垂直移動"},
-        {{{0, 10, 5}, {4, 10, 10}, {0, 10, 5}, {-4, 10, 10}, {0, 10, 5}}, "巡回足場4: 複合移動"}
-    });
-
-
-    
-    // 重力反転エリア内の足場（天井に配置）
-    // platformSystem.addPlatform(GameState::StaticPlatform(
-    //     glm::vec3(0, 12, -15), glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.8f, 0.2f)
-    // ));
-    // platformSystem.addPlatform(GameState::StaticPlatform(
-    //     glm::vec3(0, 15, -10), glm::vec3(2.5f, 1, 2.5f), glm::vec3(0.8f, 0.2f, 0.8f)
-    // ));
-    // platformSystem.addPlatform(GameState::StaticPlatform(
-    //     glm::vec3(0, 18, -5), glm::vec3(2.5f, 1, 2.5f), glm::vec3(0.8f, 0.2f, 0.8f)
-    // ));
-    
-    // 重力反転エリアを生成
-    // gameState.gravityZones.clear();
-    // GameState::GravityZone gravityZone;
-    // gravityZone.position = glm::vec3(0, 8, -15);
-    // gravityZone.size = glm::vec3(8, 2, 8);
-    // gravityZone.gravityDirection = glm::vec3(0, 1, 0);
-    // gravityZone.radius = 4.0f;
-    // gravityZone.isActive = true;
-    // gameState.gravityZones.push_back(gravityZone);
+void StageManager::generateStage2(GameState& gameState, PlatformSystem& platformSystem) {
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage2.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load stage2 from JSON\n");
+        return;
+    }
+    printf("Successfully loaded stage2 from JSON\n");
 }
 
 void StageManager::generateStage3(GameState& gameState, PlatformSystem& platformSystem) {
-    StageUtils::createItems(gameState, platformSystem, {
-        // {{x, y, z}, color, description}
-        {{-8, 5, -8}, Colors::RED, "アイテム1: スタート足場の右側"},
-        {{13, 11, 8}, Colors::GREEN, "アイテム2: スタート足場の左側"},
-        {{18, 11, 32}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
-    });
-    
-    StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        // {{x, y, z}, {size_x, size_y, size_z}, color, description}
-        {{0, 5, -25}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        {{5, 5, 4}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        {{0, 11, 15}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        {{2, 11, 53}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
-    });
-    
-    // 可変長サイクリングディスアピアリングプラットフォーム生成（個別配置）
-    std::vector<CyclingDisappearingConfig> cycleConfigs1 = {
-        {glm::vec3(7, 7, 8), glm::vec3(3, 1, 3), Colors::ORANGE, 6.0f, 4.0f, 1.0f, "サイクル消える足場1"},
-        {glm::vec3(3, 9, 8), glm::vec3(3, 1, 3), Colors::PURPLE, 6.0f, 4.0f, 1.0f, "サイクル消える足場2"},
-        {glm::vec3(7, 11, 8), glm::vec3(3, 1, 3), Colors::PURPLE, 6.0f, 4.0f, 1.0f, "サイクル消える足場2"},
-        {glm::vec3(7, 11, 15), glm::vec3(3, 1, 3), Colors::PURPLE, 6.0f, 4.0f, 1.0f, "サイクル消える足場2"}
-    };
-    StageUtils::createCyclingDisappearingPlatforms(gameState, platformSystem, cycleConfigs1);
-    
-    // 可変長連続サイクリングプラットフォーム生成（開始位置、プラットフォーム数、間隔、サイズ、色、表示時間、非表示時間、点滅時間、遅延時間、方向、逆順タイマーを指定）
-    StageUtils::createConsecutiveCyclingPlatforms(gameState, platformSystem, {
-        // {{start_x, start_y, start_z}, count, spacing, {size_x, size_y, size_z}, color, visible_time, invisible_time, blink_time, delay, {direction_x, direction_y, direction_z}, reverse_timer}
-        {{0, 5, -20}, 5, 6.0f, {3, 1, 3}, Colors::CYAN, 12.0f, 6.0f, 0.5f, 1.0f, {0, 0, 1}, true},
-        {{0, 11, 20}, 3, 6.0f, {3, 1, 3}, Colors::CYAN, 12.0f, 6.0f, 0.5f, 1.0f, {1, 0, 1}, true},
-        {{8, 11, 40}, 2, 6.0f, {3, 1, 3}, Colors::CYAN, 12.0f, 6.0f, 0.5f, 1.0f, {-1, 0, 1}, true}
-    });
-    
-    // スイッチで操作される足場（最初は非表示）
-    // platformSystem.addPlatform(GameState::StaticPlatform(
-    //     glm::vec3(0, 5, -15), glm::vec3(3, 1, 3), glm::vec3(1.0f, 0.2f, 0.2f)
-    // ));
-    
-    // スイッチを生成
-    // gameState.switches.clear();
-    // GameState::Switch switch1;
-    // switch1.position = glm::vec3(-1, 6.5, -25);
-    // switch1.size = glm::vec3(1, 0.5, 1);
-    // switch1.color = glm::vec3(1.0f, 0.2f, 0.2f);
-    // switch1.isPressed = false;
-    // switch1.isToggle = true;
-    // switch1.targetPlatformIndices = {1};
-    // switch1.targetStates = {true};
-    // switch1.pressTimer = 0.0f;
-    // switch1.cooldownTimer = 0.0f;
-    // switch1.isMultiSwitch = false;
-    // switch1.multiSwitchGroup = -1;
-    // gameState.switches.push_back(switch1);
-    
-    // 大砲を生成
-    // gameState.cannons.clear();
-    // GameState::Cannon cannon1;
-    // cannon1.position = glm::vec3(5, 5, -10);
-    // cannon1.size = glm::vec3(2, 2, 2);
-    // cannon1.color = glm::vec3(0.8f, 0.4f, 0.2f);
-    // cannon1.targetPosition = glm::vec3(0, 15, 10);
-    // cannon1.power = 15.0f;
-    // cannon1.isActive = true;
-    // cannon1.hasPlayerInside = false;
-    // cannon1.cooldownTimer = 0.0f;
-    // cannon1.cooldownTime = 2.0f;
-    
-    // 発射方向を計算
-    // glm::vec3 direction = glm::normalize(cannon1.targetPosition - cannon1.position);
-    // float distance = glm::length(cannon1.targetPosition - cannon1.position);
-    // float gravity = 9.8f;
-    // float timeToTarget = sqrt(2.0f * distance / gravity);
-    // cannon1.launchDirection = direction * cannon1.power;
-    // cannon1.launchDirection.y = (cannon1.targetPosition.y - cannon1.position.y) / timeToTarget + 0.5f * gravity * timeToTarget;
-    
-    // gameState.cannons.push_back(cannon1);
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage3.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load stage3 from JSON\n");
+        return;
+    }
+    printf("Successfully loaded stage3 from JSON\n");
 }
 
 void StageManager::generateStage4(GameState& gameState, PlatformSystem& platformSystem) {
-    // アイテム生成
-    StageUtils::createItems(gameState, platformSystem, {
-        // {{x, y, z}, color, description}
-        {{-9, 5, -12}, Colors::RED, "アイテム1: スタート足場の右側"},
-        {{3, 12, -12}, Colors::GREEN, "アイテム2: スタート足場の左側"},
-        {{-3, 12, 3}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
-    });
-    
-    // 静的プラットフォーム生成
-    StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        // {{x, y, z}, {size_x, size_y, size_z}, color, description}
-        {{0, 5, -25}, {4, 1, 4}, Colors::GREEN, "スタート足場"},
-        {{-9, 12, 15}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
-    });
-    
-    // 飛行足場のターゲット位置を定義
-    std::vector<glm::vec3> stage1TargetPositions = {
-        {0, 5, -21}, {0, 5, -18}, {3, 5, -18}, {3, 5, -15}, {3, 5, -12},
-        {0, 5, -12}, {-3, 5, -12}, {-3, 5, -9}, {-3, 6, -6}, {-6, 7, -6},
-        {-9, 8, -6}, {-9, 9, -9}, {-9, 10, -12}, {-6, 11, -12}, {-3, 12, -12},
-        {-12, 11, -12}, {-15, 12, -12}, {-15, 12, -9}, {-15, 12, -6}, {-12, 12, -3},
-        {-15, 12, 0}, {-12, 12, 3}, {-9, 12, 3}, {-15, 12, 6}, {-15, 12, 9}
-    };
-    
-    // FlyingPlatform生成（近づくと飛んでくる足場）
-    std::vector<std::tuple<std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, float, float, std::string>> flyingPlatforms;
-    for (const auto& target : stage1TargetPositions) {
-        flyingPlatforms.push_back({
-            {target.x, target.y, target.z},  // position
-            {3, 1, 3},                       // size
-            {target.x, target.y - 1, target.z}, // spawn position
-            {target.x, target.y, target.z},  // target position
-            20.0f,                           // speed
-            2.5f,                            // range
-            "右から飛んでくる足場"
-        });
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage4.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load stage4 from JSON\n");
+        return;
     }
-    StageUtils::createFlyingPlatforms(gameState, platformSystem, flyingPlatforms);
+    printf("Successfully loaded stage4 from JSON\n");
 }
 
 void StageManager::generateStage5(GameState& gameState, PlatformSystem& platformSystem) {
-    std::vector<std::vector<glm::vec3>> patrolPaths={
-        {{-10, 5, -21}, {10, 5, -21}, {10, 5, -2}, {-10, 5, -2}, {-10, 5, -21}},
-        {{7, 5, -8}, {7, 5, -13}, {-7, 5, -13}, {-7, 5, -8}, {7, 5, -8}},
-        {{4, 10, 16}, {0, 10, 16}, {0, 14, 16}, {0, 10, 16}, {4, 10, 16}},
-        {{4, 14, 18}, {8, 14, 22}, {8, 14, 22}, {4, 14, 18}, {4, 14, 18}},
-        {{0, 14, 76}, {6, 14, 80}, {0, 14, 84}, {-6, 14, 80}, {0, 14, 76}},
-        {{-18, 14, 88}, {-12, 14, 92}, {-6, 14, 88}, {-12, 14, 84}, {-18, 14, 88}},
-    };
-    std::vector<glm::vec3> targetPositions = {
-        {0, 3, 10},
-        {0, 3, 13},
-        {0, 9, 36},
-        {0, 9, 39},
-        {0, 9, 42},
-        {0, 9, 45},
-        {3, 10, 45},
-        {6, 11, 45},
-        {6, 12, 42},
-        {6, 13, 39},
-        {-12, 16, 107},
-        {-12, 16, 110},
-        {-12, 16, 113},
-        {-12, 16, 116},
-        {-12, 16, 119},
-        {-12, 16, 122},
-        {-12, 16, 125},
-        {-12, 16, 128},
-        {-12, 16, 131},
-        {-12, 16, 134},
-        {-12, 16, 137},
-        {-12, 16, 140},
-        {-12, 16, 143},
-        {-12, 16, 146},
-        {-12, 16, 149},
-        {-9, 16, 149},
-        {-9, 16, 151},
-        {-9, 16, 154},
-        {-9, 16, 157},
-        {-12, 16, 157},
-        {-12, 16, 160},
-        {-12, 16, 163},
-        {-12, 16, 166},
-        {-12, 16, 169},
-    };
-    std::vector<CyclingDisappearingConfig> cycleConfigs;
-    cycleConfigs.push_back({ {0, 5, 16},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {4, 7, 20}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {8, 9, 16}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {0, 14, 28}, {3, 1, 3}, Colors::ORANGE, 4.0f, 2.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-3, 3, 27}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
-
-    cycleConfigs.push_back({ {0, 14, 46}, {3, 1, 3}, Colors::ORANGE, 6.0f, 3.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {5, 14, 46}, {3, 1, 3}, Colors::ORANGE, 7.0f, 3.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-5, 14, 46}, {3, 1, 3}, Colors::ORANGE, 8.0f, 3.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {0, 14, 52}, {3, 1, 3}, Colors::ORANGE, 6.0f, 4.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {5, 14, 52}, {3, 1, 3}, Colors::ORANGE, 7.0f, 4.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-5, 14, 52}, {3, 1, 3}, Colors::ORANGE, 8.0f, 4.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {0, 14, 58}, {3, 1, 3}, Colors::ORANGE, 6.0f, 5.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {5, 14, 58}, {3, 1, 3}, Colors::ORANGE, 7.0f, 5.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-5, 14, 58}, {3, 1, 3}, Colors::ORANGE, 8.0f, 5.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {0, 14, 64}, {3, 1, 3}, Colors::ORANGE, 6.0f, 3.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {5, 14, 64}, {3, 1, 3}, Colors::ORANGE, 7.0f, 4.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-5, 14, 64}, {3, 1, 3}, Colors::ORANGE, 8.0f, 5.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {0, 14, 70}, {3, 1, 3}, Colors::ORANGE, 6.0f, 5.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {5, 14, 70}, {3, 1, 3}, Colors::ORANGE, 7.0f, 3.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-5, 14, 70}, {3, 1, 3}, Colors::ORANGE, 8.0f, 4.0f, 1.0f, "サイクル消える足場1" });
-    cycleConfigs.push_back({ {-12, 14, 98}, {3, 1, 3}, Colors::ORANGE, 4.0f, 2.0f, 1.0f, "サイクル消える足場1" });
-    // アイテム生成
-    StageUtils::createItems(gameState, platformSystem, {
-        // {{x, y, z}, color, description}
-        {{0, 5, 3}, Colors::RED, "アイテム1: スタート足場の右側"},
-        {{0, 14, 40}, Colors::GREEN, "アイテム2: スタート足場の左側"},
-        {{-12, 16, 104}, Colors::BLUE, "アイテム3: スタート足場の後ろ側"}
-    });
-    StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        // {{x, y, z}, {size_x, size_y, size_z}, color, description}
-        {{0, 5, -25}, {4, 1, 4}, Colors::GRAY, "スタート足場"},
-        {{10, 5, -15}, {3, 5, 1}, Colors::GRAY, "スタート足場"},
-        {{-12, 16, 170}, {4, 1, 4}, Colors::YELLOW, "ゴール足場"}
-    });
-    StageUtils::createPatrolPlatforms(gameState, platformSystem, patrolPaths, "ステージ選択エリア");
-    StageUtils::createCyclingDisappearingPlatforms(gameState, platformSystem, cycleConfigs);
-    std::vector<std::tuple<std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, float, float, std::string>> flyingPlatforms2;
-    for (const auto& target : targetPositions) {
-        flyingPlatforms2.push_back({
-            {target.x, target.y, target.z},  // position
-            {3, 1, 3},                       // size
-            {target.x, target.y - 1, target.z}, // spawn position
-            {target.x, target.y, target.z},  // target position
-            20.0f,                           // speed
-            2.5f,                            // range
-            "右から飛んでくる足場"
-        });
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage5.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load stage5 from JSON\n");
+        return;
     }
-    StageUtils::createFlyingPlatforms(gameState, platformSystem, flyingPlatforms2);
+    printf("Successfully loaded stage5 from JSON\n");
 }
 
 // ステージ選択フィールドの生成
 void StageManager::generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem) {
     platformSystem.clear();
+    
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage_selection.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load stage selection from JSON\n");
+        return;
+    }
+    printf("Successfully loaded stage selection from JSON\n");
+    
+    // 以下は元のコード（条件付きで追加の足場を生成する場合に使用）
+    /*
     std::vector<std::vector<glm::vec3>> patrolPaths={
         {{14, 0, 10}, {18, 0, 10}, {18, 0, 10}, {18, 0, 10}, {14, 0, 10}},
         {{22, 0, 14}, {22, 0, 10}, {22, 0, 10}, {22, 0, 10}, {22, 0, 14}},
@@ -738,6 +479,7 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
     StageUtils::createCyclingDisappearingPlatforms(gameState, platformSystem, cycleConfigs);
     
     
+    */
 }
 
 // 星数管理メソッドの実装
@@ -778,16 +520,16 @@ void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& p
     gameState.earnedItems = 0;
     gameState.totalItems = 3;
 
-    StageUtils::createItems(gameState, platformSystem, {
-        {{2, 0, 9.5}, Colors::RED, "Tutorial Item1"},
-        {{8.5, 0, 3}, Colors::GREEN, "Tutorial Item2"},
-        {{-4.5, 0, 3}, Colors::BLUE, "Tutorial Item3"},
-    });
+    // JSONファイルから読み込み
+    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/tutorial.json", gameState, platformSystem)) {
+        printf("ERROR: Failed to load tutorial from JSON\n");
+        return;
+    }
+    printf("Successfully loaded tutorial from JSON\n");
     
-    // チュートリアル用の簡単な足場を作成
-    StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        {{2, 0, 3}, {10, 1, 10}, glm::vec3(0.3f, 0.3f, 0.3f), "Tutorial Platform"},
-        {{2, 0, 16}, {4, 1, 4}, Colors::YELLOW, "Tutorial Platform"},
-    });
+    // JSON読み込み後にチュートリアル開始位置を再設定（復活用）
+    gameState.tutorialStartPosition = gameState.playerPosition;
+    printf("TUTORIAL: Start position set to (%.1f, %.1f, %.1f)\n", 
+           gameState.tutorialStartPosition.x, gameState.tutorialStartPosition.y, gameState.tutorialStartPosition.z);
     
 }
