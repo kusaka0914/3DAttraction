@@ -183,7 +183,7 @@ struct GameState {
     
     // 星数管理システム
     std::map<int, int> stageStars;
-    int totalStars = 0;
+    int totalStars = 100;
     std::map<int, bool> unlockedStages;
     
     // アイテム管理システム

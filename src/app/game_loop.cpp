@@ -19,6 +19,7 @@
 #include "../core/utils/physics_utils.h"
 #include "../io/input_system.h"
 #include "../io/audio_manager.h"
+#include "../gfx/minimap_renderer.h"
 #include "tutorial_manager.h"
 #include <set>
 #include <map>
@@ -1128,6 +1129,12 @@ namespace GameLoop {
                         // 時間停止スキルUIを描画
                         uiRenderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
                                                   gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
+                        
+                        // ミニマップを描画（ステージ0とエンディングシーケンス中は非表示）
+                        if (stageManager.getCurrentStage() != 0 && !gameState.isEndingSequence) {
+                            static gfx::MinimapRenderer minimapRenderer;
+                            minimapRenderer.render(gameState, platformSystem, width, height, stageManager.getCurrentStage(), 30.0f);
+                        }
                     }
                 }
             }

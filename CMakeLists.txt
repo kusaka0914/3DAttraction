@@ -53,6 +53,7 @@ add_executable(SlimesSkyTravel
     src/gfx/game_state_ui_renderer.cpp
     src/gfx/renderer_3d.cpp
     src/gfx/texture_manager.cpp
+    src/gfx/minimap_renderer.cpp
     src/game/game_state.cpp
     src/game/stage_manager.cpp
     src/game/platform_system.cpp
