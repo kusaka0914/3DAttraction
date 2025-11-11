@@ -1,45 +1,34 @@
-## ゲームを開始する手順
+━━━━━━━━━━━━━━━━━━━━
+■ゲームの概要
 
-### 1. 依存関係のインストール
+【ゲームタイトル】Slime's Sky Travel
+【ジャンル】アドベンチャー
+【特徴】空中に浮かぶ足場から次の足場へとジャンプで移動し、ステージ上に落ちている3つのアイテムを全て集めてゴールを目指す、アトラクションのようなゲームです。本作の特徴として、ゲームプレイ中に[T]キーを押すことでプレイヤーの速度を上昇させる機能があります。プレイヤー速度が上昇する一方、ステージ上のギミックの速度も上がってしまうため少し難しくなります。また、プレイヤー速度上昇により、キャラクターの制御も難しくなります。クリアタイムに応じて獲得できる星の数が変わるので、プレイヤーの速度をできるだけ速く保ち、高速で動くギミックに対応してゴールを目指してください。
+【プレイ時間】10分～30分程度
+【ゲーム制作者】日下　拓海
 
-#### macOS
-```bash
-# Xcode Command Line Tools (必須)
-xcode-select --install
+━━━━━━━━━━━━━━━━━━━━
+■ゲームの起動方法
 
-# Homebrewでライブラリをインストール
-brew install cmake glfw glm
-```
+圧縮ファイルを展開し、「SlimesSkyTravel.exe」ファイルをダブルクリックしてください。
 
-#### Ubuntu/Debian
-```bash
-sudo apt update
-sudo apt install build-essential cmake libglfw3-dev libglm-dev libgl1-mesa-dev
-```
+━━━━━━━━━━━━━━━━━━━━
+■アンインストール方法
 
-#### Windows
-```cmd
-# Chocolateyを使用する場合
-choco install cmake glfw glm
+展開したファイルをすべて削除してください。
 
-# または、手動でインストール
-# 1. CMake: https://cmake.org/download/ からダウンロード
-# 2. GLFW: https://www.glfw.org/download.html からダウンロード
-# 3. GLM: https://github.com/g-truc/glm/releases からダウンロード
+━━━━━━━━━━━━━━━━━━━━
+■基本操作
 
-# ビルドツール（必須）
-# Visual Studio Build Tools または MinGW-w64 をインストール
-# https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
-```
+▼キーボード操作の場合
+[WASDキー] ：移動
+[Space] ：ジャンプ
+[T] ：速度変更(1x,2x,3x)
 
-### 2. ゲームの起動
+━━━━━━━━━━━━━━━━━━━━
+■クレジット（敬称略/順不同）
 
-#### macOS/Linux
-```bash
-./start_game.sh
-```
+サウンド: 魔王魂
+https://maou.audio/
 
-#### Windows
-```cmd
-start_game.bat
-```
+━━━━━━━━━━━━━━━━━━━━
