@@ -599,7 +599,7 @@ namespace GameLoop {
         
         // プラットフォーム衝突判定（インデックス付き）
         auto collisionResult = platformSystem.checkCollisionWithIndex(gameState.playerPosition, playerSize);
-        PlatformVariant* currentPlatform = collisionResult.first;
+        GameState::PlatformVariant* currentPlatform = collisionResult.first;
         int currentPlatformIndex = collisionResult.second;
         
         // 足場衝突処理

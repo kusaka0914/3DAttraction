@@ -1,13 +1,14 @@
 #pragma once
 
 #include "game_state.h"
+#include "../core/types/platform_types.h"
 #include <vector>
 #include <functional>
 
 // 新しい分離型設計のプラットフォームシステム
 class PlatformSystem {
 private:
-    std::vector<PlatformVariant> platforms;
+    std::vector<GameState::PlatformVariant> platforms;
     
 public:
     // プラットフォームの追加
@@ -20,10 +21,10 @@ public:
     void update(float deltaTime, const glm::vec3& playerPos = glm::vec3(0));
     
     // 衝突判定（インデックス付き）
-    std::pair<PlatformVariant*, int> checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize);
+    std::pair<GameState::PlatformVariant*, int> checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize);
     
     // 全てのプラットフォームの取得
-    const std::vector<PlatformVariant>& getPlatforms() const { return platforms; }
+    const std::vector<GameState::PlatformVariant>& getPlatforms() const { return platforms; }
     
     // プラットフォームのクリア
     void clear() { platforms.clear(); }

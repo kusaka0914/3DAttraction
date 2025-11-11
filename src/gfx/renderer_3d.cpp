@@ -1,4 +1,3 @@
-#include <GL/glew.h>
 #include "renderer_3d.h"
 #include "../core/constants/game_constants.h"
 #include "texture_manager.h"

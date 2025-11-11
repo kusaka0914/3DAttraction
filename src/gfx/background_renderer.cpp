@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include "background_renderer.h"
 #include <iostream>
 #include <cmath>
