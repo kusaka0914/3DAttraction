@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include <variant>
 #include <glm/gtc/matrix_transform.hpp>
 #include "../core/constants/game_constants.h"
 #include "../core/constants/debug_config.h"
@@ -598,7 +599,7 @@ namespace GameLoop {
         
         // プラットフォーム衝突判定（インデックス付き）
         auto collisionResult = platformSystem.checkCollisionWithIndex(gameState.playerPosition, playerSize);
-        GameState::PlatformVariant* currentPlatform = collisionResult.first;
+        PlatformVariant* currentPlatform = collisionResult.first;
         int currentPlatformIndex = collisionResult.second;
         
         // 足場衝突処理

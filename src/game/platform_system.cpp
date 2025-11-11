@@ -1,4 +1,5 @@
 #include "platform_system.h"
+#include <variant>
 #include <algorithm>
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,7 +20,7 @@ void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos) {
     }
 }
 
-std::pair<GameState::PlatformVariant*, int> PlatformSystem::checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize) {
+std::pair<PlatformVariant*, int> PlatformSystem::checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (int i = 0; i < platforms.size(); i++) {
         auto& platform = platforms[i];
         bool collision = std::visit(overloaded{
