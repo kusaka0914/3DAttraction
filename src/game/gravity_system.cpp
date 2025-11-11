@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "gravity_system.h"
 
 // 重力反転エリアの更新

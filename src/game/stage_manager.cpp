@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "stage_manager.h"
 #include "json_stage_loader.h"
 #include "../core/constants/game_constants.h"

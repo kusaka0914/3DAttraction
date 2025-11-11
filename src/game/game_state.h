@@ -1,8 +1,14 @@
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <vector>
 #include <map>
+#include <string>
 #include <glm/glm.hpp>
+#include "../core/types/platform_types.h"
 
 struct GameState {
     // プレイヤー
@@ -19,9 +25,6 @@ struct GameState {
     glm::vec3 goalPosition = glm::vec3(0, 2.0f, 20);
     glm::vec3 goalColor = glm::vec3(1, 1, 0);
     bool gameWon = false;
-    
-    // 分離された足場データ
-    #include "../core/types/platform_types.h"
     
     // 足場
     struct Platform {

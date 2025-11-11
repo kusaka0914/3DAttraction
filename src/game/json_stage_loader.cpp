@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "json_stage_loader.h"
 #include "../core/utils/stage_utils.h"
 #include "../core/constants/debug_config.h"
@@ -557,7 +561,7 @@ bool JsonStageLoader::parseStageSelectionAreas(const nlohmann::json& root, GameS
                 color = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（ロック中）
             }
             
-            platformSystem.addPlatform(GameState::StaticPlatform(position, size, color));
+            platformSystem.addPlatform(StaticPlatform(position, size, color));
             printf("Created stage %d selection area at (%.1f, %.1f, %.1f) with color (%.1f, %.1f, %.1f)\n",
                    stageNumber, position.x, position.y, position.z, color.r, color.g, color.b);
         }

@@ -1,28 +1,169 @@
 @echo off
-echo ゲームを開始します。
+echo Starting the game.
 
-REM ビルドディレクトリが存在しない場合は作成
+REM Find cmake executable
+set CMAKE_EXE=cmake
+where cmake >nul 2>&1
+if errorlevel 1 (
+    if exist "C:\Program Files\CMake\bin\cmake.exe" (
+        set CMAKE_EXE="C:\Program Files\CMake\bin\cmake.exe"
+        goto :cmake_found
+    )
+    if exist "C:\Program Files (x86)\CMake\bin\cmake.exe" (
+        set CMAKE_EXE="C:\Program Files (x86)\CMake\bin\cmake.exe"
+        goto :cmake_found
+    )
+    if exist "%LOCALAPPDATA%\Programs\CMake\bin\cmake.exe" (
+        set CMAKE_EXE="%LOCALAPPDATA%\Programs\CMake\bin\cmake.exe"
+        goto :cmake_found
+    )
+    echo CMake not found. Please install CMake or add it to your PATH.
+    echo You can download CMake from: https://cmake.org/download/
+    pause
+    exit /b 1
+)
+:cmake_found
+
+REM Find vcpkg toolchain file
+set VCPKG_TOOLCHAIN=
+if defined VCPKG_ROOT (
+    if exist "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" (
+        set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
+        goto :vcpkg_found
+    )
+)
+if exist "C:\vcpkg\scripts\buildsystems\vcpkg.cmake" (
+    set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake"
+    goto :vcpkg_found
+)
+if exist "C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake" (
+    set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake"
+    goto :vcpkg_found
+)
+if exist "%USERPROFILE%\vcpkg\scripts\buildsystems\vcpkg.cmake" (
+    set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=%USERPROFILE%\vcpkg\scripts\buildsystems\vcpkg.cmake"
+    goto :vcpkg_found
+)
+if exist "%LOCALAPPDATA%\vcpkg\scripts\buildsystems\vcpkg.cmake" (
+    set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=%LOCALAPPDATA%\vcpkg\scripts\buildsystems\vcpkg.cmake"
+    goto :vcpkg_found
+)
+if exist "D:\vcpkg\scripts\buildsystems\vcpkg.cmake" (
+    set "VCPKG_TOOLCHAIN=-DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.cmake"
+    goto :vcpkg_found
+)
+
+REM vcpkg not found - check if we need to build
+set NEED_BUILD=1
+if exist "build\SlimesSkyTravel.exe" set NEED_BUILD=0
+if exist "build\Release\SlimesSkyTravel.exe" set NEED_BUILD=0
+if exist "build\Debug\SlimesSkyTravel.exe" set NEED_BUILD=0
+
+if %NEED_BUILD%==1 (
+    echo.
+    echo ========================================
+    echo ERROR: vcpkg is required to build this project
+    echo ========================================
+    echo.
+    echo vcpkg toolchain file not found. This project requires vcpkg to install dependencies.
+    echo.
+    echo To install vcpkg:
+    echo   1. Open PowerShell as Administrator
+    echo   2. Run: git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+    echo   3. Run: cd C:\vcpkg
+    echo   4. Run: .\bootstrap-vcpkg.bat
+    echo   5. Run: .\vcpkg install glfw3:x64-windows glm:x64-windows nlohmann-json:x64-windows sdl2-mixer:x64-windows
+    echo   6. Set environment variable: setx VCPKG_ROOT "C:\vcpkg"
+    echo.
+    echo Alternatively, you can install vcpkg to one of these locations:
+    echo   - C:\vcpkg
+    echo   - C:\tools\vcpkg
+    echo   - %USERPROFILE%\vcpkg
+    echo   - %LOCALAPPDATA%\vcpkg
+    echo   - D:\vcpkg
+    echo.
+    echo Or set the VCPKG_ROOT environment variable to point to your vcpkg installation.
+    echo.
+    pause
+    exit /b 1
+)
+
+:vcpkg_found
+
+REM Create build directory if it doesn't exist
 if not exist "build" (
-    echo ビルドディレクトリを作成しています・・・
+    echo Creating build directory...
     mkdir build
 )
 
 cd build
 
-REM ビルドが必要かチェック
-if not exist "SlimesSkyTravel.exe" (
-    echo ゲームをビルドしています・・・
-    cmake .. && cmake --build .
-    if errorlevel 1 (
-        echo ビルドに失敗しました。依存関係を確認してください。
-        pause
-        exit /b 1
-    )
-    echo ビルドが完了しました。
-) else (
-    echo 既存のビルドを使用します。
+REM Check if executable exists
+set EXE_PATH=
+if exist "SlimesSkyTravel.exe" (
+    set EXE_PATH=SlimesSkyTravel.exe
+    goto :run_game
+)
+if exist "Release\SlimesSkyTravel.exe" (
+    set EXE_PATH=Release\SlimesSkyTravel.exe
+    goto :run_game
+)
+if exist "Debug\SlimesSkyTravel.exe" (
+    set EXE_PATH=Debug\SlimesSkyTravel.exe
+    goto :run_game
 )
 
-echo ゲームを起動しています・・・
-SlimesSkyTravel.exe
+REM Clean CMake cache if it exists (to avoid platform mismatch errors)
+if exist "CMakeCache.txt" (
+    echo Cleaning CMake cache...
+    del /q CMakeCache.txt 2>nul
+    if exist "CMakeFiles" (
+        rmdir /s /q CMakeFiles 2>nul
+    )
+)
+
+REM Build the game
+echo Building the game...
+if defined VCPKG_TOOLCHAIN (
+    call %CMAKE_EXE% .. %VCPKG_TOOLCHAIN% -G "Visual Studio 17 2022" -A x64
+) else (
+    call %CMAKE_EXE% .. -G "Visual Studio 17 2022" -A x64
+)
+if errorlevel 1 (
+    echo CMake configuration failed. Please check dependencies.
+    echo Make sure vcpkg is installed and dependencies are available.
+    pause
+    exit /b 1
+)
+
+call %CMAKE_EXE% --build . --config Release
+if errorlevel 1 (
+    echo Build failed. Please check dependencies.
+    pause
+    exit /b 1
+)
+echo Build completed.
+
+REM Find executable after build
+if exist "Release\SlimesSkyTravel.exe" (
+    set EXE_PATH=Release\SlimesSkyTravel.exe
+) else if exist "Debug\SlimesSkyTravel.exe" (
+    set EXE_PATH=Debug\SlimesSkyTravel.exe
+) else if exist "SlimesSkyTravel.exe" (
+    set EXE_PATH=SlimesSkyTravel.exe
+) else (
+    echo Error: Executable not found after build.
+    pause
+    exit /b 1
+)
+
+:run_game
+if not defined EXE_PATH (
+    echo Error: Executable not found.
+    pause
+    exit /b 1
+)
+
+echo Launching the game...
+%EXE_PATH%
 pause

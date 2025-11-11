@@ -1,6 +1,11 @@
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <vector>
+#include <variant>
 #include <glm/glm.hpp>
 
 // 基底Platform構造体
@@ -128,7 +133,6 @@ struct FlyingPlatform : public BasePlatform {
 };
 
 // 全ての足場タイプを管理
-#include <variant>
 using PlatformVariant = std::variant<
     StaticPlatform,
     MovingPlatform,
