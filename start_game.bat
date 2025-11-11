@@ -62,12 +62,13 @@ if exist "build\Debug\SlimesSkyTravel.exe" set NEED_BUILD=0
 if %NEED_BUILD%==1 (
     echo.
     echo ========================================
-    echo ERROR: vcpkg is required to build this project
+    echo WARNING: vcpkg not found
     echo ========================================
     echo.
-    echo vcpkg toolchain file not found. This project requires vcpkg to install dependencies.
+    echo vcpkg toolchain file not found. This project requires vcpkg to build.
     echo.
-    echo To install vcpkg:
+    echo If you have a pre-built executable, it will be used.
+    echo Otherwise, please install vcpkg:
     echo   1. Open PowerShell as Administrator
     echo   2. Run: git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
     echo   3. Run: cd C:\vcpkg
@@ -84,8 +85,6 @@ if %NEED_BUILD%==1 (
     echo.
     echo Or set the VCPKG_ROOT environment variable to point to your vcpkg installation.
     echo.
-    pause
-    exit /b 1
 )
 
 :vcpkg_found
@@ -102,59 +101,64 @@ REM Check if executable exists
 set EXE_PATH=
 if exist "SlimesSkyTravel.exe" (
     set EXE_PATH=SlimesSkyTravel.exe
-    goto :run_game
 )
 if exist "Release\SlimesSkyTravel.exe" (
     set EXE_PATH=Release\SlimesSkyTravel.exe
-    goto :run_game
 )
 if exist "Debug\SlimesSkyTravel.exe" (
     set EXE_PATH=Debug\SlimesSkyTravel.exe
-    goto :run_game
 )
 
-REM Clean CMake cache if it exists (to avoid platform mismatch errors)
+REM Check if CMake cache exists (indicates build environment is set up)
 if exist "CMakeCache.txt" (
-    echo Cleaning CMake cache...
-    del /q CMakeCache.txt 2>nul
-    if exist "CMakeFiles" (
-        rmdir /s /q CMakeFiles 2>nul
+    REM Build environment exists - always try to build (CMake will skip if no changes)
+    REM Clean CMake cache if needed (to avoid platform mismatch errors)
+    REM Note: We don't clean automatically to preserve incremental builds
+    
+    REM Build the game
+    echo Building the game...
+    if defined VCPKG_TOOLCHAIN (
+        call %CMAKE_EXE% .. %VCPKG_TOOLCHAIN% -G "Visual Studio 17 2022" -A x64
+    ) else (
+        call %CMAKE_EXE% .. -G "Visual Studio 17 2022" -A x64
     )
-)
-
-REM Build the game
-echo Building the game...
-if defined VCPKG_TOOLCHAIN (
-    call %CMAKE_EXE% .. %VCPKG_TOOLCHAIN% -G "Visual Studio 17 2022" -A x64
+    if errorlevel 1 (
+        echo CMake configuration failed. Please check dependencies.
+        echo Make sure vcpkg is installed and dependencies are available.
+        pause
+        exit /b 1
+    )
+    
+    call %CMAKE_EXE% --build . --config Release
+    if errorlevel 1 (
+        echo Build failed. Please check dependencies.
+        pause
+        exit /b 1
+    )
+    echo Build completed.
+    
+    REM Update EXE_PATH after build
+    if exist "Release\SlimesSkyTravel.exe" (
+        set EXE_PATH=Release\SlimesSkyTravel.exe
+    ) else if exist "Debug\SlimesSkyTravel.exe" (
+        set EXE_PATH=Debug\SlimesSkyTravel.exe
+    ) else if exist "SlimesSkyTravel.exe" (
+        set EXE_PATH=SlimesSkyTravel.exe
+    )
 ) else (
-    call %CMAKE_EXE% .. -G "Visual Studio 17 2022" -A x64
-)
-if errorlevel 1 (
-    echo CMake configuration failed. Please check dependencies.
-    echo Make sure vcpkg is installed and dependencies are available.
-    pause
-    exit /b 1
-)
-
-call %CMAKE_EXE% --build . --config Release
-if errorlevel 1 (
-    echo Build failed. Please check dependencies.
-    pause
-    exit /b 1
-)
-echo Build completed.
-
-REM Find executable after build
-if exist "Release\SlimesSkyTravel.exe" (
-    set EXE_PATH=Release\SlimesSkyTravel.exe
-) else if exist "Debug\SlimesSkyTravel.exe" (
-    set EXE_PATH=Debug\SlimesSkyTravel.exe
-) else if exist "SlimesSkyTravel.exe" (
-    set EXE_PATH=SlimesSkyTravel.exe
-) else (
-    echo Error: Executable not found after build.
-    pause
-    exit /b 1
+    REM No build environment - check if executable exists
+    if not defined EXE_PATH (
+        echo.
+        echo ========================================
+        echo ERROR: No executable found and no build environment
+        echo ========================================
+        echo.
+        echo Please build the game first or set up the build environment.
+        echo.
+        pause
+        exit /b 1
+    )
+    echo Using existing executable (no build environment detected)
 )
 
 :run_game
