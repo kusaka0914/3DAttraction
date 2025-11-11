@@ -4,7 +4,7 @@
     "stageName": "最終ステージ",
     "playerStartPosition": [0, 6.0, -25.0],
     "goalPosition": [-12, 16, 170],
-    "timeLimit": 1200.0,
+    "timeLimit": 120.0,
     "isUnlocked": true
   },
   "items": [

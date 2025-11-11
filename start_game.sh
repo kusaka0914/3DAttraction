@@ -1,28 +1,34 @@
 #!/bin/bash
 
-echo "🎮 Vulkan3D ゲームを開始します..."
+echo "ゲームを開始します。"
 
 # ビルドディレクトリが存在しない場合は作成
 if [ ! -d "build" ]; then
-    echo "📁 ビルドディレクトリを作成中..."
+    echo "ビルドディレクトリを作成しています・・・"
     mkdir -p build
 fi
 
 cd build
 
-# ビルドが必要かチェック
-if [ ! -f "Vulkan3D" ] || [ "../CMakeLists.txt" -nt "Vulkan3D" ]; then
-    echo "🔨 ゲームをビルド中..."
-    cmake .. && make
-    if [ $? -ne 0 ]; then
-        echo "❌ ビルドに失敗しました。依存関係を確認してください。"
-        exit 1
-    fi
-    echo "✅ ビルド完了！"
+# 実行ファイル名を決定（macOSでは拡張子なし、Windowsでは.exe）
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    EXECUTABLE="SlimesSkyTravel.exe"
 else
-    echo "✅ 既存のビルドを使用します"
+    EXECUTABLE="SlimesSkyTravel"
 fi
 
-echo "🚀 ゲームを起動中..."
-./Vulkan3D
+# ビルドが必要かチェック
+if [ ! -f "$EXECUTABLE" ] || [ "../CMakeLists.txt" -nt "$EXECUTABLE" ]; then
+    echo "ゲームをビルドしています・・・"
+    cmake .. && make
+    if [ $? -ne 0 ]; then
+        echo "ビルドに失敗しました。依存関係を確認してください。"
+        exit 1
+    fi
+    echo "ビルドが完了しました。"
+else
+    echo "既存のビルドを使用します。"
+fi
 
+echo "ゲームを起動しています・・・"
+./"$EXECUTABLE"

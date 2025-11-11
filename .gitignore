@@ -36,9 +36,9 @@ Makefile
 *.exe
 *.out
 *.app
-Vulkan3D
-Vulkan3D.exe
-Vulkan3D.app
+SlimesSkyTravel
+SlimesSkyTravel.exe
+SlimesSkyTravel.app
 
 # IDE files
 .vscode/
@@ -84,3 +84,5 @@ vendor/
 
 # Cursor IDE files
 .cursor/
+
+original_main.cpp

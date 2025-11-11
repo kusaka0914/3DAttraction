@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Vulkan3D VERSION 1.0.0 LANGUAGES C CXX)
+project(SlimesSkyTravel VERSION 1.0.0 LANGUAGES C CXX)
 
 # C++20を要求
 set(CMAKE_CXX_STANDARD 20)
@@ -32,7 +32,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer)
 
 # メインアプリケーション
-add_executable(Vulkan3D 
+add_executable(SlimesSkyTravel
     src/app/main.cpp
     src/app/game_loop.cpp
     src/app/tutorial_manager.cpp
@@ -57,15 +57,20 @@ add_executable(Vulkan3D
     src/core/utils/stage_utils.cpp
 )
 
+# 実行ファイル名を元の名前に設定
+set_target_properties(SlimesSkyTravel PROPERTIES
+    OUTPUT_NAME "SlimesSkyTravel"
+)
+
 # インクルードディレクトリ
-target_include_directories(Vulkan3D PRIVATE
+target_include_directories(SlimesSkyTravel PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party
     ${SDL2_MIXER_INCLUDE_DIRS}
 )
 
 # ライブラリのリンク
-target_link_libraries(Vulkan3D
+target_link_libraries(SlimesSkyTravel
     glfw
     OpenGL::GL
     glm::glm
@@ -78,16 +83,16 @@ target_link_libraries(Vulkan3D
 
 # プラットフォーム固有の設定
 if(APPLE)
-    target_link_libraries(Vulkan3D
+    target_link_libraries(SlimesSkyTravel
         "-framework Cocoa"
         "-framework IOKit"
         "-framework CoreVideo"
     )
-    target_compile_definitions(Vulkan3D PRIVATE GL_SILENCE_DEPRECATION)
+    target_compile_definitions(SlimesSkyTravel PRIVATE GL_SILENCE_DEPRECATION)
 endif()
 
 # コンパイル定義
-target_compile_definitions(Vulkan3D PRIVATE
+target_compile_definitions(SlimesSkyTravel PRIVATE
     $<$<CONFIG:Debug>:_DEBUG>
     $<$<CONFIG:Release>:NDEBUG>
 )

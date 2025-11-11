@@ -1,0 +1,59 @@
+name: Build Windows Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure (CMake - Release x64)
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --target ALL_BUILD
+
+      # 必要なら assets/shaders をビルド後にコピー
+      - name: Gather files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\3DAttraction | Out-Null
+          Copy-Item build\Release\*.exe dist\3DAttraction\
+          if (Test-Path assets) { Copy-Item assets dist\3DAttraction\assets -Recurse }
+          if (Test-Path shaders) { Copy-Item shaders dist\3DAttraction\shaders -Recurse }
+          # 必要なDLLをここでコピー（例: glfw3.dll, vcruntime*.dll 等）
+          # Copy-Item path\to\glfw3.dll dist\3DAttraction\
+
+          # 起動BATを生成
+          @'
+          @echo off
+          cd /d "%~dp0"
+          set "PATH=%CD%;%PATH%"
+          if not exist "Saved" mkdir "Saved"
+          start "" /D "%CD%" "3DAttraction.exe"
+          '@ | Out-File -Encoding ascii dist\3DAttraction\start_game.bat
+
+          Compress-Archive -Path dist\3DAttraction -DestinationPath 3DAttraction_win_${{ github.ref_name }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: 3DAttraction_win_${{ github.ref_name }}.zip
+
+      # タグ push のとき Release を自動作成＆zip添付
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: 3DAttraction_win_${{ github.ref_name }}.zip
+          generate_release_notes: true
