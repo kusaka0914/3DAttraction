@@ -16,8 +16,18 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Install vcpkg
+        uses: microsoft/setup-vcpkg@v3
+
+      - name: Install dependencies
+        run: |
+          vcpkg install glfw3:x64-windows glm:x64-windows nlohmann-json:x64-windows sdl2-mixer:x64-windows
+
       - name: Configure (CMake - Release x64)
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
 
       - name: Build
         run: cmake --build build --config Release --target ALL_BUILD
