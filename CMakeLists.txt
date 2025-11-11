@@ -28,8 +28,15 @@ find_package(nlohmann_json REQUIRED)
 # find_package(stb REQUIRED)
 
 # Audio libraries - using SDL2_mixer for cross-platform audio
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer)
+if(WIN32)
+    # WindowsではvcpkgでインストールしたSDL2_mixerを使用
+    find_package(SDL2_mixer REQUIRED)
+    set(SDL2_MIXER_INCLUDE_DIRS ${SDL2_MIXER_INCLUDE_DIR})
+else()
+    # Linux/macOSではPkgConfigを使用
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer)
+endif()
 
 # メインアプリケーション
 add_executable(SlimesSkyTravel
@@ -63,32 +70,50 @@ set_target_properties(SlimesSkyTravel PROPERTIES
 )
 
 # インクルードディレクトリ
-target_include_directories(SlimesSkyTravel PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
-    ${SDL2_MIXER_INCLUDE_DIRS}
-)
+if(WIN32)
+    target_include_directories(SlimesSkyTravel PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+        ${SDL2_MIXER_INCLUDE_DIR}
+    )
+else()
+    target_include_directories(SlimesSkyTravel PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+        ${SDL2_MIXER_INCLUDE_DIRS}
+    )
+endif()
 
-# ライブラリのリンク
+# ライブラリのリンク（共通）
 target_link_libraries(SlimesSkyTravel
     glfw
     OpenGL::GL
     glm::glm
     nlohmann_json::nlohmann_json
-    ${SDL2_MIXER_LIBRARIES}
-    -L/opt/homebrew/Cellar/sdl2_mixer/2.8.1_1/lib -lSDL2_mixer
-    -L/opt/homebrew/lib -lSDL2
-    # stb::stb
 )
 
-# プラットフォーム固有の設定
-if(APPLE)
+# プラットフォーム固有のライブラリリンク
+if(WIN32)
+    # WindowsではvcpkgでインストールしたSDL2_mixerをリンク
     target_link_libraries(SlimesSkyTravel
+        SDL2_mixer::SDL2_mixer
+    )
+elseif(APPLE)
+    # macOS固有の設定
+    target_link_libraries(SlimesSkyTravel
+        ${SDL2_MIXER_LIBRARIES}
+        -L/opt/homebrew/Cellar/sdl2_mixer/2.8.1_1/lib -lSDL2_mixer
+        -L/opt/homebrew/lib -lSDL2
         "-framework Cocoa"
         "-framework IOKit"
         "-framework CoreVideo"
     )
     target_compile_definitions(SlimesSkyTravel PRIVATE GL_SILENCE_DEPRECATION)
+else()
+    # Linux
+    target_link_libraries(SlimesSkyTravel
+        ${SDL2_MIXER_LIBRARIES}
+    )
 endif()
 
 # コンパイル定義

@@ -5,6 +5,11 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <cstdio>
+#endif
 
 // ファイル存在チェック関数（シンプル版）
 bool JsonStageLoader::fileExists(const std::string& filename) {
@@ -19,15 +24,22 @@ bool JsonStageLoader::fileExists(const std::string& filename) {
 }
 
 bool JsonStageLoader::loadStageFromJSON(const std::string& filename, GameState& gameState, PlatformSystem& platformSystem) {
-    // 作業ディレクトリを確認（getcwdを使わない方法）
-    FILE* pipe = popen("pwd", "r");
-    if (pipe) {
+    // 作業ディレクトリを確認（プラットフォーム非依存）
+    #ifdef _WIN32
         char buffer[256];
-        if (fgets(buffer, sizeof(buffer), pipe)) {
-            printf("DEBUG: Current working directory: %s", buffer);
+        if (GetCurrentDirectoryA(256, buffer)) {
+            printf("DEBUG: Current working directory: %s\n", buffer);
         }
-        pclose(pipe);
-    }
+    #else
+        FILE* pipe = popen("pwd", "r");
+        if (pipe) {
+            char buffer[256];
+            if (fgets(buffer, sizeof(buffer), pipe)) {
+                printf("DEBUG: Current working directory: %s", buffer);
+            }
+            pclose(pipe);
+        }
+    #endif
     if (!fileExists(filename)) {
         printf("ERROR: Stage file not found: %s\n", filename.c_str());
         return false;

@@ -3,7 +3,11 @@
 #include <string>
 #include <map>
 #include <memory>
-#include <SDL2/SDL_mixer.h>
+#ifdef _WIN32
+    #include <SDL_mixer.h>
+#else
+    #include <SDL2/SDL_mixer.h>
+#endif
 
 namespace io {
 
