@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "game_state_ui_renderer.h"
 #include <iostream>
 #include <cmath>

@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "opengl_renderer.h"
 #include "../core/constants/game_constants.h"
 #include <iostream>

@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "input_system.h"
 #include "../physics/physics_system.h"
 #include "../core/constants/game_constants.h"

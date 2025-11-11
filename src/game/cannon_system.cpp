@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "cannon_system.h"
 #include <iostream>
 #include <cmath>

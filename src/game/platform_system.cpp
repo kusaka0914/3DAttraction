@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "platform_system.h"
 #include <variant>
 #include <algorithm>
@@ -7,24 +11,24 @@
 void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos) {
     for (auto& platform : platforms) {
         std::visit(overloaded{
-            [this, deltaTime](GameState::StaticPlatform& p) { updateStaticPlatform(p, deltaTime); },
-            [this, deltaTime](GameState::MovingPlatform& p) { updateMovingPlatform(p, deltaTime); },
-            [this, deltaTime](GameState::RotatingPlatform& p) { updateRotatingPlatform(p, deltaTime); },
-            [this, deltaTime](GameState::PatrollingPlatform& p) { updatePatrollingPlatform(p, deltaTime); },
-            [this, deltaTime](GameState::TeleportPlatform& p) { updateTeleportPlatform(p, deltaTime); },
-            [this, deltaTime](GameState::JumpPad& p) { updateJumpPad(p, deltaTime); },
-            [this, deltaTime](GameState::CycleDisappearingPlatform& p) { updateCycleDisappearingPlatform(p, deltaTime); },
-            [this, deltaTime](GameState::DisappearingPlatform& p) { updateDisappearingPlatform(p, deltaTime); },
-            [this, deltaTime, &playerPos](GameState::FlyingPlatform& p) { updateFlyingPlatform(p, deltaTime, playerPos); }
+            [this, deltaTime](StaticPlatform& p) { updateStaticPlatform(p, deltaTime); },
+            [this, deltaTime](MovingPlatform& p) { updateMovingPlatform(p, deltaTime); },
+            [this, deltaTime](RotatingPlatform& p) { updateRotatingPlatform(p, deltaTime); },
+            [this, deltaTime](PatrollingPlatform& p) { updatePatrollingPlatform(p, deltaTime); },
+            [this, deltaTime](TeleportPlatform& p) { updateTeleportPlatform(p, deltaTime); },
+            [this, deltaTime](JumpPad& p) { updateJumpPad(p, deltaTime); },
+            [this, deltaTime](CycleDisappearingPlatform& p) { updateCycleDisappearingPlatform(p, deltaTime); },
+            [this, deltaTime](DisappearingPlatform& p) { updateDisappearingPlatform(p, deltaTime); },
+            [this, deltaTime, &playerPos](FlyingPlatform& p) { updateFlyingPlatform(p, deltaTime, playerPos); }
         }, platform);
     }
 }
 
-std::pair<GameState::PlatformVariant*, int> PlatformSystem::checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize) {
+std::pair<PlatformVariant*, int> PlatformSystem::checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize) {
     for (int i = 0; i < platforms.size(); i++) {
         auto& platform = platforms[i];
         bool collision = std::visit(overloaded{
-            [this, &playerPos, &playerSize](const GameState::RotatingPlatform& p) {
+            [this, &playerPos, &playerSize](const RotatingPlatform& p) {
                 return checkCollisionWithRotatingPlatform(p, playerPos, playerSize);
             },
             [this, &playerPos, &playerSize](const auto& p) {
@@ -97,7 +101,7 @@ std::vector<bool> PlatformSystem::getIsRotating() const {
     
     for (const auto& platform : platforms) {
         std::visit([&isRotating](const auto& p) {
-            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, GameState::RotatingPlatform>) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, RotatingPlatform>) {
                 isRotating.push_back(true);
             } else {
                 isRotating.push_back(false);
@@ -114,7 +118,7 @@ std::vector<float> PlatformSystem::getRotationAngles() const {
     
     for (const auto& platform : platforms) {
         std::visit([&rotationAngles](const auto& p) {
-            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, GameState::RotatingPlatform>) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, RotatingPlatform>) {
                 rotationAngles.push_back(p.rotationAngle);
             } else {
                 rotationAngles.push_back(0.0f);
@@ -131,7 +135,7 @@ std::vector<glm::vec3> PlatformSystem::getRotationAxes() const {
     
     for (const auto& platform : platforms) {
         std::visit([&rotationAxes](const auto& p) {
-            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, GameState::RotatingPlatform>) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, RotatingPlatform>) {
                 rotationAxes.push_back(p.rotationAxis);
             } else {
                 rotationAxes.push_back(glm::vec3(1, 0, 0));
@@ -148,7 +152,7 @@ std::vector<float> PlatformSystem::getBlinkAlphas() const {
     
     for (const auto& platform : platforms) {
         std::visit([&blinkAlphas](const auto& p) {
-            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, GameState::CycleDisappearingPlatform>) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, CycleDisappearingPlatform>) {
                 blinkAlphas.push_back(p.blinkAlpha);
             } else {
                 blinkAlphas.push_back(1.0f);
@@ -166,23 +170,23 @@ std::vector<std::string> PlatformSystem::getPlatformTypes() const {
     for (const auto& platform : platforms) {
         std::visit([&platformTypes](const auto& p) {
             using T = std::decay_t<decltype(p)>;
-            if constexpr (std::is_same_v<T, GameState::StaticPlatform>) {
+            if constexpr (std::is_same_v<T, StaticPlatform>) {
                 platformTypes.push_back("static");
-            } else if constexpr (std::is_same_v<T, GameState::MovingPlatform>) {
+            } else if constexpr (std::is_same_v<T, MovingPlatform>) {
                 platformTypes.push_back("moving");
-            } else if constexpr (std::is_same_v<T, GameState::RotatingPlatform>) {
+            } else if constexpr (std::is_same_v<T, RotatingPlatform>) {
                 platformTypes.push_back("rotating");
-            } else if constexpr (std::is_same_v<T, GameState::PatrollingPlatform>) {
+            } else if constexpr (std::is_same_v<T, PatrollingPlatform>) {
                 platformTypes.push_back("patrolling");
-            } else if constexpr (std::is_same_v<T, GameState::TeleportPlatform>) {
+            } else if constexpr (std::is_same_v<T, TeleportPlatform>) {
                 platformTypes.push_back("teleport");
-            } else if constexpr (std::is_same_v<T, GameState::JumpPad>) {
+            } else if constexpr (std::is_same_v<T, JumpPad>) {
                 platformTypes.push_back("jumppad");
-            } else if constexpr (std::is_same_v<T, GameState::CycleDisappearingPlatform>) {
+            } else if constexpr (std::is_same_v<T, CycleDisappearingPlatform>) {
                 platformTypes.push_back("cycle_disappearing");
-            } else if constexpr (std::is_same_v<T, GameState::DisappearingPlatform>) {
+            } else if constexpr (std::is_same_v<T, DisappearingPlatform>) {
                 platformTypes.push_back("disappearing");
-            } else if constexpr (std::is_same_v<T, GameState::FlyingPlatform>) {
+            } else if constexpr (std::is_same_v<T, FlyingPlatform>) {
                 platformTypes.push_back("flying");
             } else {
                 platformTypes.push_back("unknown");
@@ -194,13 +198,13 @@ std::vector<std::string> PlatformSystem::getPlatformTypes() const {
 }
 
 // 各足場タイプの更新処理
-void PlatformSystem::updateStaticPlatform(GameState::StaticPlatform& platform, float deltaTime) {
+void PlatformSystem::updateStaticPlatform(StaticPlatform& platform, float deltaTime) {
     // 静的足場は何もしない
     (void)platform;
     (void)deltaTime;
 }
 
-void PlatformSystem::updateMovingPlatform(GameState::MovingPlatform& platform, float deltaTime) {
+void PlatformSystem::updateMovingPlatform(MovingPlatform& platform, float deltaTime) {
     // 前フレームの位置を保存
     platform.previousPosition = platform.position;
     
@@ -251,7 +255,7 @@ void PlatformSystem::updateMovingPlatform(GameState::MovingPlatform& platform, f
     }
 }
 
-void PlatformSystem::updateRotatingPlatform(GameState::RotatingPlatform& platform, float deltaTime) {
+void PlatformSystem::updateRotatingPlatform(RotatingPlatform& platform, float deltaTime) {
     platform.rotationAngle += platform.rotationSpeed * deltaTime;
     // 360度を超えたら0度に戻す
     if (platform.rotationAngle >= 360.0f) {
@@ -259,7 +263,7 @@ void PlatformSystem::updateRotatingPlatform(GameState::RotatingPlatform& platfor
     }
 }
 
-void PlatformSystem::updatePatrollingPlatform(GameState::PatrollingPlatform& platform, float deltaTime) {
+void PlatformSystem::updatePatrollingPlatform(PatrollingPlatform& platform, float deltaTime) {
     if (platform.patrolPoints.empty()) return;
     
     // 前フレームの位置を保存
@@ -291,19 +295,19 @@ void PlatformSystem::updatePatrollingPlatform(GameState::PatrollingPlatform& pla
     }
 }
 
-void PlatformSystem::updateTeleportPlatform(GameState::TeleportPlatform& platform, float deltaTime) {
+void PlatformSystem::updateTeleportPlatform(TeleportPlatform& platform, float deltaTime) {
     if (platform.cooldownTimer > 0.0f) {
         platform.cooldownTimer -= deltaTime;
     }
 }
 
-void PlatformSystem::updateJumpPad(GameState::JumpPad& platform, float deltaTime) {
+void PlatformSystem::updateJumpPad(JumpPad& platform, float deltaTime) {
     // ジャンプパッドは何もしない
     (void)platform;
     (void)deltaTime;
 }
 
-void PlatformSystem::updateCycleDisappearingPlatform(GameState::CycleDisappearingPlatform& platform, float deltaTime) {
+void PlatformSystem::updateCycleDisappearingPlatform(CycleDisappearingPlatform& platform, float deltaTime) {
     platform.cycleTimer += deltaTime;
     
     // サイクル時間を超えたらリセット
@@ -345,14 +349,14 @@ void PlatformSystem::updateCycleDisappearingPlatform(GameState::CycleDisappearin
     }
 }
 
-void PlatformSystem::updateDisappearingPlatform(GameState::DisappearingPlatform& platform, float deltaTime) {
+void PlatformSystem::updateDisappearingPlatform(DisappearingPlatform& platform, float deltaTime) {
     platform.disappearTimer += deltaTime;
     if (platform.disappearTimer > 3.0f) { // 3秒後に消える
         platform.size = glm::vec3(0, 0, 0);
     }
 }
 
-void PlatformSystem::updateFlyingPlatform(GameState::FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos) {
+void PlatformSystem::updateFlyingPlatform(FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos) {
     // プレイヤーとターゲット位置との距離をチェック
     float distanceToTarget = glm::length(playerPos - platform.targetPosition);
     
@@ -406,14 +410,14 @@ void PlatformSystem::resetMovingPlatformFlags() {
     for (auto& platform : platforms) {
         std::visit(overloaded{
             [](auto& p) {}, // 他のタイプは何もしない
-            [](GameState::MovingPlatform& p) {
+            [](MovingPlatform& p) {
                 p.hasPlayerOnBoard = false;
             }
         }, platform);
     }
 }
 
-bool PlatformSystem::checkCollisionWithBase(const GameState::BasePlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
+bool PlatformSystem::checkCollisionWithBase(const BasePlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
     if (!platform.isVisible) return false;
     
     glm::vec3 platformMin = platform.position - platform.size * 0.5f;
@@ -427,7 +431,7 @@ bool PlatformSystem::checkCollisionWithBase(const GameState::BasePlatform& platf
             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
 }
 
-bool PlatformSystem::checkCollisionWithRotatingPlatform(const GameState::RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
+bool PlatformSystem::checkCollisionWithRotatingPlatform(const RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
     if (!platform.isVisible) return false;
     
     // 回転した足場の当たり判定

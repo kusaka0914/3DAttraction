@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "game_state.h"
 #include "../core/types/platform_types.h"
 #include <vector>
@@ -8,7 +12,7 @@
 // 新しい分離型設計のプラットフォームシステム
 class PlatformSystem {
 private:
-    std::vector<GameState::PlatformVariant> platforms;
+    std::vector<PlatformVariant> platforms;
     
 public:
     // プラットフォームの追加
@@ -21,10 +25,10 @@ public:
     void update(float deltaTime, const glm::vec3& playerPos = glm::vec3(0));
     
     // 衝突判定（インデックス付き）
-    std::pair<GameState::PlatformVariant*, int> checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize);
+    std::pair<PlatformVariant*, int> checkCollisionWithIndex(const glm::vec3& playerPos, const glm::vec3& playerSize);
     
     // 全てのプラットフォームの取得
-    const std::vector<GameState::PlatformVariant>& getPlatforms() const { return platforms; }
+    const std::vector<PlatformVariant>& getPlatforms() const { return platforms; }
     
     // プラットフォームのクリア
     void clear() { platforms.clear(); }
@@ -47,19 +51,19 @@ public:
     
 private:
     // 各足場タイプの更新処理
-    void updateStaticPlatform(GameState::StaticPlatform& platform, float deltaTime);
-    void updateMovingPlatform(GameState::MovingPlatform& platform, float deltaTime);
-    void updateRotatingPlatform(GameState::RotatingPlatform& platform, float deltaTime);
-    void updatePatrollingPlatform(GameState::PatrollingPlatform& platform, float deltaTime);
-    void updateTeleportPlatform(GameState::TeleportPlatform& platform, float deltaTime);
-    void updateJumpPad(GameState::JumpPad& platform, float deltaTime);
-    void updateCycleDisappearingPlatform(GameState::CycleDisappearingPlatform& platform, float deltaTime);
-    void updateDisappearingPlatform(GameState::DisappearingPlatform& platform, float deltaTime);
-    void updateFlyingPlatform(GameState::FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos);
+    void updateStaticPlatform(StaticPlatform& platform, float deltaTime);
+    void updateMovingPlatform(MovingPlatform& platform, float deltaTime);
+    void updateRotatingPlatform(RotatingPlatform& platform, float deltaTime);
+    void updatePatrollingPlatform(PatrollingPlatform& platform, float deltaTime);
+    void updateTeleportPlatform(TeleportPlatform& platform, float deltaTime);
+    void updateJumpPad(JumpPad& platform, float deltaTime);
+    void updateCycleDisappearingPlatform(CycleDisappearingPlatform& platform, float deltaTime);
+    void updateDisappearingPlatform(DisappearingPlatform& platform, float deltaTime);
+    void updateFlyingPlatform(FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos);
     
     // 衝突判定ヘルパー
-    bool checkCollisionWithBase(const GameState::BasePlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize);
-    bool checkCollisionWithRotatingPlatform(const GameState::RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize);
+    bool checkCollisionWithBase(const BasePlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize);
+    bool checkCollisionWithRotatingPlatform(const RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize);
 };
 
 // バリアント訪問用のヘルパー関数

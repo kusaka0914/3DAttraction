@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "physics_system.h"
 #include "../core/constants/game_constants.h"
 #include <glm/gtc/matrix_transform.hpp>

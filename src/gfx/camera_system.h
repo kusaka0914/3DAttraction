@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include "opengl_renderer.h"

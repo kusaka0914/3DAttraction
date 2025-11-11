@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "switch_system.h"
 #include "../core/constants/game_constants.h"
 #include <iostream>
