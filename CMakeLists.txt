@@ -5,9 +5,9 @@ project(SlimesSkyTravel VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# コンパイラフラグ
+# コンパイルフラグ
 if(MSVC)
-    add_compile_options(/W4 /utf-8)
+    add_compile_options(/W4 /utf-8 /std:c++20)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
