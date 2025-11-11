@@ -1,7 +1,12 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "game_loop.h"
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include <variant>
 #include <glm/gtc/matrix_transform.hpp>
 #include "../core/constants/game_constants.h"
 #include "../core/constants/debug_config.h"
@@ -542,7 +547,7 @@ namespace GameLoop {
         const auto& platforms = platformSystem.getPlatforms();
         for (int i = 0; i < platforms.size(); i++) {
             std::visit([&](const auto& platform) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(platform)>, GameState::FlyingPlatform>) {
+                if constexpr (std::is_same_v<std::decay_t<decltype(platform)>, FlyingPlatform>) {
                     bool isCurrentlyFlying = platform.hasSpawned && platform.isFlying;
                     bool wasFlyingLastFrame = lastFlyingState[i];
                     
@@ -598,7 +603,7 @@ namespace GameLoop {
         
         // プラットフォーム衝突判定（インデックス付き）
         auto collisionResult = platformSystem.checkCollisionWithIndex(gameState.playerPosition, playerSize);
-        GameState::PlatformVariant* currentPlatform = collisionResult.first;
+        PlatformVariant* currentPlatform = collisionResult.first;
         int currentPlatformIndex = collisionResult.second;
         
         // 足場衝突処理
@@ -615,26 +620,26 @@ namespace GameLoop {
                     
                     // 足場の種類を判定
                     std::string platformType = "Unknown";
-                    if constexpr (std::is_same_v<decltype(platform), const GameState::StaticPlatform&>) {
+                    if constexpr (std::is_same_v<decltype(platform), const StaticPlatform&>) {
                         platformType = "Static";
-                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::MovingPlatform&>) {
+                    } else if constexpr (std::is_same_v<decltype(platform), const MovingPlatform&>) {
                         platformType = "Moving";
-                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::RotatingPlatform&>) {
+                    } else if constexpr (std::is_same_v<decltype(platform), const RotatingPlatform&>) {
                         platformType = "Rotating";
-                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::PatrollingPlatform&>) {
+                    } else if constexpr (std::is_same_v<decltype(platform), const PatrollingPlatform&>) {
                         platformType = "Patrolling";
-                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::TeleportPlatform&>) {
+                    } else if constexpr (std::is_same_v<decltype(platform), const TeleportPlatform&>) {
                         platformType = "Teleport";
-                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::JumpPad&>) {
+                    } else if constexpr (std::is_same_v<decltype(platform), const JumpPad&>) {
                         platformType = "JumpPad";
-                    } else if constexpr (std::is_same_v<decltype(platform), const GameState::CycleDisappearingPlatform&>) {
+                    } else if constexpr (std::is_same_v<decltype(platform), const CycleDisappearingPlatform&>) {
                         platformType = "CycleDisappearing";
                     }
                 }, *currentPlatform);
             }
             
             std::visit(overloaded{
-                [&](const GameState::StaticPlatform& platform) {
+                [&](const StaticPlatform& platform) {
                     if (!PhysicsSystem::checkPlatformCollisionHorizontal(gameState, gameState.playerPosition, playerSize)) {
                         PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
@@ -700,17 +705,17 @@ namespace GameLoop {
                         }
                     }
                 },
-                [&](const GameState::MovingPlatform& platform) {
+                [&](const MovingPlatform& platform) {
                     // 接地（重力方向に沿ってスナップ）
                     PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     // 乗っているフラグを立てる
-                    const_cast<GameState::MovingPlatform&>(platform).hasPlayerOnBoard = true;
+                    const_cast<MovingPlatform&>(platform).hasPlayerOnBoard = true;
                     // プレイヤー-足場同期（XZを足場の移動分だけ加算）
                     glm::vec3 platformMovement = platform.position - platform.previousPosition;
                     gameState.playerPosition.x += platformMovement.x;
                     gameState.playerPosition.z += platformMovement.z;
                 },
-                [&](const GameState::RotatingPlatform& platform) {
+                [&](const RotatingPlatform& platform) {
                     // 回転足場：プレイヤー位置をローカルに変換して回転を適用
                     glm::vec3 halfSize = platform.size * 0.5f;
                     glm::vec3 platformMin = platform.position - halfSize;
@@ -739,7 +744,7 @@ namespace GameLoop {
                         PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
                 },
-                [&](const GameState::PatrollingPlatform& platform) {
+                [&](const PatrollingPlatform& platform) {
                     // 巡回足場：接地 + 移動に合わせて同期、拡張範囲内なら中心に寄せる
                     glm::vec3 halfSize = platform.size * 0.5f;
                     glm::vec3 platformMin = platform.position - halfSize;
@@ -769,30 +774,30 @@ namespace GameLoop {
                         PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
                 },
-                [&](const GameState::TeleportPlatform& platform) {
+                [&](const TeleportPlatform& platform) {
                     PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     if (!platform.hasTeleported && platform.cooldownTimer <= 0.0f) {
                         gameState.playerPosition = platform.teleportDestination;
-                        const_cast<GameState::TeleportPlatform&>(platform).hasTeleported = true;
-                        const_cast<GameState::TeleportPlatform&>(platform).cooldownTimer = 2.0f;
+                        const_cast<TeleportPlatform&>(platform).hasTeleported = true;
+                        const_cast<TeleportPlatform&>(platform).cooldownTimer = 2.0f;
                     }
                 },
-                [&](const GameState::JumpPad& platform) {
+                [&](const JumpPad& platform) {
                     // ジャンプ台：接地後、上方向速度を与える
                     PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     gameState.playerVelocity.y = platform.jumpPower;
                 },
-                [&](const GameState::CycleDisappearingPlatform& platform) {
+                [&](const CycleDisappearingPlatform& platform) {
                     // サイクル消失足場：可視時のみ接地
                     if (platform.isCurrentlyVisible) {
                         PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                     }
                 },
-                [&](const GameState::DisappearingPlatform& platform) {
+                [&](const DisappearingPlatform& platform) {
                     // 一時消失足場：通常接地
                     PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 },
-                [&](const GameState::FlyingPlatform& platform) {
+                [&](const FlyingPlatform& platform) {
                     // 飛来足場：通常接地
                     PhysicsUtils::adjustPlayerPositionForGravity(gameState, platform.position, platform.size, playerSize, gravityDirection);
                 }

@@ -5,9 +5,10 @@ project(SlimesSkyTravel VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# コンパイラフラグ
+# コンパイルフラグ
 if(MSVC)
-    add_compile_options(/W4 /utf-8)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+    add_compile_options(/W4 /utf-8 /std:c++20)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -29,12 +30,14 @@ find_package(nlohmann_json REQUIRED)
 
 # Audio libraries - using SDL2_mixer for cross-platform audio
 if(WIN32)
-    # WindowsではvcpkgでインストールしたSDL2_mixerを使用
-    find_package(SDL2_mixer REQUIRED)
+    # WindowsではvcpkgでインストールしたSDL2とSDL2_mixerを使用
+    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL2_mixer CONFIG REQUIRED)
     set(SDL2_MIXER_INCLUDE_DIRS ${SDL2_MIXER_INCLUDE_DIR})
 else()
     # Linux/macOSではPkgConfigを使用
     find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SDL2 REQUIRED sdl2)
     pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer)
 endif()
 
@@ -94,9 +97,11 @@ target_link_libraries(SlimesSkyTravel
 
 # プラットフォーム固有のライブラリリンク
 if(WIN32)
-    # WindowsではvcpkgでインストールしたSDL2_mixerをリンク
+    # WindowsではvcpkgでインストールしたSDL2とSDL2_mixerをリンク
     target_link_libraries(SlimesSkyTravel
-        SDL2_mixer::SDL2_mixer
+        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
     )
 elseif(APPLE)
     # macOS固有の設定
@@ -112,6 +117,7 @@ elseif(APPLE)
 else()
     # Linux
     target_link_libraries(SlimesSkyTravel
+        ${SDL2_LIBRARIES}
         ${SDL2_MIXER_LIBRARIES}
     )
 endif()

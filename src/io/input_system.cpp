@@ -1,7 +1,12 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "input_system.h"
 #include "../physics/physics_system.h"
 #include "../core/constants/game_constants.h"
 #include "audio_manager.h"
+#include <variant>
 #include <algorithm>
 
 // ゲームパッド関連の静的変数

@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "game_state.h"
 
 // ゲーム状態の初期化関数

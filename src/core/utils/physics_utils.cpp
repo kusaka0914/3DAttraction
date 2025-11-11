@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "physics_utils.h"
 #include "../../game/game_state.h"
 

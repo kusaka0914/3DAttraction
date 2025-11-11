@@ -1,7 +1,7 @@
 #include "texture_manager.h"
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <fstream>
-#include <GL/glew.h>
 
 // STB Image の実装をインクルード
 #define STB_IMAGE_IMPLEMENTATION

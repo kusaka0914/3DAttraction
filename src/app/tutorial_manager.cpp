@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "tutorial_manager.h"
 
 namespace TutorialManager {
