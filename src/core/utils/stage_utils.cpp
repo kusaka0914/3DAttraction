@@ -1,3 +1,7 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "stage_utils.h"
 #include "../../game/game_state.h"
 #include "../../game/platform_system.h"
@@ -36,7 +40,7 @@ void initializeItemsWithConfig(GameState& gameState, const std::vector<ItemConfi
 
 void createItemPlatforms(PlatformSystem& platformSystem, const std::vector<ItemConfig>& itemConfigs) {
     for (int i = 0; i < itemConfigs.size(); i++) {
-        platformSystem.addPlatform(GameState::StaticPlatform(
+        platformSystem.addPlatform(StaticPlatform(
             itemConfigs[i].position, glm::vec3(3, 1, 3), glm::vec3(0.2f, 0.6f, 1.0f)
         ));
     }
@@ -67,7 +71,7 @@ void createStaticPlatforms(GameState& gameState, PlatformSystem& platformSystem,
         glm::vec3 color = std::get<2>(platform);
         std::string description = std::get<3>(platform);
         
-        platformSystem.addPlatform(GameState::StaticPlatform(position, sizeVec, color));
+        platformSystem.addPlatform(StaticPlatform(position, sizeVec, color));
         printf("Created %s at position (%.1f, %.1f, %.1f)\n", 
                description.c_str(), position.x, position.y, position.z);
     }
@@ -75,7 +79,7 @@ void createStaticPlatforms(GameState& gameState, PlatformSystem& platformSystem,
 
 void createPatrolPlatforms(PlatformSystem& platformSystem, const std::vector<PatrolConfig>& patrolConfigs) {
     for (const auto& config : patrolConfigs) {
-        platformSystem.addPlatform(GameState::PatrollingPlatform(
+        platformSystem.addPlatform(PatrollingPlatform(
             config.points[0], glm::vec3(2.5f, 1, 2.5f), glm::vec3(0.2f, 0.8f, 0.8f),
             config.points, 2.0f
         ));
@@ -105,7 +109,7 @@ void createPatrolPlatforms(GameState& gameState, PlatformSystem& platformSystem,
             glmPoints.push_back(glm::vec3(std::get<0>(point), std::get<1>(point), std::get<2>(point)));
         }
         
-        platformSystem.addPlatform(GameState::PatrollingPlatform(
+        platformSystem.addPlatform(PatrollingPlatform(
             glmPoints[0], glm::vec3(2.5f, 1, 2.5f), glm::vec3(0.2f, 0.8f, 0.8f),
             glmPoints, 2.0f
         ));
@@ -126,7 +130,7 @@ void createMovingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
         float speed = std::get<4>(platform);
         std::string description = std::get<5>(platform);
         
-        platformSystem.addPlatform(GameState::MovingPlatform(startPosition, sizeVec, color, endPosition, speed));
+        platformSystem.addPlatform(MovingPlatform(startPosition, sizeVec, color, endPosition, speed));
         printf("Created %s from (%.1f, %.1f, %.1f) to (%.1f, %.1f, %.1f)\n", 
                description.c_str(), startPosition.x, startPosition.y, startPosition.z,
                endPosition.x, endPosition.y, endPosition.z);
@@ -149,7 +153,7 @@ void createFlyingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
         float range = std::get<5>(platform);
         std::string description = std::get<6>(platform);
         
-        platformSystem.addPlatform(GameState::FlyingPlatform(position, sizeVec, color, spawnPosition, targetPosition, speed, range));
+        platformSystem.addPlatform(FlyingPlatform(position, sizeVec, color, spawnPosition, targetPosition, speed, range));
         printf("Created %s at (%.1f, %.1f, %.1f) with spawn at (%.1f, %.1f, %.1f)\n", 
                description.c_str(), position.x, position.y, position.z,
                spawnPosition.x, spawnPosition.y, spawnPosition.z);
@@ -159,7 +163,7 @@ void createFlyingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
 void createCyclingDisappearingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
                                        const std::vector<CyclingDisappearingConfig>& configs) {
     for (const auto& config : configs) {
-        platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
+        platformSystem.addPlatform(CycleDisappearingPlatform(
             config.position, config.size, config.color,
             config.visibleTime, config.invisibleTime, config.initialTimer
         ));
@@ -197,7 +201,7 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
             } else {
                 initialTimer = i * delay;  // 通常のタイマー
             }
-            platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
+            platformSystem.addPlatform(CycleDisappearingPlatform(
                 position, sizeVec, color,
                 visibleTime + invisibleTime, visibleTime, blinkTime, initialTimer
             ));
@@ -235,7 +239,7 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
             } else {
                 initialTimer = i * delay;  // 通常のタイマー
             }
-            platformSystem.addPlatform(GameState::CycleDisappearingPlatform(
+            platformSystem.addPlatform(CycleDisappearingPlatform(
                 position, sizeVec, color,
                 visibleTime + invisibleTime, visibleTime, blinkTime, initialTimer
             ));
@@ -248,7 +252,7 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
 // JSON用のプラットフォーム生成関数
 void createStaticPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<StaticPlatformConfig>& configs) {
     for (const auto& config : configs) {
-        platformSystem.addPlatform(GameState::StaticPlatform(
+        platformSystem.addPlatform(StaticPlatform(
             config.position, config.size, config.color
         ));
         printf("Created %s at position (%.1f, %.1f, %.1f)\n", 
@@ -260,7 +264,7 @@ void createStaticPlatformsFromConfig(GameState& gameState, PlatformSystem& platf
 void createPatrolPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<PatrolPlatformConfig>& configs) {
     for (const auto& config : configs) {
         if (config.points.size() >= 2) {
-            platformSystem.addPlatform(GameState::PatrollingPlatform(
+            platformSystem.addPlatform(PatrollingPlatform(
                 config.points[0], glm::vec3(3, 1, 3), glm::vec3(0.8f, 0.4f, 0.2f),
                 config.points, 2.0f
             ));

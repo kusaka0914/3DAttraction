@@ -1,4 +1,3 @@
-#include <GL/glew.h>
 #include "renderer_3d.h"
 #include "../core/constants/game_constants.h"
 #include "texture_manager.h"
@@ -6,6 +5,10 @@
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace gfx {
 
