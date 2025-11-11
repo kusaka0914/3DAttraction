@@ -497,6 +497,17 @@ namespace GameLoop {
                         PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime,
                         std::map<int, InputUtils::KeyState>& keyStates,
                         std::function<void()> resetStageStartTime, io::AudioManager& audioManager) {
+        // ファイル監視：ステージJSONファイルの変更をチェック（0.5秒ごと）
+        static float fileCheckTimer = 0.0f;
+        fileCheckTimer += deltaTime;
+        if (fileCheckTimer >= 0.5f) {
+            fileCheckTimer = 0.0f;
+            stageManager.checkAndReloadStage(gameState, platformSystem);
+            // テクスチャと音声の監視も同時に実行
+            gfx::TextureManager::checkAndReloadTextures();
+            audioManager.checkAndReloadAudio();
+        }
+        
         // 時間停止スキル発動時の処理
         if (gameState.isTimeStopped) {
             gameState.timeStopTimer -= deltaTime;

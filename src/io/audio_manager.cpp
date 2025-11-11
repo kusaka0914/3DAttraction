@@ -3,8 +3,12 @@
 #include <filesystem>
 #ifdef _WIN32
     #include <SDL.h>
+    #include <sys/stat.h>
+    #include <io.h>
 #else
     #include <SDL2/SDL.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
 #endif
 
 namespace io {
@@ -17,6 +21,7 @@ AudioManager::AudioManager()
     , m_bgmPlaying(false)
     , m_bgmPaused(false)
     , m_bgmMusic(nullptr)
+    , m_bgmModTime(0)
 {
 }
 
@@ -107,6 +112,8 @@ bool AudioManager::loadBGM(const std::string& filename) {
     }
     
     m_currentBGM = filename;
+    // 更新時刻を記録
+    m_bgmModTime = getFileModificationTime(filename);
     std::cout << "BGM loaded: " << filename << std::endl;
     return true;
 }
@@ -213,6 +220,8 @@ bool AudioManager::loadSFX(const std::string& name, const std::string& filename)
     
     m_sfxChunks[name] = chunk;
     m_sfxFiles[name] = filename;
+    // 更新時刻を記録
+    m_sfxModTimes[name] = getFileModificationTime(filename);
     std::cout << "SFX loaded: " << name << " -> " << filename << std::endl;
     return true;
 }
@@ -263,6 +272,114 @@ void AudioManager::setMasterVolume(float volume) {
 
 float AudioManager::getMasterVolume() const {
     return m_masterVolume;
+}
+
+std::time_t AudioManager::getFileModificationTime(const std::string& filepath) {
+#ifdef _WIN32
+    struct _stat fileInfo;
+    if (_stat(filepath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+    // 代替パスも試す
+    std::string altPath = filepath;
+    if (altPath.find("../") == 0) {
+        altPath = altPath.substr(3);
+    } else if (altPath.find("assets/") == 0) {
+        altPath = "../" + altPath;
+    }
+    if (_stat(altPath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+#else
+    struct stat fileInfo;
+    if (stat(filepath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+    // 代替パスも試す
+    std::string altPath = filepath;
+    if (altPath.find("../") == 0) {
+        altPath = altPath.substr(3);
+    } else if (altPath.find("assets/") == 0) {
+        altPath = "../" + altPath;
+    }
+    if (stat(altPath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+#endif
+    return 0;
+}
+
+void AudioManager::reloadBGM() {
+    if (m_currentBGM.empty() || !m_bgmMusic) {
+        return;
+    }
+    
+    bool wasPlaying = m_bgmPlaying && !m_bgmPaused;
+    
+    // 古いBGMを停止・削除
+    if (m_bgmPlaying) {
+        stopBGM();
+    }
+    
+    // 新しいBGMを読み込み
+    if (loadBGM(m_currentBGM)) {
+        // 再生中だった場合は再開
+        if (wasPlaying) {
+            playBGM();
+        }
+        std::cout << "BGM reloaded: " << m_currentBGM << std::endl;
+    }
+}
+
+void AudioManager::reloadSFX(const std::string& name) {
+    auto it = m_sfxFiles.find(name);
+    if (it == m_sfxFiles.end()) {
+        return;
+    }
+    
+    const std::string& filename = it->second;
+    
+    // 再読み込み
+    if (loadSFX(name, filename)) {
+        std::cout << "SFX reloaded: " << name << " -> " << filename << std::endl;
+    }
+}
+
+void AudioManager::checkAndReloadAudio() {
+    if (!m_initialized) {
+        return;
+    }
+    
+    // BGMの監視
+    if (!m_currentBGM.empty()) {
+        std::time_t currentModTime = getFileModificationTime(m_currentBGM);
+        if (currentModTime > 0 && currentModTime != m_bgmModTime && m_bgmModTime > 0) {
+            reloadBGM();
+        } else if (m_bgmModTime == 0 && currentModTime > 0) {
+            // 初回の場合は更新時刻を記録
+            m_bgmModTime = currentModTime;
+        }
+    }
+    
+    // SFXの監視
+    for (auto& pair : m_sfxModTimes) {
+        const std::string& name = pair.first;
+        std::time_t& lastModTime = pair.second;
+        
+        auto it = m_sfxFiles.find(name);
+        if (it == m_sfxFiles.end()) {
+            continue;
+        }
+        
+        const std::string& filename = it->second;
+        std::time_t currentModTime = getFileModificationTime(filename);
+        if (currentModTime > 0 && currentModTime != lastModTime && lastModTime > 0) {
+            reloadSFX(name);
+        } else if (lastModTime == 0 && currentModTime > 0) {
+            // 初回の場合は更新時刻を記録
+            lastModTime = currentModTime;
+        }
+    }
 }
 
 } // namespace io

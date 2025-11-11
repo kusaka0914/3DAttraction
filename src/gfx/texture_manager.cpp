@@ -2,6 +2,13 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <fstream>
+#ifdef _WIN32
+    #include <sys/stat.h>
+    #include <io.h>
+#else
+    #include <sys/stat.h>
+    #include <unistd.h>
+#endif
 
 // STB Image の実装をインクルード
 #define STB_IMAGE_IMPLEMENTATION
@@ -10,6 +17,7 @@
 namespace gfx {
 
 std::map<std::string, GLuint> TextureManager::textures;
+std::map<std::string, std::time_t> TextureManager::textureModTimes;
 
 GLuint TextureManager::loadTexture(const std::string& filename) {
     // 既に読み込まれている場合はキャッシュから返す
@@ -29,6 +37,8 @@ GLuint TextureManager::loadTexture(const std::string& filename) {
     GLuint textureID = loadTextureFromFile(filename);
     if (textureID != 0) {
         textures[filename] = textureID;
+        // 更新時刻を記録
+        textureModTimes[filename] = getFileModificationTime(filename);
         std::cout << "Loaded texture: " << filename << " (ID: " << textureID << ")" << std::endl;
     }
     
@@ -90,6 +100,75 @@ void TextureManager::cleanup() {
 
 bool TextureManager::hasTexture(const std::string& filename) {
     return textures.find(filename) != textures.end();
+}
+
+std::time_t TextureManager::getFileModificationTime(const std::string& filepath) {
+#ifdef _WIN32
+    struct _stat fileInfo;
+    if (_stat(filepath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+    // 代替パスも試す
+    std::string altPath = filepath;
+    if (altPath.find("../") == 0) {
+        altPath = altPath.substr(3);
+    } else if (altPath.find("assets/") == 0) {
+        altPath = "../" + altPath;
+    }
+    if (_stat(altPath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+#else
+    struct stat fileInfo;
+    if (stat(filepath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+    // 代替パスも試す
+    std::string altPath = filepath;
+    if (altPath.find("../") == 0) {
+        altPath = altPath.substr(3);
+    } else if (altPath.find("assets/") == 0) {
+        altPath = "../" + altPath;
+    }
+    if (stat(altPath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+#endif
+    return 0;
+}
+
+void TextureManager::reloadTexture(const std::string& filename) {
+    auto it = textures.find(filename);
+    if (it == textures.end()) {
+        return;
+    }
+    
+    // 古いテクスチャを削除
+    glDeleteTextures(1, &it->second);
+    textures.erase(it);
+    
+    // 新しいテクスチャを読み込み
+    GLuint textureID = loadTextureFromFile(filename);
+    if (textureID != 0) {
+        textures[filename] = textureID;
+        textureModTimes[filename] = getFileModificationTime(filename);
+        std::cout << "Reloaded texture: " << filename << " (ID: " << textureID << ")" << std::endl;
+    }
+}
+
+void TextureManager::checkAndReloadTextures() {
+    for (auto& pair : textureModTimes) {
+        const std::string& filename = pair.first;
+        std::time_t& lastModTime = pair.second;
+        
+        std::time_t currentModTime = getFileModificationTime(filename);
+        if (currentModTime > 0 && currentModTime != lastModTime && lastModTime > 0) {
+            reloadTexture(filename);
+        } else if (lastModTime == 0 && currentModTime > 0) {
+            // 初回の場合は更新時刻を記録
+            lastModTime = currentModTime;
+        }
+    }
 }
 
 } // namespace gfx

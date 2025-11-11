@@ -4,6 +4,9 @@
 #include "platform_system.h"
 #include <vector>
 #include <functional>
+#include <string>
+#include <ctime>
+#include <map>
 
 // ステージデータの構造体
 struct StageData {
@@ -49,9 +52,22 @@ public:
     bool goToPreviousStage(GameState& gameState, PlatformSystem& platformSystem);
     bool goToStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem);
     
+    // ファイル監視（自動リロード用）
+    bool checkAndReloadStage(GameState& gameState, PlatformSystem& platformSystem);
+    
 private:
     std::vector<StageData> stages;
     int currentStage;
+    
+    // ファイル監視用の変数
+    std::string currentStageFilePath;  // 現在のステージのJSONファイルパス
+    std::time_t lastFileModificationTime;  // 最後に確認した更新時刻
+    std::map<int, std::string> stageFilePaths;  // ステージ番号とファイルパスのマッピング
+    
+    // ファイル監視用のヘルパー関数
+    std::time_t getFileModificationTime(const std::string& filepath);
+    std::string getStageFilePath(int stageNumber);
+    void updateCurrentStageFileInfo(int stageNumber);
     
     // 各ステージの生成関数
     static void generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem);
