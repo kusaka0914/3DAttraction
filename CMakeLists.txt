@@ -72,6 +72,14 @@ set_target_properties(SlimesSkyTravel PROPERTIES
     OUTPUT_NAME "SlimesSkyTravel"
 )
 
+# 実行ファイルと同じ場所にassetsディレクトリをコピー（リリースビルド用）
+add_custom_command(TARGET SlimesSkyTravel POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    $<TARGET_FILE_DIR:SlimesSkyTravel>/assets
+    COMMENT "Copying assets directory to build output directory"
+)
+
 # インクルードディレクトリ
 if(WIN32)
     target_include_directories(SlimesSkyTravel PRIVATE
