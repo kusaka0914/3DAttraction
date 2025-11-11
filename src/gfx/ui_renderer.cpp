@@ -11,12 +11,18 @@ UIRenderer::UIRenderer() {
 UIRenderer::~UIRenderer() {
 }
 
+void UIRenderer::setWindowSize(int width, int height) {
+    windowWidth = width;
+    windowHeight = height;
+}
+
 void UIRenderer::begin2DMode() {
     // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, 1280, 720, 0, -1, 1);
+    // 実際のウィンドウサイズを使用
+    glOrtho(0, windowWidth, windowHeight, 0, -1, 1);
     
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -39,12 +45,18 @@ void UIRenderer::end2DMode() {
 void UIRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
     begin2DMode();
     
+    // 1280x720基準の座標を実際のウィンドウサイズにスケーリング
+    float scaleX = static_cast<float>(windowWidth) / 1280.0f;
+    float scaleY = static_cast<float>(windowHeight) / 720.0f;
+    glm::vec2 scaledPosition = glm::vec2(position.x * scaleX, position.y * scaleY);
+    float scaledScale = scale * std::min(scaleX, scaleY);  // アスペクト比を維持
+    
     glColor3f(color.r, color.g, color.b);
     
-    float currentX = position.x;
-    float charWidth = GameConstants::RenderConstants::CHAR_WIDTH * scale;
-    float charHeight = GameConstants::RenderConstants::CHAR_HEIGHT * scale;
-    float spaceWidth = GameConstants::RenderConstants::SPACE_WIDTH * scale;
+    float currentX = scaledPosition.x;
+    float charWidth = GameConstants::RenderConstants::CHAR_WIDTH * scaledScale;
+    float charHeight = GameConstants::RenderConstants::CHAR_HEIGHT * scaledScale;
+    float spaceWidth = GameConstants::RenderConstants::SPACE_WIDTH * scaledScale;
     
     for (size_t i = 0; i < text.length(); i++) {
         char c = text[i];
@@ -54,8 +66,8 @@ void UIRenderer::renderText(const std::string& text, const glm::vec2& position, 
             continue;
         }
         
-        renderBitmapChar(c, glm::vec2(currentX, position.y), color, scale);
-        currentX += charWidth + GameConstants::RenderConstants::CHAR_SPACING * scale;  // 文字間隔を増加
+        renderBitmapChar(c, glm::vec2(currentX, scaledPosition.y), color, scaledScale);
+        currentX += charWidth + GameConstants::RenderConstants::CHAR_SPACING * scaledScale;  // 文字間隔を増加
     }
     
     end2DMode();
@@ -371,11 +383,17 @@ void UIRenderer::renderBurstJumpUI(bool hasSkill, bool isActive, int remainingUs
 }
 
 void UIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
+    // 1280x720基準の座標を実際のウィンドウサイズにスケーリング
+    float scaleX = static_cast<float>(windowWidth) / 1280.0f;
+    float scaleY = static_cast<float>(windowHeight) / 720.0f;
+    glm::vec2 scaledPosition = glm::vec2(position.x * scaleX, position.y * scaleY);
+    float scaledScale = scale * std::min(scaleX, scaleY);
+    
     glColor3f(color.r, color.g, color.b);
     
     // 星の中心点
-    float centerX = position.x;
-    float centerY = position.y;
+    float centerX = scaledPosition.x;
+    float centerY = scaledPosition.y;
     
     // 星の5つの角を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);
@@ -408,11 +426,17 @@ void UIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, f
 }
 
 void UIRenderer::renderHeart(const glm::vec2& position, const glm::vec3& color, float scale) {
+    // 1280x720基準の座標を実際のウィンドウサイズにスケーリング
+    float scaleX = static_cast<float>(windowWidth) / 1280.0f;
+    float scaleY = static_cast<float>(windowHeight) / 720.0f;
+    glm::vec2 scaledPosition = glm::vec2(position.x * scaleX, position.y * scaleY);
+    float scaledScale = scale * std::min(scaleX, scaleY);
+    
     glColor3f(color.r, color.g, color.b);
     
     // ハートの中心点
-    float centerX = position.x;
-    float centerY = position.y;
+    float centerX = scaledPosition.x;
+    float centerY = scaledPosition.y;
     
     // ハートの形状を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);

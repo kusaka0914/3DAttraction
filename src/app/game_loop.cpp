@@ -940,6 +940,9 @@ namespace GameLoop {
         int width, height;
         prepareFrame(window, gameState, stageManager, renderer, width, height);
         
+        // UIレンダラーにウィンドウサイズを設定（スケーリング用）
+        uiRenderer->setWindowSize(width, height);
+        
         // 足場の描画
         renderPlatforms(platformSystem, renderer);
         

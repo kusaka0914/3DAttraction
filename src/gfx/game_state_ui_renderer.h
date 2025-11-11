@@ -29,7 +29,7 @@ public:
 private:
     void renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale = 1.0f);
     void renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale);
-    void renderStar(const glm::vec2& position, const glm::vec3& color, float scale);
+    void renderStar(const glm::vec2& position, const glm::vec3& color, float scale, int width, int height);
     
     BitmapFont font; // ビットマップフォントのインスタンス
 };

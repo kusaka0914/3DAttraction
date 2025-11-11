@@ -165,7 +165,7 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
             starColor = glm::vec3(0.5f, 0.5f, 0.5f);
         }
         
-        renderStar(starPos, starColor, 10.0f);
+        renderStar(starPos, starColor, 10.0f, width, height);
     }
     
     // ステージ選択フィールドに戻るボタン
@@ -827,10 +827,15 @@ void GameStateUIRenderer::renderBitmapChar(char c, const glm::vec2& position, co
     }
 }
 
-void GameStateUIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
+void GameStateUIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale, int width, int height) {
+    // 1280x720基準のスケーリングを適用
+    float scaleX = static_cast<float>(width) / 1280.0f;
+    float scaleY = static_cast<float>(height) / 720.0f;
+    float scaledScale = scale * std::min(scaleX, scaleY);
+    
     glColor3f(color.r, color.g, color.b);
     
-    // 星の中心点
+    // 星の中心点（positionは既にスケーリング済みなのでそのまま使用）
     float centerX = position.x;
     float centerY = position.y;
     
@@ -840,17 +845,17 @@ void GameStateUIRenderer::renderStar(const glm::vec2& position, const glm::vec3&
         float angle1 = i * 72.0f * 3.14159f / 180.0f;
         float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
         
-        // 外側の点
-        float x1 = centerX + cos(angle1) * 12.0f * scale;
-        float y1 = centerY + sin(angle1) * 12.0f * scale;
+        // 外側の点（scaledScaleを使用）
+        float x1 = centerX + cos(angle1) * 12.0f * scaledScale;
+        float y1 = centerY + sin(angle1) * 12.0f * scaledScale;
         
-        // 内側の点
-        float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
-        float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
+        // 内側の点（scaledScaleを使用）
+        float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scaledScale;
+        float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scaledScale;
         
-        // 次の外側の点
-        float x3 = centerX + cos(angle2) * 12.0f * scale;
-        float y3 = centerY + sin(angle2) * 12.0f * scale;
+        // 次の外側の点（scaledScaleを使用）
+        float x3 = centerX + cos(angle2) * 12.0f * scaledScale;
+        float y3 = centerY + sin(angle2) * 12.0f * scaledScale;
         
         // 中心から各点への三角形を描画（塗りつぶし）
         glVertex2f(centerX, centerY);  // 中心点

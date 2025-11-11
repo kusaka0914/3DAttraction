@@ -45,6 +45,9 @@ public:
     UIRenderer();
     ~UIRenderer();
     
+    // ウィンドウサイズを設定（スケーリング用）
+    void setWindowSize(int width, int height);
+    
     // 統合されたUI描画関数
     void renderGameUI(const GameUIState& state);
     
@@ -87,6 +90,10 @@ private:
     void renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale);
     
     BitmapFont font;
+    
+    // ウィンドウサイズ（スケーリング用）
+    int windowWidth = 1280;
+    int windowHeight = 720;
 };
 
 } // namespace gfx
