@@ -71,7 +71,8 @@ namespace UIConfig {
         UITextConfig getWorldTitleConfig() const { return worldTitleConfig; }
         UITextConfig getStarIconConfig() const { return starIconConfig; }
         UITextConfig getStarCountConfig() const { return starCountConfig; }
-        UITextConfig getModeTextConfig() const { return modeTextConfig; }
+        UITextConfig getNormalModeTextConfig() const { return normalModeTextConfig; }
+        UITextConfig getEasyModeTextConfig() const { return easyModeTextConfig; }
         UITextConfig getPressEConfig() const { return pressEConfig; }
         UITextConfig getControlsTextConfig() const { return controlsTextConfig; }
         
@@ -102,6 +103,7 @@ namespace UIConfig {
         // Mode Selection UI
         UITextConfig getModeSelectionTitleConfig() const { return modeSelectionTitleConfig; }
         UISelectableConfig getModeSelectionNormalTextConfig() const { return modeSelectionNormalTextConfig; }
+        UISelectableConfig getModeSelectionEasyTextConfig() const { return modeSelectionEasyTextConfig; }
         UISelectableConfig getModeSelectionTimeAttackTextConfig() const { return modeSelectionTimeAttackTextConfig; }
         UITextConfig getModeSelectionPressTConfig() const { return modeSelectionPressTConfig; }
         UITextConfig getModeSelectionConfirmConfig() const { return modeSelectionConfirmConfig; }
@@ -223,7 +225,8 @@ namespace UIConfig {
         UITextConfig worldTitleConfig;
         UITextConfig starIconConfig;
         UITextConfig starCountConfig;
-        UITextConfig modeTextConfig;
+        UITextConfig normalModeTextConfig;
+        UITextConfig easyModeTextConfig;
         UITextConfig pressEConfig;
         UITextConfig controlsTextConfig;
         
@@ -254,6 +257,7 @@ namespace UIConfig {
         // Mode Selection UI設定
         UITextConfig modeSelectionTitleConfig;
         UISelectableConfig modeSelectionNormalTextConfig;
+        UISelectableConfig modeSelectionEasyTextConfig;
         UISelectableConfig modeSelectionTimeAttackTextConfig;
         UITextConfig modeSelectionPressTConfig;
         UITextConfig modeSelectionConfirmConfig;

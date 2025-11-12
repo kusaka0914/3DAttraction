@@ -10,6 +10,9 @@
 #include <glm/glm.hpp>
 #include "../core/types/platform_types.h"
 
+// 前方宣言
+struct EditorState;
+
 struct GameState {
     // プレイヤー
     glm::vec3 playerPosition = glm::vec3(0, 30.0f, 0);
@@ -346,6 +349,9 @@ struct GameState {
     bool audioEnabled = true;
     std::string currentBGM = "";
     bool bgmPlaying = false;
+    
+    // エディタ状態（前方宣言を使用）
+    EditorState* editorState = nullptr;
 };
 
 // ゲーム状態の初期化関数

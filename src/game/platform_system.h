@@ -29,9 +29,19 @@ public:
     
     // 全てのプラットフォームの取得
     const std::vector<PlatformVariant>& getPlatforms() const { return platforms; }
+    std::vector<PlatformVariant>& getPlatforms() { return platforms; }  // エディタ用
     
     // プラットフォームのクリア
     void clear() { platforms.clear(); }
+    
+    // プラットフォームの削除（エディタ用）
+    bool removePlatform(int index) {
+        if (index >= 0 && index < static_cast<int>(platforms.size())) {
+            platforms.erase(platforms.begin() + index);
+            return true;
+        }
+        return false;
+    }
     
     // プラットフォームの描画用データ取得
     std::vector<glm::vec3> getPositions() const;

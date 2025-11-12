@@ -55,6 +55,9 @@ public:
     // ファイル監視（自動リロード用）
     bool checkAndReloadStage(GameState& gameState, PlatformSystem& platformSystem);
     
+    // エディタ用：現在のステージファイルパスを取得
+    std::string getCurrentStageFilePath() const { return currentStageFilePath; }
+    
 private:
     std::vector<StageData> stages;
     int currentStage;
