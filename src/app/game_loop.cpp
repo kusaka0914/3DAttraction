@@ -23,6 +23,7 @@
 #include "../io/audio_manager.h"
 #include "../gfx/minimap_renderer.h"
 #include "../game/replay_manager.h"
+#include "../game/stage_editor.h"
 #include "tutorial_manager.h"
 #include <set>
 #include <map>
@@ -113,14 +114,14 @@ namespace GameLoop {
             gameState.blockEnterUntilReleased = true;  // 直前のENTERを無視
         } else {
             // 初めて入る場合: 直接ready画面へ（タイムアタック選択UIは表示しない）
-            resetStageStartTime();
-            gameState.lives = 6;
-            stageManager.goToStage(stageNumber, gameState, platformSystem);
-            gameState.readyScreenShown = false;
-            gameState.showReadyScreen = true;
-            gameState.readyScreenSpeedLevel = 0;
-            gameState.timeScale = 1.0f;
-            gameState.timeScaleLevel = 0;
+        resetStageStartTime();
+        gameState.lives = 6;
+        stageManager.goToStage(stageNumber, gameState, platformSystem);
+        gameState.readyScreenShown = false;
+        gameState.showReadyScreen = true;
+        gameState.readyScreenSpeedLevel = 0;
+        gameState.timeScale = 1.0f;
+        gameState.timeScaleLevel = 0;
             gameState.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
         }
     }
@@ -522,17 +523,34 @@ namespace GameLoop {
                         PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime,
                         std::map<int, InputUtils::KeyState>& keyStates,
                         std::function<void()> resetStageStartTime, io::AudioManager& audioManager) {
+        // エディタ状態（静的変数として保持、GameStateと共有）
+        static EditorState editorState;
+        gameState.editorState = &editorState;
+        
+        // エディタ入力処理（常に実行）
+        StageEditor::processEditorInput(window, gameState, editorState, platformSystem, stageManager, deltaTime);
+        
+        // エディタモード中はカメラ移動のみ有効化（通常のゲームロジックはスキップ）
+        if (editorState.isActive) {
+            // エディタモード中でもカメラ移動を有効化
+            InputSystem::processInput(window, gameState, deltaTime);
+            return;
+        }
+        
         // ファイル監視：ステージJSONファイルの変更をチェック（0.5秒ごと）
-        static float fileCheckTimer = 0.0f;
-        fileCheckTimer += deltaTime;
-        if (fileCheckTimer >= 0.5f) {
-            fileCheckTimer = 0.0f;
-            stageManager.checkAndReloadStage(gameState, platformSystem);
-            // テクスチャと音声の監視も同時に実行
-            gfx::TextureManager::checkAndReloadTextures();
-            audioManager.checkAndReloadAudio();
-            // UI設定ファイルの監視も実行
-            UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
+        // エディタモード中はホットリロードを無効化（エディタで編集中の内容が上書きされないように）
+        if (!editorState.isActive) {
+            static float fileCheckTimer = 0.0f;
+            fileCheckTimer += deltaTime;
+            if (fileCheckTimer >= 0.5f) {
+                fileCheckTimer = 0.0f;
+                stageManager.checkAndReloadStage(gameState, platformSystem);
+                // テクスチャと音声の監視も同時に実行
+                gfx::TextureManager::checkAndReloadTextures();
+                audioManager.checkAndReloadAudio();
+                // UI設定ファイルの監視も実行
+                UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
+            }
         }
         
         // 時間停止スキル発動時の処理
@@ -544,8 +562,8 @@ namespace GameLoop {
             }
         }
         
-        // フリーカメラスキル発動時の処理
-        if (gameState.isFreeCameraActive) {
+        // フリーカメラスキル発動時の処理（エディタモード中はタイマーを減らさない）
+        if (gameState.isFreeCameraActive && !editorState.isActive) {
             gameState.freeCameraTimer -= deltaTime;
             if (gameState.freeCameraTimer <= 0.0f) {
                 gameState.isFreeCameraActive = false;
@@ -1175,6 +1193,14 @@ namespace GameLoop {
                     std::unique_ptr<gfx::UIRenderer>& uiRenderer,
                     std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
                     float deltaTime) {
+        // エディタ状態をGameStateから取得（updateGameStateと共有）
+        EditorState* editorState = gameState.editorState;
+        if (!editorState) {
+            // エディタ状態が初期化されていない場合はスキップ
+            static EditorState defaultEditorState;
+            editorState = &defaultEditorState;
+        }
+        
         // ファイル監視：UI設定ファイルの変更をチェック（0.5秒ごと）
         static float gameUIFileCheckTimer = 0.0f;
         gameUIFileCheckTimer += deltaTime;
@@ -1185,6 +1211,27 @@ namespace GameLoop {
         
         int width, height;
         prepareFrame(window, gameState, stageManager, renderer, width, height);
+        
+        // エディタモード中はグリッドとプレビューを表示
+        if (editorState->isActive) {
+            CameraConfig cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
+            StageEditor::renderGrid(cameraConfig.position, editorState->gridSize, 20);
+            
+            // プレビュー位置にオブジェクトを表示
+            if (editorState->showPreview && editorState->currentMode == EditorMode::PLACE) {
+                glPushMatrix();
+                glTranslatef(editorState->previewPosition.x, editorState->previewPosition.y, editorState->previewPosition.z);
+                glColor3f(0.5f, 1.0f, 0.5f);  // 薄い緑色
+                glBegin(GL_LINE_LOOP);
+                float halfSize = 2.0f;
+                glVertex3f(-halfSize, 0, -halfSize);
+                glVertex3f( halfSize, 0, -halfSize);
+                glVertex3f( halfSize, 0,  halfSize);
+                glVertex3f(-halfSize, 0,  halfSize);
+                glEnd();
+                glPopMatrix();
+            }
+        }
         
         // UIレンダラーにウィンドウサイズを設定（スケーリング用）
         uiRenderer->setWindowSize(width, height);
@@ -1618,12 +1665,16 @@ namespace GameLoop {
             glm::vec2 starCountPos = uiConfig.calculatePosition(starCountConfig.position, width, height);
             uiRenderer->renderText("x " + std::to_string(gameState.totalStars), starCountPos, starCountConfig.color, starCountConfig.scale);
             
-            // 星数の右にEASY/NORMAL表示
-            std::string modeText = gameState.isEasyMode ? "EASY" : "NORMAL";
-            auto modeTextConfig = uiConfig.getModeTextConfig();
-            glm::vec3 modeColor = gameState.isEasyMode ? glm::vec3(0.2f, 0.8f, 0.2f) : modeTextConfig.color;
-            glm::vec2 modeTextPosition = uiConfig.calculatePosition(modeTextConfig.position, width, height);
-            uiRenderer->renderText(modeText, modeTextPosition, modeColor, modeTextConfig.scale);
+            // 星数の右にEASY/NORMAL表示（個別の設定を使用）
+            if (gameState.isEasyMode) {
+                auto easyModeTextConfig = uiConfig.getEasyModeTextConfig();
+                glm::vec2 easyModeTextPosition = uiConfig.calculatePosition(easyModeTextConfig.position, width, height);
+                uiRenderer->renderText("EASY", easyModeTextPosition, easyModeTextConfig.color, easyModeTextConfig.scale);
+            } else {
+                auto normalModeTextConfig = uiConfig.getNormalModeTextConfig();
+                glm::vec2 normalModeTextPosition = uiConfig.calculatePosition(normalModeTextConfig.position, width, height);
+                uiRenderer->renderText("NORMAL", normalModeTextPosition, normalModeTextConfig.color, normalModeTextConfig.scale);
+            }
             
             // EASY/NORMALの下にPRESS E表示
             auto pressEConfig = uiConfig.getPressEConfig();
@@ -1680,6 +1731,12 @@ namespace GameLoop {
         auto controlsTextConfig = uiConfig.getControlsTextConfig();
         glm::vec2 controlsTextPos = uiConfig.calculatePosition(controlsTextConfig.position, width, height);
         uiRenderer->renderText(controlsText, controlsTextPos, controlsTextConfig.color, controlsTextConfig.scale);
+        
+        // エディタUIと選択ハイライトを描画
+        if (editorState && editorState->isActive) {
+            StageEditor::renderSelectionHighlight(*editorState, platformSystem, gameState);
+            StageEditor::renderEditorUI(window, *editorState, gameState, uiRenderer);
+        }
         
         renderer->endFrame();
     }
@@ -2180,12 +2237,12 @@ namespace GameLoop {
                     gameState.blockEnterUntilReleased = true;
                 } else {
                     // 初めて入る場合: 直接ready画面へ（タイムアタック選択UIは表示しない）
-                    resetStageStartTime();
-                    gameState.lives = 6;
+                resetStageStartTime();
+                gameState.lives = 6;
                     stageManager.goToStage(targetStage, gameState, platformSystem);
-                    gameState.readyScreenShown = false;
-                    gameState.showReadyScreen = true;
-                    gameState.readyScreenSpeedLevel = 0;
+                gameState.readyScreenShown = false;
+                gameState.showReadyScreen = true;
+                gameState.readyScreenSpeedLevel = 0;
                     gameState.timeScale = 1.0f;
                     gameState.timeScaleLevel = 0;
                     gameState.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード

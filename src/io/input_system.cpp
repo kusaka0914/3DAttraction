@@ -6,6 +6,7 @@
 #include "../physics/physics_system.h"
 #include "../core/constants/game_constants.h"
 #include "audio_manager.h"
+#include "../game/stage_editor.h"
 #include <variant>
 #include <algorithm>
 
@@ -18,6 +19,12 @@ static bool gamepadButtonsLast[GameConstants::InputConstants::MAX_GAMEPAD_BUTTON
 // マウスコールバック
 void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     GameState* gameState = static_cast<GameState*>(glfwGetWindowUserPointer(window));
+    
+    // エディタモード中はマウスでカメラを動かさない
+    if (gameState->editorState && gameState->editorState->isActive) {
+        return;
+    }
+    
     if (gameState->firstMouse) {
         gameState->lastMouseX = xpos;
         gameState->lastMouseY = ypos;
@@ -47,8 +54,20 @@ void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 // スクロールコールバック
-void InputSystem::scroll_callback(GLFWwindow* window, double, double yoffset) {
+void InputSystem::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     GameState* gameState = static_cast<GameState*>(glfwGetWindowUserPointer(window));
+    
+    // エディタモード中はスクロールでカメラを動かす（マウスパッドの二本指ジェスチャー）
+    if (gameState->editorState && gameState->editorState->isActive) {
+        // スクロールでカメラを回転（マウスパッドの二本指ジェスチャーをシミュレート）
+        float sensitivity = 2.0f;
+        gameState->freeCameraYaw += float(xoffset) * sensitivity;
+        gameState->freeCameraPitch -= float(yoffset) * sensitivity;
+        gameState->freeCameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
+                                             std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->freeCameraPitch));
+        return;
+    }
+    
     gameState->cameraDistance -= float(yoffset);
     gameState->cameraDistance = std::max(GameConstants::InputConstants::MIN_CAMERA_DISTANCE, 
                                        std::min(GameConstants::InputConstants::MAX_CAMERA_DISTANCE, gameState->cameraDistance));

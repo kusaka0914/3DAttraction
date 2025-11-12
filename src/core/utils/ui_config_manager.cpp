@@ -103,11 +103,17 @@ namespace UIConfig {
         starCountConfig.scale = 1.5f;
         
         // EASY/NORMAL表示
-        modeTextConfig.position.useRelative = false;
-        modeTextConfig.position.absoluteX = 140.0f;
-        modeTextConfig.position.absoluteY = 20.0f;
-        modeTextConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
-        modeTextConfig.scale = 1.5f;
+        normalModeTextConfig.position.useRelative = false;
+        normalModeTextConfig.position.absoluteX = 140.0f;
+        normalModeTextConfig.position.absoluteY = 20.0f;
+        normalModeTextConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        normalModeTextConfig.scale = 1.5f;
+        
+        easyModeTextConfig.position.useRelative = false;
+        easyModeTextConfig.position.absoluteX = 140.0f;
+        easyModeTextConfig.position.absoluteY = 20.0f;
+        easyModeTextConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        easyModeTextConfig.scale = 1.5f;
         
         // PRESS E表示
         pressEConfig.position.useRelative = false;
@@ -260,6 +266,13 @@ namespace UIConfig {
         modeSelectionNormalTextConfig.selectedColor = glm::vec3(1.0f, 0.8f, 0.2f);
         modeSelectionNormalTextConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         modeSelectionNormalTextConfig.scale = 2.0f;
+        
+        modeSelectionEasyTextConfig.position.useRelative = true;
+        modeSelectionEasyTextConfig.position.offsetX = 20.0f;
+        modeSelectionEasyTextConfig.position.offsetY = -50.0f;
+        modeSelectionEasyTextConfig.selectedColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        modeSelectionEasyTextConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        modeSelectionEasyTextConfig.scale = 2.0f;
         
         modeSelectionTimeAttackTextConfig.position.useRelative = true;
         modeSelectionTimeAttackTextConfig.position.offsetX = 20.0f;
@@ -910,17 +923,30 @@ namespace UIConfig {
                     if (cfg.contains("scale")) starCountConfig.scale = cfg["scale"];
                 }
                 
-                if (sel.contains("modeText")) {
-                    auto& cfg = sel["modeText"];
+                if (sel.contains("normalModeText")) {
+                    auto& cfg = sel["normalModeText"];
                     if (cfg.contains("position")) {
                         auto& pos = cfg["position"];
-                        if (pos.contains("absoluteX")) modeTextConfig.position.absoluteX = pos["absoluteX"];
-                        if (pos.contains("absoluteY")) modeTextConfig.position.absoluteY = pos["absoluteY"];
+                        if (pos.contains("absoluteX")) normalModeTextConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) normalModeTextConfig.position.absoluteY = pos["absoluteY"];
                     }
                     if (cfg.contains("color")) {
-                        modeTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                        normalModeTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
-                    if (cfg.contains("scale")) modeTextConfig.scale = cfg["scale"];
+                    if (cfg.contains("scale")) normalModeTextConfig.scale = cfg["scale"];
+                }
+                
+                if (sel.contains("easyModeText")) {
+                    auto& cfg = sel["easyModeText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("absoluteX")) easyModeTextConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) easyModeTextConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        easyModeTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) easyModeTextConfig.scale = cfg["scale"];
                 }
                 
                 if (sel.contains("pressE")) {
@@ -1260,6 +1286,22 @@ namespace UIConfig {
                         modeSelectionNormalTextConfig.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
                     }
                     if (cfg.contains("scale")) modeSelectionNormalTextConfig.scale = cfg["scale"];
+                }
+                
+                if (modeSel.contains("easyText")) {
+                    auto& cfg = modeSel["easyText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) modeSelectionEasyTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) modeSelectionEasyTextConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        modeSelectionEasyTextConfig.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        modeSelectionEasyTextConfig.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) modeSelectionEasyTextConfig.scale = cfg["scale"];
                 }
                 
                 if (modeSel.contains("timeAttackText")) {
@@ -2341,12 +2383,27 @@ namespace UIConfig {
             return false;
         }
         
-        // ファイルの更新時刻を取得
+        // ファイルの更新時刻を取得（複数のパスを試す）
         time_t currentModTime = getFileModificationTime(configFilePath);
+        
+        // パスが見つからない場合は代替パスを試す
+        if (currentModTime == 0) {
+            std::string altPath = configFilePath;
+            if (altPath.find("../") == 0) {
+                altPath = altPath.substr(3);
+            } else if (altPath.find("assets/") == 0) {
+                altPath = "../" + altPath;
+            }
+            currentModTime = getFileModificationTime(altPath);
+            if (currentModTime > 0) {
+                // 代替パスが見つかった場合は、それをconfigFilePathに設定
+                configFilePath = altPath;
+            }
+        }
         
         // 更新時刻が変わった場合はリロード
         if (currentModTime > 0 && currentModTime != lastFileModificationTime && lastFileModificationTime > 0) {
-            printf("UI Config: File changed! Reloading...\n");
+            printf("UI Config: File changed! Reloading from %s...\n", configFilePath.c_str());
             lastFileModificationTime = currentModTime;
             reloadConfig();
             return true;
@@ -2355,6 +2412,7 @@ namespace UIConfig {
         // 初回の場合は更新時刻を記録
         if (lastFileModificationTime == 0 && currentModTime > 0) {
             lastFileModificationTime = currentModTime;
+            printf("UI Config: Initial file modification time recorded: %ld\n", lastFileModificationTime);
         }
         
         return false;

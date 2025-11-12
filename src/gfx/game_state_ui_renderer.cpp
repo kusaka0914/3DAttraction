@@ -1063,10 +1063,10 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glm::vec3 normalColor = isEasyMode ? normalConfig.unselectedColor : normalConfig.selectedColor;
     renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
     
-    auto timeAttackConfig = uiConfig.getModeSelectionTimeAttackTextConfig();
-    glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, width, height);
-    glm::vec3 easyColor = isEasyMode ? timeAttackConfig.selectedColor : timeAttackConfig.unselectedColor;
-    renderText("EASY", timeAttackPos, easyColor, timeAttackConfig.scale);
+    auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+    glm::vec2 easyPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+    glm::vec3 easyColor = isEasyMode ? easyConfig.selectedColor : easyConfig.unselectedColor;
+    renderText("EASY", easyPos, easyColor, easyConfig.scale);
     
     // PRESS T表示
     auto pressTConfig = uiConfig.getModeSelectionPressTConfig();

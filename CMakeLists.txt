@@ -58,6 +58,7 @@ add_executable(SlimesSkyTravel
     src/game/stage_manager.cpp
     src/game/platform_system.cpp
     src/game/json_stage_loader.cpp
+    src/game/stage_editor.cpp
     src/game/cannon_system.cpp
     src/game/switch_system.cpp
     src/game/gravity_system.cpp
