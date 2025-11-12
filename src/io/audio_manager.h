@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <ctime>
 #ifdef _WIN32
     #include <SDL_mixer.h>
 #else
@@ -39,6 +40,9 @@ public:
     bool initialize();
     void shutdown();
     
+    // ファイル監視（自動リロード用）
+    void checkAndReloadAudio();
+    
 private:
     bool m_initialized;
     float m_masterVolume;
@@ -52,6 +56,15 @@ private:
     Mix_Music* m_bgmMusic;
     std::map<std::string, Mix_Chunk*> m_sfxChunks;
     std::map<std::string, std::string> m_sfxFiles;
+    
+    // ファイル監視用
+    std::time_t m_bgmModTime;  // BGMの更新時刻
+    std::map<std::string, std::time_t> m_sfxModTimes;  // SFXの更新時刻
+    
+    // ヘルパー関数
+    std::time_t getFileModificationTime(const std::string& filepath);
+    void reloadBGM();
+    void reloadSFX(const std::string& name);
 };
 
 } // namespace io

@@ -45,11 +45,15 @@ public:
     UIRenderer();
     ~UIRenderer();
     
+    // ウィンドウサイズを設定（スケーリング用）
+    void setWindowSize(int width, int height);
+    
     // 統合されたUI描画関数
     void renderGameUI(const GameUIState& state);
     
     // 個別UI描画関数（後方互換性のため残す）
     void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives);
+    void renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives);  // タイムアタック用
     void renderLivesWithExplanation(int lives);
     void renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
     void renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
@@ -77,6 +81,7 @@ public:
 private:
     // 個別UIコンポーネント描画関数
     void renderTimeDisplay(float remainingTime, float timeLimit);
+    void renderTimeAttackDisplay(float currentTime, float bestTime);  // タイムアタック用
     void renderGoalDisplay(float timeLimit);
     void renderStarsDisplay(int existingStars);
     void renderLivesDisplay(int lives);
@@ -87,6 +92,10 @@ private:
     void renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale);
     
     BitmapFont font;
+    
+    // ウィンドウサイズ（スケーリング用）
+    int windowWidth = 1280;
+    int windowHeight = 720;
 };
 
 } // namespace gfx

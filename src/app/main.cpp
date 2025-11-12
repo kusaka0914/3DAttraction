@@ -2,7 +2,12 @@
 #define NOMINMAX
 #endif
 
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -20,6 +25,7 @@
 #include "../core/error_handler.h"
 #include "../gfx/camera_system.h"
 #include "../core/utils/input_utils.h"
+#include "../core/utils/ui_config_manager.h"
 #include "game_loop.h"
 #include "tutorial_manager.h"
 #include "../core/constants/debug_config.h"
@@ -38,17 +44,54 @@ int main(int argc, char* argv[]) {
     // OpenGL 2.1に設定する
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // フルスクリーンなのでリサイズ不可
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     
-    // ウィンドウの作成
-    GLFWwindow* window = glfwCreateWindow(GameConstants::WINDOW_WIDTH, GameConstants::WINDOW_HEIGHT, 
-                                         GameConstants::WINDOW_TITLE, nullptr, nullptr);
+    // プライマリモニターの解像度を取得
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* videoMode = glfwGetVideoMode(primaryMonitor);
+    
+    // ウィンドウの作成（一旦ウィンドウモードで作成）
+    GLFWwindow* window = glfwCreateWindow(videoMode->width, videoMode->height, 
+                                         GameConstants::WINDOW_TITLE, 
+                                         nullptr, nullptr);
     if (!window) {
         ErrorHandler::handleGLFWError("window creation");
         glfwTerminate();
         return -1;
     }
+    
+    // OpenGLコンテキストを作成（glfwSetWindowMonitorの前に必要）
+    glfwMakeContextCurrent(window);
+    
+    // Windows APIを使ってフルスクリーンに切り替え
+    #ifdef _WIN32
+        HWND hwnd = glfwGetWin32Window(window);
+        if (hwnd) {
+            // ウィンドウスタイルを変更（タイトルバーと境界線を削除）
+            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+            style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+            
+            // ウィンドウをフルスクリーンに設定
+            SetWindowPos(hwnd, HWND_TOP, 0, 0, videoMode->width, videoMode->height, 
+                        SWP_FRAMECHANGED | SWP_NOZORDER);
+            
+            // ウィンドウを前面に表示
+            ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+            SetForegroundWindow(hwnd);
+        }
+    #else
+        // macOS/LinuxではglfwSetWindowMonitorを使用
+        glfwSetWindowMonitor(window, primaryMonitor, 0, 0, videoMode->width, videoMode->height, videoMode->refreshRate);
+    #endif
+    
+    // イベントを処理してウィンドウを確実に表示
+    glfwPollEvents();
+    
+    // ウィンドウを前面に表示
+    glfwShowWindow(window);
+    glfwFocusWindow(window);
     
     // 文字入力を無効化（ゲーム中にテキストが表示されないようにする）
     glfwSetCharCallback(window, nullptr);
@@ -127,6 +170,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to initialize audio system" << std::endl;
         // 音声システムの初期化に失敗してもゲームは続行
     }
+    
+    // UI設定を読み込み
+    UIConfig::UIConfigManager::getInstance().loadConfig("assets/config/ui_config.json");
     
     // デバッグ用エンドロール表示フラグがtrueの時は開始時にエンドロールが流れる
     if (debugEnding) {

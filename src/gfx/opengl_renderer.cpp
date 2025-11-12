@@ -45,6 +45,11 @@ void OpenGLRenderer::cleanup() {
 }
 
 void OpenGLRenderer::beginFrame() {
+    // ビューポートを毎フレーム更新（ウィンドウサイズ変更に対応）
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+    
     glClearColor(GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.r, 
                  GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.g, 
                  GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.b, 1.0f);
@@ -60,6 +65,11 @@ void OpenGLRenderer::beginFrame() {
 }
 
 void OpenGLRenderer::beginFrameWithBackground(int stageNumber) {
+    // ビューポートを毎フレーム更新（ウィンドウサイズ変更に対応）
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // ステージ6（チュートリアル）の場合は黒背景を設定

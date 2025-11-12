@@ -53,6 +53,7 @@ add_executable(SlimesSkyTravel
     src/gfx/game_state_ui_renderer.cpp
     src/gfx/renderer_3d.cpp
     src/gfx/texture_manager.cpp
+    src/gfx/minimap_renderer.cpp
     src/game/game_state.cpp
     src/game/stage_manager.cpp
     src/game/platform_system.cpp
@@ -60,11 +61,13 @@ add_executable(SlimesSkyTravel
     src/game/cannon_system.cpp
     src/game/switch_system.cpp
     src/game/gravity_system.cpp
+    src/game/replay_manager.cpp
     src/physics/physics_system.cpp
     src/io/input_system.cpp
     src/io/audio_manager.cpp
     src/core/utils/physics_utils.cpp
     src/core/utils/stage_utils.cpp
+    src/core/utils/ui_config_manager.cpp
 )
 
 # 実行ファイル名を元の名前に設定

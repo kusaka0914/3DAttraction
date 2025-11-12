@@ -11,11 +11,29 @@
 #include <iostream>
 #include <algorithm>
 #include <tuple>
+#include <fstream>
+#ifdef _WIN32
+    #include <sys/stat.h>
+    #include <io.h>
+#else
+    #include <sys/stat.h>
+    #include <unistd.h>
+#endif
 
 namespace Colors = GameConstants::Colors;
 
-StageManager::StageManager() : currentStage(1) {
+StageManager::StageManager() : currentStage(1), lastFileModificationTime(0) {
     initializeStages();
+    
+    // ステージ番号とJSONファイルパスのマッピングを初期化
+    // デフォルトは相対パス（../assets/）を使用
+    stageFilePaths[0] = "../assets/stages/stage_selection.json";
+    stageFilePaths[1] = "../assets/stages/stage1.json";
+    stageFilePaths[2] = "../assets/stages/stage2.json";
+    stageFilePaths[3] = "../assets/stages/stage3.json";
+    stageFilePaths[4] = "../assets/stages/stage4.json";
+    stageFilePaths[5] = "../assets/stages/stage5.json";
+    stageFilePaths[6] = "../assets/stages/tutorial.json";
 }
 
 void StageManager::initializeStages() {
@@ -178,6 +196,9 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     
     // ステージ生成関数を実行
     stageIt->generateFunction(gameState, platformSystem);
+    
+    // 現在のステージのファイル情報を更新
+    updateCurrentStageFileInfo(stageNumber);
     
     currentStage = stageNumber;
     return true;
@@ -537,4 +558,125 @@ void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& p
     printf("TUTORIAL: Start position set to (%.1f, %.1f, %.1f)\n", 
            gameState.tutorialStartPosition.x, gameState.tutorialStartPosition.y, gameState.tutorialStartPosition.z);
     
+}
+
+// ======================================================
+// ファイル監視機能（自動リロード用）
+// ======================================================
+
+std::time_t StageManager::getFileModificationTime(const std::string& filepath) {
+#ifdef _WIN32
+    struct _stat fileInfo;
+    if (_stat(filepath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+    // 代替パスも試す
+    std::string altPath = filepath;
+    if (altPath.find("../") == 0) {
+        altPath = altPath.substr(3);
+    } else if (altPath.find("assets/") == 0) {
+        altPath = "../" + altPath;
+    }
+    if (_stat(altPath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+#else
+    struct stat fileInfo;
+    if (stat(filepath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+    // 代替パスも試す
+    std::string altPath = filepath;
+    if (altPath.find("../") == 0) {
+        altPath = altPath.substr(3);
+    } else if (altPath.find("assets/") == 0) {
+        altPath = "../" + altPath;
+    }
+    if (stat(altPath.c_str(), &fileInfo) == 0) {
+        return fileInfo.st_mtime;
+    }
+#endif
+    return 0;
+}
+
+std::string StageManager::getStageFilePath(int stageNumber) {
+    // まずマッピングから取得
+    auto it = stageFilePaths.find(stageNumber);
+    if (it != stageFilePaths.end()) {
+        // ファイルが存在するか確認
+        std::ifstream file(it->second);
+        if (file.good()) {
+            file.close();
+            return it->second;
+        }
+        file.close();
+    }
+    
+    // マッピングにない、またはファイルが見つからない場合は代替パスを試す
+    std::vector<std::string> alternativePaths;
+    switch (stageNumber) {
+        case 0: alternativePaths = {"assets/stages/stage_selection.json", "../assets/stages/stage_selection.json"}; break;
+        case 1: alternativePaths = {"assets/stages/stage1.json", "../assets/stages/stage1.json"}; break;
+        case 2: alternativePaths = {"assets/stages/stage2.json", "../assets/stages/stage2.json"}; break;
+        case 3: alternativePaths = {"assets/stages/stage3.json", "../assets/stages/stage3.json"}; break;
+        case 4: alternativePaths = {"assets/stages/stage4.json", "../assets/stages/stage4.json"}; break;
+        case 5: alternativePaths = {"assets/stages/stage5.json", "../assets/stages/stage5.json"}; break;
+        case 6: alternativePaths = {"assets/stages/tutorial.json", "../assets/stages/tutorial.json"}; break;
+        default: return "";
+    }
+    
+    for (const auto& path : alternativePaths) {
+        std::ifstream file(path);
+        if (file.good()) {
+            file.close();
+            return path;
+        }
+        file.close();
+    }
+    
+    return "";
+}
+
+void StageManager::updateCurrentStageFileInfo(int stageNumber) {
+    currentStageFilePath = getStageFilePath(stageNumber);
+    if (!currentStageFilePath.empty()) {
+        lastFileModificationTime = getFileModificationTime(currentStageFilePath);
+    } else {
+        currentStageFilePath = "";
+        lastFileModificationTime = 0;
+    }
+}
+
+bool StageManager::checkAndReloadStage(GameState& gameState, PlatformSystem& platformSystem) {
+    // ファイルパスが設定されていない場合はスキップ
+    if (currentStageFilePath.empty()) {
+        return false;
+    }
+    
+    // ファイルの存在確認（パスが変わった可能性がある）
+    std::string actualPath = getStageFilePath(currentStage);
+    if (actualPath != currentStageFilePath) {
+        // パスが変わった場合は更新
+        updateCurrentStageFileInfo(currentStage);
+        return false;
+    }
+    
+    // ファイルの更新時刻を取得
+    std::time_t currentModTime = getFileModificationTime(currentStageFilePath);
+    
+    // 更新時刻が変わった場合はリロード
+    if (currentModTime > 0 && currentModTime != lastFileModificationTime && lastFileModificationTime > 0) {
+        printf("Stage file changed! Reloading stage %d...\n", currentStage);
+        lastFileModificationTime = currentModTime;
+        
+        // ステージを再読み込み
+        return loadStage(currentStage, gameState, platformSystem);
+    }
+    
+    // 初回の場合は更新時刻を記録
+    if (lastFileModificationTime == 0 && currentModTime > 0) {
+        lastFileModificationTime = currentModTime;
+    }
+    
+    return false;
 }

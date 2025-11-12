@@ -183,7 +183,7 @@ struct GameState {
     
     // 星数管理システム
     std::map<int, int> stageStars;
-    int totalStars = 0;
+    int totalStars = 100;
     std::map<int, bool> unlockedStages;
     
     // アイテム管理システム
@@ -228,9 +228,47 @@ struct GameState {
     bool showEasyModeExplanationUI = false;
     
     // モード選択UI状態
-    bool showModeSelectionUI = false;
+    bool showModeSelectionUI = false;  // EASY/NORMAL選択UI（ステージ選択フィールド用）
+    bool showTimeAttackSelectionUI = false;  // NORMAL/TIME ATTACK選択UI（ステージ入場時用）
+    int modeSelectionTargetStage = 0;  // モード選択UIで選択されたステージ番号
     // カウントダウン時の時間設定フラグ
     bool timeLimitApplied = false;
+    
+    // タイムアタックモード
+    bool isTimeAttackMode = false;
+    float currentTimeAttackTime = 0.0f;  // 現在のタイムアタック経過時間
+    std::map<int, float> timeAttackRecords;  // ステージ番号 -> ベストタイム（秒）
+    bool isNewRecord = false;  // 新記録フラグ
+    float timeAttackStartTime = 0.0f;  // タイムアタック開始時刻（カウントダウン終了時）
+    
+    // リプレイシステム
+    struct ReplayFrame {
+        float timestamp;           // カウントダウン終了からの経過時間（秒）
+        glm::vec3 playerPosition;  // プレイヤー位置
+        glm::vec3 playerVelocity;  // プレイヤー速度
+        std::vector<bool> itemCollectedStates;  // アイテムの収集状態
+    };
+    
+    struct ReplayData {
+        int stageNumber;
+        float clearTime;
+        std::vector<ReplayFrame> frames;
+        std::string recordedDate;
+        float frameRate;  // 記録間隔（秒）
+    };
+    
+    // リプレイ記録用
+    bool isRecordingReplay = false;
+    std::vector<ReplayFrame> replayBuffer;
+    float replayRecordTimer = 0.0f;
+    const float REPLAY_RECORD_INTERVAL = 0.1f; // 0.1秒間隔で記録
+    
+    // リプレイ再生用
+    bool isReplayMode = false;
+    ReplayData currentReplay;
+    float replayPlaybackTime = 0.0f;
+    bool isReplayPaused = false;
+    float replayPlaybackSpeed = 1.0f;  // 再生速度（0.3x, 0.5x, 1.0x）
     
     // 速度制御システム
     float timeScale = 1.0f;
