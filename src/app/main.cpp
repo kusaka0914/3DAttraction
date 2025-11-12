@@ -25,6 +25,7 @@
 #include "../core/error_handler.h"
 #include "../gfx/camera_system.h"
 #include "../core/utils/input_utils.h"
+#include "../core/utils/ui_config_manager.h"
 #include "game_loop.h"
 #include "tutorial_manager.h"
 #include "../core/constants/debug_config.h"
@@ -169,6 +170,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to initialize audio system" << std::endl;
         // 音声システムの初期化に失敗してもゲームは続行
     }
+    
+    // UI設定を読み込み
+    UIConfig::UIConfigManager::getInstance().loadConfig("assets/config/ui_config.json");
     
     // デバッグ用エンドロール表示フラグがtrueの時は開始時にエンドロールが流れる
     if (debugEnding) {

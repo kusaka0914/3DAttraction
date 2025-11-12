@@ -228,7 +228,8 @@ struct GameState {
     bool showEasyModeExplanationUI = false;
     
     // モード選択UI状態
-    bool showModeSelectionUI = false;
+    bool showModeSelectionUI = false;  // EASY/NORMAL選択UI（ステージ選択フィールド用）
+    bool showTimeAttackSelectionUI = false;  // NORMAL/TIME ATTACK選択UI（ステージ入場時用）
     int modeSelectionTargetStage = 0;  // モード選択UIで選択されたステージ番号
     // カウントダウン時の時間設定フラグ
     bool timeLimitApplied = false;

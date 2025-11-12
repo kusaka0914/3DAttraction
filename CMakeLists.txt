@@ -67,6 +67,7 @@ add_executable(SlimesSkyTravel
     src/io/audio_manager.cpp
     src/core/utils/physics_utils.cpp
     src/core/utils/stage_utils.cpp
+    src/core/utils/ui_config_manager.cpp
 )
 
 # 実行ファイル名を元の名前に設定

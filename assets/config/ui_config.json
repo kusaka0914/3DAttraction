@@ -1,0 +1,928 @@
+{
+  "stageInfo": {
+    "position": {
+      "useRelative": false,
+      "absoluteX": 30,
+      "absoluteY": 30
+    },
+    "color": [1.0, 1.0, 0.0],
+    "scale": 2.0
+  },
+  "speedDisplay": {
+    "position": {
+      "useRelative": false,
+      "absoluteX": 880,
+      "absoluteY": 25
+    },
+    "color": [1.0, 1.0, 1.0],
+    "scale": 2.0
+  },
+  "pressT": {
+    "position": {
+      "useRelative": false,
+      "absoluteX": 870,
+      "absoluteY": 65
+    },
+    "color": [1.0, 1.0, 1.0],
+    "scale": 1.0
+  },
+  "replayUI": {
+    "pauseMark": {
+      "position": {
+        "offsetX": -360,
+        "offsetY": -280
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 5.0
+    },
+    "rewindMark": {
+      "position": {
+        "offsetX": -360,
+        "offsetY": -280
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 5.0
+    },
+    "fastForwardMark": {
+      "position": {
+        "offsetX": -360,
+        "offsetY": -280
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 5.0
+    },
+    "speedLabel": {
+      "position": {
+        "offsetX": -365,
+        "offsetY": -65
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "speedDisplay": {
+      "position": {
+        "offsetX": -350,
+        "offsetY": -40
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.0
+    },
+    "pressT": {
+      "position": {
+        "offsetX": -340,
+        "offsetY": 0
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "instructions": {
+      "position": {
+        "offsetX": -300,
+        "offsetY": -50
+      },
+      "color": [0.8, 0.8, 0.8],
+      "scale": 1.0
+    }
+  },
+  "stageSelection": {
+    "worldTitle": {
+      "position": {
+        "offsetX": 180,
+        "offsetY": -560
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 1.5
+    },
+    "starIcon": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 45,
+        "absoluteY": 35
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "starCount": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 72,
+        "absoluteY": 27
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 1.5
+    },
+    "modeText": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 180,
+        "absoluteY": 20
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "pressE": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 195,
+        "absoluteY": 50
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 0.8
+    },
+    "controlsText": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 10,
+        "absoluteY": 0,
+        "offsetY": -30
+      },
+      "color": [0.8, 0.8, 0.8],
+      "scale": 1.0
+    }
+  },
+  "readyScreen": {
+    "readyText": {
+      "position": {
+        "offsetX": -180,
+        "offsetY": -300
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 5.0
+    },
+    "playSpeedLabel": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -70
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "speedOptions": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": 0,
+        "spacing": 150
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
+    "pressT": {
+      "position": {
+        "offsetX": -350,
+        "offsetY": 100
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 1.2
+    },
+    "tpsFpsLabel": {
+      "position": {
+        "offsetX": 190,
+        "offsetY": -70
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "tpsOption": {
+      "position": {
+        "offsetX": 130,
+        "offsetY": 0
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
+    "fpsOption": {
+      "position": {
+        "offsetX": 320,
+        "offsetY": 0
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
+    "pressF": {
+      "position": {
+        "offsetX": 210,
+        "offsetY": 100
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 1.2
+    },
+    "confirm": {
+      "position": {
+        "offsetX": -150,
+        "offsetY": 250
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.2
+    }
+  },
+  "stageClear": {
+    "completedText": {
+      "position": {
+        "offsetX": -500,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.5
+    },
+    "clearText": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.5
+    },
+    "clearTime": {
+      "position": {
+        "offsetX": -460,
+        "offsetY": -160
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.8
+    },
+    "stars": {
+      "position": {
+        "offsetX": -280,
+        "offsetY": -50,
+        "spacing": 300
+      },
+      "activeColor": [1.0, 1.0, 0.0],
+      "inactiveColor": [0.5, 0.5, 0.5],
+      "scale": 5.0
+    },
+    "returnField": {
+      "position": {
+        "offsetX": -460,
+        "offsetY": -70
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.0
+    },
+    "retry": {
+      "position": {
+        "offsetX": -230,
+        "offsetY": -70
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    }
+  },
+  "gameOver": {
+    "gameOverText": {
+      "position": {
+        "offsetX": -300,
+        "offsetY": -100
+      },
+      "color": [1.0, 0.2, 0.2],
+      "scale": 3.0
+    },
+    "returnField": {
+      "position": {
+        "offsetX": -300,
+        "offsetY": 50
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    },
+    "retry": {
+      "position": {
+        "offsetX": -150,
+        "offsetY": 150
+      },
+      "color": [0.8, 0.8, 0.8],
+      "scale": 1.5
+    }
+  },
+  "modeSelection": {
+    "title": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -350
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "normalText": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -280
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
+    "timeAttackText": {
+      "position": {
+        "offsetX": -300,
+        "offsetY": -280
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
+    "pressT": {
+      "position": {
+        "offsetX": -330,
+        "offsetY": -230
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 1.2
+    },
+    "confirm": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -180
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    }
+  },
+  "tutorial": {
+    "stepText": {
+      "position": {
+        "offsetX": -360,
+        "offsetY": -90
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "message": {
+      "position": {
+        "offsetX": -480,
+        "offsetY": -50
+      },
+      "completedColor": [0.2, 0.8, 0.2],
+      "normalColor": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "pressEnter": {
+      "position": {
+        "offsetX": -440,
+        "offsetY": 0
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.2
+    },
+    "steps": {
+      "step5": {
+        "explainText1": {
+          "position": {
+            "offsetX": -50,
+            "offsetY": -400
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        }
+      },
+      "step9": {
+        "explainText1": {
+          "position": {
+            "offsetX": -200,
+            "offsetY": 50
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        },
+        "explainText2": {
+          "position": {
+            "offsetX": -120,
+            "offsetY": 90
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        },
+        "explainText3": {
+          "position": {
+            "offsetX": -200,
+            "offsetY": 130
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        },
+        "explainText4": {
+          "position": {
+            "offsetX": -150,
+            "offsetY": 170
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        }
+      },
+      "step10": {
+        "explainText1": {
+          "position": {
+            "offsetX": -190,
+            "offsetY": 50
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        },
+        "explainText2": {
+          "position": {
+            "offsetX": -300,
+            "offsetY": 90
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        },
+        "explainText3": {
+          "position": {
+            "offsetX": -90,
+            "offsetY": 130
+          },
+          "color": [1.0, 1.0, 1.0],
+          "scale": 1.2
+        }
+      }
+    }
+  },
+  "unlockConfirm": {
+    "title": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -370
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.0
+    },
+    "requiredStars": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -280
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 1.5
+    },
+    "unlockButton": {
+      "position": {
+        "offsetX": -520,
+        "offsetY": -200
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    },
+    "cancelButton": {
+      "position": {
+        "offsetX": -270,
+        "offsetY": -200
+      },
+      "color": [0.8, 0.2, 0.2],
+      "scale": 1.5
+    }
+  },
+  "starInsufficient": {
+    "title": {
+      "position": {
+        "offsetX": -350,
+        "offsetY": -200
+      },
+      "color": [1.0, 0.2, 0.2],
+      "scale": 2.0
+    },
+    "requiredStars": {
+      "position": {
+        "offsetX": -200,
+        "offsetY": -50
+      },
+      "color": [1.0, 0.8, 0.2],
+      "scale": 1.5
+    },
+    "collectStars": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": 100
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "okButton": {
+      "position": {
+        "offsetX": -100,
+        "offsetY": 200
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    }
+  },
+  "ending": {
+    "thankYou": {
+      "position": {
+        "offsetX": -700,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "congratulations": {
+      "position": {
+        "offsetX": -850,
+        "offsetY": -300
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 1.8
+    },
+    "seeYouAgain": {
+      "position": {
+        "offsetX": -700,
+        "offsetY": -200
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "skip": {
+      "position": {
+        "offsetX": 880,
+        "offsetY": -690
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    }
+  },
+  "gameUI": {
+    "timeDisplay": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 1170,
+        "absoluteY": 30
+      },
+      "normalColor": [1.0, 1.0, 1.0],
+      "warningColor": [1.0, 0.5, 0.0],
+      "scale": 3.0
+    },
+    "timeAttackDisplay": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 1170,
+        "absoluteY": 30
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.1
+    },
+    "bestTime": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 1170,
+        "absoluteY": 60
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.8
+    },
+    "goalDisplay": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 962,
+        "absoluteY": 65
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "goalTime5s": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 1040,
+        "absoluteY": 65
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "goalTime10s": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 1110,
+        "absoluteY": 65
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "goalTime20s": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 1110,
+        "absoluteY": 65
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "stars": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 980,
+        "absoluteY": 40,
+        "spacing": 70
+      },
+      "activeColor": [1.0, 1.0, 0.0],
+      "inactiveColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
+    "hearts": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 200,
+        "absoluteY": 40,
+        "spacing": 40
+      },
+      "activeColor": [1.0, 0.3, 0.3],
+      "inactiveColor": [0.3, 0.3, 0.3],
+      "scale": 1.4
+    },
+    "skills": {
+      "timeStop": {
+        "position": {
+          "useRelative": false,
+          "absoluteX": 30,
+          "absoluteY": 650
+        },
+        "countOffset": 50,
+        "instructionOffset": 20,
+        "color": [1.0, 1.0, 1.0],
+        "disabledColor": [0.5, 0.5, 0.5],
+        "activeColor": [0.5, 0.5, 1.0],
+        "scale": 1.0,
+        "countScale": 3.0,
+        "instructionScale": 1.2
+      },
+      "doubleJump": {
+        "position": {
+          "useRelative": false,
+          "absoluteX": 230,
+          "absoluteY": 650
+        },
+        "countOffset": 70,
+        "instructionOffset": -25,
+        "color": [1.0, 1.0, 1.0],
+        "disabledColor": [0.5, 0.5, 0.5],
+        "activeColor": [0.5, 0.5, 1.0],
+        "scale": 1.0,
+        "countScale": 3.0,
+        "instructionScale": 1.2
+      },
+      "heartFeel": {
+        "position": {
+          "useRelative": false,
+          "absoluteX": 460,
+          "absoluteY": 650
+        },
+        "countOffset": 60,
+        "instructionOffset": 30,
+        "color": [1.0, 1.0, 1.0],
+        "disabledColor": [0.5, 0.5, 0.5],
+        "activeColor": [0.5, 0.5, 1.0],
+        "scale": 1.0,
+        "countScale": 3.0,
+        "instructionScale": 1.2
+      },
+      "freeCamera": {
+        "position": {
+          "useRelative": false,
+          "absoluteX": 850,
+          "absoluteY": 650
+        },
+        "countOffset": 60,
+        "instructionOffset": 40,
+        "color": [1.0, 1.0, 1.0],
+        "disabledColor": [0.5, 0.5, 0.5],
+        "activeColor": [0.5, 0.5, 1.0],
+        "scale": 1.0,
+        "countScale": 3.0,
+        "instructionScale": 1.2,
+        "activePosition": {
+          "useRelative": false,
+          "absoluteX": 550,
+          "absoluteY": 490
+        },
+        "activeScale": 2.0
+      },
+      "burstJump": {
+        "position": {
+          "useRelative": false,
+          "absoluteX": 650,
+          "absoluteY": 650
+        },
+        "countOffset": 50,
+        "instructionOffset": 25,
+        "color": [1.0, 1.0, 1.0],
+        "disabledColor": [0.5, 0.5, 0.5],
+        "activeColor": [0.5, 0.5, 1.0],
+        "scale": 1.0,
+        "countScale": 3.0,
+        "instructionScale": 1.2
+      }
+    }
+  },
+  "warpTutorial": {
+    "title": {
+      "position": {
+        "offsetX": -550,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "description1": {
+      "position": {
+        "offsetX": -480,
+        "offsetY": -300
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "description2": {
+      "position": {
+        "offsetX": -430,
+        "offsetY": -250
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "enterButton": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -180
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    }
+  },
+  "stage0Tutorial": {
+    "line1": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -410
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "line2": {
+      "position": {
+        "offsetX": -550,
+        "offsetY": -360
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "line3": {
+      "position": {
+        "offsetX": -510,
+        "offsetY": -310
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "line4": {
+      "position": {
+        "offsetX": -650,
+        "offsetY": -260
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "line5": {
+      "position": {
+        "offsetX": -630,
+        "offsetY": -180
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "okButton": {
+      "position": {
+        "offsetX": -380,
+        "offsetY": -100
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    }
+  },
+  "easyModeExplanation": {
+    "title": {
+      "position": {
+        "offsetX": -500,
+        "offsetY": -450
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "description1": {
+      "position": {
+        "offsetX": -630,
+        "offsetY": -380
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "description2": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -300
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "item1": {
+      "position": {
+        "offsetX": -570,
+        "offsetY": -220
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "item2": {
+      "position": {
+        "offsetX": -570,
+        "offsetY": -170
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "item3": {
+      "position": {
+        "offsetX": -570,
+        "offsetY": -120
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "item4a": {
+      "position": {
+        "offsetX": -570,
+        "offsetY": -70
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "item4b": {
+      "position": {
+        "offsetX": -560,
+        "offsetY": -20
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "okButton": {
+      "position": {
+        "offsetX": -380,
+        "offsetY": 30
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    }
+  },
+  "countdown": {
+    "number": {
+      "position": {
+        "offsetX": -350,
+        "offsetY": -280
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 7.0
+    }
+  },
+  "stageSelectionAssist": {
+    "text": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -200
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.3
+    }
+  },
+  "staffRoll": {
+    "skip": {
+      "position": {
+        "offsetX": -70,
+        "offsetY": -650
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "title": {
+      "position": {
+        "offsetX": -600,
+        "offsetY": 0
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.5
+    },
+    "role": {
+      "position": {
+        "offsetX": -750,
+        "offsetY": 0
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.0
+    },
+    "name": {
+      "position": {
+        "offsetX": -500,
+        "offsetY": 0
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.0
+    },
+    "spacing": 100
+  }
+}

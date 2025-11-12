@@ -1,5 +1,5 @@
 {
-  "clearTime": 4.245400905609131,
+  "clearTime": 6.482700824737549,
   "frameRate": 0.10000000149011612,
   "frames": [
     {
@@ -29,14 +29,14 @@
       "playerPosition": [
         0.0,
         6.0,
-        -25.0
+        -23.842119216918945
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 0.08238369971513748
+      "timestamp": 0.08772849291563034
     },
     {
       "itemCollectedStates": [
@@ -46,15 +46,15 @@
       ],
       "playerPosition": [
         0.0,
-        6.789915084838867,
-        -23.169355392456055
+        7.189957141876221,
+        -21.885652542114258
       ],
       "playerVelocity": [
         0.0,
-        6.144899845123291,
+        4.940436363220215,
         0.0
       ],
-      "timestamp": 0.18408599495887756
+      "timestamp": 0.19642098248004913
     },
     {
       "itemCollectedStates": [
@@ -64,15 +64,15 @@
       ],
       "playerPosition": [
         0.0,
-        7.82521915435791,
-        -21.32375717163086
+        7.8581085205078125,
+        -19.949399948120117
       ],
       "playerVelocity": [
         0.0,
-        1.5449110269546509,
+        0.18891656398773193,
         0.0
       ],
-      "timestamp": 0.28661930561065674
+      "timestamp": 0.3039907217025757
     },
     {
       "itemCollectedStates": [
@@ -82,33 +82,15 @@
       ],
       "playerPosition": [
         0.0,
-        7.483375072479248,
-        -19.471086502075195
+        7.078441143035889,
+        -18.059791564941406
       ],
       "playerVelocity": [
         0.0,
-        -2.844815492630005,
+        -4.222777366638184,
         0.0
       ],
-      "timestamp": 0.3895455300807953
-    },
-    {
-      "itemCollectedStates": [
-        false,
-        false,
-        false
-      ],
-      "playerPosition": [
-        0.0,
-        5.803132057189941,
-        -17.601390838623047
-      ],
-      "playerVelocity": [
-        0.0,
-        -7.058770179748535,
-        0.0
-      ],
-      "timestamp": 0.49341753125190735
+      "timestamp": 0.4089690148830414
     },
     {
       "itemCollectedStates": [
@@ -119,14 +101,14 @@
       "playerPosition": [
         0.0,
         6.0,
-        -15.774365425109863
+        -16.166393280029297
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 0.5949189066886902
+      "timestamp": 0.5141577124595642
     },
     {
       "itemCollectedStates": [
@@ -136,213 +118,411 @@
       ],
       "playerPosition": [
         0.0,
-        7.599757194519043,
-        -15.013528823852539
-      ],
-      "playerVelocity": [
-        0.0,
-        3.2540900707244873,
-        0.0
-      ],
-      "timestamp": 0.6987866759300232
-    },
-    {
-      "itemCollectedStates": [
-        false,
-        false,
-        false
-      ],
-      "playerPosition": [
-        1.8542519807815552,
-        7.769545078277588,
-        -15.013528823852539
-      ],
-      "playerVelocity": [
-        0.0,
-        -1.2237019538879395,
-        0.0
-      ],
-      "timestamp": 0.8018007278442383
-    },
-    {
-      "itemCollectedStates": [
-        false,
-        false,
-        false
-      ],
-      "playerPosition": [
-        3.713498830795288,
-        6.590716361999512,
-        -15.013528823852539
-      ],
-      "playerVelocity": [
-        0.0,
-        -5.495185852050781,
-        0.0
-      ],
-      "timestamp": 0.9050922393798828
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        false,
-        false
-      ],
-      "playerPosition": [
-        5.527200698852539,
         6.0,
-        -15.013528823852539
+        -14.237271308898926
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 1.005853533744812
+      "timestamp": 0.6213312745094299
     },
     {
       "itemCollectedStates": [
-        true,
+        false,
         false,
         false
       ],
       "playerPosition": [
-        7.347589492797852,
+        0.0,
         6.0,
-        -15.013528823852539
+        -14.237271308898926
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 1.106986165046692
+      "timestamp": 0.7282543778419495
     },
     {
       "itemCollectedStates": [
-        true,
+        false,
         false,
         false
       ],
       "playerPosition": [
-        7.347589492797852,
+        0.0,
         6.0,
-        -15.013528823852539
+        -14.237271308898926
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 1.2106945514678955
+      "timestamp": 0.8346810936927795
     },
     {
       "itemCollectedStates": [
-        true,
+        false,
         false,
         false
       ],
       "playerPosition": [
-        7.347589492797852,
+        0.0,
         6.0,
-        -15.013528823852539
+        -14.237271308898926
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 1.3129117488861084
+      "timestamp": 0.9433913826942444
     },
     {
       "itemCollectedStates": [
-        true,
+        false,
         false,
         false
       ],
       "playerPosition": [
-        5.882767200469971,
-        6.816431045532227,
-        -15.013528823852539
-      ],
-      "playerVelocity": [
         0.0,
-        6.07288122177124,
-        0.0
-      ],
-      "timestamp": 1.4156665802001953
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        false,
-        false
-      ],
-      "playerPosition": [
-        4.025824069976807,
-        7.831432342529297,
-        -15.013528823852539
-      ],
-      "playerVelocity": [
-        0.0,
-        1.4497995376586914,
-        0.0
-      ],
-      "timestamp": 1.5188301801681519
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        false,
-        false
-      ],
-      "playerPosition": [
-        2.184715747833252,
-        7.468306541442871,
-        -15.013528823852539
-      ],
-      "playerVelocity": [
-        0.0,
-        -2.9089386463165283,
-        0.0
-      ],
-      "timestamp": 1.6211140155792236
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        false,
-        false
-      ],
-      "playerPosition": [
-        0.3512682318687439,
         6.0,
-        -15.013528823852539
+        -15.816694259643555
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 1.7229721546173096
+      "timestamp": 1.0537645816802979
     },
     {
       "itemCollectedStates": [
-        true,
+        false,
         false,
         false
       ],
       "playerPosition": [
-        -0.03692513704299927,
+        0.0,
         6.0,
-        -14.653264045715332
+        -16.587200164794922
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 1.8276807069778442
+      "timestamp": 1.1608227491378784
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        0.0,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 1.2681851387023926
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        0.397830605506897,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 1.375687837600708
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        2.3560469150543213,
+        7.634544849395752,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        3.0475070476531982,
+        0.0
+      ],
+      "timestamp": 1.4844776391983032
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        4.268680095672607,
+        7.719513893127441,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        -1.5559823513031006,
+        0.0
+      ],
+      "timestamp": 1.5907350778579712
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        6.1695756912231445,
+        6.393510341644287,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        -5.906662940979004,
+        0.0
+      ],
+      "timestamp": 1.6963403224945068
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.11845874786377,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 1.8046115636825562
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.503692626953125,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 1.9107856750488281
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.503692626953125,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.0180532932281494
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        6.9340386390686035,
+        6.443591594696045,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        7.019044876098633,
+        0.0
+      ],
+      "timestamp": 2.1276028156280518
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        4.948243141174316,
+        7.773441791534424,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        2.0506253242492676,
+        0.0
+      ],
+      "timestamp": 2.2379250526428223
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        4.1753716468811035,
+        7.525124549865723,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        -2.605348587036133,
+        0.0
+      ],
+      "timestamp": 2.3465576171875
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        5.341778755187988,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.4549736976623535
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        7.2446184158325195,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.5606870651245117
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.052268981933594,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.6712584495544434
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.052268981933594,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.776285409927368
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.052268981933594,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.88173246383667
+    },
+    {
+      "itemCollectedStates": [
+        false,
+        false,
+        false
+      ],
+      "playerPosition": [
+        8.052268981933594,
+        6.0,
+        -16.587200164794922
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 2.9897100925445557
     },
     {
       "itemCollectedStates": [
@@ -351,16 +531,16 @@
         false
       ],
       "playerPosition": [
-        -0.03692513704299927,
-        7.396170616149902,
-        -12.777044296264648
+        8.052268981933594,
+        6.0,
+        -15.007166862487793
       ],
       "playerVelocity": [
         0.0,
-        4.183261871337891,
+        0.0,
         0.0
       ],
-      "timestamp": 1.9319151639938354
+      "timestamp": 3.09838604927063
     },
     {
       "itemCollectedStates": [
@@ -369,16 +549,160 @@
         false
       ],
       "playerPosition": [
-        -0.03692513704299927,
+        8.052268981933594,
+        6.0,
+        -15.007166862487793
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 3.207240104675293
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        6.490504264831543,
+        6.0,
+        -15.007166862487793
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 3.315585136413574
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        4.561644077301025,
+        7.148491859436035,
+        -15.007166862487793
+      ],
+      "playerVelocity": [
+        0.0,
+        5.082259178161621,
+        0.0
+      ],
+      "timestamp": 3.422744035720825
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        2.641317844390869,
+        7.862358570098877,
+        -15.007166862487793
+      ],
+      "playerVelocity": [
+        0.0,
+        0.360993355512619,
+        0.0
+      ],
+      "timestamp": 3.529428482055664
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        0.7546479105949402,
+        7.137782096862793,
+        -15.007166862487793
+      ],
+      "playerVelocity": [
+        0.0,
+        -4.05089807510376,
+        0.0
+      ],
+      "timestamp": 3.6342432498931885
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        -0.42329731583595276,
+        6.0,
+        -15.007166862487793
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 3.7440898418426514
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        -0.42329731583595276,
+        6.0,
+        -14.589858055114746
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 3.8543472290039063
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        -0.42329731583595276,
+        7.406810283660889,
+        -12.675383567810059
+      ],
+      "playerVelocity": [
+        0.0,
+        4.140425205230713,
+        0.0
+      ],
+      "timestamp": 3.960706949234009
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        false,
+        false
+      ],
+      "playerPosition": [
+        -0.42329731583595276,
         8.0,
-        -10.955416679382324
+        -10.804140090942383
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 2.033116579055786
+      "timestamp": 4.064664840698242
     },
     {
       "itemCollectedStates": [
@@ -387,16 +711,16 @@
         false
       ],
       "playerPosition": [
-        -0.5647355318069458,
+        -0.8295375108718872,
         8.0,
-        -9.308403968811035
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 2.136763334274292
+      "timestamp": 4.17388916015625
     },
     {
       "itemCollectedStates": [
@@ -405,16 +729,16 @@
         false
       ],
       "playerPosition": [
-        -2.42374324798584,
-        9.12903881072998,
-        -9.308403968811035
+        -2.7625844478607178,
+        9.433741569519043,
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
-        5.146852970123291,
+        4.026308536529541,
         0.0
       ],
-      "timestamp": 2.240041494369507
+      "timestamp": 4.281280517578125
     },
     {
       "itemCollectedStates": [
@@ -423,34 +747,16 @@
         false
       ],
       "playerPosition": [
-        -4.262711524963379,
-        9.86670207977295,
-        -9.308403968811035
+        -4.677183151245117,
+        9.820961952209473,
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
-        0.6118415594100952,
+        -0.6300504803657532,
         0.0
       ],
-      "timestamp": 2.3422062397003174
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        false,
-        false
-      ],
-      "playerPosition": [
-        -6.1111063957214355,
-        9.248540878295898,
-        -9.308403968811035
-      ],
-      "playerVelocity": [
-        0.0,
-        -3.722818374633789,
-        0.0
-      ],
-      "timestamp": 2.444895029067993
+      "timestamp": 4.387646675109863
     },
     {
       "itemCollectedStates": [
@@ -459,16 +765,34 @@
         false
       ],
       "playerPosition": [
-        -6.853052139282227,
+        -6.5672149658203125,
+        8.790617942810059,
+        -10.021293640136719
+      ],
+      "playerVelocity": [
+        0.0,
+        -5.000499248504639,
+        0.0
+      ],
+      "timestamp": 4.492648601531982
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        true,
+        false
+      ],
+      "playerPosition": [
+        -8.046692848205566,
         8.0,
-        -9.308403968811035
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 2.5471293926239014
+      "timestamp": 4.596229076385498
     },
     {
       "itemCollectedStates": [
@@ -477,16 +801,16 @@
         false
       ],
       "playerPosition": [
-        -4.958248138427734,
-        9.141168594360352,
-        -9.308403968811035
+        -6.12744665145874,
+        9.147666931152344,
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
-        5.10637092590332,
+        5.085463523864746,
         0.0
       ],
-      "timestamp": 2.6523962020874023
+      "timestamp": 4.702854156494141
     },
     {
       "itemCollectedStates": [
@@ -495,16 +819,16 @@
         false
       ],
       "playerPosition": [
-        -3.1247756481170654,
-        9.867154121398926,
-        -9.308403968811035
+        -4.218858242034912,
+        9.86318588256836,
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
-        0.5857540965080261,
+        0.3910057842731476,
         0.0
       ],
-      "timestamp": 2.754255771636963
+      "timestamp": 4.808886528015137
     },
     {
       "itemCollectedStates": [
@@ -513,16 +837,16 @@
         false
       ],
       "playerPosition": [
-        -1.2498524188995361,
-        9.220458030700684,
-        -9.308403968811035
+        -2.322572708129883,
+        9.139958381652832,
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
-        -3.8107593059539795,
+        -4.042966842651367,
         0.0
       ],
-      "timestamp": 2.8584184646606445
+      "timestamp": 4.914235591888428
     },
     {
       "itemCollectedStates": [
@@ -531,16 +855,16 @@
         false
       ],
       "playerPosition": [
-        0.5197073221206665,
+        -0.4175228476524353,
         8.0,
-        -9.040740966796875
+        -10.021293640136719
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 2.9628868103027344
+      "timestamp": 5.020071983337402
     },
     {
       "itemCollectedStates": [
@@ -549,70 +873,16 @@
         false
       ],
       "playerPosition": [
-        1.0520564317703247,
-        9.628942489624023,
-        -7.315841197967529
-      ],
-      "playerVelocity": [
-        0.0,
-        3.0767812728881836,
-        0.0
-      ],
-      "timestamp": 3.070964813232422
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        true,
-        false
-      ],
-      "playerPosition": [
-        1.0520564317703247,
-        9.72846508026123,
-        -5.416737079620361
-      ],
-      "playerVelocity": [
-        0.0,
-        -1.4964120388031006,
-        0.0
-      ],
-      "timestamp": 3.1764705181121826
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        true,
-        false
-      ],
-      "playerPosition": [
-        1.0520564317703247,
-        8.401809692382813,
-        -3.4988160133361816
-      ],
-      "playerVelocity": [
-        0.0,
-        -5.890042781829834,
-        0.0
-      ],
-      "timestamp": 3.283021926879883
-    },
-    {
-      "itemCollectedStates": [
-        true,
-        true,
-        false
-      ],
-      "playerPosition": [
-        1.0520564317703247,
+        0.477810800075531,
         8.0,
-        -1.6261029243469238
+        -8.71889591217041
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 3.387061357498169
+      "timestamp": 5.12469482421875
     },
     {
       "itemCollectedStates": [
@@ -621,16 +891,16 @@
         false
       ],
       "playerPosition": [
-        1.3105452060699463,
-        9.398585319519043,
-        0.12523755431175232
+        0.477810800075531,
+        9.607786178588867,
+        -6.8306884765625
       ],
       "playerVelocity": [
         0.0,
-        4.177569389343262,
+        3.211719274520874,
         0.0
       ],
-      "timestamp": 3.4903063774108887
+      "timestamp": 5.22959566116333
     },
     {
       "itemCollectedStates": [
@@ -639,16 +909,88 @@
         false
       ],
       "playerPosition": [
-        2.6338188648223877,
-        9.842095375061035,
-        1.4485113620758057
+        0.477810800075531,
+        9.756250381469727,
+        -4.952174186706543
       ],
       "playerVelocity": [
         0.0,
-        -0.3839142918586731,
+        -1.3201731443405151,
         0.0
       ],
-      "timestamp": 3.5942723751068115
+      "timestamp": 5.333957672119141
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        true,
+        false
+      ],
+      "playerPosition": [
+        0.477810800075531,
+        8.493213653564453,
+        -3.0421817302703857
+      ],
+      "playerVelocity": [
+        0.0,
+        -5.704649925231934,
+        0.0
+      ],
+      "timestamp": 5.440068244934082
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        true,
+        false
+      ],
+      "playerPosition": [
+        0.477810800075531,
+        8.0,
+        -1.1615396738052368
+      ],
+      "playerVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": 5.544548034667969
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        true,
+        false
+      ],
+      "playerPosition": [
+        1.5889723300933838,
+        8.445565223693848,
+        0.335354745388031
+      ],
+      "playerVelocity": [
+        0.0,
+        7.014443397521973,
+        0.0
+      ],
+      "timestamp": 5.653278350830078
+    },
+    {
+      "itemCollectedStates": [
+        true,
+        true,
+        false
+      ],
+      "playerPosition": [
+        2.9694387912750244,
+        9.766390800476074,
+        1.715821385383606
+      ],
+      "playerVelocity": [
+        0.0,
+        2.1238014698028564,
+        0.0
+      ],
+      "timestamp": 5.761738300323486
     },
     {
       "itemCollectedStates": [
@@ -657,16 +999,16 @@
         true
       ],
       "playerPosition": [
-        3.9723494052886963,
+        4.300227165222168,
         10.0,
-        2.7870419025421143
+        3.04660964012146
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 3.699437379837036
+      "timestamp": 5.866294860839844
     },
     {
       "itemCollectedStates": [
@@ -675,16 +1017,16 @@
         true
       ],
       "playerPosition": [
-        5.260929584503174,
+        5.994872570037842,
         10.0,
-        3.3170948028564453
+        3.582181692123413
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 3.804074764251709
+      "timestamp": 5.972766876220703
     },
     {
       "itemCollectedStates": [
@@ -693,16 +1035,16 @@
         true
       ],
       "playerPosition": [
-        4.533243656158447,
-        11.387862205505371,
-        3.3170948028564453
+        5.994872570037842,
+        10.0,
+        3.582181692123413
       ],
       "playerVelocity": [
         0.0,
-        4.221700191497803,
+        0.0,
         0.0
       ],
-      "timestamp": 3.9059603214263916
+      "timestamp": 6.08740234375
     },
     {
       "itemCollectedStates": [
@@ -711,16 +1053,16 @@
         true
       ],
       "playerPosition": [
-        2.8650758266448975,
-        11.818164825439453,
-        2.5415074825286865
+        4.415011882781982,
+        10.0,
+        2.7744436264038086
       ],
       "playerVelocity": [
         0.0,
-        -0.6122861504554749,
+        0.0,
         0.0
       ],
-      "timestamp": 4.016483783721924
+      "timestamp": 6.193760395050049
     },
     {
       "itemCollectedStates": [
@@ -729,16 +1071,16 @@
         true
       ],
       "playerPosition": [
-        1.57162606716156,
-        10.852519989013672,
-        1.2480577230453491
+        3.088290214538574,
+        10.0,
+        1.4477219581604004
       ],
       "playerVelocity": [
         0.0,
-        -4.842193603515625,
+        0.0,
         0.0
       ],
-      "timestamp": 4.118106842041016
+      "timestamp": 6.29799747467041
     },
     {
       "itemCollectedStates": [
@@ -747,31 +1089,31 @@
         true
       ],
       "playerPosition": [
-        0.2085241675376892,
-        8.471915245056152,
-        -0.11504417657852173
+        1.7803854942321777,
+        9.197887420654297,
+        0.13981738686561584
       ],
       "playerVelocity": [
         0.0,
-        -9.095548629760742,
+        -4.308363437652588,
         0.0
       ],
-      "timestamp": 4.2252020835876465
+      "timestamp": 6.400755882263184
     },
     {
       "playerPosition": [
-        -0.15505602955818176,
+        0.9964548945426941,
         8.0,
-        -0.11504417657852173
+        -1.0104689598083496
       ],
       "playerVelocity": [
         0.0,
         0.0,
         0.0
       ],
-      "timestamp": 4.245400905609131
+      "timestamp": 6.482700824737549
     }
   ],
-  "recordedDate": "2025-11-12 22:39:32",
+  "recordedDate": "2025-11-13 01:42:51",
   "stageNumber": 1
 }

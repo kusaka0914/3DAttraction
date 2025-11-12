@@ -1,5 +1,6 @@
 #include "ui_renderer.h"
 #include "bitmap_font.h"
+#include "../core/utils/ui_config_manager.h"
 #include <iostream>
 
 namespace gfx {
@@ -164,15 +165,22 @@ void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earne
 
 // 時間表示の描画
 void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
-    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
-    glm::vec3 timeColor = (remainingTime <= 5.0f) ? GameConstants::Colors::UI_WARNING_COLOR : GameConstants::Colors::UI_TEXT_COLOR;
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto timeConfig = uiConfig.getGameUITimeDisplayConfig();
+    glm::vec2 timePos = uiConfig.calculatePosition(timeConfig.position, windowWidth, windowHeight);
     
-    renderText(timeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
-                                   GameConstants::Colors::UILayout::TIME_UI_Y), timeColor, GameConstants::Colors::UILayout::TIME_UI_SCALE);
+    std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
+    glm::vec3 timeColor = (remainingTime <= 5.0f) ? timeConfig.warningColor : timeConfig.normalColor;
+    
+    renderText(timeText, timePos, timeColor, timeConfig.scale);
 }
 
 // タイムアタック用時間表示の描画
 void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto timeAttackConfig = uiConfig.getGameUITimeAttackDisplayConfig();
+    auto bestTimeConfig = uiConfig.getGameUIBestTimeConfig();
+    
     // 経過時間を表示（分:秒.ミリ秒）- "TIME:"プレフィックスなし
     int minutes = static_cast<int>(currentTime) / 60;
     int seconds = static_cast<int>(currentTime) % 60;
@@ -182,9 +190,8 @@ void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
                           (seconds < 10 ? "0" : "") + std::to_string(seconds) + "." +
                           (milliseconds < 10 ? "0" : "") + std::to_string(milliseconds);
     
-    renderText(timeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
-                                   GameConstants::Colors::UILayout::TIME_UI_Y), 
-              GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::TIME_UI_SCALE * 0.7f);
+    glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, windowWidth, windowHeight);
+    renderText(timeText, timeAttackPos, timeAttackConfig.color, timeAttackConfig.scale);
     
     // ベストタイムを表示（記録がある場合）
     if (bestTime > 0.0f) {
@@ -196,48 +203,58 @@ void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
                                    (bestSeconds < 10 ? "0" : "") + std::to_string(bestSeconds) + "." +
                                    (bestMilliseconds < 10 ? "0" : "") + std::to_string(bestMilliseconds);
         
-        renderText("BEST: " + bestTimeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
-                                                      GameConstants::Colors::UILayout::TIME_UI_Y + 30), 
-                  GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::TIME_UI_SCALE * 0.6f);
+        glm::vec2 bestTimePos = uiConfig.calculatePosition(bestTimeConfig.position, windowWidth, windowHeight);
+        renderText("BEST: " + bestTimeText, bestTimePos, bestTimeConfig.color, bestTimeConfig.scale);
     }
 }
 
 // ゴール表示の描画
 void UIRenderer::renderGoalDisplay(float timeLimit) {
-    std::string goalText = "GOAL";
-    renderText(goalText, glm::vec2(GameConstants::Colors::UILayout::GOAL_UI_X, 
-                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto goalConfig = uiConfig.getGameUIGoalDisplayConfig();
+    auto goal5sConfig = uiConfig.getGameUIGoalTime5sConfig();
+    auto goal10sConfig = uiConfig.getGameUIGoalTime10sConfig();
+    auto goal20sConfig = uiConfig.getGameUIGoalTime20sConfig();
+    
+    glm::vec2 goalPos = uiConfig.calculatePosition(goalConfig.position, windowWidth, windowHeight);
+    renderText("GOAL", goalPos, goalConfig.color, goalConfig.scale);
     
     if (timeLimit <= 20) {
-        renderText("5s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_5S_X, 
-                                   GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
-        renderText("10s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_10S_X, 
-                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+        glm::vec2 goal5sPos = uiConfig.calculatePosition(goal5sConfig.position, windowWidth, windowHeight);
+        glm::vec2 goal10sPos = uiConfig.calculatePosition(goal10sConfig.position, windowWidth, windowHeight);
+        renderText("5s", goal5sPos, goal5sConfig.color, goal5sConfig.scale);
+        renderText("10s", goal10sPos, goal10sConfig.color, goal10sConfig.scale);
     } else {
-        renderText("10s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_5S_X, 
-                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
-        renderText("20s", glm::vec2(GameConstants::Colors::UILayout::GOAL_TIME_20S_X, 
-                                    GameConstants::Colors::UILayout::GOAL_UI_Y), GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::GOAL_UI_SCALE);
+        glm::vec2 goal5sPos = uiConfig.calculatePosition(goal5sConfig.position, windowWidth, windowHeight);
+        glm::vec2 goal20sPos = uiConfig.calculatePosition(goal20sConfig.position, windowWidth, windowHeight);
+        renderText("10s", goal5sPos, goal5sConfig.color, goal5sConfig.scale);
+        renderText("20s", goal20sPos, goal20sConfig.color, goal20sConfig.scale);
     }
 }
 
 // 星表示の描画
 void UIRenderer::renderStarsDisplay(int existingStars) {
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto starsConfig = uiConfig.getGameUIStarsConfig();
+    glm::vec2 basePos = uiConfig.calculatePosition(starsConfig.position, windowWidth, windowHeight);
+    
     for (int i = 0; i < 3; i++) {
-        glm::vec2 starPos = glm::vec2(GameConstants::Colors::UILayout::STARS_START_X + 
-                                      i * GameConstants::Colors::UILayout::STARS_SPACING, 
-                                      GameConstants::Colors::UILayout::STARS_Y);
-        glm::vec3 starColor = (i < existingStars) ? GameConstants::Colors::STAR_ACTIVE : GameConstants::Colors::STAR_INACTIVE;
-        renderStar(starPos, starColor, GameConstants::Colors::UILayout::STARS_SCALE);
+        glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
+        glm::vec3 starColor = (i < existingStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
+        renderStar(starPos, starColor, starsConfig.scale);
     }
 }
 
 // ライフ表示の描画
 void UIRenderer::renderLivesDisplay(int lives) {
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto heartsConfig = uiConfig.getGameUIHeartsConfig();
+    glm::vec2 basePos = uiConfig.calculatePosition(heartsConfig.position, windowWidth, windowHeight);
+    
     for (int i = 0; i < 6; i++) {
-        glm::vec3 heartColor = (i < lives) ? GameConstants::Colors::LIFE_ACTIVE : GameConstants::Colors::LIFE_INACTIVE;
-        float heartX = GameConstants::Colors::UILayout::HEART_START_X + i * GameConstants::Colors::UILayout::HEART_SPACING;
-        renderHeart(glm::vec2(heartX, GameConstants::Colors::UILayout::HEART_Y), heartColor, GameConstants::Colors::UILayout::HEART_SCALE);
+        glm::vec2 heartPos = glm::vec2(basePos.x + i * heartsConfig.spacing, basePos.y);
+        glm::vec3 heartColor = (i < lives) ? heartsConfig.selectedColor : heartsConfig.unselectedColor;
+        renderHeart(heartPos, heartColor, heartsConfig.scale);
     }
 }
 

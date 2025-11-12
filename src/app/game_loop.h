@@ -35,7 +35,8 @@ namespace GameLoop {
                           std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
                           std::map<int, InputUtils::KeyState>& keyStates,
                           std::function<void()> resetStageStartTime,
-                          io::AudioManager& audioManager);
+                          io::AudioManager& audioManager,
+                          float deltaTime);
     
     // カウントダウンの処理
     void handleCountdown(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
@@ -76,7 +77,8 @@ namespace GameLoop {
                     PlatformSystem& platformSystem,
                     std::unique_ptr<gfx::OpenGLRenderer>& renderer,
                     std::unique_ptr<gfx::UIRenderer>& uiRenderer,
-                    std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer);
+                    std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
+                    float deltaTime = 0.016f);
     
     // 入力処理の統合
     void handleInputProcessing(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 

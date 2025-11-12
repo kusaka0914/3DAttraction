@@ -17,6 +17,7 @@
 #include "../game/cannon_system.h"
 #include "../physics/physics_system.h"
 #include "../core/utils/physics_utils.h"
+#include "../core/utils/ui_config_manager.h"
 #include "../io/input_system.h"
 #include "../io/audio_manager.h"
 #include "../gfx/minimap_renderer.h"
@@ -101,10 +102,26 @@ namespace GameLoop {
             return;
         }
 
-        // 解放済み: モード選択UIを表示
-        gameState.showModeSelectionUI = true;
-        gameState.modeSelectionTargetStage = stageNumber;
-        gameState.blockEnterUntilReleased = true;  // 直前のENTERを無視
+        // 解放済み: ステージをクリアしたことがあるかチェック（星を1個以上獲得しているか）
+        bool hasClearedStage = (gameState.stageStars.count(stageNumber) > 0 && gameState.stageStars[stageNumber] > 0);
+        
+        if (hasClearedStage) {
+            // クリア済み: タイムアタック選択UIを表示（ステージに入る前に）
+            gameState.showTimeAttackSelectionUI = true;
+            gameState.modeSelectionTargetStage = stageNumber;
+            gameState.blockEnterUntilReleased = true;  // 直前のENTERを無視
+        } else {
+            // 初めて入る場合: 直接ready画面へ（タイムアタック選択UIは表示しない）
+            resetStageStartTime();
+            gameState.lives = 6;
+            stageManager.goToStage(stageNumber, gameState, platformSystem);
+            gameState.readyScreenShown = false;
+            gameState.showReadyScreen = true;
+            gameState.readyScreenSpeedLevel = 0;
+            gameState.timeScale = 1.0f;
+            gameState.timeScaleLevel = 0;
+            gameState.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+        }
     }
 
     void run(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
@@ -246,7 +263,7 @@ namespace GameLoop {
 
             // Ready画面表示中の処理
             if (gameState.showReadyScreen) {
-                handleReadyScreen(window, gameState, stageManager, platformSystem, renderer, gameStateUIRenderer, keyStates, resetStageStartTime, audioManager);
+                handleReadyScreen(window, gameState, stageManager, platformSystem, renderer, gameStateUIRenderer, keyStates, resetStageStartTime, audioManager, deltaTime);
                 glfwPollEvents();
                 continue; // Ready画面表示中は他の処理をスキップ
             }
@@ -274,7 +291,7 @@ namespace GameLoop {
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
 
             // 描画
-            renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer);
+            renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, deltaTime);
             
             // フレームレート制限
             std::this_thread::sleep_for(std::chrono::milliseconds(GameConstants::FRAME_DELAY_MS));
@@ -289,7 +306,16 @@ namespace GameLoop {
                           std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
                           std::map<int, InputUtils::KeyState>& keyStates,
                           std::function<void()> resetStageStartTime,
-                          io::AudioManager& audioManager) {
+                          io::AudioManager& audioManager,
+                          float deltaTime) {
+        // ファイル監視：UI設定ファイルの変更をチェック（0.5秒ごと）
+        static float readyScreenFileCheckTimer = 0.0f;
+        readyScreenFileCheckTimer += deltaTime;
+        if (readyScreenFileCheckTimer >= 0.5f) {
+            readyScreenFileCheckTimer = 0.0f;
+            UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
+        }
+        
         // Ready画面表示中はゲームを一時停止
         int width, height;
         prepareFrame(window, gameState, stageManager, renderer, width, height);
@@ -536,6 +562,8 @@ namespace GameLoop {
             // テクスチャと音声の監視も同時に実行
             gfx::TextureManager::checkAndReloadTextures();
             audioManager.checkAndReloadAudio();
+            // UI設定ファイルの監視も実行
+            UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
         }
         
         // 時間停止スキル発動時の処理
@@ -1176,7 +1204,16 @@ namespace GameLoop {
                     PlatformSystem& platformSystem,
                     std::unique_ptr<gfx::OpenGLRenderer>& renderer,
                     std::unique_ptr<gfx::UIRenderer>& uiRenderer,
-                    std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer) {
+                    std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
+                    float deltaTime) {
+        // ファイル監視：UI設定ファイルの変更をチェック（0.5秒ごと）
+        static float gameUIFileCheckTimer = 0.0f;
+        gameUIFileCheckTimer += deltaTime;
+        if (gameUIFileCheckTimer >= 0.5f) {
+            gameUIFileCheckTimer = 0.0f;
+            UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
+        }
+        
         int width, height;
         prepareFrame(window, gameState, stageManager, renderer, width, height);
         
@@ -1280,13 +1317,17 @@ namespace GameLoop {
         const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
         if (currentStageData && stageManager.getCurrentStage()!=0) {
             // チュートリアルステージの場合は「TUTORIAL」を表示
+            auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+            auto stageInfoConfig = uiConfig.getStageInfoConfig();
+            glm::vec2 stageInfoPos = uiConfig.calculatePosition(stageInfoConfig.position, width, height);
+            
             if (stageManager.getCurrentStage() == 6) {
                 uiRenderer->renderText("TUTORIAL", 
-                                   glm::vec2(15, 30), glm::vec3(1, 1, 0), 2.0f);
+                                   stageInfoPos, stageInfoConfig.color, stageInfoConfig.scale);
             } else {
                 // 通常のステージは「STAGE X」を表示
                 uiRenderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
-                                   glm::vec2(30, 30), glm::vec3(1, 1, 0), 2.0f);
+                                   stageInfoPos, stageInfoConfig.color, stageInfoConfig.scale);
                 }
             }
         }
@@ -1300,15 +1341,21 @@ namespace GameLoop {
             }
             
             if (shouldShowSpeedUI) {
+                auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+                auto speedConfig = uiConfig.getSpeedDisplayConfig();
+                auto pressTConfig = uiConfig.getPressTConfig();
+                
                 std::string speedText = std::to_string((int)gameState.timeScale) + "x";
-                glm::vec3 speedColor = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-                uiRenderer->renderText(speedText, glm::vec2(880, 25), speedColor, 2.0f);
+                glm::vec3 speedColor = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : speedConfig.color;
+                glm::vec2 speedPos = uiConfig.calculatePosition(speedConfig.position, width, height);
+                uiRenderer->renderText(speedText, speedPos, speedColor, speedConfig.scale);
                 
                 // PRESS T表示（リプレイモード中でない場合のみ）
                 if (!gameState.isReplayMode) {
                     std::string speedText2 = "PRESS T";
-                    glm::vec3 speedColor2 = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-                    uiRenderer->renderText(speedText2, glm::vec2(870, 65), speedColor2, 1.0f);
+                    glm::vec3 speedColor2 = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : pressTConfig.color;
+                    glm::vec2 pressTPos = uiConfig.calculatePosition(pressTConfig.position, width, height);
+                    uiRenderer->renderText(speedText2, pressTPos, speedColor2, pressTConfig.scale);
                 }
             }
         }
@@ -1423,16 +1470,29 @@ namespace GameLoop {
             }
             
             // 画面中央にマークを表示（大きめ）
+            auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+            
             if (gameState.isReplayPaused) {
                 // ポーズマーク「||」（<<と同じ色）
-                uiRenderer->renderText("||", glm::vec2(width / 2 - 200, height / 2 - 280), glm::vec3(1.0f, 0.8f, 0.2f), 5.0f);
+                auto pauseConfig = uiConfig.getReplayPauseMarkConfig();
+                glm::vec2 pausePos = uiConfig.calculatePosition(pauseConfig.position, width, height);
+                uiRenderer->renderText("||", pausePos, pauseConfig.color, pauseConfig.scale);
             } else if (isRewinding) {
                 // 巻き戻しマーク「<<»
-                uiRenderer->renderText("<<", glm::vec2(width / 2 - 60, height / 2 - 80), glm::vec3(1.0f, 0.8f, 0.2f), 5.0f);
+                auto rewindConfig = uiConfig.getReplayRewindMarkConfig();
+                glm::vec2 rewindPos = uiConfig.calculatePosition(rewindConfig.position, width, height);
+                uiRenderer->renderText("<<", rewindPos, rewindConfig.color, rewindConfig.scale);
             } else if (isFastForwarding) {
                 // 早送りマーク「>>»
-                uiRenderer->renderText(">>", glm::vec2(width / 2 - 60, height / 2 - 80), glm::vec3(1.0f, 0.8f, 0.2f), 5.0f);
+                auto ffConfig = uiConfig.getReplayFastForwardMarkConfig();
+                glm::vec2 ffPos = uiConfig.calculatePosition(ffConfig.position, width, height);
+                uiRenderer->renderText(">>", ffPos, ffConfig.color, ffConfig.scale);
             }
+            
+            // REPLAY SPEEDラベル（速度表示の上）
+            auto speedLabelConfig = uiConfig.getReplaySpeedLabelConfig();
+            glm::vec2 speedLabelPos = uiConfig.calculatePosition(speedLabelConfig.position, width, height);
+            uiRenderer->renderText("REPLAY SPEED", speedLabelPos, speedLabelConfig.color, speedLabelConfig.scale);
             
             // 速度表示（画面中央で画面下寄り）
             std::string speedText;
@@ -1443,14 +1503,24 @@ namespace GameLoop {
             } else {
                 speedText = "1.0x";
             }
-            uiRenderer->renderText(speedText, glm::vec2(width / 2 - 40, height / 2 + 100), glm::vec3(0.8f, 0.8f, 0.8f), 1.5f);
+            auto speedConfig = uiConfig.getReplaySpeedDisplayConfig();
+            glm::vec2 speedPos = uiConfig.calculatePosition(speedConfig.position, width, height);
+            uiRenderer->renderText(speedText, speedPos, speedConfig.color, speedConfig.scale);
             
             // PRESS T表示（速度表示の下）
-            uiRenderer->renderText("PRESS T", glm::vec2(width / 2 - 60, height / 2 + 140), glm::vec3(0.8f, 0.8f, 0.8f), 1.0f);
+            auto pressTConfig = uiConfig.getReplayPressTConfig();
+            glm::vec2 pressTPos = uiConfig.calculatePosition(pressTConfig.position, width, height);
+            uiRenderer->renderText("PRESS T", pressTPos, pressTConfig.color, pressTConfig.scale);
             
             // 操作説明
+            auto instructionsConfig = uiConfig.getReplayInstructionsConfig();
+            glm::vec2 instructionsPos = uiConfig.calculatePosition(instructionsConfig.position, width, height);
+            // 画面下からのオフセットを考慮
+            if (instructionsConfig.position.useRelative && instructionsConfig.position.offsetY < 0) {
+                instructionsPos.y = height + instructionsConfig.position.offsetY;
+            }
             uiRenderer->renderText("SPACE: Pause/Resume  A/D: Rewind/FastForward  T: Speed  ESC: Exit", 
-                                  glm::vec2(width / 2 - 300, height - 50), glm::vec3(0.8f, 0.8f, 0.8f), 1.0f);
+                                  instructionsPos, instructionsConfig.color, instructionsConfig.scale);
             
             uiRenderer->end2DMode();
         }
@@ -1564,20 +1634,32 @@ namespace GameLoop {
             // 深度テストを無効化（UI表示のため）
             glDisable(GL_DEPTH_TEST);
             
-            uiRenderer->renderText("WORLD 1", glm::vec2(width/2 - 50, 30), glm::vec3(1, 1, 0), 1.5f);
+            auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+            
+            // WORLD 1表示
+            auto worldTitleConfig = uiConfig.getWorldTitleConfig();
+            glm::vec2 worldTitlePos = uiConfig.calculatePosition(worldTitleConfig.position, width, height);
+            uiRenderer->renderText("WORLD 1", worldTitlePos, worldTitleConfig.color, worldTitleConfig.scale);
             
             // 左上に星アイコンとトータル星数を表示
-            uiRenderer->renderStar(glm::vec2(70, 70), glm::vec3(1.0f, 1.0f, 0.0f), 3.0f);
-            uiRenderer->renderText("x " + std::to_string(gameState.totalStars), glm::vec2(72, 27), glm::vec3(1.0f, 1.0f, 0.0f), 1.5f);
+            auto starIconConfig = uiConfig.getStarIconConfig();
+            glm::vec2 starIconPos = uiConfig.calculatePosition(starIconConfig.position, width, height);
+            uiRenderer->renderStar(starIconPos, starIconConfig.color, starIconConfig.scale);
+            auto starCountConfig = uiConfig.getStarCountConfig();
+            glm::vec2 starCountPos = uiConfig.calculatePosition(starCountConfig.position, width, height);
+            uiRenderer->renderText("x " + std::to_string(gameState.totalStars), starCountPos, starCountConfig.color, starCountConfig.scale);
             
             // 星数の右にEASY/NORMAL表示
             std::string modeText = gameState.isEasyMode ? "EASY" : "NORMAL";
-            glm::vec3 modeColor = gameState.isEasyMode ? glm::vec3(0.2f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-            glm::vec2 modeTextPosition = gameState.isEasyMode ? glm::vec2(155, 20) : glm::vec2(140, 20);
-            uiRenderer->renderText(modeText, modeTextPosition, modeColor, 1.5f);
+            auto modeTextConfig = uiConfig.getModeTextConfig();
+            glm::vec3 modeColor = gameState.isEasyMode ? glm::vec3(0.2f, 0.8f, 0.2f) : modeTextConfig.color;
+            glm::vec2 modeTextPosition = uiConfig.calculatePosition(modeTextConfig.position, width, height);
+            uiRenderer->renderText(modeText, modeTextPosition, modeColor, modeTextConfig.scale);
             
             // EASY/NORMALの下にPRESS E表示
-            uiRenderer->renderText("PRESS E", glm::vec2(155, 50), glm::vec3(1.0f, 1.0f, 1.0f), 0.8f);
+            auto pressEConfig = uiConfig.getPressEConfig();
+            glm::vec2 pressEPos = uiConfig.calculatePosition(pressEConfig.position, width, height);
+            uiRenderer->renderText("PRESS E", pressEPos, pressEConfig.color, pressEConfig.scale);
             
             // 初回ステージ0入場チュートリアルUIの表示
             if (gameState.showStage0Tutorial) {
@@ -1589,9 +1671,14 @@ namespace GameLoop {
                 gameStateUIRenderer->renderEasyModeExplanationUI(width, height);
             }
             
-            // モード選択UIの表示
+            // EASY/NORMAL選択UIの表示（ステージ選択フィールド用）
             if (gameState.showModeSelectionUI) {
-                gameStateUIRenderer->renderModeSelectionUI(width, height, gameState.isTimeAttackMode);
+                gameStateUIRenderer->renderEasyModeSelectionUI(width, height, gameState.isEasyMode);
+            }
+            
+            // NORMAL/TIME ATTACK選択UIの表示（ステージ入場時用）
+            if (gameState.showTimeAttackSelectionUI) {
+                gameStateUIRenderer->renderTimeAttackSelectionUI(width, height, gameState.isTimeAttackMode);
             }
             
             // 操作アシストUI（トータルスターのUIと同じタイミングで描画）
@@ -1602,6 +1689,7 @@ namespace GameLoop {
                                    !gameState.showWarpTutorialUI &&
                                    !gameState.showEasyModeExplanationUI &&
                                    !gameState.showModeSelectionUI &&
+                                   !gameState.showTimeAttackSelectionUI &&  // タイムアタック選択UI表示中は非表示
                                    !gameState.showStage0Tutorial; // チュートリアル表示中は非表示
             bool isStageUnlocked = gameState.unlockedStages[gameState.assistTargetStage];
             gameStateUIRenderer->renderStageSelectionAssist(width, height, gameState.assistTargetStage, shouldShowAssist, isStageUnlocked);
@@ -1619,7 +1707,10 @@ namespace GameLoop {
         if (stageManager.getCurrentStage() == 0) {
             controlsText = "Controls: WASD=Move, SPACE=Select Stage, 1-5=Teleport to Stage Area, F=Camera Toggle, E=Easy Mode, R=Toggle Time Stop Skill, T=Toggle Double Jump Skill, Y=Toggle Heart Feel Skill, U=Toggle Free Camera Skill, I=Toggle Burst Jump Skill";
         }
-        uiRenderer->renderText(controlsText, glm::vec2(10, height - 30), glm::vec3(0.8f, 0.8f, 0.8f));
+        auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+        auto controlsTextConfig = uiConfig.getControlsTextConfig();
+        glm::vec2 controlsTextPos = uiConfig.calculatePosition(controlsTextConfig.position, width, height);
+        uiRenderer->renderText(controlsText, controlsTextPos, controlsTextConfig.color, controlsTextConfig.scale);
         
         renderer->endFrame();
     }
@@ -1725,7 +1816,7 @@ namespace GameLoop {
         }
         
         // 速度制御処理（Tキー）- ステージ0以外で有効（モード選択UI表示中は無効）
-        if (keyStates[GLFW_KEY_T].justPressed() && gameState.currentStage != 0 && !gameState.showModeSelectionUI) {
+        if (keyStates[GLFW_KEY_T].justPressed() && gameState.currentStage != 0 && !gameState.showModeSelectionUI && !gameState.showTimeAttackSelectionUI) {
                 gameState.timeScaleLevel = (gameState.timeScaleLevel + 1) % 3;
             switch (gameState.timeScaleLevel) {
                 case 0:
@@ -1742,7 +1833,7 @@ namespace GameLoop {
         
         // お助けモード切り替え処理（Eキー）- ステージ0のみ
         // モード選択UI表示中は無効化（モード選択UIで処理するため）
-        if (keyStates[GLFW_KEY_E].justPressed() && stageManager.getCurrentStage() == 0 && !gameState.showModeSelectionUI) {
+        if (keyStates[GLFW_KEY_E].justPressed() && stageManager.getCurrentStage() == 0 && !gameState.showModeSelectionUI && !gameState.showTimeAttackSelectionUI) {
             gameState.isEasyMode = !gameState.isEasyMode;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -1863,12 +1954,12 @@ namespace GameLoop {
             }
         }
         
-        // モード選択UI処理
+        // EASY/NORMAL選択UI処理（ステージ選択フィールド用）
         if (gameState.showModeSelectionUI) {
-            // TキーでNORMAL/TIME ATTACKモード切り替え（blockEnterUntilReleasedの影響を受けない）
+            // TキーでNORMAL/EASYモード切り替え（blockEnterUntilReleasedの影響を受けない）
             if (keyStates[GLFW_KEY_T].justPressed()) {
-                gameState.isTimeAttackMode = !gameState.isTimeAttackMode;
-                printf("MODE SELECTION: %s\n", gameState.isTimeAttackMode ? "TIME ATTACK" : "NORMAL");
+                gameState.isEasyMode = !gameState.isEasyMode;
+                printf("MODE SELECTION: %s\n", gameState.isEasyMode ? "EASY" : "NORMAL");
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             
@@ -1881,11 +1972,37 @@ namespace GameLoop {
                 return;
             }
             
-            // ENTERキーで確定してステージへ移動
+            // ENTERキーで確定してステージ選択フィールドに戻る（ステージに入らない）
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                gameState.showModeSelectionUI = false;
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        }
+        
+        // NORMAL/TIME ATTACK選択UI処理（ステージ入場時用）
+        if (gameState.showTimeAttackSelectionUI) {
+            // TキーでNORMAL/TIME ATTACKモード切り替え（blockEnterUntilReleasedの影響を受けない）
+            if (keyStates[GLFW_KEY_T].justPressed()) {
+                gameState.isTimeAttackMode = !gameState.isTimeAttackMode;
+                printf("TIME ATTACK SELECTION: %s\n", gameState.isTimeAttackMode ? "TIME ATTACK" : "NORMAL");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            
+            // 直前のENTERを離すまで受け付けない
+            if (gameState.blockEnterUntilReleased) {
+                if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE) {
+                    gameState.blockEnterUntilReleased = false; // 離されたのを確認
+                }
+                // 離されるまでここで処理終了（自動遷移を防止）
+                return;
+            }
+            
+            // ENTERキーで確定してready画面へ進む
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                 int targetStage = gameState.modeSelectionTargetStage;
-                gameState.showModeSelectionUI = false;
+                gameState.showTimeAttackSelectionUI = false;
                 gameState.modeSelectionTargetStage = 0;
+                gameState.blockEnterUntilReleased = false;  // ブロックを解除
                 
                 // 選択したモードでステージへ移動
                 resetStageStartTime();
@@ -1979,8 +2096,9 @@ namespace GameLoop {
                 gameState.timeScale = 1.0f;
                 gameState.timeScaleLevel = 0;
                 gameState.lives = 6;
-                gameState.showReadyScreen = true;
+                // リトライ時は既にステージに入っているので、直接ready画面へ
                 gameState.readyScreenShown = false;
+                gameState.showReadyScreen = true;
                 gameState.readyScreenSpeedLevel = 0;
             }
         }
@@ -2016,8 +2134,9 @@ namespace GameLoop {
                 gameState.playerVelocity = glm::vec3(0, 0, 0);
                 gameState.lastCheckpoint = glm::vec3(0, 30.0f, 0);
                 gameState.lastCheckpointItemId = -1;
-                gameState.showReadyScreen = true;
+                // リトライ時は既にステージに入っているので、直接ready画面へ
                 gameState.readyScreenShown = false;
+                gameState.showReadyScreen = true;
                 gameState.readyScreenSpeedLevel = 0;
             }
         }
@@ -2077,16 +2196,31 @@ namespace GameLoop {
                 return;
             }
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
-                // ステージに入る
-                resetStageStartTime();
-                gameState.lives = 6;
-                stageManager.goToStage(gameState.warpTutorialStage, gameState, platformSystem);
-                gameState.readyScreenShown = false;
-                gameState.showReadyScreen = true;
-                gameState.readyScreenSpeedLevel = 0;
-                
+                int targetStage = gameState.warpTutorialStage;
                 gameState.showWarpTutorialUI = false;
                 gameState.warpTutorialStage = 0;
+                gameState.blockEnterUntilReleased = false;  // ブロックを解除
+                
+                // ステージをクリアしたことがあるかチェック（星を1個以上獲得しているか）
+                bool hasClearedStage = (gameState.stageStars.count(targetStage) > 0 && gameState.stageStars[targetStage] > 0);
+                
+                if (hasClearedStage) {
+                    // クリア済み: タイムアタック選択UIを表示（ステージに入る前に）
+                    gameState.showTimeAttackSelectionUI = true;
+                    gameState.modeSelectionTargetStage = targetStage;
+                    gameState.blockEnterUntilReleased = true;
+                } else {
+                    // 初めて入る場合: 直接ready画面へ（タイムアタック選択UIは表示しない）
+                    resetStageStartTime();
+                    gameState.lives = 6;
+                    stageManager.goToStage(targetStage, gameState, platformSystem);
+                    gameState.readyScreenShown = false;
+                    gameState.showReadyScreen = true;
+                    gameState.readyScreenSpeedLevel = 0;
+                    gameState.timeScale = 1.0f;
+                    gameState.timeScaleLevel = 0;
+                    gameState.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+                }
             }
         }
         
@@ -2099,6 +2233,7 @@ namespace GameLoop {
                                    gameState.showStageClearUI || 
                                    gameState.showEasyModeExplanationUI ||
                                    gameState.showModeSelectionUI ||
+                                   gameState.showTimeAttackSelectionUI ||
                                    (gameState.showStage0Tutorial && stageManager.getCurrentStage() == 0);
         
         if (tutorialInputEnabled && !isUIBlockingMovement) {
