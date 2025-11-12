@@ -142,6 +142,26 @@ void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedSt
     renderGameUI(state);
 }
 
+// タイムアタック用UI描画
+void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives) {
+    begin2DMode();
+    
+    // 経過時間を表示（ミリ秒まで）
+    renderTimeAttackDisplay(currentTime, bestTime);
+    
+    // 星を表示（existingStarsが0より大きい場合のみ）
+    if (existingStars > 0) {
+        renderStarsDisplay(existingStars);
+    }
+    
+    // ライフを表示（livesが0より大きい場合のみ）
+    if (lives > 0) {
+        renderLivesDisplay(lives);
+    }
+    
+    end2DMode();
+}
+
 // 時間表示の描画
 void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
     std::string timeText = std::to_string(static_cast<int>(remainingTime)) + "s";
@@ -149,6 +169,37 @@ void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
     
     renderText(timeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
                                    GameConstants::Colors::UILayout::TIME_UI_Y), timeColor, GameConstants::Colors::UILayout::TIME_UI_SCALE);
+}
+
+// タイムアタック用時間表示の描画
+void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
+    // 経過時間を表示（分:秒.ミリ秒）- "TIME:"プレフィックスなし
+    int minutes = static_cast<int>(currentTime) / 60;
+    int seconds = static_cast<int>(currentTime) % 60;
+    int milliseconds = static_cast<int>((currentTime - static_cast<int>(currentTime)) * 100);
+    
+    std::string timeText = (minutes > 0 ? std::to_string(minutes) + ":" : "") + 
+                          (seconds < 10 ? "0" : "") + std::to_string(seconds) + "." +
+                          (milliseconds < 10 ? "0" : "") + std::to_string(milliseconds);
+    
+    renderText(timeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
+                                   GameConstants::Colors::UILayout::TIME_UI_Y), 
+              GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::TIME_UI_SCALE * 0.7f);
+    
+    // ベストタイムを表示（記録がある場合）
+    if (bestTime > 0.0f) {
+        int bestMinutes = static_cast<int>(bestTime) / 60;
+        int bestSeconds = static_cast<int>(bestTime) % 60;
+        int bestMilliseconds = static_cast<int>((bestTime - static_cast<int>(bestTime)) * 100);
+        
+        std::string bestTimeText = (bestMinutes > 0 ? std::to_string(bestMinutes) + ":" : "") + 
+                                   (bestSeconds < 10 ? "0" : "") + std::to_string(bestSeconds) + "." +
+                                   (bestMilliseconds < 10 ? "0" : "") + std::to_string(bestMilliseconds);
+        
+        renderText("BEST: " + bestTimeText, glm::vec2(GameConstants::Colors::UILayout::TIME_UI_X, 
+                                                      GameConstants::Colors::UILayout::TIME_UI_Y + 30), 
+                  GameConstants::Colors::UI_TEXT_COLOR, GameConstants::Colors::UILayout::TIME_UI_SCALE * 0.6f);
+    }
 }
 
 // ゴール表示の描画

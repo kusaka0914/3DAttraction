@@ -148,8 +148,12 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
         renderText("STAGE CLEAR!", glm::vec2((boxX + boxWidth/2 - 200) * scaleX, (boxY - 80) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 2.5f);
     }
     
-    // クリアタイム
-    renderText("CLEAR TIME: " + std::to_string((int)clearTime) + "s", 
+    // クリアタイム（少数第2位まで表示）
+    int clearTimeInt = static_cast<int>(clearTime);
+    int clearTimeDecimal = static_cast<int>((clearTime - clearTimeInt) * 100);
+    std::string clearTimeText = std::to_string(clearTimeInt) + "." + 
+                               (clearTimeDecimal < 10 ? "0" : "") + std::to_string(clearTimeDecimal) + "s";
+    renderText("CLEAR TIME: " + clearTimeText, 
                glm::vec2((boxX + 200) * scaleX, (boxY + 350) * scaleY), glm::vec3(1.0f, 1.0f, 1.0f), 1.8f);
     
     // 星の表示（実際の星を3つ表示）
@@ -941,7 +945,7 @@ void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderModeSelectionUI(int width, int height, bool isEasyMode) {
+void GameStateUIRenderer::renderModeSelectionUI(int width, int height, bool isTimeAttackMode) {
     // フォントの初期化を確実に行う
     font.initialize();
     
@@ -975,17 +979,17 @@ void GameStateUIRenderer::renderModeSelectionUI(int width, int height, bool isEa
     float scaleY = 720.0f / height;
     
     // タイトル
-    renderText("SELECT DIFFICULTY", 
-               glm::vec2((width/2 - 300) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 1.0f, 0.0f), 2.0f);
+    renderText("SELECT MODE", 
+               glm::vec2((width/2 - 250) * scaleX, (height/2 - 200) * scaleY), glm::vec3(1.0f, 1.0f, 0.0f), 2.0f);
     
-    // EASY/NORMALの表示（選択された方がオレンジ色、選択されていない方がグレー）
-    renderText("EASY", glm::vec2((width/2 - 200) * scaleX, (height/2-50) * scaleY), 
-               isEasyMode ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), 2.0f);
-    renderText("NORMAL", glm::vec2((width/2 + 20) * scaleX, (height/2-50) * scaleY), 
-               isEasyMode ? glm::vec3(0.5f, 0.5f, 0.5f) : glm::vec3(1.0f, 0.8f, 0.2f), 2.0f);
+    // NORMAL/TIME ATTACKの表示（選択された方がオレンジ色、選択されていない方がグレー）
+    renderText("NORMAL", glm::vec2((width/2 - 200) * scaleX, (height/2-50) * scaleY), 
+               isTimeAttackMode ? glm::vec3(0.5f, 0.5f, 0.5f) : glm::vec3(1.0f, 0.8f, 0.2f), 2.0f);
+    renderText("TIME ATTACK", glm::vec2((width/2 + 20) * scaleX, (height/2-50) * scaleY), 
+               isTimeAttackMode ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), 2.0f);
     
-    // PRESS E表示
-    renderText("PRESS E", glm::vec2((width/2 - 80) * scaleX, (height/2 + 50) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
+    // PRESS T表示
+    renderText("PRESS T", glm::vec2((width/2 - 80) * scaleX, (height/2 + 50) * scaleY), glm::vec3(1.0f, 0.8f, 0.2f), 1.2f);
     
     renderText("CONFIRM: ENTER", 
                glm::vec2((width/2 - 200) * scaleX, (height/2 + 150) * scaleY), glm::vec3(0.2f, 0.8f, 0.2f), 1.5f);

@@ -20,9 +20,14 @@
 #include "../io/input_system.h"
 #include "../io/audio_manager.h"
 #include "../gfx/minimap_renderer.h"
+#include "../game/replay_manager.h"
 #include "tutorial_manager.h"
 #include <set>
 #include <map>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <algorithm>
 
 namespace GameLoop {
 
@@ -96,15 +101,10 @@ namespace GameLoop {
             return;
         }
 
-        // 解放済み: ステージへ移動
-        resetStageStartTime();
-        gameState.lives = 6;
-        stageManager.goToStage(stageNumber, gameState, platformSystem);
-        gameState.readyScreenShown = false;
-        gameState.showReadyScreen = true;
-        gameState.readyScreenSpeedLevel = 0;
-        gameState.timeScale = 1.0f;
-        gameState.timeScaleLevel = 0;
+        // 解放済み: モード選択UIを表示
+        gameState.showModeSelectionUI = true;
+        gameState.modeSelectionTargetStage = stageNumber;
+        gameState.blockEnterUntilReleased = true;  // 直前のENTERを無視
     }
 
     void run(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
@@ -416,6 +416,32 @@ namespace GameLoop {
         if (gameState.countdownTimer <= 0.0f) {
             gameState.isCountdownActive = false;
             resetStageStartTime();
+            
+            // タイムアタックモードの場合、開始時刻を記録
+            if (gameState.isTimeAttackMode) {
+                gameState.timeAttackStartTime = gameState.gameTime;
+                gameState.currentTimeAttackTime = 0.0f;
+                
+                // リプレイ記録を開始
+                gameState.isRecordingReplay = true;
+                gameState.replayBuffer.clear();
+                gameState.replayRecordTimer = 0.0f;
+                
+                // 最初のフレームを記録
+                GameState::ReplayFrame firstFrame;
+                firstFrame.timestamp = 0.0f;
+                firstFrame.playerPosition = gameState.playerPosition;
+                firstFrame.playerVelocity = gameState.playerVelocity;
+                // アイテムの収集状態を記録
+                firstFrame.itemCollectedStates.clear();
+                for (const auto& item : gameState.items) {
+                    firstFrame.itemCollectedStates.push_back(item.isCollected);
+                }
+                gameState.replayBuffer.push_back(firstFrame);
+                
+                printf("TIME ATTACK: Started at %.2f\n", gameState.timeAttackStartTime);
+                printf("REPLAY: Recording started\n");
+            }
         }
     }
 
@@ -494,6 +520,9 @@ namespace GameLoop {
         }
     }
 
+    // リプレイ再生用のクリアタイムを保存
+    float savedClearTime = 0.0f;
+
     void updateGameState(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
                         PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime,
                         std::map<int, InputUtils::KeyState>& keyStates,
@@ -537,7 +566,137 @@ namespace GameLoop {
             }
         }
         
-        // 制限時間システムの更新（時間停止中は更新しない）
+        // リプレイ再生モードの処理
+        if (gameState.isReplayMode) {
+            // 左右キーで巻き戻し/早送り（ポーズ中でも少しずつ移動可能）
+            float rewindSpeed = 0.0f;
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+                if (gameState.isReplayPaused) {
+                    rewindSpeed = -0.5f;  // ポーズ中はゆっくり巻き戻し
+                } else {
+                    rewindSpeed = -2.0f;  // 通常時は2倍速で巻き戻し
+                }
+            } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+                if (gameState.isReplayPaused) {
+                    rewindSpeed = 0.5f;   // ポーズ中はゆっくり早送り
+                } else {
+                    rewindSpeed = 2.0f;   // 通常時は2倍速で早送り
+                }
+            }
+            
+            if (!gameState.isReplayPaused && rewindSpeed == 0.0f) {
+                // 通常再生
+                gameState.replayPlaybackTime += deltaTime * gameState.replayPlaybackSpeed;
+            } else if (rewindSpeed != 0.0f) {
+                // 巻き戻し/早送り（ポーズ中も含む）
+                gameState.replayPlaybackTime += deltaTime * rewindSpeed * gameState.replayPlaybackSpeed;
+                // 時間が負にならないように制限
+                if (gameState.replayPlaybackTime < 0.0f) {
+                    gameState.replayPlaybackTime = 0.0f;
+                }
+            }
+            
+            // リプレイデータから現在時刻に該当するフレームを取得して補間
+            if (!gameState.currentReplay.frames.empty()) {
+                // 最後のフレームを超えた場合はリプレイ終了
+                if (gameState.replayPlaybackTime >= gameState.currentReplay.frames.back().timestamp) {
+                    gameState.replayPlaybackTime = gameState.currentReplay.frames.back().timestamp;
+                    
+                    // リプレイ終了：クリア画面に戻る
+                    gameState.isReplayMode = false;
+                    gameState.isReplayPaused = false;
+                    gameState.showStageClearUI = true;
+                    gameState.isStageCompleted = true;
+                    gameState.isGoalReached = true;
+                    gameState.clearTime = savedClearTime;  // 保存しておいたクリアタイムを復元
+                    gameState.replayPlaybackTime = 0.0f;
+                    
+                    // 最後のフレームの位置を設定
+                    const auto& lastFrame = gameState.currentReplay.frames.back();
+                    gameState.playerPosition = lastFrame.playerPosition;
+                    gameState.playerVelocity = lastFrame.playerVelocity;
+                    
+                    printf("REPLAY: Finished, returning to stage clear screen\n");
+                } else {
+                    // 2つのフレーム間を補間
+                    for (size_t i = 0; i < gameState.currentReplay.frames.size() - 1; i++) {
+                        const auto& frame1 = gameState.currentReplay.frames[i];
+                        const auto& frame2 = gameState.currentReplay.frames[i + 1];
+                        
+                        if (gameState.replayPlaybackTime >= frame1.timestamp && 
+                            gameState.replayPlaybackTime <= frame2.timestamp) {
+                            float t = (gameState.replayPlaybackTime - frame1.timestamp) / 
+                                     (frame2.timestamp - frame1.timestamp);
+                            t = std::clamp(t, 0.0f, 1.0f);
+                            
+                            gameState.playerPosition = glm::mix(frame1.playerPosition, frame2.playerPosition, t);
+                            gameState.playerVelocity = glm::mix(frame1.playerVelocity, frame2.playerVelocity, t);
+                            
+                            // アイテムの収集状態を復元（より近いフレームの状態を使用）
+                            if (!frame1.itemCollectedStates.empty() && frame1.itemCollectedStates.size() == gameState.items.size() &&
+                                !frame2.itemCollectedStates.empty() && frame2.itemCollectedStates.size() == gameState.items.size()) {
+                                // フレーム1とフレーム2の間で、より近い方の状態を使用
+                                // 巻き戻し時：frame1の状態を使用（過去の状態に戻す）
+                                // 早送り時：frame2の状態を使用（未来の状態に進める）
+                                bool useFrame1 = (t < 0.5f);
+                                
+                                for (size_t j = 0; j < gameState.items.size() && j < frame1.itemCollectedStates.size(); j++) {
+                                    bool shouldBeCollected = useFrame1 ? frame1.itemCollectedStates[j] : frame2.itemCollectedStates[j];
+                                    
+                                    // 現在の状態と目標状態が異なる場合のみ更新
+                                    if (gameState.items[j].isCollected != shouldBeCollected) {
+                                        if (shouldBeCollected) {
+                                            // アイテムを収集状態にする
+                                            gameState.items[j].isCollected = true;
+                                            gameState.collectedItems++;
+                                        } else {
+                                            // アイテムを未収集状態に戻す（復活）
+                                            gameState.items[j].isCollected = false;
+                                            gameState.collectedItems--;
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // リプレイ記録の処理（タイムアタックモード中）
+        if (gameState.isRecordingReplay && gameState.isTimeAttackMode) {
+            if (!gameState.isCountdownActive && gameState.timeAttackStartTime > 0.0f) {
+                gameState.replayRecordTimer += deltaTime;
+                
+                // 一定間隔でフレームを記録
+                if (gameState.replayRecordTimer >= gameState.REPLAY_RECORD_INTERVAL) {
+                    GameState::ReplayFrame frame;
+                    frame.timestamp = gameState.currentTimeAttackTime;
+                    frame.playerPosition = gameState.playerPosition;
+                    frame.playerVelocity = gameState.playerVelocity;
+                    // アイテムの収集状態を記録
+                    frame.itemCollectedStates.clear();
+                    for (const auto& item : gameState.items) {
+                        frame.itemCollectedStates.push_back(item.isCollected);
+                    }
+                    gameState.replayBuffer.push_back(frame);
+                    
+                    gameState.replayRecordTimer = 0.0f;
+                }
+            }
+        }
+        
+        // タイムアタックモードの処理
+        if (gameState.isTimeAttackMode) {
+            // タイムアタックモード：カウントダウン終了後、経過時間を計測
+            if (!gameState.isCountdownActive && gameState.timeAttackStartTime > 0.0f) {
+                if (!gameState.isStageCompleted && !gameState.isTimeStopped) {
+                    gameState.currentTimeAttackTime += deltaTime;
+                }
+            }
+        } else {
+            // 通常モード：制限時間システムの更新（時間停止中は更新しない）
         if (!gameState.isStageCompleted && !gameState.isTimeUp && !gameState.isTimeStopped) {
             gameState.remainingTime -= deltaTime;
             
@@ -546,6 +705,7 @@ namespace GameLoop {
                 gameState.isTimeUp = true;
                 gameState.isGameOver = true;
                 gameState.gameOverTimer = 0.0f;
+                }
             }
         }
         
@@ -585,8 +745,19 @@ namespace GameLoop {
         }
         
         handleInputProcessing(window, gameState, stageManager, platformSystem, keyStates, resetStageStartTime, scaledDeltaTime, audioManager);
+        
+        // リプレイモード中は物理演算をスキップ（位置はリプレイデータから設定される）
+        if (!gameState.isReplayMode) {
         updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
+        } else {
+            // リプレイモード中でも足場の更新は必要（視覚的な動きのため）
+            platformSystem.update(scaledDeltaTime, gameState.playerPosition);
+        }
+        
+        // アイテムの更新（リプレイモード中はポーズ中でない場合のみ、または通常モード）
+        if (!gameState.isReplayMode || !gameState.isReplayPaused) {
         updateItems(gameState, scaledDeltaTime, audioManager);
+        }
         handleStageSelectionArea(window, gameState, stageManager, platformSystem, resetStageStartTime);
     }
 
@@ -671,12 +842,69 @@ namespace GameLoop {
                             gameState.gameWon = true;
                             gameState.isStageCompleted = true;
                             gameState.isGoalReached = true;
-                            gameState.clearTime = gameState.gameTime;
                             
+                            // リプレイモード中はクリアタイムを更新しない
+                            if (!gameState.isReplayMode) {
+                            gameState.clearTime = gameState.gameTime;
+                            }
+                            
+                            int currentStage = stageManager.getCurrentStage();
+                            
+                            // タイムアタックモードの場合
+                            if (gameState.isTimeAttackMode) {
+                                float clearTime = gameState.currentTimeAttackTime;
+                                
+                                // リプレイ記録を停止
+                                if (gameState.isRecordingReplay) {
+                                    // 最後のフレームを記録
+                                    GameState::ReplayFrame lastFrame;
+                                    lastFrame.timestamp = clearTime;
+                                    lastFrame.playerPosition = gameState.playerPosition;
+                                    lastFrame.playerVelocity = gameState.playerVelocity;
+                                    gameState.replayBuffer.push_back(lastFrame);
+                                    
+                                    gameState.isRecordingReplay = false;
+                                    printf("REPLAY: Recording stopped (%zu frames)\n", gameState.replayBuffer.size());
+                                }
+                                
+                                // ベストタイムを更新
+                                gameState.isNewRecord = false;
+                                bool shouldSaveReplay = false;
+                                if (gameState.timeAttackRecords.find(currentStage) == gameState.timeAttackRecords.end() ||
+                                    clearTime < gameState.timeAttackRecords[currentStage]) {
+                                    gameState.timeAttackRecords[currentStage] = clearTime;
+                                    gameState.isNewRecord = true;
+                                    shouldSaveReplay = true;
+                                    printf("TIME ATTACK: New record for stage %d: %.2fs\n", currentStage, clearTime);
+                                } else {
+                                    printf("TIME ATTACK: Stage %d cleared in %.2fs (Best: %.2fs)\n", 
+                                           currentStage, clearTime, gameState.timeAttackRecords[currentStage]);
+                                }
+                                
+                                // ベストタイム更新時のみリプレイを保存
+                                if (shouldSaveReplay && !gameState.replayBuffer.empty()) {
+                                    GameState::ReplayData replayData;
+                                    replayData.stageNumber = currentStage;
+                                    replayData.clearTime = clearTime;
+                                    replayData.frames = gameState.replayBuffer;
+                                    replayData.frameRate = gameState.REPLAY_RECORD_INTERVAL;
+                                    
+                                    // 現在の日時を文字列として取得
+                                    auto now = std::time(nullptr);
+                                    std::stringstream ss;
+                                    ss << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S");
+                                    replayData.recordedDate = ss.str();
+                                    
+                                    ReplayManager::saveReplay(replayData, currentStage);
+                                }
+                                
+                                // タイムアタックモードでは星数は常に3（ベストタイム更新時のみ）
+                                gameState.earnedStars = gameState.isNewRecord ? 3 : 0;
+                            } else {
+                                // 通常モード：制限時間の長さによって獲得する星数を変える
                             float remainingTime = gameState.timeLimit - gameState.clearTime;
                             float limitTime = gameState.timeLimit;
                             
-                            //制限時間の長さによって獲得する星数を変える                            
                             if(limitTime >= GameConstants::LONG_TIME_THRESHOLD){
                                 if (remainingTime >= GameConstants::STAR_3_TIME_LONG) {
                                     gameState.earnedStars = 3;
@@ -696,13 +924,13 @@ namespace GameLoop {
                             }
                             
                             // 星数管理システムの更新
-                            int currentStage = stageManager.getCurrentStage();
                             int oldStars = gameState.stageStars[currentStage];
                             int starDifference = gameState.earnedStars - oldStars;
                             
                             if (starDifference > 0) {
                                 gameState.stageStars[currentStage] = gameState.earnedStars;
                                 gameState.totalStars += starDifference;
+                                }
                             }
                         
                             // ステージ5クリア後の特別処理
@@ -1047,7 +1275,8 @@ namespace GameLoop {
             gameStateUIRenderer->renderTutorialStageUI(width, height, gameState.tutorialMessage, gameState.tutorialStep, gameState.tutorialStepCompleted);
         }
     
-        // ステージ情報
+        // ステージ情報（リプレイモード中は非表示）
+        if (!gameState.isReplayMode) {
         const StageData* currentStageData = stageManager.getStageData(stageManager.getCurrentStage());
         if (currentStageData && stageManager.getCurrentStage()!=0) {
             // チュートリアルステージの場合は「TUTORIAL」を表示
@@ -1058,8 +1287,10 @@ namespace GameLoop {
                 // 通常のステージは「STAGE X」を表示
                 uiRenderer->renderText("STAGE " + std::to_string(stageManager.getCurrentStage()), 
                                    glm::vec2(30, 30), glm::vec3(1, 1, 0), 2.0f);
+                }
             }
         }
+        
         
         // 速度倍率の表示（全ステージで表示、チュートリアルステージでは条件付き）
         if(stageManager.getCurrentStage()!=0){
@@ -1072,10 +1303,13 @@ namespace GameLoop {
                 std::string speedText = std::to_string((int)gameState.timeScale) + "x";
                 glm::vec3 speedColor = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
                 uiRenderer->renderText(speedText, glm::vec2(880, 25), speedColor, 2.0f);
-
-                std::string speedText2 =  "PRESS T";
-                glm::vec3 speedColor2 = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
-                uiRenderer->renderText(speedText2, glm::vec2(870, 65), speedColor2, 1.0f);
+                
+                // PRESS T表示（リプレイモード中でない場合のみ）
+                if (!gameState.isReplayMode) {
+                    std::string speedText2 = "PRESS T";
+                    glm::vec3 speedColor2 = (gameState.timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : glm::vec3(1.0f, 1.0f, 1.0f);
+                    uiRenderer->renderText(speedText2, glm::vec2(870, 65), speedColor2, 1.0f);
+                }
             }
         }
         
@@ -1105,11 +1339,39 @@ namespace GameLoop {
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
                     uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
                 } else {
-                    // 通常のステージでは全てのUIを表示（エンディングシーケンス中は非表示）
+                    // 通常のステージでは全てのUIを表示（エンディングシーケンス中とリプレイモード中は一部非表示）
                     if (!gameState.isEndingSequence) {
                         int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                        uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
                         
+                        // タイムアタックモードかどうかでUIを切り替え（リプレイモード中でもタイムは表示）
+                        if (gameState.isTimeAttackMode) {
+                            float bestTime = 0.0f;
+                            if (gameState.timeAttackRecords.find(stageManager.getCurrentStage()) != gameState.timeAttackRecords.end()) {
+                                bestTime = gameState.timeAttackRecords[stageManager.getCurrentStage()];
+                            }
+                            
+                            // リプレイモード中のタイムアタック時間を計算
+                            float displayTime = gameState.currentTimeAttackTime;
+                            if (gameState.isReplayMode) {
+                                // リプレイ中の場合は、リプレイの再生時間に基づいてタイムを計算
+                                displayTime = gameState.replayPlaybackTime;
+                            }
+                            
+                            // リプレイモード中は星とライフのUIを非表示にするため、earnedStarsとcurrentStageStars、livesを0に設定
+                            if (gameState.isReplayMode) {
+                                uiRenderer->renderTimeAttackUI(displayTime, bestTime, 0, 0, 0);
+                            } else {
+                                uiRenderer->renderTimeAttackUI(gameState.currentTimeAttackTime, bestTime, gameState.earnedStars, currentStageStars, gameState.lives);
+                            }
+                        } else {
+                            // 通常モードではリプレイ中でもUIを表示しない（制限時間はリプレイ中は不要）
+                            if (!gameState.isReplayMode) {
+                        uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+                            }
+                        }
+                        
+                        // スキルUIはリプレイモード中は非表示
+                        if (!gameState.isReplayMode) {
                         // フリーカメラスキルUIを描画
                         uiRenderer->renderFreeCameraUI(gameState.hasFreeCameraSkill, gameState.isFreeCameraActive, gameState.freeCameraTimer, 
                                                     gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses);
@@ -1129,8 +1391,9 @@ namespace GameLoop {
                         // 時間停止スキルUIを描画
                         uiRenderer->renderTimeStopUI(gameState.hasTimeStopSkill, gameState.isTimeStopped, gameState.timeStopTimer, 
                                                   gameState.timeStopRemainingUses, gameState.timeStopMaxUses);
+                        }
                         
-                        // ミニマップを描画（ステージ0とエンディングシーケンス中は非表示）
+                        // ミニマップを描画（ステージ0とエンディングシーケンス中は非表示、リプレイモード中でも表示）
                         if (stageManager.getCurrentStage() != 0 && !gameState.isEndingSequence) {
                             static gfx::MinimapRenderer minimapRenderer;
                             minimapRenderer.render(gameState, platformSystem, width, height, stageManager.getCurrentStage(), 30.0f);
@@ -1140,10 +1403,56 @@ namespace GameLoop {
             }
         }
         
-        // ステージクリアUI（エンディングシーケンス中は非表示）
-        if (gameState.showStageClearUI && !gameState.isEndingSequence) {
+        // ステージクリアUI（エンディングシーケンス中とリプレイモード中は非表示）
+        if (gameState.showStageClearUI && !gameState.isEndingSequence && !gameState.isReplayMode) {
             // 背景とボックスを描画
             gameStateUIRenderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.stageStars[stageManager.getCurrentStage()]);
+        }
+        
+        // リプレイモード中のUI表示
+        if (gameState.isReplayMode) {
+            uiRenderer->begin2DMode();
+            
+            // 巻き戻し/早送り/ポーズ状態を判定（ポーズ中でもキー入力は検出）
+            bool isRewinding = false;
+            bool isFastForwarding = false;
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+                isRewinding = true;
+            } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+                isFastForwarding = true;
+            }
+            
+            // 画面中央にマークを表示（大きめ）
+            if (gameState.isReplayPaused) {
+                // ポーズマーク「||」（<<と同じ色）
+                uiRenderer->renderText("||", glm::vec2(width / 2 - 200, height / 2 - 280), glm::vec3(1.0f, 0.8f, 0.2f), 5.0f);
+            } else if (isRewinding) {
+                // 巻き戻しマーク「<<»
+                uiRenderer->renderText("<<", glm::vec2(width / 2 - 60, height / 2 - 80), glm::vec3(1.0f, 0.8f, 0.2f), 5.0f);
+            } else if (isFastForwarding) {
+                // 早送りマーク「>>»
+                uiRenderer->renderText(">>", glm::vec2(width / 2 - 60, height / 2 - 80), glm::vec3(1.0f, 0.8f, 0.2f), 5.0f);
+            }
+            
+            // 速度表示（画面中央で画面下寄り）
+            std::string speedText;
+            if (gameState.replayPlaybackSpeed == 0.3f) {
+                speedText = "0.3x";
+            } else if (gameState.replayPlaybackSpeed == 0.5f) {
+                speedText = "0.5x";
+            } else {
+                speedText = "1.0x";
+            }
+            uiRenderer->renderText(speedText, glm::vec2(width / 2 - 40, height / 2 + 100), glm::vec3(0.8f, 0.8f, 0.8f), 1.5f);
+            
+            // PRESS T表示（速度表示の下）
+            uiRenderer->renderText("PRESS T", glm::vec2(width / 2 - 60, height / 2 + 140), glm::vec3(0.8f, 0.8f, 0.8f), 1.0f);
+            
+            // 操作説明
+            uiRenderer->renderText("SPACE: Pause/Resume  A/D: Rewind/FastForward  T: Speed  ESC: Exit", 
+                                  glm::vec2(width / 2 - 300, height - 50), glm::vec3(0.8f, 0.8f, 0.8f), 1.0f);
+            
+            uiRenderer->end2DMode();
         }
         
         // ステージ0での3D星の描画（ステージ選択エリアの上に固定）
@@ -1282,7 +1591,7 @@ namespace GameLoop {
             
             // モード選択UIの表示
             if (gameState.showModeSelectionUI) {
-                gameStateUIRenderer->renderModeSelectionUI(width, height, gameState.isEasyMode);
+                gameStateUIRenderer->renderModeSelectionUI(width, height, gameState.isTimeAttackMode);
             }
             
             // 操作アシストUI（トータルスターのUIと同じタイミングで描画）
@@ -1319,6 +1628,37 @@ namespace GameLoop {
                               PlatformSystem& platformSystem, 
                               std::map<int, InputUtils::KeyState>& keyStates,
                               std::function<void()> resetStageStartTime, float scaledDeltaTime, io::AudioManager& audioManager) {
+        // リプレイモード中は入力処理をスキップ（一部のコントロールキーは除く）
+        if (gameState.isReplayMode) {
+            // リプレイコントロール
+            // スペースキーで一時停止/再開
+            if (keyStates[GLFW_KEY_SPACE].justPressed()) {
+                gameState.isReplayPaused = !gameState.isReplayPaused;
+                printf("REPLAY: %s\n", gameState.isReplayPaused ? "Paused" : "Resumed");
+            }
+            
+            // Tキーでリプレイ速度切り替え（0.3x → 0.5x → 1x → 0.3x...）
+            if (keyStates[GLFW_KEY_T].justPressed()) {
+                if (gameState.replayPlaybackSpeed < 0.4f) {
+                    gameState.replayPlaybackSpeed = 0.5f;
+                } else if (gameState.replayPlaybackSpeed < 0.6f) {
+                    gameState.replayPlaybackSpeed = 1.0f;
+                } else {
+                    gameState.replayPlaybackSpeed = 0.3f;
+                }
+                printf("REPLAY: Speed changed to %.1fx\n", gameState.replayPlaybackSpeed);
+            }
+            
+            // ESCキーで終了
+            if (keyStates[GLFW_KEY_ESCAPE].justPressed()) {
+                gameState.isReplayMode = false;
+                gameState.isReplayPaused = false;
+                gameState.replayPlaybackTime = 0.0f;
+                printf("REPLAY: Stopped\n");
+            }
+            return;  // リプレイモード中は他の入力処理をスキップ
+        }
+        
         // チュートリアルステージでの入力制御
         bool tutorialInputEnabled = true;
         if (gameState.isTutorialStage) {
@@ -1384,13 +1724,9 @@ namespace GameLoop {
             }
         }
         
-        // 速度制御処理（Tキー）- 全ステージで有効
-        if (keyStates[GLFW_KEY_T].justPressed()) {
-            if(gameState.currentStage==0){
-                gameState.timeScaleLevel = 0;
-            }else{
+        // 速度制御処理（Tキー）- ステージ0以外で有効（モード選択UI表示中は無効）
+        if (keyStates[GLFW_KEY_T].justPressed() && gameState.currentStage != 0 && !gameState.showModeSelectionUI) {
                 gameState.timeScaleLevel = (gameState.timeScaleLevel + 1) % 3;
-            }
             switch (gameState.timeScaleLevel) {
                 case 0:
                     gameState.timeScale = 1.0f;
@@ -1423,10 +1759,14 @@ namespace GameLoop {
             
             std::vector<SkillToggle> skillToggles = {
                 {GLFW_KEY_R, gameState.hasTimeStopSkill, gameState.timeStopRemainingUses, gameState.timeStopMaxUses, "Time Stop"},
-                {GLFW_KEY_T, gameState.hasDoubleJumpSkill, gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses, "Double Jump"},
-                {GLFW_KEY_Y, gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, gameState.heartFeelMaxUses, "Heart Feel"},
-                {GLFW_KEY_U, gameState.hasFreeCameraSkill, gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses, "Free Camera"},
-                {GLFW_KEY_I, gameState.hasBurstJumpSkill, gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses, "Burst Jump"}
+                // Tキーはタイムアタックモード切り替えに使用するため、Double JumpスキルはYキーに変更
+                {GLFW_KEY_Y, gameState.hasDoubleJumpSkill, gameState.doubleJumpRemainingUses, gameState.doubleJumpMaxUses, "Double Jump"},
+                // YキーがDouble Jumpに使われたため、Heart FeelスキルはUキーに変更
+                {GLFW_KEY_U, gameState.hasHeartFeelSkill, gameState.heartFeelRemainingUses, gameState.heartFeelMaxUses, "Heart Feel"},
+                // UキーがHeart Feelに使われたため、Free CameraスキルはIキーに変更
+                {GLFW_KEY_I, gameState.hasFreeCameraSkill, gameState.freeCameraRemainingUses, gameState.freeCameraMaxUses, "Free Camera"},
+                // IキーがFree Cameraに使われたため、Burst JumpスキルはOキーに変更
+                {GLFW_KEY_O, gameState.hasBurstJumpSkill, gameState.burstJumpRemainingUses, gameState.burstJumpMaxUses, "Burst Jump"}
             };
             
             for (const auto& skill : skillToggles) {
@@ -1525,11 +1865,10 @@ namespace GameLoop {
         
         // モード選択UI処理
         if (gameState.showModeSelectionUI) {
-            // Eキーでモード切り替え（blockEnterUntilReleasedの影響を受けない）
-            if (keyStates[GLFW_KEY_E].justPressed()) {
-                printf("DEBUG: E key pressed in mode selection UI\n");
-                gameState.isEasyMode = !gameState.isEasyMode;
-                printf("DEBUG: isEasyMode changed to: %s\n", gameState.isEasyMode ? "true" : "false");
+            // TキーでNORMAL/TIME ATTACKモード切り替え（blockEnterUntilReleasedの影響を受けない）
+            if (keyStates[GLFW_KEY_T].justPressed()) {
+                gameState.isTimeAttackMode = !gameState.isTimeAttackMode;
+                printf("MODE SELECTION: %s\n", gameState.isTimeAttackMode ? "TIME ATTACK" : "NORMAL");
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             
@@ -1542,9 +1881,29 @@ namespace GameLoop {
                 return;
             }
             
-            // ENTERキーで確定
+            // ENTERキーで確定してステージへ移動
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                int targetStage = gameState.modeSelectionTargetStage;
                 gameState.showModeSelectionUI = false;
+                gameState.modeSelectionTargetStage = 0;
+                
+                // 選択したモードでステージへ移動
+                resetStageStartTime();
+                gameState.lives = 6;
+                stageManager.goToStage(targetStage, gameState, platformSystem);
+                gameState.readyScreenShown = false;
+                gameState.showReadyScreen = true;
+                gameState.readyScreenSpeedLevel = 0;
+                gameState.timeScale = 1.0f;
+                gameState.timeScaleLevel = 0;
+                
+                // タイムアタックモードの初期化
+                if (gameState.isTimeAttackMode) {
+                    gameState.currentTimeAttackTime = 0.0f;
+                    gameState.timeAttackStartTime = 0.0f;
+                    gameState.isNewRecord = false;
+                }
+                
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
@@ -1583,6 +1942,35 @@ namespace GameLoop {
             }
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
+                // タイムアタックモードでリプレイが存在する場合はリプレイ再生
+                if (gameState.isTimeAttackMode) {
+                    int currentStage = stageManager.getCurrentStage();
+                    if (ReplayManager::replayExists(currentStage)) {
+                        // リプレイデータを読み込み
+                        if (ReplayManager::loadReplay(gameState.currentReplay, currentStage)) {
+                            // ステージを再読み込み（リプレイ再生用）
+                            stageManager.goToStage(currentStage, gameState, platformSystem);
+                            
+                            // クリアタイムを保存（リプレイ完了時に使用）
+                            savedClearTime = gameState.currentReplay.clearTime;
+                            
+                            // クリアタイムをリプレイデータから設定（更新を防ぐため）
+                            gameState.clearTime = gameState.currentReplay.clearTime;
+                            
+                            gameState.isReplayMode = true;
+                            gameState.isReplayPaused = false;
+                            gameState.replayPlaybackTime = 0.0f;
+                            gameState.replayPlaybackSpeed = 1.0f;  // 初期速度は1.0x
+                            gameState.showStageClearUI = false;
+                            gameState.isStageCompleted = false;
+                            gameState.isGoalReached = false;
+                            printf("REPLAY: Started playback for stage %d (Clear time: %.2fs)\n", currentStage, gameState.clearTime);
+                            return;  // リプレイ再生開始時はリトライ処理をスキップ
+                        }
+                    }
+                }
+                
+                // リプレイ再生できない場合は通常のリトライ処理
                 resetStageStartTime();
                 stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
                 gameState.showStageClearUI = false;

@@ -20,7 +20,7 @@ public:
     void renderCountdown(int width, int height, int count);
     void renderStage0Tutorial(int width, int height);
     void renderEasyModeExplanationUI(int width, int height);
-    void renderModeSelectionUI(int width, int height, bool isEasyMode);
+    void renderModeSelectionUI(int width, int height, bool isTimeAttackMode);
     void renderStageSelectionAssist(int width, int height, int targetStage, bool isVisible, bool isUnlocked);
     void renderEndingMessage(int width, int height, float timer);
     void renderStaffRoll(int width, int height, float timer);
