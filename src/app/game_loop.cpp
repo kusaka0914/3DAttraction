@@ -136,36 +136,13 @@ namespace GameLoop {
         
         // SE（効果音）の初期化
         if (gameState.audioEnabled) {
-            audioManager.loadSFX("jump", "../assets/audio/se/jump.mp3");
-            audioManager.loadSFX("clear", "../assets/audio/se/clear.mp3");
-            audioManager.loadSFX("item", "../assets/audio/se/item.mp3");
-            audioManager.loadSFX("on_ground", "../assets/audio/se/on_ground.mp3");
-            audioManager.loadSFX("flying", "../assets/audio/se/flying.mp3");
-            audioManager.loadSFX("countdown", "../assets/audio/se/countdown.mp3");
-            audioManager.loadSFX("tutorial_ok", "../assets/audio/se/tutorial_ok.mp3");
-            
-            // 作業ディレクトリがプロジェクトルートの場合に対応
-            if (!audioManager.loadSFX("jump", "assets/audio/se/jump.mp3")) {
-                audioManager.loadSFX("jump", "../assets/audio/se/jump.mp3");
-            }
-            if (!audioManager.loadSFX("clear", "assets/audio/se/clear.mp3")) {
-                audioManager.loadSFX("clear", "../assets/audio/se/clear.mp3");
-            }
-            if (!audioManager.loadSFX("item", "assets/audio/se/item.mp3")) {
-                audioManager.loadSFX("item", "../assets/audio/se/item.mp3");
-            }
-            if (!audioManager.loadSFX("on_ground", "assets/audio/se/on_ground.mp3")) {
-                audioManager.loadSFX("on_ground", "../assets/audio/se/on_ground.mp3");
-            }
-            if (!audioManager.loadSFX("flying", "assets/audio/se/flying.mp3")) {
-                audioManager.loadSFX("flying", "../assets/audio/se/flying.mp3");
-            }
-            if (!audioManager.loadSFX("countdown", "assets/audio/se/countdown.mp3")) {
-                audioManager.loadSFX("countdown", "../assets/audio/se/countdown.mp3");
-            }
-            if (!audioManager.loadSFX("tutorial_ok", "assets/audio/se/tutorial_ok.mp3")) {
-                audioManager.loadSFX("tutorial_ok", "../assets/audio/se/tutorial_ok.mp3");
-            }
+            audioManager.loadSFX("jump", ResourcePath::getResourcePath("assets/audio/se/jump.mp3"));
+            audioManager.loadSFX("clear", ResourcePath::getResourcePath("assets/audio/se/clear.mp3"));
+            audioManager.loadSFX("item", ResourcePath::getResourcePath("assets/audio/se/item.mp3"));
+            audioManager.loadSFX("on_ground", ResourcePath::getResourcePath("assets/audio/se/on_ground.mp3"));
+            audioManager.loadSFX("flying", ResourcePath::getResourcePath("assets/audio/se/flying.mp3"));
+            audioManager.loadSFX("countdown", ResourcePath::getResourcePath("assets/audio/se/countdown.mp3"));
+            audioManager.loadSFX("tutorial_ok", ResourcePath::getResourcePath("assets/audio/se/tutorial_ok.mp3"));
         }
         
         auto lastFrameTime = startTime;
@@ -195,31 +172,31 @@ namespace GameLoop {
                 switch (currentStage) {
                     case 0: // ステージ選択画面
                         targetBGM = "stage_select_field.mp3";
-                        bgmPath = "../assets/audio/bgm/stage_select_field.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage_select_field.mp3");
                         break;
                     case 1: // ステージ1
                         targetBGM = "stage1.mp3";
-                        bgmPath = "../assets/audio/bgm/stage1.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage1.mp3");
                         break;
                     case 2: // ステージ2
                         targetBGM = "stage2.mp3";
-                        bgmPath = "../assets/audio/bgm/stage2.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage2.mp3");
                         break;
                     case 3: // ステージ3
                         targetBGM = "stage3.mp3";
-                        bgmPath = "../assets/audio/bgm/stage3.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage3.mp3");
                         break;
                     case 4: // ステージ4
                         targetBGM = "stage4.mp3";
-                        bgmPath = "../assets/audio/bgm/stage4.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage4.mp3");
                         break;
                     case 5: // ステージ5
                         targetBGM = "stage5.mp3";
-                        bgmPath = "../assets/audio/bgm/stage5.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage5.mp3");
                         break;
                     case 6: // チュートリアルステージ
                         targetBGM = "tutorial.mp3";
-                        bgmPath = "../assets/audio/bgm/tutorial.mp3";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/tutorial.mp3");
                         break;
                     default:
                         // その他のステージはBGMなし
@@ -241,15 +218,6 @@ namespace GameLoop {
                             gameState.currentBGM = targetBGM;
                             gameState.bgmPlaying = true;
                             std::cout << "BGM started: " << targetBGM << std::endl;
-                        } else {
-                            // 作業ディレクトリがプロジェクトルートの場合に対応
-                            std::string altPath = "assets/audio/bgm/" + targetBGM;
-                            if (audioManager.loadBGM(altPath)) {
-                                audioManager.playBGM();
-                                gameState.currentBGM = targetBGM;
-                                gameState.bgmPlaying = true;
-                                std::cout << "BGM started (alternative path): " << targetBGM << std::endl;
-                            }
                         }
                     }
                 } else if (gameState.bgmPlaying) {
@@ -1254,7 +1222,7 @@ namespace GameLoop {
         // アイテム用のテクスチャを読み込み
         static GLuint itemFirstTexture = 0;
         if (itemFirstTexture == 0) {
-            itemFirstTexture = gfx::TextureManager::loadTexture("../assets/textures/item_first.png");
+            itemFirstTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/item_first.png"));
             if (itemFirstTexture == 0) {
                 itemFirstTexture = gfx::TextureManager::loadTexture("assets/textures/item_first.png");
             }
@@ -1262,7 +1230,7 @@ namespace GameLoop {
         
         static GLuint itemSecondTexture = 0;
         if (itemSecondTexture == 0) {
-            itemSecondTexture = gfx::TextureManager::loadTexture("../assets/textures/item_second.png");
+            itemSecondTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/item_second.png"));
             if (itemSecondTexture == 0) {
                 itemSecondTexture = gfx::TextureManager::loadTexture("assets/textures/item_second.png");
             }
@@ -1270,7 +1238,7 @@ namespace GameLoop {
         
         static GLuint itemThirdTexture = 0;
         if (itemThirdTexture == 0) {
-            itemThirdTexture = gfx::TextureManager::loadTexture("../assets/textures/item_third.png");
+            itemThirdTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/item_third.png"));
             if (itemThirdTexture == 0) {
                 itemThirdTexture = gfx::TextureManager::loadTexture("assets/textures/item_third.png");
             }
@@ -2277,7 +2245,7 @@ namespace GameLoop {
         // static足場用のテクスチャを読み込み
         static GLuint staticPlatformTexture = 0;
         if (staticPlatformTexture == 0) {
-            staticPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/static_platform.png");
+            staticPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/static_platform.png"));
             if (staticPlatformTexture == 0) {
                 // 作業ディレクトリがプロジェクトルートの場合に対応
                 staticPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/static_platform.png");
@@ -2286,7 +2254,7 @@ namespace GameLoop {
         // ゴール（黄色）足場用のテクスチャを読み込み
         static GLuint goalPlatformTexture = 0;
         if (goalPlatformTexture == 0) {
-            goalPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/goal_platform.png");
+            goalPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/goal_platform.png"));
             if (goalPlatformTexture == 0) {
                 goalPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/goal_platform.png");
             }
@@ -2294,7 +2262,7 @@ namespace GameLoop {
         // スタート（緑色）足場用のテクスチャを読み込み
         static GLuint startPlatformTexture = 0;
         if (startPlatformTexture == 0) {
-            startPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/start_platform.png");
+            startPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/start_platform.png"));
             if (startPlatformTexture == 0) {
                 startPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/start_platform.png");
             }
@@ -2303,7 +2271,7 @@ namespace GameLoop {
         // moving足場用のテクスチャを読み込み
         static GLuint movingPlatformTexture = 0;
         if (movingPlatformTexture == 0) {
-            movingPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/moving_platform.png");
+            movingPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/moving_platform.png"));
             if (movingPlatformTexture == 0) {
                 movingPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/moving_platform.png");
             }
@@ -2312,7 +2280,7 @@ namespace GameLoop {
         // サイクル消失足場用のテクスチャを読み込み
         static GLuint cyclingDisappearTexture = 0;
         if (cyclingDisappearTexture == 0) {
-            cyclingDisappearTexture = gfx::TextureManager::loadTexture("../assets/textures/cyclingdisappearing_platform.png");
+            cyclingDisappearTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/cyclingdisappearing_platform.png"));
             if (cyclingDisappearTexture == 0) {
                 cyclingDisappearTexture = gfx::TextureManager::loadTexture("assets/textures/cyclingdisappearing_platform.png");
             }
@@ -2321,7 +2289,7 @@ namespace GameLoop {
         // 飛来足場用のテクスチャを読み込み
         static GLuint flyingPlatformTexture = 0;
         if (flyingPlatformTexture == 0) {
-            flyingPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/flying_platform.png");
+            flyingPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/flying_platform.png"));
             if (flyingPlatformTexture == 0) {
                 flyingPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/flying_platform.png");
             }
@@ -2330,7 +2298,7 @@ namespace GameLoop {
         // ロック状態の足場用のテクスチャを読み込み
         static GLuint lockPlatformTexture = 0;
         if (lockPlatformTexture == 0) {
-            lockPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/lock_platform.png");
+            lockPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/lock_platform.png"));
             if (lockPlatformTexture == 0) {
                 lockPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/lock_platform.png");
             }
@@ -2339,7 +2307,7 @@ namespace GameLoop {
         // アンロック状態の足場用のテクスチャを読み込み
         static GLuint unlockPlatformTexture = 0;
         if (unlockPlatformTexture == 0) {
-            unlockPlatformTexture = gfx::TextureManager::loadTexture("../assets/textures/unlock_platform.png");
+            unlockPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/unlock_platform.png"));
             if (unlockPlatformTexture == 0) {
                 unlockPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/unlock_platform.png");
             }
@@ -2393,7 +2361,7 @@ void renderPlayer(GameState& gameState,
     static GLuint playerFrontTexture = 0;
     
     if (playerTexture == 0) {
-        playerTexture = gfx::TextureManager::loadTexture("../assets/textures/player.png");
+        playerTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/player.png"));
         if (playerTexture == 0) {
             // 作業ディレクトリがプロジェクトルートの場合に対応
             playerTexture = gfx::TextureManager::loadTexture("assets/textures/player.png");
@@ -2401,7 +2369,7 @@ void renderPlayer(GameState& gameState,
     }
     
     if (playerFrontTexture == 0) {
-        playerFrontTexture = gfx::TextureManager::loadTexture("../assets/textures/player_front.png");
+        playerFrontTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/player_front.png"));
         if (playerFrontTexture == 0) {
             // 作業ディレクトリがプロジェクトルートの場合に対応
             playerFrontTexture = gfx::TextureManager::loadTexture("assets/textures/player_front.png");
