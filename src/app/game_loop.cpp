@@ -18,6 +18,7 @@
 #include "../physics/physics_system.h"
 #include "../core/utils/physics_utils.h"
 #include "../core/utils/ui_config_manager.h"
+#include "../core/utils/resource_path.h"
 #include "../io/input_system.h"
 #include "../io/audio_manager.h"
 #include "../gfx/minimap_renderer.h"
@@ -1609,7 +1610,7 @@ namespace GameLoop {
             glm::vec2 worldTitlePos = uiConfig.calculatePosition(worldTitleConfig.position, width, height);
             uiRenderer->renderText("WORLD 1", worldTitlePos, worldTitleConfig.color, worldTitleConfig.scale);
             
-            // 左上に星アイコンとトータル星数を表示
+            // 左上に星アイコンとトータル星数を表示（difficulty selectionと同じ方法で、背景より前に描画）
             auto starIconConfig = uiConfig.getStarIconConfig();
             glm::vec2 starIconPos = uiConfig.calculatePosition(starIconConfig.position, width, height);
             uiRenderer->renderStar(starIconPos, starIconConfig.color, starIconConfig.scale);

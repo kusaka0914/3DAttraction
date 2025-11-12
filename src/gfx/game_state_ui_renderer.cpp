@@ -634,6 +634,19 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
     // フォントの初期化を確実に行う
     font.initialize();
     
+    // 2D描画モードに切り替え（difficulty selectionと同じ方法）
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
     // 半透明の背景
@@ -648,6 +661,7 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
     glVertex2f(width, height);
     glVertex2f(0, height);
     glEnd();
+    glDisable(GL_BLEND);
     
     // テキストの描画
     auto line1Config = uiConfig.getStage0TutorialLine1Config();
@@ -674,7 +688,14 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
     glm::vec2 okButtonPos = uiConfig.calculatePosition(okButtonConfig.position, width, height);
     renderText("OK : ENTER", okButtonPos, okButtonConfig.color, okButtonConfig.scale);
     
-    glDisable(GL_BLEND);
+    // 3D描画モードに戻す（difficulty selectionと同じ方法）
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 void GameStateUIRenderer::renderStageSelectionAssist(int width, int height, int targetStage, bool isVisible, bool isUnlocked) {
