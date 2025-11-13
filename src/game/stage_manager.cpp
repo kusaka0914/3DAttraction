@@ -7,6 +7,7 @@
 #include "../core/constants/game_constants.h"
 #include "../core/constants/debug_config.h"
 #include "../core/utils/stage_utils.h"
+#include "../core/utils/resource_path.h"
 #include <iostream>
 #include <algorithm>
 #include <tuple>
@@ -360,7 +361,7 @@ bool StageManager::goToStage(int stageNumber, GameState& gameState, PlatformSyst
 
 void StageManager::generateStage1(GameState& gameState, PlatformSystem& platformSystem) {
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage1.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage1.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load stage1 from JSON\n");
         return;
     }
@@ -369,7 +370,7 @@ void StageManager::generateStage1(GameState& gameState, PlatformSystem& platform
 
 void StageManager::generateStage2(GameState& gameState, PlatformSystem& platformSystem) {
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage2.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage2.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load stage2 from JSON\n");
         return;
     }
@@ -378,7 +379,7 @@ void StageManager::generateStage2(GameState& gameState, PlatformSystem& platform
 
 void StageManager::generateStage3(GameState& gameState, PlatformSystem& platformSystem) {
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage3.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage3.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load stage3 from JSON\n");
         return;
     }
@@ -387,7 +388,7 @@ void StageManager::generateStage3(GameState& gameState, PlatformSystem& platform
 
 void StageManager::generateStage4(GameState& gameState, PlatformSystem& platformSystem) {
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage4.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage4.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load stage4 from JSON\n");
         return;
     }
@@ -396,7 +397,7 @@ void StageManager::generateStage4(GameState& gameState, PlatformSystem& platform
 
 void StageManager::generateStage5(GameState& gameState, PlatformSystem& platformSystem) {
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage5.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage5.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load stage5 from JSON\n");
         return;
     }
@@ -408,7 +409,7 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
     platformSystem.clear();
     
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/stage_selection.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage_selection.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load stage selection from JSON\n");
         return;
     }
@@ -546,7 +547,7 @@ void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& p
     gameState.totalItems = 3;
 
     // JSONファイルから読み込み
-    if (!JsonStageLoader::loadStageFromJSON("../assets/stages/tutorial.json", gameState, platformSystem)) {
+    if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/tutorial.json"), gameState, platformSystem)) {
         printf("ERROR: Failed to load tutorial from JSON\n");
         return;
     }

@@ -732,3 +732,173 @@ bool JsonStageLoader::parseConditionalFlyingPlatforms(const nlohmann::json& root
         return false;
     }
 }
+
+bool JsonStageLoader::saveStageToJSON(const std::string& filename, const GameState& gameState, 
+                                     const PlatformSystem& platformSystem, int stageNumber) {
+    try {
+        nlohmann::json root;
+        
+        // ステージ情報を保存
+        nlohmann::json stageInfo;
+        stageInfo["stageNumber"] = stageNumber;
+        stageInfo["stageName"] = "Stage " + std::to_string(stageNumber);
+        stageInfo["playerStartPosition"] = {
+            gameState.playerPosition.x,
+            gameState.playerPosition.y,
+            gameState.playerPosition.z
+        };
+        stageInfo["goalPosition"] = {
+            gameState.goalPosition.x,
+            gameState.goalPosition.y,
+            gameState.goalPosition.z
+        };
+        stageInfo["timeLimit"] = gameState.timeLimit;
+        stageInfo["isUnlocked"] = true;
+        root["stageInfo"] = stageInfo;
+        
+        // アイテムを保存
+        nlohmann::json itemsArray = nlohmann::json::array();
+        for (const auto& item : gameState.items) {
+            if (!item.isCollected) {  // 収集されていないアイテムのみ保存
+                nlohmann::json itemJson;
+                itemJson["position"] = {item.position.x, item.position.y, item.position.z};
+                itemJson["color"] = {item.color.x, item.color.y, item.color.z};
+                itemJson["description"] = "Item " + std::to_string(item.itemId);
+                itemsArray.push_back(itemJson);
+            }
+        }
+        if (!itemsArray.empty()) {
+            root["items"] = itemsArray;
+        }
+        
+        // プラットフォームを保存（タイプ別に分類）
+        nlohmann::json staticPlatformsArray = nlohmann::json::array();
+        nlohmann::json movingPlatformsArray = nlohmann::json::array();
+        nlohmann::json rotatingPlatformsArray = nlohmann::json::array();
+        nlohmann::json patrolPlatformsArray = nlohmann::json::array();
+        nlohmann::json teleportPlatformsArray = nlohmann::json::array();
+        nlohmann::json jumpPadsArray = nlohmann::json::array();
+        nlohmann::json cyclingDisappearingPlatformsArray = nlohmann::json::array();
+        nlohmann::json disappearingPlatformsArray = nlohmann::json::array();
+        nlohmann::json flyingPlatformsArray = nlohmann::json::array();
+        
+        for (const auto& platform : platformSystem.getPlatforms()) {
+            std::visit([&](const auto& p) {
+                using T = std::decay_t<decltype(p)>;
+                nlohmann::json platformJson;
+                platformJson["position"] = {p.position.x, p.position.y, p.position.z};
+                platformJson["size"] = {p.size.x, p.size.y, p.size.z};
+                platformJson["color"] = {p.color.x, p.color.y, p.color.z};
+                platformJson["description"] = "";
+                
+                if constexpr (std::is_same_v<T, StaticPlatform>) {
+                    staticPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, MovingPlatform>) {
+                    platformJson["moveTargetPosition"] = {
+                        p.moveTargetPosition.x, p.moveTargetPosition.y, p.moveTargetPosition.z
+                    };
+                    platformJson["moveSpeed"] = p.moveSpeed;
+                    movingPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, RotatingPlatform>) {
+                    platformJson["rotationAxis"] = {
+                        p.rotationAxis.x, p.rotationAxis.y, p.rotationAxis.z
+                    };
+                    platformJson["rotationSpeed"] = p.rotationSpeed;
+                    rotatingPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, PatrollingPlatform>) {
+                    nlohmann::json pointsArray = nlohmann::json::array();
+                    for (const auto& point : p.patrolPoints) {
+                        pointsArray.push_back({point.x, point.y, point.z});
+                    }
+                    platformJson["patrolPoints"] = pointsArray;
+                    platformJson["patrolSpeed"] = p.patrolSpeed;
+                    patrolPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, TeleportPlatform>) {
+                    platformJson["teleportDestination"] = {
+                        p.teleportDestination.x, p.teleportDestination.y, p.teleportDestination.z
+                    };
+                    platformJson["cooldownTime"] = p.cooldown;
+                    teleportPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, JumpPad>) {
+                    platformJson["jumpPower"] = p.jumpPower;
+                    jumpPadsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, CycleDisappearingPlatform>) {
+                    platformJson["cycleTime"] = p.cycleTime;
+                    platformJson["visibleTime"] = p.visibleTime;
+                    platformJson["blinkTime"] = p.blinkTime;
+                    cyclingDisappearingPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, DisappearingPlatform>) {
+                    // DisappearingPlatformには特別なパラメータがないので、基本情報のみ保存
+                    disappearingPlatformsArray.push_back(platformJson);
+                } else if constexpr (std::is_same_v<T, FlyingPlatform>) {
+                    platformJson["spawnPosition"] = {
+                        p.spawnPosition.x, p.spawnPosition.y, p.spawnPosition.z
+                    };
+                    platformJson["targetPosition"] = {
+                        p.targetPosition.x, p.targetPosition.y, p.targetPosition.z
+                    };
+                    platformJson["flySpeed"] = p.flySpeed;
+                    platformJson["detectionRange"] = p.detectionRange;
+                    flyingPlatformsArray.push_back(platformJson);
+                }
+            }, platform);
+        }
+        
+        if (!staticPlatformsArray.empty()) {
+            root["staticPlatforms"] = staticPlatformsArray;
+        }
+        if (!movingPlatformsArray.empty()) {
+            root["movingPlatforms"] = movingPlatformsArray;
+        }
+        if (!rotatingPlatformsArray.empty()) {
+            root["rotatingPlatforms"] = rotatingPlatformsArray;
+        }
+        if (!patrolPlatformsArray.empty()) {
+            root["patrolPlatforms"] = patrolPlatformsArray;
+        }
+        if (!teleportPlatformsArray.empty()) {
+            root["teleportPlatforms"] = teleportPlatformsArray;
+        }
+        if (!jumpPadsArray.empty()) {
+            root["jumpPads"] = jumpPadsArray;
+        }
+        if (!cyclingDisappearingPlatformsArray.empty()) {
+            root["cyclingDisappearingPlatforms"] = cyclingDisappearingPlatformsArray;
+        }
+        if (!disappearingPlatformsArray.empty()) {
+            root["disappearingPlatforms"] = disappearingPlatformsArray;
+        }
+        if (!flyingPlatformsArray.empty()) {
+            root["flyingPlatforms"] = flyingPlatformsArray;
+        }
+        
+        // ファイルに書き込み
+        printf("DEBUG: Attempting to open file for writing: %s\n", filename.c_str());
+        std::ofstream file(filename, std::ios::out | std::ios::trunc);
+        if (!file.is_open()) {
+            printf("ERROR: Failed to open file for writing: %s\n", filename.c_str());
+            return false;
+        }
+        
+        std::string jsonContent = root.dump(2);
+        printf("DEBUG: JSON content size: %zu bytes\n", jsonContent.size());
+        file << jsonContent;
+        file.flush();
+        file.close();
+        
+        // ファイルが正しく書き込まれたか確認
+        std::ifstream verifyFile(filename);
+        if (!verifyFile.good()) {
+            printf("ERROR: File verification failed after writing: %s\n", filename.c_str());
+            return false;
+        }
+        verifyFile.close();
+        
+        printf("SUCCESS: Saved stage to %s\n", filename.c_str());
+        return true;
+        
+    } catch (const std::exception& e) {
+        printf("ERROR: Failed to save stage to JSON: %s\n", e.what());
+        return false;
+    }
+}

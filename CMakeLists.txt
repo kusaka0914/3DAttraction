@@ -58,6 +58,7 @@ add_executable(SlimesSkyTravel
     src/game/stage_manager.cpp
     src/game/platform_system.cpp
     src/game/json_stage_loader.cpp
+    src/game/stage_editor.cpp
     src/game/cannon_system.cpp
     src/game/switch_system.cpp
     src/game/gravity_system.cpp
@@ -73,6 +74,14 @@ add_executable(SlimesSkyTravel
 # 実行ファイル名を元の名前に設定
 set_target_properties(SlimesSkyTravel PROPERTIES
     OUTPUT_NAME "SlimesSkyTravel"
+)
+
+# 実行ファイルと同じ場所にassetsディレクトリをコピー（リリースビルド用）
+add_custom_command(TARGET SlimesSkyTravel POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    $<TARGET_FILE_DIR:SlimesSkyTravel>/assets
+    COMMENT "Copying assets directory to build output directory"
 )
 
 # インクルードディレクトリ

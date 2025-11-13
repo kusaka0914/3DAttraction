@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
 #include "background_renderer.h"
+#include "../core/utils/resource_path.h"
 #include <iostream>
 #include <cmath>
 
@@ -386,7 +387,7 @@ void BackgroundRenderer::renderNebula() {
 
 void BackgroundRenderer::renderStage1WithTexture() {
     // ステージ1の背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage1_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage1_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
@@ -428,7 +429,7 @@ void BackgroundRenderer::renderStage1WithTexture() {
 
 void BackgroundRenderer::renderStage2WithTexture() {
     // ステージ2の背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage2_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage2_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
@@ -470,7 +471,7 @@ void BackgroundRenderer::renderStage2WithTexture() {
 
 void BackgroundRenderer::renderStage3WithTexture() {
     // ステージ3の背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage3_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage3_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
@@ -512,7 +513,7 @@ void BackgroundRenderer::renderStage3WithTexture() {
 
 void BackgroundRenderer::renderStage4WithTexture() {
     // ステージ4の背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage4_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage4_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
@@ -554,7 +555,7 @@ void BackgroundRenderer::renderStage4WithTexture() {
 
 void BackgroundRenderer::renderStage5WithTexture() {
     // ステージ5の背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage5_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage5_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
@@ -596,7 +597,7 @@ void BackgroundRenderer::renderStage5WithTexture() {
 
 void BackgroundRenderer::renderStageSelectionWithTexture() {
     // ステージ選択フィールドの背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/stage_selection_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage_selection_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
@@ -639,7 +640,7 @@ void BackgroundRenderer::renderStageSelectionWithTexture() {
 
 void BackgroundRenderer::renderTutorialWithTexture() {
     // チュートリアルステージの背景画像を読み込んで表示
-    GLuint backgroundTexture = TextureManager::loadTexture("../assets/textures/tutorial_bg.png");
+    GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/tutorial_bg.png"));
     
     if (backgroundTexture == 0) {
         // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック

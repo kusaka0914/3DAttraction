@@ -18,6 +18,10 @@ public:
     // ステージ情報のみを読み込み（プレイヤー位置、ゴール位置、制限時間など）
     static bool loadStageInfoFromJSON(const std::string& filename, GameState& gameState);
     
+    // ステージをJSONファイルに保存（エディタ用）
+    static bool saveStageToJSON(const std::string& filename, const GameState& gameState, 
+                                const PlatformSystem& platformSystem, int stageNumber);
+    
 private:
     // JSONファイルの存在確認
     static bool fileExists(const std::string& filename);

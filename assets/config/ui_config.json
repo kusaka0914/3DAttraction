@@ -111,13 +111,22 @@
       "color": [1.0, 1.0, 0.0],
       "scale": 1.5
     },
-    "modeText": {
+    "normalModeText": {
       "position": {
         "useRelative": false,
         "absoluteX": 180,
         "absoluteY": 20
       },
       "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "easyModeText": {
+      "position": {
+        "useRelative": false,
+        "absoluteX": 195,
+        "absoluteY": 20
+      },
+      "color": [0.2, 0.8, 0.2],
       "scale": 1.5
     },
     "pressE": {
@@ -314,6 +323,15 @@
       "unselectedColor": [0.5, 0.5, 0.5],
       "scale": 2.0
     },
+    "easyText": {
+      "position": {
+        "offsetX": -260,
+        "offsetY": -280
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
     "timeAttackText": {
       "position": {
         "offsetX": -300,
@@ -325,7 +343,7 @@
     },
     "pressT": {
       "position": {
-        "offsetX": -330,
+        "offsetX": -335,
         "offsetY": -230
       },
       "color": [1.0, 0.8, 0.2],
