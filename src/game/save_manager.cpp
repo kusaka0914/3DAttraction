@@ -92,6 +92,20 @@ bool SaveManager::saveGameData(const GameState& gameState) {
         // 初回チュートリアル表示フラグを保存
         saveData["showStage0Tutorial"] = gameState.showStage0Tutorial;
         
+        // ゲームクリア済みフラグを保存
+        saveData["isGameCleared"] = gameState.isGameCleared;
+        
+        // SECRET STARのクリア状況を保存
+        nlohmann::json secretStarClearedJson;
+        for (const auto& [stageNumber, clearedTypes] : gameState.secretStarCleared) {
+            nlohmann::json typesArray = nlohmann::json::array();
+            for (auto type : clearedTypes) {
+                typesArray.push_back(static_cast<int>(type));
+            }
+            secretStarClearedJson[std::to_string(stageNumber)] = typesArray;
+        }
+        saveData["secretStarCleared"] = secretStarClearedJson;
+        
         // JSONファイルに書き込み（ReplayManagerと同じロジック）
         std::string filePath = "assets/save/save_data.json";
         std::ofstream file(filePath);
@@ -176,6 +190,29 @@ bool SaveManager::loadGameData(GameState& gameState) {
         // 初回チュートリアル表示フラグを読み込み
         if (saveData.contains("showStage0Tutorial") && saveData["showStage0Tutorial"].is_boolean()) {
             gameState.showStage0Tutorial = saveData["showStage0Tutorial"];
+        }
+        
+        // ゲームクリア済みフラグを読み込み
+        if (saveData.contains("isGameCleared") && saveData["isGameCleared"].is_boolean()) {
+            gameState.isGameCleared = saveData["isGameCleared"];
+        }
+        
+        // SECRET STARのクリア状況を読み込み
+        if (saveData.contains("secretStarCleared") && saveData["secretStarCleared"].is_object()) {
+            gameState.secretStarCleared.clear();
+            for (auto& [key, value] : saveData["secretStarCleared"].items()) {
+                int stageNumber = std::stoi(key);
+                if (value.is_array()) {
+                    std::set<GameState::SecretStarType> clearedTypes;
+                    for (auto& typeValue : value) {
+                        if (typeValue.is_number()) {
+                            int typeInt = typeValue.get<int>();
+                            clearedTypes.insert(static_cast<GameState::SecretStarType>(typeInt));
+                        }
+                    }
+                    gameState.secretStarCleared[stageNumber] = clearedTypes;
+                }
+            }
         }
         
         std::cout << "Game data loaded successfully from: " << filePath << std::endl;

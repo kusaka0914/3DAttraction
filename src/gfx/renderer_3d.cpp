@@ -75,7 +75,8 @@ void Renderer3D::renderRealisticBox(const glm::vec3& position, const glm::vec3& 
                               GameConstants::RenderConstants::LIGHT_POSITION.z, 1.0f};
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
     
-    // 環境光を設定
+    // 環境光を設定（SHADOW_STARモードの場合は既に設定されているので、ここでは通常の設定）
+    // 注意: SHADOW_STARモードの場合は、game_loop.cppで既にライティングが設定されている
     GLfloat ambientLight[] = {GameConstants::RenderConstants::AMBIENT_LIGHT.r, 
                              GameConstants::RenderConstants::AMBIENT_LIGHT.g, 
                              GameConstants::RenderConstants::AMBIENT_LIGHT.b, 1.0f};

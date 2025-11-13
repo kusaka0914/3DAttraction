@@ -92,6 +92,9 @@ namespace GameLoop {
             gameState.isFirstPersonView = false;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             
+            // SECRET STARモードをリセット
+            gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+            
             return;
         }
 
@@ -113,6 +116,9 @@ namespace GameLoop {
             gameState.showTimeAttackSelectionUI = true;
             gameState.modeSelectionTargetStage = stageNumber;
             gameState.blockEnterUntilReleased = true;  // 直前のENTERを無視
+            // モード選択UI表示時に、selectedSecretStarTypeを初期化
+            gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+            gameState.isTimeAttackMode = false;
         } else {
             // 初めて入る場合: 直接ready画面へ（タイムアタック選択UIは表示しない）
         resetStageStartTime();
@@ -146,6 +152,7 @@ namespace GameLoop {
             audioManager.loadSFX("flying", ResourcePath::getResourcePath("assets/audio/se/flying.ogg"));
             audioManager.loadSFX("countdown", ResourcePath::getResourcePath("assets/audio/se/countdown.ogg"));
             audioManager.loadSFX("tutorial_ok", ResourcePath::getResourcePath("assets/audio/se/tutorial_ok.ogg"));
+            audioManager.loadSFX("damage", ResourcePath::getResourcePath("assets/audio/se/damage.ogg"));
         }
         
         auto lastFrameTime = startTime;
@@ -167,7 +174,8 @@ namespace GameLoop {
             
             // BGM管理：各ステージに対応するBGMを再生
             int currentStage = stageManager.getCurrentStage();
-            if (gameState.audioEnabled && !gameState.isGoalReached) {
+            // タイトル画面表示中はステージBGMを再生しない
+            if (gameState.audioEnabled && !gameState.isGoalReached && !gameState.showTitleScreen) {
                 std::string targetBGM = "";
                 std::string bgmPath = "";
                 
@@ -262,6 +270,27 @@ namespace GameLoop {
 
             // タイトル画面の処理
             if (gameState.showTitleScreen) {
+                // タイトル画面のBGMを再生
+                if (gameState.audioEnabled) {
+                    std::string titleBGM = "title.ogg";
+                    if (gameState.currentBGM != titleBGM) {
+                        // 現在のBGMを停止
+                        if (gameState.bgmPlaying) {
+                            audioManager.stopBGM();
+                            gameState.bgmPlaying = false;
+                        }
+                        
+                        // タイトルBGMを読み込み・再生
+                        std::string bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/title.ogg");
+                        if (audioManager.loadBGM(bgmPath)) {
+                            audioManager.playBGM();
+                            gameState.currentBGM = titleBGM;
+                            gameState.bgmPlaying = true;
+                            std::cout << "Title BGM started: " << titleBGM << std::endl;
+                        }
+                    }
+                }
+                
                 // キー状態更新
                 for (auto& [key, state] : keyStates) {
                     state.update(glfwGetKey(window, key) == GLFW_PRESS);
@@ -270,6 +299,13 @@ namespace GameLoop {
                 // ENTERキーでゲーム開始
                 if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                     gameState.showTitleScreen = false;
+                    
+                    // タイトルBGMを停止
+                    if (gameState.bgmPlaying && gameState.currentBGM == "title.ogg") {
+                        audioManager.stopBGM();
+                        gameState.bgmPlaying = false;
+                        gameState.currentBGM = "";
+                    }
                     
                     // チュートリアル（ステージ6）がクリア済みかチェック
                     bool hasClearedTutorial = (gameState.stageStars.count(6) > 0 && gameState.stageStars[6] > 0);
@@ -287,9 +323,17 @@ namespace GameLoop {
                         gameState.isFirstPersonMode = false;
                         gameState.isFirstPersonView = false;
                         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                        
+                        // SECRET STARモードをリセット
+                        gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
                     } else {
                         // 未クリア: チュートリアルステージ（ステージ6）を読み込む
                         stageManager.loadStage(6, gameState, platformSystem);
+                        // UIフラグをリセット（チュートリアルステージでは不要なUIを非表示にする）
+                        gameState.showModeSelectionUI = false;
+                        gameState.showTimeAttackSelectionUI = false;
+                        gameState.showSecretStarSelectionUI = false;
+                        gameState.showSecretStarExplanationUI = false;
                         // Ready画面とカウントダウンをスキップして直接ゲーム開始
                         gameState.showReadyScreen = false;
                         gameState.readyScreenShown = true;  // Ready画面をスキップしたことを記録
@@ -297,6 +341,11 @@ namespace GameLoop {
                         gameState.countdownTimer = 0.0f;
                         // カウントダウン終了時の処理を直接実行
                         resetStageStartTime();
+                        
+                        // 速度設定を初期化（ready画面をスキップした場合でも、Tキーで速度変更できるようにする）
+                        gameState.readyScreenSpeedLevel = 0;
+                        gameState.timeScale = 1.0f;
+                        gameState.timeScaleLevel = 0;
                         
                         // タイムアタックモードの場合、開始時刻を記録
                         if (gameState.isTimeAttackMode) {
@@ -367,7 +416,7 @@ namespace GameLoop {
         prepareFrame(window, gameState, stageManager, renderer, width, height);
         
         // 通常のゲーム要素を描画（背景として）
-        renderPlatforms(platformSystem, renderer);
+        renderPlatforms(platformSystem, renderer, gameState, stageManager);
         
         // プレイヤーの描画
         renderPlayer(gameState, renderer);
@@ -387,9 +436,7 @@ namespace GameLoop {
             gameState.readyScreenSpeedLevel = (gameState.readyScreenSpeedLevel + 1) % 3;
         }
         
-        if (keyStates[GLFW_KEY_F].justPressed()) {
-            gameState.isFirstPersonMode = !gameState.isFirstPersonMode;
-        }
+        // FPS/TPS切り替えはready画面では無効化
         
         if (keyStates[GLFW_KEY_ENTER].justPressed()) {
             gameState.showReadyScreen = false;
@@ -465,7 +512,7 @@ namespace GameLoop {
         prepareFrame(window, gameState, stageManager, renderer, width, height);
         
         // 通常のゲーム要素を描画（背景として）
-        renderPlatforms(platformSystem, renderer);
+        renderPlatforms(platformSystem, renderer, gameState, stageManager);
         
         // プレイヤーの描画
         renderPlayer(gameState, renderer);
@@ -488,6 +535,21 @@ namespace GameLoop {
         if (gameState.countdownTimer <= 0.0f) {
             gameState.isCountdownActive = false;
             resetStageStartTime();
+            
+            // MAX_SPEED_STARの場合は時間倍率を3倍に固定
+            if (gameState.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+                gameState.timeScale = 3.0f;
+                gameState.timeScaleLevel = 2;  // 3倍に設定
+            }
+            
+            // IMMERSIVE_STARの場合はFPSモードを有効化
+            if (gameState.selectedSecretStarType == GameState::SecretStarType::IMMERSIVE_STAR) {
+                gameState.isFirstPersonView = true;
+                gameState.cameraYaw = 90.0f;
+                gameState.cameraPitch = -10.0f;
+                gameState.firstMouse = true;
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
             
             // タイムアタックモードの場合、開始時刻を記録
             if (gameState.isTimeAttackMode) {
@@ -553,6 +615,10 @@ namespace GameLoop {
                 gameState.staffRollTimer = 0.0f;
                 gameState.endingMessageTimer = 0.0f;
                 
+                // ゲームクリア済みフラグを設定
+                gameState.isGameCleared = true;
+                gameState.showSecretStarExplanationUI = true;
+                
                 // フィールドに戻る
                 stageManager.goToStage(0, gameState, platformSystem);
                 gameState.playerPosition = glm::vec3(8, 0, 0);
@@ -562,6 +628,9 @@ namespace GameLoop {
                 gameState.isFirstPersonMode = false;
                 gameState.isFirstPersonView = false;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                
+                // SECRET STARモードをリセット
+                gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
             } else {
                 gameStateUIRenderer->renderEndingMessage(width, height, gameState.endingMessageTimer);
             }
@@ -575,6 +644,10 @@ namespace GameLoop {
             gameState.staffRollTimer = 0.0f;
             gameState.endingMessageTimer = 0.0f;
             
+            // ゲームクリア済みフラグを設定
+            gameState.isGameCleared = true;
+            gameState.showSecretStarExplanationUI = true;
+            
             stageManager.goToStage(0, gameState, platformSystem);
             gameState.playerPosition = glm::vec3(8, 0, 0);
             gameState.playerVelocity = glm::vec3(0, 0, 0);
@@ -583,6 +656,9 @@ namespace GameLoop {
             gameState.isFirstPersonMode = false;
             gameState.isFirstPersonView = false;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            
+            // SECRET STARモードをリセット
+            gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
         }
         
         renderer->endFrame();
@@ -1029,6 +1105,13 @@ namespace GameLoop {
                                 }
                             }
                         
+                            // SECRET STARモードでクリアした場合、クリア状況を記録（ゴール到達時）
+                            if (gameState.selectedSecretStarType != GameState::SecretStarType::NONE && currentStage > 0) {
+                                gameState.secretStarCleared[currentStage].insert(gameState.selectedSecretStarType);
+                                // ゲームデータをセーブ（SECRET STARのクリア状況を含む）
+                                SaveManager::saveGameData(gameState);
+                            }
+                            
                             // ステージ5クリア後の特別処理
                             if (currentStage == 5) {
                                 // エンディング
@@ -1150,7 +1233,8 @@ namespace GameLoop {
         wasOnPlatform = isOnPlatform;
         
         // 下限チェック（奈落に落ちた場合）
-        if (gameState.playerPosition.y < 0) {
+        // ゲームオーバー中は落下判定をスキップ（無限ループを防ぐ）
+        if (gameState.playerPosition.y < 0 && !gameState.isGameOver) {
             if (gameState.isEasyMode) {
                 // お助けモード：足場の追跡を試行
                 if (gameState.isTrackingPlatform && gameState.lastPlatformIndex >= 0) {
@@ -1181,9 +1265,22 @@ namespace GameLoop {
             } else {
                 // 通常モード：残機を減らす
                 gameState.lives--;
+                
+                // ダメージSEを再生
+                if (gameState.audioEnabled) {
+                    audioManager.playSFX("damage");
+                }
+                
                 if (gameState.lives <= 0) {
                     gameState.isGameOver = true;
                     gameState.gameOverTimer = 0.0f;
+                    // ゲームオーバー時も位置をリセット（無限落下を防ぐ）
+                    if (gameState.lastCheckpointItemId != -1) {
+                        gameState.playerPosition = gameState.lastCheckpoint;
+                    } else {
+                        gameState.playerPosition = glm::vec3(0, 6.0f, -25.0f);
+                    }
+                    gameState.playerVelocity = glm::vec3(0, 0, 0);
                 } else {
                     // 残機がある場合はチェックポイントにリセット（アイテムは保持）
                     if (gameState.lastCheckpointItemId != -1) {
@@ -1328,7 +1425,7 @@ namespace GameLoop {
         uiRenderer->setWindowSize(width, height);
         
         // 足場の描画
-        renderPlatforms(platformSystem, renderer);
+        renderPlatforms(platformSystem, renderer, gameState, stageManager);
         
         // 重力反転エリアの描画
         for (const auto& zone : gameState.gravityZones) {
@@ -1490,11 +1587,35 @@ namespace GameLoop {
                 } else if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep == 8) {
                     // チュートリアルステージでステップ8はライフ、制限時間、星を表示
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                    uiRenderer->renderLivesTimeAndStarsUI(gameState.lives, gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars);
+                    int currentStage = stageManager.getCurrentStage();
+                    int secretStarType = (gameState.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                                         static_cast<int>(gameState.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
+                    std::map<int, std::set<int>> secretStarClearedInt;
+                    for (const auto& [stage, types] : gameState.secretStarCleared) {
+                        std::set<int> typesInt;
+                        for (auto type : types) {
+                            typesInt.insert(static_cast<int>(type) - 1);  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
+                        }
+                        secretStarClearedInt[stage] = typesInt;
+                    }
+                    uiRenderer->renderLivesTimeAndStarsUI(gameState.lives, gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars,
+                                                          currentStage, secretStarType, secretStarClearedInt);
                 } else if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep >= 9) {
                     // チュートリアルステージでステップ9以降は通常のUIを表示（全部あるやつ）
                     int currentStageStars = gameState.stageStars[stageManager.getCurrentStage()];
-                    uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+                    int currentStage = stageManager.getCurrentStage();
+                    int secretStarType = (gameState.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                                         static_cast<int>(gameState.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
+                    std::map<int, std::set<int>> secretStarClearedInt;
+                    for (const auto& [stage, types] : gameState.secretStarCleared) {
+                        std::set<int> typesInt;
+                        for (auto type : types) {
+                            typesInt.insert(static_cast<int>(type) - 1);  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
+                        }
+                        secretStarClearedInt[stage] = typesInt;
+                    }
+                    uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives,
+                                              currentStage, secretStarType, secretStarClearedInt);
                 } else {
                     // 通常のステージでは全てのUIを表示（エンディングシーケンス中とリプレイモード中は一部非表示）
                     if (!gameState.isEndingSequence) {
@@ -1523,7 +1644,19 @@ namespace GameLoop {
                         } else {
                             // 通常モードではリプレイ中でもUIを表示しない（制限時間はリプレイ中は不要）
                             if (!gameState.isReplayMode) {
-                        uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives);
+                                int currentStage = stageManager.getCurrentStage();
+                                int secretStarType = (gameState.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                                                     static_cast<int>(gameState.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
+                                std::map<int, std::set<int>> secretStarClearedInt;
+                                for (const auto& [stage, types] : gameState.secretStarCleared) {
+                                    std::set<int> typesInt;
+                                    for (auto type : types) {
+                                        typesInt.insert(static_cast<int>(type) - 1);  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
+                                    }
+                                    secretStarClearedInt[stage] = typesInt;
+                                }
+                                uiRenderer->renderTimeUI(gameState.remainingTime, gameState.timeLimit, gameState.earnedStars, currentStageStars, gameState.lives,
+                                                          currentStage, secretStarType, secretStarClearedInt);
                             }
                         }
                         
@@ -1572,7 +1705,9 @@ namespace GameLoop {
                 gameStateUIRenderer->renderTimeAttackClearBackground(width, height, clearTime, bestTime, gameState.isNewRecord);
             } else {
                 // 通常モードの場合は従来のUIを表示
-                gameStateUIRenderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.stageStars[stageManager.getCurrentStage()], false);
+                int currentStage = stageManager.getCurrentStage();
+                gameStateUIRenderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.stageStars[currentStage], false,
+                                                                 currentStage, gameState.selectedSecretStarType, gameState.secretStarCleared);
             }
         }
         
@@ -1702,6 +1837,47 @@ namespace GameLoop {
                         
                         renderer->renderer3D.renderStar3D(starPos, starColor, 1.0f);
                     }
+                    
+                    // クリア済みの場合、SECRET STAR用の星を追加表示（ゲームクリア後のみ表示）
+                    bool hasClearedStage = (gameState.isGameCleared && gameState.stageStars.count(stageNumber) > 0 && gameState.stageStars[stageNumber] > 0);
+                    if (hasClearedStage) {
+                        // SECRET STARタイプの順序: MAX_SPEED_STAR, SHADOW_STAR, IMMERSIVE_STAR（左から右）
+                        std::vector<GameState::SecretStarType> secretStarTypes = {
+                            GameState::SecretStarType::MAX_SPEED_STAR,
+                            GameState::SecretStarType::SHADOW_STAR,
+                            GameState::SecretStarType::IMMERSIVE_STAR
+                        };
+                        
+                        // 各SECRET STARタイプの色定義
+                        std::vector<glm::vec3> secretStarColors = {
+                            glm::vec3(0.2f, 0.8f, 1.0f),  // MAX_SPEED_STAR: 水色
+                            glm::vec3(0.1f, 0.1f, 0.1f),  // SHADOW_STAR: 黒
+                            glm::vec3(1.0f, 0.4f, 0.8f)   // IMMERSIVE_STAR: ピンク
+                        };
+                        
+                        glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
+                        
+                        // 現在のステージでクリア済みのSECRET STARタイプを取得
+                        std::set<GameState::SecretStarType> clearedTypes;
+                        if (gameState.secretStarCleared.count(stageNumber) > 0) {
+                            clearedTypes = gameState.secretStarCleared.at(stageNumber);
+                        }
+                        
+                        // SECRET STAR用の星を通常の星の下に表示（左から右に：MAX_SPEED_STAR, SHADOW_STAR, IMMERSIVE_STAR）
+                        for (int i = 0; i < 3; i++) {
+                            bool isCleared = (clearedTypes.count(secretStarTypes[i]) > 0);
+                            glm::vec3 starColor = isCleared ? secretStarColors[i] : inactiveColor;
+                            
+                            // 星の位置をエリアの中心から計算（通常の星の下、左から右に並べる）
+                            glm::vec3 starPos = glm::vec3(
+                                area.x - 0.8f + (2 - i) * 0.8f,  // 順序を逆にして左から右に：MAX_SPEED_STAR, SHADOW_STAR, IMMERSIVE_STAR
+                                area.y + area.height + 1.5f - 0.7f,  // 通常の星の下に配置
+                                area.z
+                            );
+                            
+                            renderer->renderer3D.renderStar3D(starPos, starColor, 1.0f);
+                        }
+                    }
                 } else {
                     // 未解禁：数値×星鍵穴の順番で横並びに表示
                     // 数値を左側に表示
@@ -1818,7 +1994,17 @@ namespace GameLoop {
             
             // NORMAL/TIME ATTACK選択UIの表示（ステージ入場時用）
             if (gameState.showTimeAttackSelectionUI) {
-                gameStateUIRenderer->renderTimeAttackSelectionUI(width, height, gameState.isTimeAttackMode);
+                gameStateUIRenderer->renderTimeAttackSelectionUI(width, height, gameState.isTimeAttackMode, gameState.isGameCleared, gameState.selectedSecretStarType);
+            }
+            
+            // SECRET STAR説明UIの表示
+            if (gameState.showSecretStarExplanationUI) {
+                gameStateUIRenderer->renderSecretStarExplanationUI(width, height);
+            }
+            
+            // SECRET STAR選択UIの表示
+            if (gameState.showSecretStarSelectionUI) {
+                gameStateUIRenderer->renderSecretStarSelectionUI(width, height, gameState.selectedSecretStarType);
             }
             
             // 操作アシストUI（トータルスターのUIと同じタイミングで描画）
@@ -1943,10 +2129,36 @@ namespace GameLoop {
         lastTutorialStepCompleted = gameState.tutorialStepCompleted;
         
         // ステージ切り替え処理（ワープUI表示中は数値キー無効）
+        // チュートリアルステージではステージ切り替えを許可（ESCで終了できるようにするため）
         for (int key = GLFW_KEY_0; key <= GLFW_KEY_6; key++) {
             if (keyStates[key].justPressed()) {
                 if (gameState.showWarpTutorialUI) { continue; }
                 int stageNumber = key - GLFW_KEY_0;
+                
+                // チュートリアルステージ（ステージ6）では、0キーでステージ選択フィールドに戻れるようにする
+                if (gameState.isTutorialStage && stageNumber == 0) {
+                    resetStageStartTime();
+                    stageManager.goToStage(0, gameState, platformSystem);
+                    gameState.showReadyScreen = false;
+                    gameState.readyScreenShown = false;
+                    gameState.timeScale = 1.0f;
+                    gameState.timeScaleLevel = 0;
+                    
+                    // ステージ選択フィールドではTPSモードに戻す
+                    gameState.isFirstPersonMode = false;
+                    gameState.isFirstPersonView = false;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    
+                    // SECRET STARモードをリセット
+                    gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    
+                    // UIフラグをリセット
+                    gameState.showModeSelectionUI = false;
+                    gameState.showTimeAttackSelectionUI = false;
+                    gameState.showSecretStarSelectionUI = false;
+                    gameState.showSecretStarExplanationUI = false;
+                    continue;
+                }
                 
                 // ステージ選択フィールドでの1-5キーはワープ機能に変更
                 if (stageManager.getCurrentStage() == 0 && stageNumber >= 1 && stageNumber <= 5) {
@@ -1954,16 +2166,21 @@ namespace GameLoop {
                         // ステージ選択エリアの目の前にワープ
                         teleportToStageArea(stageNumber, gameState);
                     }
-                } else {
-                    // 通常のステージ選択処理
+                } else if (!gameState.isTutorialStage) {
+                    // 通常のステージ選択処理（チュートリアルステージ以外）
                     processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
                 }
             }
         }
         
-        // 速度制御処理（Tキー）- ステージ0以外で有効（モード選択UI表示中は無効）
-        if (keyStates[GLFW_KEY_T].justPressed() && gameState.currentStage != 0 && !gameState.showModeSelectionUI && !gameState.showTimeAttackSelectionUI) {
-                gameState.timeScaleLevel = (gameState.timeScaleLevel + 1) % 3;
+        // 速度制御処理（Tキー）- ステージ0以外で有効（モード選択UI表示中は無効、MAX_SPEED_STAR時は無効）
+        // チュートリアル中でも速度変更は常に可能（ただし、チュートリアルステップ5以外ではtutorialInputEnabledのチェックが必要）
+        // UI処理より前に実行することで、UI表示中でも速度変更が可能（ただし、UI処理でTキーが消費される場合は速度変更は実行されない）
+        int currentStage = stageManager.getCurrentStage();
+        bool canUseTKey = tutorialInputEnabled || (gameState.isTutorialStage);
+        // MAX_SPEED_STARの場合は時間倍率を変更できない
+        if (keyStates[GLFW_KEY_T].justPressed() && currentStage != 0 && canUseTKey && !gameState.showModeSelectionUI && !gameState.showTimeAttackSelectionUI && !gameState.showSecretStarSelectionUI && gameState.selectedSecretStarType != GameState::SecretStarType::MAX_SPEED_STAR) {
+            gameState.timeScaleLevel = (gameState.timeScaleLevel + 1) % 3;
             switch (gameState.timeScaleLevel) {
                 case 0:
                     gameState.timeScale = 1.0f;
@@ -2125,12 +2342,131 @@ namespace GameLoop {
             }
         }
         
+        // SECRET STAR説明UI処理
+        if (gameState.showSecretStarExplanationUI) {
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                gameState.showSecretStarExplanationUI = false;
+            }
+        }
+        
+        // SECRET STAR選択UI処理（最優先）
+        if (gameState.showSecretStarSelectionUI) {
+            // SECRET STAR選択UI表示時に、selectedSecretStarTypeがNONEの場合はMAX_SPEED_STARに初期化
+            if (gameState.selectedSecretStarType == GameState::SecretStarType::NONE) {
+                gameState.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+            }
+            
+            // TキーでSECRET STARタイプ切り替え（blockEnterUntilReleasedの影響を受けない）
+            if (keyStates[GLFW_KEY_T].justPressed()) {
+                if (gameState.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+                    gameState.selectedSecretStarType = GameState::SecretStarType::SHADOW_STAR;
+                } else if (gameState.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR) {
+                    gameState.selectedSecretStarType = GameState::SecretStarType::IMMERSIVE_STAR;
+                } else if (gameState.selectedSecretStarType == GameState::SecretStarType::IMMERSIVE_STAR) {
+                    gameState.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+                } else {
+                    // その他の場合はMAX_SPEED_STARに初期化
+                    gameState.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+                }
+                printf("SECRET STAR SELECTION: %d (0=NONE, 1=MAX_SPEED, 2=SHADOW, 3=IMMERSIVE)\n", static_cast<int>(gameState.selectedSecretStarType));
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            
+            // 直前のENTERを離すまで受け付けない
+            if (gameState.blockEnterUntilReleased) {
+                if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE) {
+                    gameState.blockEnterUntilReleased = false; // 離されたのを確認
+                    printf("SECRET STAR: ENTER released, blockEnterUntilReleased = false\n");
+                }
+                // 離されるまでここで処理終了（自動遷移を防止）
+                // ただし、Tキーの処理は上で実行済みなので、returnしても問題ない
+                return;
+            }
+            
+            // ENTERキーで確定してカウントダウンを開始（ready画面をスキップ）
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                printf("SECRET STAR: ENTER pressed, selectedType = %d\n", static_cast<int>(gameState.selectedSecretStarType));
+                int targetStage = gameState.modeSelectionTargetStage;
+                gameState.showSecretStarSelectionUI = false;
+                gameState.showTimeAttackSelectionUI = false;  // 念のためタイムアタック選択UIも無効化
+                gameState.modeSelectionTargetStage = 0;
+                gameState.blockEnterUntilReleased = false;  // ブロックを解除
+                
+                // 選択したSECRET STARモードでステージへ移動
+                resetStageStartTime();
+                gameState.lives = 6;
+                stageManager.goToStage(targetStage, gameState, platformSystem);
+                
+                // SECRET STARモードの初期化
+                gameState.isTimeAttackMode = false;  // SECRET STARモード時はタイムアタックモードを無効化
+                
+                // MAX_SPEED_STARの場合はready画面をスキップしてカウントダウンを開始
+                if (gameState.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+                    gameState.readyScreenShown = true;  // ready画面をスキップしたことを記録
+                    gameState.showReadyScreen = false;  // ready画面を表示しない
+                    gameState.isCountdownActive = true;  // カウントダウンを開始
+                    gameState.countdownTimer = 3.0f;  // カウントダウンタイマーを設定
+                    gameState.readyScreenSpeedLevel = 0;
+                    
+                    // 時間倍率を3倍に固定
+                    gameState.timeScale = 3.0f;
+                    gameState.timeScaleLevel = 2;  // 3倍に設定
+                } else {
+                    // SHADOW_STARとIMMERSIVE_STARの場合は通常通りready画面を表示
+                    gameState.showReadyScreen = true;
+                    gameState.readyScreenShown = false;
+                    gameState.isCountdownActive = false;
+                    gameState.countdownTimer = 0.0f;
+                    gameState.readyScreenSpeedLevel = 0;
+                    
+                    gameState.timeScale = 1.0f;
+                    gameState.timeScaleLevel = 0;
+                }
+                
+                // IMMERSIVE_STARの場合はFPSモードを有効化
+                if (gameState.selectedSecretStarType == GameState::SecretStarType::IMMERSIVE_STAR) {
+                    gameState.isFirstPersonMode = true;
+                    gameState.isFirstPersonView = true;
+                    gameState.cameraYaw = 90.0f;
+                    gameState.cameraPitch = -10.0f;
+                    gameState.firstMouse = true;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                } else {
+                    gameState.isFirstPersonMode = false;
+                    gameState.isFirstPersonView = false;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                }
+                
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            return;  // SECRET STAR選択UI表示中は他のUI処理をスキップ
+        }
+        
         // NORMAL/TIME ATTACK選択UI処理（ステージ入場時用）
         if (gameState.showTimeAttackSelectionUI) {
-            // TキーでNORMAL/TIME ATTACKモード切り替え（blockEnterUntilReleasedの影響を受けない）
+            // TキーでNORMAL/TIME ATTACK/SECRET STARモード切り替え（blockEnterUntilReleasedの影響を受けない）
             if (keyStates[GLFW_KEY_T].justPressed()) {
-                gameState.isTimeAttackMode = !gameState.isTimeAttackMode;
-                printf("TIME ATTACK SELECTION: %s\n", gameState.isTimeAttackMode ? "TIME ATTACK" : "NORMAL");
+                if (gameState.isGameCleared) {
+                    // 3択: NORMAL -> TIME ATTACK -> SECRET STAR -> NORMAL
+                    if (!gameState.isTimeAttackMode && gameState.selectedSecretStarType == GameState::SecretStarType::NONE) {
+                        gameState.isTimeAttackMode = true;
+                    } else if (gameState.isTimeAttackMode && gameState.selectedSecretStarType == GameState::SecretStarType::NONE) {
+                        gameState.isTimeAttackMode = false;
+                        gameState.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+                    } else {
+                        gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    }
+                } else {
+                    // 2択: NORMAL <-> TIME ATTACK
+                    gameState.isTimeAttackMode = !gameState.isTimeAttackMode;
+                    // NORMALモードに戻った場合は、selectedSecretStarTypeをリセット
+                    if (!gameState.isTimeAttackMode) {
+                        gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    }
+                }
+                printf("MODE SELECTION: %s\n", 
+                    gameState.isTimeAttackMode ? "TIME ATTACK" : 
+                    (gameState.selectedSecretStarType != GameState::SecretStarType::NONE ? "SECRET STAR" : "NORMAL"));
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             
@@ -2143,8 +2479,24 @@ namespace GameLoop {
                 return;
             }
             
-            // ENTERキーで確定してready画面へ進む
+            // ENTERキーで確定
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                // SECRET STARが選択されている場合は、SECRET STAR選択UIを表示
+                if (gameState.selectedSecretStarType != GameState::SecretStarType::NONE) {
+                    // modeSelectionTargetStageを保持したままSECRET STAR選択UIへ
+                    gameState.showTimeAttackSelectionUI = false;
+                    gameState.showSecretStarSelectionUI = true;
+                    gameState.blockEnterUntilReleased = true;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    return;
+                }
+                
+                // NORMALまたはTIME ATTACKが選択されている場合はready画面へ進む
+                // NORMALモードの場合は、selectedSecretStarTypeを確実にNONEにリセット
+                if (!gameState.isTimeAttackMode) {
+                    gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+                }
+                
                 int targetStage = gameState.modeSelectionTargetStage;
                 gameState.showTimeAttackSelectionUI = false;
                 gameState.modeSelectionTargetStage = 0;
@@ -2176,6 +2528,8 @@ namespace GameLoop {
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                 int clearedStage = stageManager.getCurrentStage();
                 
+                // SECRET STARのクリア状況は既にゴール到達時に記録済みなので、ここでは何もしない
+                
                 stageManager.completeStage(clearedStage);
                 stageManager.goToStage(0, gameState, platformSystem);
                 gameState.timeScale = 1.0f;
@@ -2185,6 +2539,9 @@ namespace GameLoop {
                 gameState.isFirstPersonMode = false;
                 gameState.isFirstPersonView = false;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                
+                // SECRET STARモードをリセット
+                gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
                 
                 glm::vec3 returnPosition;
                 switch (clearedStage) {
@@ -2269,6 +2626,9 @@ namespace GameLoop {
                 
                 gameState.playerPosition = glm::vec3(8, 2.0f, 0);
                 gameState.playerVelocity = glm::vec3(0, 0, 0);
+                
+                // SECRET STARモードをリセット
+                gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
                 
                 // ステージ選択フィールドではTPSモードに戻す
                 gameState.isFirstPersonMode = false;
@@ -2363,6 +2723,9 @@ namespace GameLoop {
                     gameState.showTimeAttackSelectionUI = true;
                     gameState.modeSelectionTargetStage = targetStage;
                     gameState.blockEnterUntilReleased = true;
+                    // モード選択UI表示時に、selectedSecretStarTypeを初期化
+                    gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    gameState.isTimeAttackMode = false;
                 } else {
                     // 初めて入る場合: 直接ready画面へ（タイムアタック選択UIは表示しない）
                 resetStageStartTime();
@@ -2388,6 +2751,8 @@ namespace GameLoop {
                                    gameState.showEasyModeExplanationUI ||
                                    gameState.showModeSelectionUI ||
                                    gameState.showTimeAttackSelectionUI ||
+                                   gameState.showSecretStarExplanationUI ||
+                                   gameState.showSecretStarSelectionUI ||
                                    (gameState.showStage0Tutorial && stageManager.getCurrentStage() == 0);
         
         if (tutorialInputEnabled && !isUIBlockingMovement) {
@@ -2407,6 +2772,12 @@ namespace GameLoop {
                      std::unique_ptr<gfx::OpenGLRenderer>& renderer, int& width, int& height) {
         renderer->beginFrameWithBackground(stageManager.getCurrentStage());
         
+        // SHADOW_STARモードの場合は背景を黒にする
+        if (gameState.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+        
         // カメラ設定
         auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window);
         CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
@@ -2417,7 +2788,9 @@ namespace GameLoop {
     }
 
     void renderPlatforms(PlatformSystem& platformSystem, 
-                        std::unique_ptr<gfx::OpenGLRenderer>& renderer) {
+                        std::unique_ptr<gfx::OpenGLRenderer>& renderer,
+                        GameState& gameState,
+                        StageManager& stageManager) {
         auto positions = platformSystem.getPositions();
         auto sizes = platformSystem.getSizes();
         auto colors = platformSystem.getColors();
@@ -2427,6 +2800,25 @@ namespace GameLoop {
         auto rotationAxes = platformSystem.getRotationAxes();
         auto blinkAlphas = platformSystem.getBlinkAlphas();
         auto platformTypes = platformSystem.getPlatformTypes();
+        
+        // SHADOW_STARモードの場合、プレイヤーが乗っている足場だけを表示（ステージ0では適用しない）
+        std::vector<bool> shadowVisibility = visibility;
+        if (gameState.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
+            // すべての足場を一旦非表示にする
+            for (size_t i = 0; i < shadowVisibility.size(); i++) {
+                shadowVisibility[i] = false;
+            }
+            
+            // プレイヤーが乗っている足場を判定
+            glm::vec3 playerSize = glm::vec3(1.0f, 2.0f, 1.0f);
+            auto collisionResult = platformSystem.checkCollisionWithIndex(gameState.playerPosition, playerSize);
+            int currentPlatformIndex = collisionResult.second;
+            
+            // プレイヤーが乗っている足場を表示
+            if (currentPlatformIndex >= 0 && currentPlatformIndex < static_cast<int>(shadowVisibility.size())) {
+                shadowVisibility[currentPlatformIndex] = true;
+            }
+        }
         
         // static足場用のテクスチャを読み込み
         static GLuint staticPlatformTexture = 0;
@@ -2500,7 +2892,11 @@ namespace GameLoop {
         }
         
         for (size_t i = 0; i < positions.size(); i++) {
-            if (!visibility[i] || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
+            // SHADOW_STARモードの場合はshadowVisibilityを使用、それ以外は通常のvisibilityを使用
+            bool shouldRender = (gameState.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR) 
+                                ? shadowVisibility[i] 
+                                : visibility[i];
+            if (!shouldRender || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
             
             if (isRotating[i]) {
                 renderer->renderer3D.renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);

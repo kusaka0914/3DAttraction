@@ -128,8 +128,32 @@ namespace UIConfig {
         UISelectableConfig getModeSelectionNormalTextConfig() const { return modeSelectionNormalTextConfig; }
         UISelectableConfig getModeSelectionEasyTextConfig() const { return modeSelectionEasyTextConfig; }
         UISelectableConfig getModeSelectionTimeAttackTextConfig() const { return modeSelectionTimeAttackTextConfig; }
+        UISelectableConfig getModeSelectionSecretStarTextConfig() const { return modeSelectionSecretStarTextConfig; }
         UITextConfig getModeSelectionPressTConfig() const { return modeSelectionPressTConfig; }
         UITextConfig getModeSelectionConfirmConfig() const { return modeSelectionConfirmConfig; }
+        
+        // SECRET STAR Explanation UI
+        UITextConfig getSecretStarExplanationLine1Config() const { return secretStarExplanationLine1Config; }
+        UITextConfig getSecretStarExplanationLine2Config() const { return secretStarExplanationLine2Config; }
+        UITextConfig getSecretStarExplanationLine3Config() const { return secretStarExplanationLine3Config; }
+        UITextConfig getSecretStarExplanationLine3bConfig() const { return secretStarExplanationLine3bConfig; }
+        UITextConfig getSecretStarExplanationLine4Config() const { return secretStarExplanationLine4Config; }
+        UITextConfig getSecretStarExplanationLine4bConfig() const { return secretStarExplanationLine4bConfig; }
+        UITextConfig getSecretStarExplanationLine4cConfig() const { return secretStarExplanationLine4cConfig; }
+        UITextConfig getSecretStarExplanationLine5Config() const { return secretStarExplanationLine5Config; }
+        UITextConfig getSecretStarExplanationLine5bConfig() const { return secretStarExplanationLine5bConfig; }
+        UITextConfig getSecretStarExplanationOkButtonConfig() const { return secretStarExplanationOkButtonConfig; }
+        
+        // SECRET STAR Selection UI
+        UITextConfig getSecretStarSelectionTitleConfig() const { return secretStarSelectionTitleConfig; }
+        UIPosition getSecretStarSelectionStar1Config() const { return secretStarSelectionStar1Config; }
+        UIPosition getSecretStarSelectionStar2Config() const { return secretStarSelectionStar2Config; }
+        UIPosition getSecretStarSelectionStar3Config() const { return secretStarSelectionStar3Config; }
+        UISelectableConfig getSecretStarSelectionName1Config() const { return secretStarSelectionName1Config; }
+        UISelectableConfig getSecretStarSelectionName2Config() const { return secretStarSelectionName2Config; }
+        UISelectableConfig getSecretStarSelectionName3Config() const { return secretStarSelectionName3Config; }
+        UITextConfig getSecretStarSelectionPressTConfig() const { return secretStarSelectionPressTConfig; }
+        UITextConfig getSecretStarSelectionConfirmConfig() const { return secretStarSelectionConfirmConfig; }
         
         // Tutorial UI
         UITextConfig getTutorialStepTextConfig() const { return tutorialStepTextConfig; }
@@ -344,8 +368,32 @@ namespace UIConfig {
         UISelectableConfig modeSelectionNormalTextConfig;
         UISelectableConfig modeSelectionEasyTextConfig;
         UISelectableConfig modeSelectionTimeAttackTextConfig;
+        UISelectableConfig modeSelectionSecretStarTextConfig;
         UITextConfig modeSelectionPressTConfig;
         UITextConfig modeSelectionConfirmConfig;
+        
+        // SECRET STAR Explanation UI設定
+        UITextConfig secretStarExplanationLine1Config;
+        UITextConfig secretStarExplanationLine2Config;
+        UITextConfig secretStarExplanationLine3Config;
+        UITextConfig secretStarExplanationLine3bConfig;
+        UITextConfig secretStarExplanationLine4Config;
+        UITextConfig secretStarExplanationLine4bConfig;
+        UITextConfig secretStarExplanationLine4cConfig;
+        UITextConfig secretStarExplanationLine5Config;
+        UITextConfig secretStarExplanationLine5bConfig;
+        UITextConfig secretStarExplanationOkButtonConfig;
+        
+        // SECRET STAR Selection UI設定
+        UITextConfig secretStarSelectionTitleConfig;
+        UIPosition secretStarSelectionStar1Config;
+        UIPosition secretStarSelectionStar2Config;
+        UIPosition secretStarSelectionStar3Config;
+        UISelectableConfig secretStarSelectionName1Config;
+        UISelectableConfig secretStarSelectionName2Config;
+        UISelectableConfig secretStarSelectionName3Config;
+        UITextConfig secretStarSelectionPressTConfig;
+        UITextConfig secretStarSelectionConfirmConfig;
         
         // Tutorial UI設定
         UITextConfig tutorialStepTextConfig;
