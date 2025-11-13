@@ -61,6 +61,47 @@ namespace UIConfig {
         replayFastForwardMarkConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         replayFastForwardMarkConfig.scale = 5.0f;
         
+        // リプレイ常時表示マーク（画面下に並べて配置）
+        replayRewindMarkAlwaysConfig.position.useRelative = true;
+        replayRewindMarkAlwaysConfig.position.offsetX = -300.0f;
+        replayRewindMarkAlwaysConfig.position.offsetY = -120.0f;
+        replayRewindMarkAlwaysConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayRewindMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        replayRewindMarkAlwaysConfig.scale = 2.0f;
+        
+        replayPauseMarkAlwaysConfig.position.useRelative = true;
+        replayPauseMarkAlwaysConfig.position.offsetX = 0.0f;
+        replayPauseMarkAlwaysConfig.position.offsetY = -120.0f;
+        replayPauseMarkAlwaysConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPauseMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        replayPauseMarkAlwaysConfig.scale = 2.0f;
+        
+        replayFastForwardMarkAlwaysConfig.position.useRelative = true;
+        replayFastForwardMarkAlwaysConfig.position.offsetX = 300.0f;
+        replayFastForwardMarkAlwaysConfig.position.offsetY = -120.0f;
+        replayFastForwardMarkAlwaysConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayFastForwardMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        replayFastForwardMarkAlwaysConfig.scale = 2.0f;
+        
+        // リプレイPRESSキー表示
+        replayPressAConfig.position.useRelative = true;
+        replayPressAConfig.position.offsetX = -300.0f;
+        replayPressAConfig.position.offsetY = -80.0f;
+        replayPressAConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPressAConfig.scale = 1.0f;
+        
+        replayPressSpaceConfig.position.useRelative = true;
+        replayPressSpaceConfig.position.offsetX = 0.0f;
+        replayPressSpaceConfig.position.offsetY = -80.0f;
+        replayPressSpaceConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPressSpaceConfig.scale = 1.0f;
+        
+        replayPressDConfig.position.useRelative = true;
+        replayPressDConfig.position.offsetX = 300.0f;
+        replayPressDConfig.position.offsetY = -80.0f;
+        replayPressDConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPressDConfig.scale = 1.0f;
+        
         // リプレイ速度ラベル（REPLAY SPEED）
         replaySpeedLabelConfig.position.useRelative = true;
         replaySpeedLabelConfig.position.offsetX = -80.0f;
@@ -234,6 +275,55 @@ namespace UIConfig {
         stageClearStarsConfig.selectedColor = glm::vec3(1.0f, 1.0f, 0.0f);
         stageClearStarsConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         stageClearStarsConfig.scale = 10.0f;
+        
+        // Time Attack Clear UI設定
+        timeAttackClearCompletedTextConfig.position.useRelative = true;
+        timeAttackClearCompletedTextConfig.position.offsetX = -500.0f;
+        timeAttackClearCompletedTextConfig.position.offsetY = -400.0f;
+        timeAttackClearCompletedTextConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        timeAttackClearCompletedTextConfig.scale = 2.5f;
+        
+        timeAttackClearClearTextConfig.position.useRelative = true;
+        timeAttackClearClearTextConfig.position.offsetX = -450.0f;
+        timeAttackClearClearTextConfig.position.offsetY = -400.0f;
+        timeAttackClearClearTextConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        timeAttackClearClearTextConfig.scale = 2.5f;
+        
+        timeAttackClearClearTimeConfig.position.useRelative = true;
+        timeAttackClearClearTimeConfig.position.offsetX = -460.0f;
+        timeAttackClearClearTimeConfig.position.offsetY = -280.0f;
+        timeAttackClearClearTimeConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        timeAttackClearClearTimeConfig.scale = 1.8f;
+        
+        timeAttackClearBestTimeConfig.position.useRelative = true;
+        timeAttackClearBestTimeConfig.position.offsetX = -460.0f;
+        timeAttackClearBestTimeConfig.position.offsetY = -200.0f;
+        timeAttackClearBestTimeConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        timeAttackClearBestTimeConfig.scale = 1.8f;
+        
+        timeAttackClearNewRecordConfig.position.useRelative = true;
+        timeAttackClearNewRecordConfig.position.offsetX = -460.0f;
+        timeAttackClearNewRecordConfig.position.offsetY = -120.0f;
+        timeAttackClearNewRecordConfig.color = glm::vec3(1.0f, 0.5f, 0.0f);
+        timeAttackClearNewRecordConfig.scale = 2.0f;
+        
+        timeAttackClearReturnFieldConfig.position.useRelative = true;
+        timeAttackClearReturnFieldConfig.position.offsetX = -460.0f;
+        timeAttackClearReturnFieldConfig.position.offsetY = -70.0f;
+        timeAttackClearReturnFieldConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        timeAttackClearReturnFieldConfig.scale = 1.0f;
+        
+        timeAttackClearRetryConfig.position.useRelative = true;
+        timeAttackClearRetryConfig.position.offsetX = -230.0f;
+        timeAttackClearRetryConfig.position.offsetY = -70.0f;
+        timeAttackClearRetryConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        timeAttackClearRetryConfig.scale = 1.0f;
+        
+        timeAttackClearReplayConfig.position.useRelative = true;
+        timeAttackClearReplayConfig.position.offsetX = 0.0f;
+        timeAttackClearReplayConfig.position.offsetY = -70.0f;
+        timeAttackClearReplayConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        timeAttackClearReplayConfig.scale = 1.0f;
         
         // Game Over UI設定
         gameOverTextConfig.position.useRelative = true;
@@ -625,6 +715,14 @@ namespace UIConfig {
         gameUIBestTimeConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         gameUIBestTimeConfig.scale = 1.8f;
         
+        gameUITimeAttackSpeedDisplayPosition.useRelative = false;
+        gameUITimeAttackSpeedDisplayPosition.absoluteX = 970.0f;
+        gameUITimeAttackSpeedDisplayPosition.absoluteY = 30.0f;
+        
+        gameUITimeAttackPressTPosition.useRelative = false;
+        gameUITimeAttackPressTPosition.absoluteX = 960.0f;
+        gameUITimeAttackPressTPosition.absoluteY = 65.0f;
+        
         gameUIGoalDisplayConfig.position.useRelative = false;
         gameUIGoalDisplayConfig.position.absoluteX = 962.0f;
         gameUIGoalDisplayConfig.position.absoluteY = 65.0f;
@@ -848,6 +946,105 @@ namespace UIConfig {
                         replayFastForwardMarkConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) replayFastForwardMarkConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("rewindMarkAlways")) {
+                    auto& cfg = replay["rewindMarkAlways"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayRewindMarkAlwaysConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayRewindMarkAlwaysConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayRewindMarkAlwaysConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayRewindMarkAlwaysConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayRewindMarkAlwaysConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayRewindMarkAlwaysConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayRewindMarkAlwaysConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pauseMarkAlways")) {
+                    auto& cfg = replay["pauseMarkAlways"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPauseMarkAlwaysConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPauseMarkAlwaysConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPauseMarkAlwaysConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPauseMarkAlwaysConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPauseMarkAlwaysConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPauseMarkAlwaysConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("activeColor")) {
+                        replayPauseMarkAlwaysConfig.activeColor = glm::vec3(cfg["activeColor"][0], cfg["activeColor"][1], cfg["activeColor"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPauseMarkAlwaysConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("fastForwardMarkAlways")) {
+                    auto& cfg = replay["fastForwardMarkAlways"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayFastForwardMarkAlwaysConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayFastForwardMarkAlwaysConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayFastForwardMarkAlwaysConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayFastForwardMarkAlwaysConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayFastForwardMarkAlwaysConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayFastForwardMarkAlwaysConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayFastForwardMarkAlwaysConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pressA")) {
+                    auto& cfg = replay["pressA"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPressAConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPressAConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPressAConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPressAConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPressAConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPressAConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPressAConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pressSpace")) {
+                    auto& cfg = replay["pressSpace"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPressSpaceConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPressSpaceConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPressSpaceConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPressSpaceConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPressSpaceConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPressSpaceConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPressSpaceConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pressD")) {
+                    auto& cfg = replay["pressD"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPressDConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPressDConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPressDConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPressDConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPressDConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPressDConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPressDConfig.scale = cfg["scale"];
                 }
                 
                 if (replay.contains("speedLabel")) {
@@ -1218,6 +1415,139 @@ namespace UIConfig {
                         stageClearStarsConfig.unselectedColor = glm::vec3(cfg["inactiveColor"][0], cfg["inactiveColor"][1], cfg["inactiveColor"][2]);
                     }
                     if (cfg.contains("scale")) stageClearStarsConfig.scale = cfg["scale"];
+                }
+            }
+            
+            // Time Attack Clear UI
+            if (jsonData.contains("timeAttackClear")) {
+                auto& timeAttackClear = jsonData["timeAttackClear"];
+                
+                if (timeAttackClear.contains("completedText")) {
+                    auto& cfg = timeAttackClear["completedText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearCompletedTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearCompletedTextConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearCompletedTextConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearCompletedTextConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearCompletedTextConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearCompletedTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearCompletedTextConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("clearText")) {
+                    auto& cfg = timeAttackClear["clearText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearClearTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearClearTextConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearClearTextConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearClearTextConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearClearTextConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearClearTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearClearTextConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("clearTime")) {
+                    auto& cfg = timeAttackClear["clearTime"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearClearTimeConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearClearTimeConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearClearTimeConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearClearTimeConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearClearTimeConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearClearTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearClearTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("bestTime")) {
+                    auto& cfg = timeAttackClear["bestTime"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearBestTimeConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearBestTimeConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearBestTimeConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearBestTimeConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearBestTimeConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearBestTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearBestTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("newRecord")) {
+                    auto& cfg = timeAttackClear["newRecord"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearNewRecordConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearNewRecordConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearNewRecordConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearNewRecordConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearNewRecordConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearNewRecordConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearNewRecordConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("returnField")) {
+                    auto& cfg = timeAttackClear["returnField"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearReturnFieldConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearReturnFieldConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearReturnFieldConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearReturnFieldConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearReturnFieldConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearReturnFieldConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearReturnFieldConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("retry")) {
+                    auto& cfg = timeAttackClear["retry"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearRetryConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearRetryConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearRetryConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearRetryConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearRetryConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearRetryConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearRetryConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("replay")) {
+                    auto& cfg = timeAttackClear["replay"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearReplayConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearReplayConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearReplayConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearReplayConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearReplayConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearReplayConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearReplayConfig.scale = cfg["scale"];
                 }
             }
             
@@ -2128,6 +2458,24 @@ namespace UIConfig {
                     if (cfg.contains("scale")) gameUIBestTimeConfig.scale = cfg["scale"];
                 }
                 
+                if (gameUI.contains("timeAttackSpeedDisplayPosition")) {
+                    auto& pos = gameUI["timeAttackSpeedDisplayPosition"];
+                    if (pos.contains("absoluteX")) gameUITimeAttackSpeedDisplayPosition.absoluteX = pos["absoluteX"];
+                    if (pos.contains("absoluteY")) gameUITimeAttackSpeedDisplayPosition.absoluteY = pos["absoluteY"];
+                    if (pos.contains("useRelative")) gameUITimeAttackSpeedDisplayPosition.useRelative = pos["useRelative"];
+                    if (pos.contains("offsetX")) gameUITimeAttackSpeedDisplayPosition.offsetX = pos["offsetX"];
+                    if (pos.contains("offsetY")) gameUITimeAttackSpeedDisplayPosition.offsetY = pos["offsetY"];
+                }
+                
+                if (gameUI.contains("timeAttackPressTPosition")) {
+                    auto& pos = gameUI["timeAttackPressTPosition"];
+                    if (pos.contains("absoluteX")) gameUITimeAttackPressTPosition.absoluteX = pos["absoluteX"];
+                    if (pos.contains("absoluteY")) gameUITimeAttackPressTPosition.absoluteY = pos["absoluteY"];
+                    if (pos.contains("useRelative")) gameUITimeAttackPressTPosition.useRelative = pos["useRelative"];
+                    if (pos.contains("offsetX")) gameUITimeAttackPressTPosition.offsetX = pos["offsetX"];
+                    if (pos.contains("offsetY")) gameUITimeAttackPressTPosition.offsetY = pos["offsetY"];
+                }
+                
                 if (gameUI.contains("goalDisplay")) {
                     auto& cfg = gameUI["goalDisplay"];
                     if (cfg.contains("position")) {
@@ -2553,6 +2901,10 @@ namespace UIConfig {
         
         if (json.contains("completedColor") && json["completedColor"].is_array() && json["completedColor"].size() >= 3) {
             config.completedColor = glm::vec3(json["completedColor"][0], json["completedColor"][1], json["completedColor"][2]);
+        }
+        
+        if (json.contains("activeColor") && json["activeColor"].is_array() && json["activeColor"].size() >= 3) {
+            config.activeColor = glm::vec3(json["activeColor"][0], json["activeColor"][1], json["activeColor"][2]);
         }
         
         if (json.contains("scale")) {

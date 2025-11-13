@@ -144,15 +144,32 @@ void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedSt
 }
 
 // タイムアタック用UI描画
-void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives) {
+void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives, float timeScale, bool isReplayMode) {
     begin2DMode();
     
     // 経過時間を表示（ミリ秒まで）
     renderTimeAttackDisplay(currentTime, bestTime);
     
-    // 星を表示（existingStarsが0より大きい場合のみ）
-    if (existingStars > 0) {
-        renderStarsDisplay(existingStars);
+    // タイムアタックモードでは星は表示しない
+    
+    // 速度UIとPRESS Tを時間UIの隣に表示（既存の設定を再利用、位置だけタイムアタック用）
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto speedConfig = uiConfig.getSpeedDisplayConfig();
+    auto pressTConfig = uiConfig.getPressTConfig();
+    auto timeAttackSpeedPos = uiConfig.getGameUITimeAttackSpeedDisplayPosition();
+    auto timeAttackPressTPos = uiConfig.getGameUITimeAttackPressTPosition();
+    
+    // 速度UIを表示（色とスケールは既存設定、位置だけタイムアタック用）
+    glm::vec2 speedPos = uiConfig.calculatePosition(timeAttackSpeedPos, windowWidth, windowHeight);
+    std::string speedText = std::to_string((int)timeScale) + "x";
+    glm::vec3 speedColor = (timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : speedConfig.color;
+    renderText(speedText, speedPos, speedColor, speedConfig.scale);
+    
+    // PRESS Tを表示（リプレイモード中でない場合のみ、色とスケールは既存設定、位置だけタイムアタック用）
+    if (!isReplayMode) {
+        glm::vec2 pressTPos = uiConfig.calculatePosition(timeAttackPressTPos, windowWidth, windowHeight);
+        glm::vec3 pressTColor = (timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : pressTConfig.color;
+        renderText("PRESS T", pressTPos, pressTColor, pressTConfig.scale);
     }
     
     // ライフを表示（livesが0より大きい場合のみ）
@@ -193,19 +210,7 @@ void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
     glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, windowWidth, windowHeight);
     renderText(timeText, timeAttackPos, timeAttackConfig.color, timeAttackConfig.scale);
     
-    // ベストタイムを表示（記録がある場合）
-    if (bestTime > 0.0f) {
-        int bestMinutes = static_cast<int>(bestTime) / 60;
-        int bestSeconds = static_cast<int>(bestTime) % 60;
-        int bestMilliseconds = static_cast<int>((bestTime - static_cast<int>(bestTime)) * 100);
-        
-        std::string bestTimeText = (bestMinutes > 0 ? std::to_string(bestMinutes) + ":" : "") + 
-                                   (bestSeconds < 10 ? "0" : "") + std::to_string(bestSeconds) + "." +
-                                   (bestMilliseconds < 10 ? "0" : "") + std::to_string(bestMilliseconds);
-        
-        glm::vec2 bestTimePos = uiConfig.calculatePosition(bestTimeConfig.position, windowWidth, windowHeight);
-        renderText("BEST: " + bestTimeText, bestTimePos, bestTimeConfig.color, bestTimeConfig.scale);
-    }
+    // ベストタイムの表示は削除（ゲームプレイ中、リプレイ中に右上に出るBESTのUIは不要）
 }
 
 // ゴール表示の描画

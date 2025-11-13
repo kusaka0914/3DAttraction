@@ -27,50 +27,77 @@
     "scale": 1.0
   },
   "replayUI": {
-    "pauseMark": {
+    "rewindMarkAlways": {
       "position": {
-        "offsetX": -360,
-        "offsetY": -280
+        "offsetX": -450,
+        "offsetY": -120
       },
-      "color": [1.0, 0.8, 0.2],
-      "scale": 5.0
+      "color": [1.0, 1.0, 1.0],
+      "activeColor": [1.0, 0.8, 0.2],
+      "scale": 2.0
     },
-    "rewindMark": {
+    "pauseMarkAlways": {
       "position": {
-        "offsetX": -360,
-        "offsetY": -280
+        "offsetX": -340,
+        "offsetY": -120
       },
-      "color": [1.0, 0.8, 0.2],
-      "scale": 5.0
+      "color": [1.0, 1.0, 1.0],
+      "activeColor": [1.0, 0.8, 0.2],
+      "scale": 2.0
     },
-    "fastForwardMark": {
+    "fastForwardMarkAlways": {
       "position": {
-        "offsetX": -360,
-        "offsetY": -280
+        "offsetX": -230,
+        "offsetY": -120
       },
-      "color": [1.0, 0.8, 0.2],
-      "scale": 5.0
+      "color": [1.0, 1.0, 1.0],
+      "activeColor": [1.0, 0.8, 0.2],
+      "scale": 2.0
+    },
+    "pressA": {
+      "position": {
+        "offsetX": -465,
+        "offsetY": -85
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "pressSpace": {
+      "position": {
+        "offsetX": -370,
+        "offsetY": -85
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "pressD": {
+      "position": {
+        "offsetX": -245,
+        "offsetY": -85
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
     },
     "speedLabel": {
       "position": {
-        "offsetX": -365,
-        "offsetY": -65
+        "offsetX": -370,
+        "offsetY": -15
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.0
     },
     "speedDisplay": {
       "position": {
-        "offsetX": -350,
-        "offsetY": -40
+        "offsetX": -355,
+        "offsetY": 10
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 2.0
     },
     "pressT": {
       "position": {
-        "offsetX": -340,
-        "offsetY": 0
+        "offsetX": -345,
+        "offsetY": 50
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.0
@@ -279,27 +306,93 @@
       "scale": 1.0
     }
   },
+  "timeAttackClear": {
+    "completedText": {
+      "position": {
+        "offsetX": -500,
+        "offsetY": -380
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.5
+    },
+    "clearText": {
+      "position": {
+        "offsetX": -450,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.5
+    },
+    "clearTime": {
+      "position": {
+        "offsetX": -440,
+        "offsetY": -280
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "bestTime": {
+      "position": {
+        "offsetX": -430,
+        "offsetY": -230
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 1.5
+    },
+    "newRecord": {
+      "position": {
+        "offsetX": -410,
+        "offsetY": -340
+      },
+      "color": [1.0, 0.5, 0.0],
+      "scale": 2.0
+    },
+    "returnField": {
+      "position": {
+        "offsetX": -530,
+        "offsetY": -180
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.0
+    },
+    "retry": {
+      "position": {
+        "offsetX": -310,
+        "offsetY": -180
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    },
+    "replay": {
+      "position": {
+        "offsetX": -200,
+        "offsetY": -180
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.0
+    }
+  },
   "gameOver": {
     "gameOverText": {
       "position": {
-        "offsetX": -300,
-        "offsetY": -100
+        "offsetX": -450,
+        "offsetY": -300
       },
       "color": [1.0, 0.2, 0.2],
       "scale": 3.0
     },
     "returnField": {
       "position": {
-        "offsetX": -300,
-        "offsetY": 50
+        "offsetX": -450,
+        "offsetY": -220
       },
       "color": [0.2, 0.8, 0.2],
       "scale": 1.5
     },
     "retry": {
       "position": {
-        "offsetX": -150,
-        "offsetY": 150
+        "offsetX": -370,
+        "offsetY": -170
       },
       "color": [0.8, 0.8, 0.8],
       "scale": 1.5
@@ -702,6 +795,16 @@
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.8
+    },
+    "timeAttackSpeedDisplayPosition": {
+      "useRelative": false,
+      "absoluteX": 1080,
+      "absoluteY": 30
+    },
+    "timeAttackPressTPosition": {
+      "useRelative": false,
+      "absoluteX": 1070,
+      "absoluteY": 65
     },
     "goalDisplay": {
       "position": {

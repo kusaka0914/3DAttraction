@@ -19,6 +19,7 @@ namespace UIConfig {
         UIPosition position;
         glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
         glm::vec3 completedColor = glm::vec3(1.0f, 1.0f, 1.0f);  // 完了時の色（チュートリアルメッセージ用）
+        glm::vec3 activeColor = glm::vec3(1.0f, 1.0f, 1.0f);  // アクティブ時の色（リプレイポーズマーク用）
         float scale = 1.0f;
     };
     
@@ -66,6 +67,12 @@ namespace UIConfig {
         UITextConfig getReplayPauseMarkConfig() const { return replayPauseMarkConfig; }
         UITextConfig getReplayRewindMarkConfig() const { return replayRewindMarkConfig; }
         UITextConfig getReplayFastForwardMarkConfig() const { return replayFastForwardMarkConfig; }
+        UITextConfig getReplayRewindMarkAlwaysConfig() const { return replayRewindMarkAlwaysConfig; }
+        UITextConfig getReplayPauseMarkAlwaysConfig() const { return replayPauseMarkAlwaysConfig; }
+        UITextConfig getReplayFastForwardMarkAlwaysConfig() const { return replayFastForwardMarkAlwaysConfig; }
+        UITextConfig getReplayPressAConfig() const { return replayPressAConfig; }
+        UITextConfig getReplayPressSpaceConfig() const { return replayPressSpaceConfig; }
+        UITextConfig getReplayPressDConfig() const { return replayPressDConfig; }
         UITextConfig getReplaySpeedLabelConfig() const { return replaySpeedLabelConfig; }
         UITextConfig getReplaySpeedDisplayConfig() const { return replaySpeedDisplayConfig; }
         UITextConfig getReplayPressTConfig() const { return replayPressTConfig; }
@@ -96,6 +103,16 @@ namespace UIConfig {
         UITextConfig getStageClearReturnFieldConfig() const { return stageClearReturnFieldConfig; }
         UITextConfig getStageClearRetryConfig() const { return stageClearRetryConfig; }
         UISelectableConfig getStageClearStarsConfig() const { return stageClearStarsConfig; }
+        
+        // Time Attack Clear UI
+        UITextConfig getTimeAttackClearCompletedTextConfig() const { return timeAttackClearCompletedTextConfig; }
+        UITextConfig getTimeAttackClearClearTextConfig() const { return timeAttackClearClearTextConfig; }
+        UITextConfig getTimeAttackClearClearTimeConfig() const { return timeAttackClearClearTimeConfig; }
+        UITextConfig getTimeAttackClearBestTimeConfig() const { return timeAttackClearBestTimeConfig; }
+        UITextConfig getTimeAttackClearNewRecordConfig() const { return timeAttackClearNewRecordConfig; }
+        UITextConfig getTimeAttackClearReturnFieldConfig() const { return timeAttackClearReturnFieldConfig; }
+        UITextConfig getTimeAttackClearRetryConfig() const { return timeAttackClearRetryConfig; }
+        UITextConfig getTimeAttackClearReplayConfig() const { return timeAttackClearReplayConfig; }
         
         // Game Over UI
         UITextConfig getGameOverTextConfig() const { return gameOverTextConfig; }
@@ -186,6 +203,8 @@ namespace UIConfig {
         UITimeDisplayConfig getGameUITimeDisplayConfig() const { return gameUITimeDisplayConfig; }
         UITextConfig getGameUITimeAttackDisplayConfig() const { return gameUITimeAttackDisplayConfig; }
         UITextConfig getGameUIBestTimeConfig() const { return gameUIBestTimeConfig; }
+        UIPosition getGameUITimeAttackSpeedDisplayPosition() const { return gameUITimeAttackSpeedDisplayPosition; }
+        UIPosition getGameUITimeAttackPressTPosition() const { return gameUITimeAttackPressTPosition; }
         UITextConfig getGameUIGoalDisplayConfig() const { return gameUIGoalDisplayConfig; }
         UITextConfig getGameUIGoalTime5sConfig() const { return gameUIGoalTime5sConfig; }
         UITextConfig getGameUIGoalTime10sConfig() const { return gameUIGoalTime10sConfig; }
@@ -262,6 +281,12 @@ namespace UIConfig {
         UITextConfig replayPauseMarkConfig;
         UITextConfig replayRewindMarkConfig;
         UITextConfig replayFastForwardMarkConfig;
+        UITextConfig replayRewindMarkAlwaysConfig;
+        UITextConfig replayPauseMarkAlwaysConfig;
+        UITextConfig replayFastForwardMarkAlwaysConfig;
+        UITextConfig replayPressAConfig;
+        UITextConfig replayPressSpaceConfig;
+        UITextConfig replayPressDConfig;
         UITextConfig replaySpeedLabelConfig;
         UITextConfig replaySpeedDisplayConfig;
         UITextConfig replayPressTConfig;
@@ -292,6 +317,16 @@ namespace UIConfig {
         UITextConfig stageClearReturnFieldConfig;
         UITextConfig stageClearRetryConfig;
         UISelectableConfig stageClearStarsConfig;
+        
+        // Time Attack Clear UI設定
+        UITextConfig timeAttackClearCompletedTextConfig;
+        UITextConfig timeAttackClearClearTextConfig;
+        UITextConfig timeAttackClearClearTimeConfig;
+        UITextConfig timeAttackClearBestTimeConfig;
+        UITextConfig timeAttackClearNewRecordConfig;
+        UITextConfig timeAttackClearReturnFieldConfig;
+        UITextConfig timeAttackClearRetryConfig;
+        UITextConfig timeAttackClearReplayConfig;
         
         // Game Over UI設定
         UITextConfig gameOverTextConfig;
@@ -382,6 +417,8 @@ namespace UIConfig {
         UITimeDisplayConfig gameUITimeDisplayConfig;
         UITextConfig gameUITimeAttackDisplayConfig;
         UITextConfig gameUIBestTimeConfig;
+        UIPosition gameUITimeAttackSpeedDisplayPosition;
+        UIPosition gameUITimeAttackPressTPosition;
         UITextConfig gameUIGoalDisplayConfig;
         UITextConfig gameUIGoalTime5sConfig;
         UITextConfig gameUIGoalTime10sConfig;

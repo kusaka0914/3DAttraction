@@ -113,7 +113,7 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars) {
+void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode) {
     // フォントの初期化を確実に行う
     font.initialize();
     
@@ -164,13 +164,15 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     glm::vec2 clearTimePos = uiConfig.calculatePosition(clearTimeConfig.position, width, height);
     renderText("CLEAR TIME: " + clearTimeText, clearTimePos, clearTimeConfig.color, clearTimeConfig.scale);
     
-    // 星の表示（実際の星を3つ表示）
-    auto starsConfig = uiConfig.getStageClearStarsConfig();
-    glm::vec2 starsBasePos = uiConfig.calculatePosition(starsConfig.position, width, height);
-    for (int i = 0; i < 3; i++) {
-        glm::vec2 starPos = glm::vec2(starsBasePos.x + i * starsConfig.spacing, starsBasePos.y);
-        glm::vec3 starColor = (i < earnedStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
-        renderStar(starPos, starColor, starsConfig.scale, width, height);
+    // 星の表示（タイムアタックモードでは表示しない）
+    if (!isTimeAttackMode) {
+        auto starsConfig = uiConfig.getStageClearStarsConfig();
+        glm::vec2 starsBasePos = uiConfig.calculatePosition(starsConfig.position, width, height);
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(starsBasePos.x + i * starsConfig.spacing, starsBasePos.y);
+            glm::vec3 starColor = (i < earnedStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
+            renderStar(starPos, starColor, starsConfig.scale, width, height);
+        }
     }
     
     // ステージ選択フィールドに戻るボタン
@@ -182,6 +184,97 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     auto retryConfig = uiConfig.getStageClearRetryConfig();
     glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
     renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // ステージクリアメッセージ（STAGE COMPLETEDとSTAGE CLEARは削除）
+    
+    // クリアタイム（分:秒.ミリ秒形式）
+    int clearTimeInt = static_cast<int>(clearTime);
+    int clearTimeMinutes = clearTimeInt / 60;
+    int clearTimeSeconds = clearTimeInt % 60;
+    int clearTimeDecimal = static_cast<int>((clearTime - clearTimeInt) * 100);
+    std::string clearTimeText = (clearTimeMinutes > 0 ? std::to_string(clearTimeMinutes) + ":" : "") + 
+                                (clearTimeSeconds < 10 ? "0" : "") + std::to_string(clearTimeSeconds) + "." +
+                                (clearTimeDecimal < 10 ? "0" : "") + std::to_string(clearTimeDecimal) + "s";
+    auto clearTimeConfig = uiConfig.getTimeAttackClearClearTimeConfig();
+    glm::vec2 clearTimePos = uiConfig.calculatePosition(clearTimeConfig.position, width, height);
+    renderText("CLEAR TIME: " + clearTimeText, clearTimePos, clearTimeConfig.color, clearTimeConfig.scale);
+    
+    // ベストタイム（記録がある場合のみ表示）
+    if (bestTime > 0.0f) {
+        int bestTimeInt = static_cast<int>(bestTime);
+        int bestTimeMinutes = bestTimeInt / 60;
+        int bestTimeSeconds = bestTimeInt % 60;
+        int bestTimeDecimal = static_cast<int>((bestTime - bestTimeInt) * 100);
+        std::string bestTimeText = (bestTimeMinutes > 0 ? std::to_string(bestTimeMinutes) + ":" : "") + 
+                                   (bestTimeSeconds < 10 ? "0" : "") + std::to_string(bestTimeSeconds) + "." +
+                                   (bestTimeDecimal < 10 ? "0" : "") + std::to_string(bestTimeDecimal) + "s";
+        auto bestTimeConfig = uiConfig.getTimeAttackClearBestTimeConfig();
+        glm::vec2 bestTimePos = uiConfig.calculatePosition(bestTimeConfig.position, width, height);
+        renderText("BEST TIME: " + bestTimeText, bestTimePos, bestTimeConfig.color, bestTimeConfig.scale);
+    }
+    
+    // 新記録メッセージ（新記録の場合のみ表示）
+    if (isNewRecord) {
+        auto newRecordConfig = uiConfig.getTimeAttackClearNewRecordConfig();
+        glm::vec2 newRecordPos = uiConfig.calculatePosition(newRecordConfig.position, width, height);
+        renderText("NEW RECORD!", newRecordPos, newRecordConfig.color, newRecordConfig.scale);
+    }
+    
+    // ステージ選択フィールドに戻るボタン
+    auto returnFieldConfig = uiConfig.getTimeAttackClearReturnFieldConfig();
+    glm::vec2 returnFieldPos = uiConfig.calculatePosition(returnFieldConfig.position, width, height);
+    renderText("RETURN FIELD: ENTER", returnFieldPos, returnFieldConfig.color, returnFieldConfig.scale);
+    
+    // リトライボタン
+    auto retryConfig = uiConfig.getTimeAttackClearRetryConfig();
+    glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
+    renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
+    
+    // リプレイボタン
+    auto replayConfig = uiConfig.getTimeAttackClearReplayConfig();
+    glm::vec2 replayPos = uiConfig.calculatePosition(replayConfig.position, width, height);
+    renderText("REPLAY: SPACE", replayPos, replayConfig.color, replayConfig.scale);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);

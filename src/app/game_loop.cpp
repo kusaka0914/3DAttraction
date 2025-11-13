@@ -623,7 +623,12 @@ namespace GameLoop {
                     gameState.showStageClearUI = true;
                     gameState.isStageCompleted = true;
                     gameState.isGoalReached = true;
-                    gameState.clearTime = savedClearTime;  // 保存しておいたクリアタイムを復元
+                    // タイムアタックモードではcurrentTimeAttackTimeを復元
+                    if (gameState.isTimeAttackMode) {
+                        gameState.currentTimeAttackTime = savedClearTime;  // 保存しておいたクリアタイムを復元
+                    } else {
+                        gameState.clearTime = savedClearTime;  // 通常モード用
+                    }
                     gameState.replayPlaybackTime = 0.0f;
                     
                     // 最後のフレームの位置を設定
@@ -1349,11 +1354,14 @@ namespace GameLoop {
         }
         
         
-        // 速度倍率の表示（全ステージで表示、チュートリアルステージでは条件付き）
+        // 速度倍率の表示（全ステージで表示、チュートリアルステージでは条件付き、タイムアタックモードでは非表示）
         if(stageManager.getCurrentStage()!=0){
             bool shouldShowSpeedUI = true;
             if (stageManager.getCurrentStage() == 6 && gameState.tutorialStep >= 6 && gameState.tutorialStep < 9) {
                 shouldShowSpeedUI = false; // ステップ6-8は速度倍率UIを非表示
+            }
+            if (gameState.isTimeAttackMode) {
+                shouldShowSpeedUI = false; // タイムアタックモードでは非表示（renderTimeAttackUI内で表示されるため）
             }
             
             if (shouldShowSpeedUI) {
@@ -1422,9 +1430,9 @@ namespace GameLoop {
                             
                             // リプレイモード中は星とライフのUIを非表示にするため、earnedStarsとcurrentStageStars、livesを0に設定
                             if (gameState.isReplayMode) {
-                                uiRenderer->renderTimeAttackUI(displayTime, bestTime, 0, 0, 0);
+                                uiRenderer->renderTimeAttackUI(displayTime, bestTime, 0, 0, 0, gameState.timeScale, true);
                             } else {
-                                uiRenderer->renderTimeAttackUI(gameState.currentTimeAttackTime, bestTime, gameState.earnedStars, currentStageStars, gameState.lives);
+                                uiRenderer->renderTimeAttackUI(gameState.currentTimeAttackTime, bestTime, gameState.earnedStars, currentStageStars, gameState.lives, gameState.timeScale, false);
                             }
                         } else {
                             // 通常モードではリプレイ中でもUIを表示しない（制限時間はリプレイ中は不要）
@@ -1468,15 +1476,27 @@ namespace GameLoop {
         
         // ステージクリアUI（エンディングシーケンス中とリプレイモード中は非表示）
         if (gameState.showStageClearUI && !gameState.isEndingSequence && !gameState.isReplayMode) {
-            // 背景とボックスを描画
-            gameStateUIRenderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.stageStars[stageManager.getCurrentStage()]);
+            // タイムアタックモードの場合は専用のUIを表示
+            if (gameState.isTimeAttackMode) {
+                float clearTime = gameState.currentTimeAttackTime;  // タイムアタックモードではcurrentTimeAttackTimeを使用
+                float bestTime = 0.0f;
+                if (gameState.timeAttackRecords.find(stageManager.getCurrentStage()) != gameState.timeAttackRecords.end()) {
+                    bestTime = gameState.timeAttackRecords[stageManager.getCurrentStage()];
+                }
+                gameStateUIRenderer->renderTimeAttackClearBackground(width, height, clearTime, bestTime, gameState.isNewRecord);
+            } else {
+                // 通常モードの場合は従来のUIを表示
+                gameStateUIRenderer->renderStageClearBackground(width, height, gameState.clearTime, gameState.stageStars[stageManager.getCurrentStage()], false);
+            }
         }
         
         // リプレイモード中のUI表示
         if (gameState.isReplayMode) {
             uiRenderer->begin2DMode();
             
-            // 巻き戻し/早送り/ポーズ状態を判定（ポーズ中でもキー入力は検出）
+            auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+            
+            // 巻き戻し/早送り状態を判定
             bool isRewinding = false;
             bool isFastForwarding = false;
             if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
@@ -1485,25 +1505,39 @@ namespace GameLoop {
                 isFastForwarding = true;
             }
             
-            // 画面中央にマークを表示（大きめ）
-            auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+            // 常時表示されるマークとPRESSキー表示（画面下、REPLAY SPEEDの上）
+            // 巻き戻しマーク「<<」（巻き戻し中は色が変わる）
+            auto rewindMarkConfig = uiConfig.getReplayRewindMarkAlwaysConfig();
+            glm::vec2 rewindMarkPos = uiConfig.calculatePosition(rewindMarkConfig.position, width, height);
+            glm::vec3 rewindMarkColor = isRewinding ? rewindMarkConfig.activeColor : rewindMarkConfig.color;
+            uiRenderer->renderText("<<", rewindMarkPos, rewindMarkColor, rewindMarkConfig.scale);
             
-            if (gameState.isReplayPaused) {
-                // ポーズマーク「||」（<<と同じ色）
-                auto pauseConfig = uiConfig.getReplayPauseMarkConfig();
-                glm::vec2 pausePos = uiConfig.calculatePosition(pauseConfig.position, width, height);
-                uiRenderer->renderText("||", pausePos, pauseConfig.color, pauseConfig.scale);
-            } else if (isRewinding) {
-                // 巻き戻しマーク「<<»
-                auto rewindConfig = uiConfig.getReplayRewindMarkConfig();
-                glm::vec2 rewindPos = uiConfig.calculatePosition(rewindConfig.position, width, height);
-                uiRenderer->renderText("<<", rewindPos, rewindConfig.color, rewindConfig.scale);
-            } else if (isFastForwarding) {
-                // 早送りマーク「>>»
-                auto ffConfig = uiConfig.getReplayFastForwardMarkConfig();
-                glm::vec2 ffPos = uiConfig.calculatePosition(ffConfig.position, width, height);
-                uiRenderer->renderText(">>", ffPos, ffConfig.color, ffConfig.scale);
-            }
+            // PRESS A表示
+            auto pressAConfig = uiConfig.getReplayPressAConfig();
+            glm::vec2 pressAPos = uiConfig.calculatePosition(pressAConfig.position, width, height);
+            uiRenderer->renderText("PRESS A", pressAPos, pressAConfig.color, pressAConfig.scale);
+            
+            // ポーズマーク「||」（ポーズ中は色が変わる）
+            auto pauseMarkConfig = uiConfig.getReplayPauseMarkAlwaysConfig();
+            glm::vec2 pauseMarkPos = uiConfig.calculatePosition(pauseMarkConfig.position, width, height);
+            glm::vec3 pauseMarkColor = gameState.isReplayPaused ? pauseMarkConfig.activeColor : pauseMarkConfig.color;
+            uiRenderer->renderText("||", pauseMarkPos, pauseMarkColor, pauseMarkConfig.scale);
+            
+            // PRESS SPACE表示
+            auto pressSpaceConfig = uiConfig.getReplayPressSpaceConfig();
+            glm::vec2 pressSpacePos = uiConfig.calculatePosition(pressSpaceConfig.position, width, height);
+            uiRenderer->renderText("PRESS SPACE", pressSpacePos, pressSpaceConfig.color, pressSpaceConfig.scale);
+            
+            // 早送りマーク「>>»（早送り中は色が変わる）
+            auto fastForwardMarkConfig = uiConfig.getReplayFastForwardMarkAlwaysConfig();
+            glm::vec2 fastForwardMarkPos = uiConfig.calculatePosition(fastForwardMarkConfig.position, width, height);
+            glm::vec3 fastForwardMarkColor = isFastForwarding ? fastForwardMarkConfig.activeColor : fastForwardMarkConfig.color;
+            uiRenderer->renderText(">>", fastForwardMarkPos, fastForwardMarkColor, fastForwardMarkConfig.scale);
+            
+            // PRESS D表示
+            auto pressDConfig = uiConfig.getReplayPressDConfig();
+            glm::vec2 pressDPos = uiConfig.calculatePosition(pressDConfig.position, width, height);
+            uiRenderer->renderText("PRESS D", pressDPos, pressDConfig.color, pressDConfig.scale);
             
             // REPLAY SPEEDラベル（速度表示の上）
             auto speedLabelConfig = uiConfig.getReplaySpeedLabelConfig();
@@ -2085,6 +2119,28 @@ namespace GameLoop {
             }
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
+                // リトライ処理（タイムアタックモードでも通常モードと同じ）
+                resetStageStartTime();
+                stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
+                gameState.showStageClearUI = false;
+                gameState.gameWon = false;
+                gameState.isGoalReached = false;
+                gameState.timeScale = 1.0f;
+                gameState.timeScaleLevel = 0;
+                gameState.lives = 6;
+                // タイムアタックモードの初期化
+                if (gameState.isTimeAttackMode) {
+                    gameState.currentTimeAttackTime = 0.0f;
+                    gameState.timeAttackStartTime = 0.0f;
+                    gameState.isNewRecord = false;
+                }
+                // リトライ時は既にステージに入っているので、直接ready画面へ
+                gameState.readyScreenShown = false;
+                gameState.showReadyScreen = true;
+                gameState.readyScreenSpeedLevel = 0;
+            }
+            
+            if (keyStates[GLFW_KEY_SPACE].justPressed()) {
                 // タイムアタックモードでリプレイが存在する場合はリプレイ再生
                 if (gameState.isTimeAttackMode) {
                     int currentStage = stageManager.getCurrentStage();
@@ -2094,8 +2150,8 @@ namespace GameLoop {
                             // ステージを再読み込み（リプレイ再生用）
                             stageManager.goToStage(currentStage, gameState, platformSystem);
                             
-                            // クリアタイムを保存（リプレイ完了時に使用）
-                            savedClearTime = gameState.currentReplay.clearTime;
+                            // 現在のクリアタイムを保存（リプレイ完了時に復元するため）
+                            savedClearTime = gameState.currentTimeAttackTime;
                             
                             // クリアタイムをリプレイデータから設定（更新を防ぐため）
                             gameState.clearTime = gameState.currentReplay.clearTime;
@@ -2107,25 +2163,11 @@ namespace GameLoop {
                             gameState.showStageClearUI = false;
                             gameState.isStageCompleted = false;
                             gameState.isGoalReached = false;
-                            printf("REPLAY: Started playback for stage %d (Clear time: %.2fs)\n", currentStage, gameState.clearTime);
-                            return;  // リプレイ再生開始時はリトライ処理をスキップ
+                            printf("REPLAY: Started playback for stage %d (Saved clear time: %.2fs)\n", currentStage, savedClearTime);
+                            return;  // リプレイ再生開始時は他の処理をスキップ
                         }
                     }
                 }
-                
-                // リプレイ再生できない場合は通常のリトライ処理
-                resetStageStartTime();
-                stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
-                gameState.showStageClearUI = false;
-                gameState.gameWon = false;
-                gameState.isGoalReached = false;
-                gameState.timeScale = 1.0f;
-                gameState.timeScaleLevel = 0;
-                gameState.lives = 6;
-                // リトライ時は既にステージに入っているので、直接ready画面へ
-                gameState.readyScreenShown = false;
-                gameState.showReadyScreen = true;
-                gameState.readyScreenSpeedLevel = 0;
             }
         }
         

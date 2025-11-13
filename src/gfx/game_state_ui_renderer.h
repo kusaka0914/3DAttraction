@@ -11,7 +11,8 @@ public:
     GameStateUIRenderer();
     ~GameStateUIRenderer();
     void renderTutorialStageUI(int width, int height, const std::string& message, int currentStep, bool stepCompleted);
-    void renderStageClearBackground(int width, int height, float clearTime, int earnedStars);
+    void renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode = false);
+    void renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord);
     void renderUnlockConfirmBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
     void renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
     void renderWarpTutorialBackground(int width, int height, int targetStage);

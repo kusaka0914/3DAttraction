@@ -53,7 +53,7 @@ public:
     
     // 個別UI描画関数（後方互換性のため残す）
     void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives);
-    void renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives);  // タイムアタック用
+    void renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives, float timeScale, bool isReplayMode = false);  // タイムアタック用
     void renderLivesWithExplanation(int lives);
     void renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
     void renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
