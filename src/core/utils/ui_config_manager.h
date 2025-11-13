@@ -3,6 +3,8 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <map>
+#include <type_traits>
+#include <nlohmann/json.hpp>
 
 namespace UIConfig {
     struct UIPosition {
@@ -17,6 +19,7 @@ namespace UIConfig {
         UIPosition position;
         glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
         glm::vec3 completedColor = glm::vec3(1.0f, 1.0f, 1.0f);  // 完了時の色（チュートリアルメッセージ用）
+        glm::vec3 activeColor = glm::vec3(1.0f, 1.0f, 1.0f);  // アクティブ時の色（リプレイポーズマーク用）
         float scale = 1.0f;
     };
     
@@ -64,6 +67,12 @@ namespace UIConfig {
         UITextConfig getReplayPauseMarkConfig() const { return replayPauseMarkConfig; }
         UITextConfig getReplayRewindMarkConfig() const { return replayRewindMarkConfig; }
         UITextConfig getReplayFastForwardMarkConfig() const { return replayFastForwardMarkConfig; }
+        UITextConfig getReplayRewindMarkAlwaysConfig() const { return replayRewindMarkAlwaysConfig; }
+        UITextConfig getReplayPauseMarkAlwaysConfig() const { return replayPauseMarkAlwaysConfig; }
+        UITextConfig getReplayFastForwardMarkAlwaysConfig() const { return replayFastForwardMarkAlwaysConfig; }
+        UITextConfig getReplayPressAConfig() const { return replayPressAConfig; }
+        UITextConfig getReplayPressSpaceConfig() const { return replayPressSpaceConfig; }
+        UITextConfig getReplayPressDConfig() const { return replayPressDConfig; }
         UITextConfig getReplaySpeedLabelConfig() const { return replaySpeedLabelConfig; }
         UITextConfig getReplaySpeedDisplayConfig() const { return replaySpeedDisplayConfig; }
         UITextConfig getReplayPressTConfig() const { return replayPressTConfig; }
@@ -75,6 +84,10 @@ namespace UIConfig {
         UITextConfig getEasyModeTextConfig() const { return easyModeTextConfig; }
         UITextConfig getPressEConfig() const { return pressEConfig; }
         UITextConfig getControlsTextConfig() const { return controlsTextConfig; }
+        
+        // タイトル画面UI要素の設定を取得
+        UITextConfig getTitleLogoConfig() const { return titleLogoConfig; }
+        UITextConfig getTitleStartButtonConfig() const { return titleStartButtonConfig; }
         
         // Ready画面UI要素の設定を取得
         UITextConfig getReadyTextConfig() const { return readyTextConfig; }
@@ -95,6 +108,16 @@ namespace UIConfig {
         UITextConfig getStageClearRetryConfig() const { return stageClearRetryConfig; }
         UISelectableConfig getStageClearStarsConfig() const { return stageClearStarsConfig; }
         
+        // Time Attack Clear UI
+        UITextConfig getTimeAttackClearCompletedTextConfig() const { return timeAttackClearCompletedTextConfig; }
+        UITextConfig getTimeAttackClearClearTextConfig() const { return timeAttackClearClearTextConfig; }
+        UITextConfig getTimeAttackClearClearTimeConfig() const { return timeAttackClearClearTimeConfig; }
+        UITextConfig getTimeAttackClearBestTimeConfig() const { return timeAttackClearBestTimeConfig; }
+        UITextConfig getTimeAttackClearNewRecordConfig() const { return timeAttackClearNewRecordConfig; }
+        UITextConfig getTimeAttackClearReturnFieldConfig() const { return timeAttackClearReturnFieldConfig; }
+        UITextConfig getTimeAttackClearRetryConfig() const { return timeAttackClearRetryConfig; }
+        UITextConfig getTimeAttackClearReplayConfig() const { return timeAttackClearReplayConfig; }
+        
         // Game Over UI
         UITextConfig getGameOverTextConfig() const { return gameOverTextConfig; }
         UITextConfig getGameOverReturnFieldConfig() const { return gameOverReturnFieldConfig; }
@@ -105,12 +128,37 @@ namespace UIConfig {
         UISelectableConfig getModeSelectionNormalTextConfig() const { return modeSelectionNormalTextConfig; }
         UISelectableConfig getModeSelectionEasyTextConfig() const { return modeSelectionEasyTextConfig; }
         UISelectableConfig getModeSelectionTimeAttackTextConfig() const { return modeSelectionTimeAttackTextConfig; }
+        UISelectableConfig getModeSelectionSecretStarTextConfig() const { return modeSelectionSecretStarTextConfig; }
         UITextConfig getModeSelectionPressTConfig() const { return modeSelectionPressTConfig; }
         UITextConfig getModeSelectionConfirmConfig() const { return modeSelectionConfirmConfig; }
+        
+        // SECRET STAR Explanation UI
+        UITextConfig getSecretStarExplanationLine1Config() const { return secretStarExplanationLine1Config; }
+        UITextConfig getSecretStarExplanationLine2Config() const { return secretStarExplanationLine2Config; }
+        UITextConfig getSecretStarExplanationLine3Config() const { return secretStarExplanationLine3Config; }
+        UITextConfig getSecretStarExplanationLine3bConfig() const { return secretStarExplanationLine3bConfig; }
+        UITextConfig getSecretStarExplanationLine4Config() const { return secretStarExplanationLine4Config; }
+        UITextConfig getSecretStarExplanationLine4bConfig() const { return secretStarExplanationLine4bConfig; }
+        UITextConfig getSecretStarExplanationLine4cConfig() const { return secretStarExplanationLine4cConfig; }
+        UITextConfig getSecretStarExplanationLine5Config() const { return secretStarExplanationLine5Config; }
+        UITextConfig getSecretStarExplanationLine5bConfig() const { return secretStarExplanationLine5bConfig; }
+        UITextConfig getSecretStarExplanationOkButtonConfig() const { return secretStarExplanationOkButtonConfig; }
+        
+        // SECRET STAR Selection UI
+        UITextConfig getSecretStarSelectionTitleConfig() const { return secretStarSelectionTitleConfig; }
+        UIPosition getSecretStarSelectionStar1Config() const { return secretStarSelectionStar1Config; }
+        UIPosition getSecretStarSelectionStar2Config() const { return secretStarSelectionStar2Config; }
+        UIPosition getSecretStarSelectionStar3Config() const { return secretStarSelectionStar3Config; }
+        UISelectableConfig getSecretStarSelectionName1Config() const { return secretStarSelectionName1Config; }
+        UISelectableConfig getSecretStarSelectionName2Config() const { return secretStarSelectionName2Config; }
+        UISelectableConfig getSecretStarSelectionName3Config() const { return secretStarSelectionName3Config; }
+        UITextConfig getSecretStarSelectionPressTConfig() const { return secretStarSelectionPressTConfig; }
+        UITextConfig getSecretStarSelectionConfirmConfig() const { return secretStarSelectionConfirmConfig; }
         
         // Tutorial UI
         UITextConfig getTutorialStepTextConfig() const { return tutorialStepTextConfig; }
         UITextConfig getTutorialMessageConfig() const { return tutorialMessageConfig; }
+        UITextConfig getTutorialMessageConfigForStep(int step) const;
         UITextConfig getTutorialPressEnterConfig() const { return tutorialPressEnterConfig; }
         
         // Tutorial Step-specific UI
@@ -183,6 +231,8 @@ namespace UIConfig {
         UITimeDisplayConfig getGameUITimeDisplayConfig() const { return gameUITimeDisplayConfig; }
         UITextConfig getGameUITimeAttackDisplayConfig() const { return gameUITimeAttackDisplayConfig; }
         UITextConfig getGameUIBestTimeConfig() const { return gameUIBestTimeConfig; }
+        UIPosition getGameUITimeAttackSpeedDisplayPosition() const { return gameUITimeAttackSpeedDisplayPosition; }
+        UIPosition getGameUITimeAttackPressTPosition() const { return gameUITimeAttackPressTPosition; }
         UITextConfig getGameUIGoalDisplayConfig() const { return gameUIGoalDisplayConfig; }
         UITextConfig getGameUIGoalTime5sConfig() const { return gameUIGoalTime5sConfig; }
         UITextConfig getGameUIGoalTime10sConfig() const { return gameUIGoalTime10sConfig; }
@@ -198,6 +248,36 @@ namespace UIConfig {
         // 位置を計算（ウィンドウサイズを考慮）
         glm::vec2 calculatePosition(const UIPosition& pos, int windowWidth, int windowHeight) const;
         
+        // 動的UI要素登録システム
+        // JSONパスを指定して設定を取得（例: "gameUI.timeDisplay", "readyScreen.title"）
+        template<typename T>
+        T getUIConfig(const std::string& jsonPath) const {
+            nlohmann::json jsonValue = getJsonValue(jsonPath);
+            
+            if (jsonValue.is_null()) {
+                // パスが見つからない場合はデフォルト値を返す
+                printf("UI Config Warning: Path '%s' not found, using default values\n", jsonPath.c_str());
+                T defaultConfig;
+                return defaultConfig;
+            }
+            
+            // 型に応じて解析
+            if constexpr (std::is_same_v<T, UITextConfig>) {
+                return parseUITextConfig(jsonValue);
+            } else if constexpr (std::is_same_v<T, UISelectableConfig>) {
+                return parseUISelectableConfig(jsonValue);
+            } else if constexpr (std::is_same_v<T, UITimeDisplayConfig>) {
+                return parseUITimeDisplayConfig(jsonValue);
+            } else if constexpr (std::is_same_v<T, UISkillConfig>) {
+                return parseUISkillConfig(jsonValue);
+            } else {
+                // 未知の型
+                printf("UI Config Error: Unsupported type for path '%s'\n", jsonPath.c_str());
+                T defaultConfig;
+                return defaultConfig;
+            }
+        }
+        
     private:
         UIConfigManager() = default;
         ~UIConfigManager() = default;
@@ -210,6 +290,17 @@ namespace UIConfig {
         std::string configFilePath;
         bool configLoaded = false;
         time_t lastFileModificationTime = 0;  // ファイル監視用
+        nlohmann::json cachedJsonData;  // JSONデータのキャッシュ（動的アクセス用）
+        
+        // JSONから構造体への変換ヘルパー関数
+        UITextConfig parseUITextConfig(const nlohmann::json& json) const;
+        UISelectableConfig parseUISelectableConfig(const nlohmann::json& json) const;
+        UITimeDisplayConfig parseUITimeDisplayConfig(const nlohmann::json& json) const;
+        UISkillConfig parseUISkillConfig(const nlohmann::json& json) const;
+        UIPosition parseUIPosition(const nlohmann::json& json) const;
+        
+        // JSONパスから値を取得（内部用）
+        nlohmann::json getJsonValue(const std::string& jsonPath) const;
         
         // UI設定
         UITextConfig stageInfoConfig;
@@ -218,10 +309,18 @@ namespace UIConfig {
         UITextConfig replayPauseMarkConfig;
         UITextConfig replayRewindMarkConfig;
         UITextConfig replayFastForwardMarkConfig;
+        UITextConfig replayRewindMarkAlwaysConfig;
+        UITextConfig replayPauseMarkAlwaysConfig;
+        UITextConfig replayFastForwardMarkAlwaysConfig;
+        UITextConfig replayPressAConfig;
+        UITextConfig replayPressSpaceConfig;
+        UITextConfig replayPressDConfig;
         UITextConfig replaySpeedLabelConfig;
         UITextConfig replaySpeedDisplayConfig;
         UITextConfig replayPressTConfig;
         UITextConfig replayInstructionsConfig;
+        UITextConfig titleLogoConfig;
+        UITextConfig titleStartButtonConfig;
         UITextConfig worldTitleConfig;
         UITextConfig starIconConfig;
         UITextConfig starCountConfig;
@@ -249,6 +348,16 @@ namespace UIConfig {
         UITextConfig stageClearRetryConfig;
         UISelectableConfig stageClearStarsConfig;
         
+        // Time Attack Clear UI設定
+        UITextConfig timeAttackClearCompletedTextConfig;
+        UITextConfig timeAttackClearClearTextConfig;
+        UITextConfig timeAttackClearClearTimeConfig;
+        UITextConfig timeAttackClearBestTimeConfig;
+        UITextConfig timeAttackClearNewRecordConfig;
+        UITextConfig timeAttackClearReturnFieldConfig;
+        UITextConfig timeAttackClearRetryConfig;
+        UITextConfig timeAttackClearReplayConfig;
+        
         // Game Over UI設定
         UITextConfig gameOverTextConfig;
         UITextConfig gameOverReturnFieldConfig;
@@ -259,12 +368,37 @@ namespace UIConfig {
         UISelectableConfig modeSelectionNormalTextConfig;
         UISelectableConfig modeSelectionEasyTextConfig;
         UISelectableConfig modeSelectionTimeAttackTextConfig;
+        UISelectableConfig modeSelectionSecretStarTextConfig;
         UITextConfig modeSelectionPressTConfig;
         UITextConfig modeSelectionConfirmConfig;
+        
+        // SECRET STAR Explanation UI設定
+        UITextConfig secretStarExplanationLine1Config;
+        UITextConfig secretStarExplanationLine2Config;
+        UITextConfig secretStarExplanationLine3Config;
+        UITextConfig secretStarExplanationLine3bConfig;
+        UITextConfig secretStarExplanationLine4Config;
+        UITextConfig secretStarExplanationLine4bConfig;
+        UITextConfig secretStarExplanationLine4cConfig;
+        UITextConfig secretStarExplanationLine5Config;
+        UITextConfig secretStarExplanationLine5bConfig;
+        UITextConfig secretStarExplanationOkButtonConfig;
+        
+        // SECRET STAR Selection UI設定
+        UITextConfig secretStarSelectionTitleConfig;
+        UIPosition secretStarSelectionStar1Config;
+        UIPosition secretStarSelectionStar2Config;
+        UIPosition secretStarSelectionStar3Config;
+        UISelectableConfig secretStarSelectionName1Config;
+        UISelectableConfig secretStarSelectionName2Config;
+        UISelectableConfig secretStarSelectionName3Config;
+        UITextConfig secretStarSelectionPressTConfig;
+        UITextConfig secretStarSelectionConfirmConfig;
         
         // Tutorial UI設定
         UITextConfig tutorialStepTextConfig;
         UITextConfig tutorialMessageConfig;
+        UITextConfig tutorialMessageConfigs[11]; // step0-10用の個別設定
         UITextConfig tutorialPressEnterConfig;
         
         // Tutorial Step-specific UI設定
@@ -337,6 +471,8 @@ namespace UIConfig {
         UITimeDisplayConfig gameUITimeDisplayConfig;
         UITextConfig gameUITimeAttackDisplayConfig;
         UITextConfig gameUIBestTimeConfig;
+        UIPosition gameUITimeAttackSpeedDisplayPosition;
+        UIPosition gameUITimeAttackPressTPosition;
         UITextConfig gameUIGoalDisplayConfig;
         UITextConfig gameUIGoalTime5sConfig;
         UITextConfig gameUIGoalTime10sConfig;

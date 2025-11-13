@@ -61,6 +61,9 @@ private:
     std::time_t m_bgmModTime;  // BGMの更新時刻
     std::map<std::string, std::time_t> m_sfxModTimes;  // SFXの更新時刻
     
+    // MP3サポートの有無
+    bool m_mp3Supported;
+    
     // ヘルパー関数
     std::time_t getFileModificationTime(const std::string& filepath);
     void reloadBGM();

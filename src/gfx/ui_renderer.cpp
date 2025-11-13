@@ -118,7 +118,7 @@ void UIRenderer::renderGameUI(const GameUIState& state) {
     
     // 星表示
     if (state.showStars) {
-        renderStarsDisplay(state.existingStars);
+        renderStarsDisplay(state.existingStars, state.currentStage, state.selectedSecretStarType, state.secretStarCleared);
     }
     
     // ライフ表示
@@ -129,30 +129,52 @@ void UIRenderer::renderGameUI(const GameUIState& state) {
     end2DMode();
 }
 
-void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives) {
+void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives,
+                               int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     GameUIState state;
     state.showTime = true;
-    state.showGoal = true;
+    // SECRET STARモードの場合はGOAL表示を非表示
+    state.showGoal = (selectedSecretStarType < 0);
     state.showStars = true;
     state.showLives = true;
     state.remainingTime = remainingTime;
     state.timeLimit = timeLimit;
     state.existingStars = existingStars;
     state.lives = lives;
+    state.currentStage = currentStage;
+    state.selectedSecretStarType = selectedSecretStarType;
+    state.secretStarCleared = secretStarCleared;
     
     renderGameUI(state);
 }
 
 // タイムアタック用UI描画
-void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives) {
+void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives, float timeScale, bool isReplayMode) {
     begin2DMode();
     
     // 経過時間を表示（ミリ秒まで）
     renderTimeAttackDisplay(currentTime, bestTime);
     
-    // 星を表示（existingStarsが0より大きい場合のみ）
-    if (existingStars > 0) {
-        renderStarsDisplay(existingStars);
+    // タイムアタックモードでは星は表示しない
+    
+    // 速度UIとPRESS Tを時間UIの隣に表示（既存の設定を再利用、位置だけタイムアタック用）
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto speedConfig = uiConfig.getSpeedDisplayConfig();
+    auto pressTConfig = uiConfig.getPressTConfig();
+    auto timeAttackSpeedPos = uiConfig.getGameUITimeAttackSpeedDisplayPosition();
+    auto timeAttackPressTPos = uiConfig.getGameUITimeAttackPressTPosition();
+    
+    // 速度UIを表示（色とスケールは既存設定、位置だけタイムアタック用）
+    glm::vec2 speedPos = uiConfig.calculatePosition(timeAttackSpeedPos, windowWidth, windowHeight);
+    std::string speedText = std::to_string((int)timeScale) + "x";
+    glm::vec3 speedColor = (timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : speedConfig.color;
+    renderText(speedText, speedPos, speedColor, speedConfig.scale);
+    
+    // PRESS Tを表示（リプレイモード中でない場合のみ、色とスケールは既存設定、位置だけタイムアタック用）
+    if (!isReplayMode) {
+        glm::vec2 pressTPos = uiConfig.calculatePosition(timeAttackPressTPos, windowWidth, windowHeight);
+        glm::vec3 pressTColor = (timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : pressTConfig.color;
+        renderText("PRESS T", pressTPos, pressTColor, pressTConfig.scale);
     }
     
     // ライフを表示（livesが0より大きい場合のみ）
@@ -193,19 +215,7 @@ void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
     glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, windowWidth, windowHeight);
     renderText(timeText, timeAttackPos, timeAttackConfig.color, timeAttackConfig.scale);
     
-    // ベストタイムを表示（記録がある場合）
-    if (bestTime > 0.0f) {
-        int bestMinutes = static_cast<int>(bestTime) / 60;
-        int bestSeconds = static_cast<int>(bestTime) % 60;
-        int bestMilliseconds = static_cast<int>((bestTime - static_cast<int>(bestTime)) * 100);
-        
-        std::string bestTimeText = (bestMinutes > 0 ? std::to_string(bestMinutes) + ":" : "") + 
-                                   (bestSeconds < 10 ? "0" : "") + std::to_string(bestSeconds) + "." +
-                                   (bestMilliseconds < 10 ? "0" : "") + std::to_string(bestMilliseconds);
-        
-        glm::vec2 bestTimePos = uiConfig.calculatePosition(bestTimeConfig.position, windowWidth, windowHeight);
-        renderText("BEST: " + bestTimeText, bestTimePos, bestTimeConfig.color, bestTimeConfig.scale);
-    }
+    // ベストタイムの表示は削除（ゲームプレイ中、リプレイ中に右上に出るBESTのUIは不要）
 }
 
 // ゴール表示の描画
@@ -233,15 +243,44 @@ void UIRenderer::renderGoalDisplay(float timeLimit) {
 }
 
 // 星表示の描画
-void UIRenderer::renderStarsDisplay(int existingStars) {
+void UIRenderer::renderStarsDisplay(int existingStars, int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto starsConfig = uiConfig.getGameUIStarsConfig();
     glm::vec2 basePos = uiConfig.calculatePosition(starsConfig.position, windowWidth, windowHeight);
     
-    for (int i = 0; i < 3; i++) {
-        glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
-        glm::vec3 starColor = (i < existingStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
-        renderStar(starPos, starColor, starsConfig.scale);
+    // SECRET STARモードの場合
+    if (selectedSecretStarType >= 0 && currentStage >= 0) {
+        // SECRET STARタイプの順序: MAX_SPEED_STAR(0), SHADOW_STAR(1), IMMERSIVE_STAR(2)
+        std::vector<int> secretStarTypes = {0, 1, 2}; // 0=MAX_SPEED_STAR, 1=SHADOW_STAR, 2=IMMERSIVE_STAR
+        
+        // 各SECRET STARタイプの色定義
+        std::vector<glm::vec3> secretStarColors = {
+            glm::vec3(0.2f, 0.8f, 1.0f),  // MAX_SPEED_STAR: 水色
+            glm::vec3(0.1f, 0.1f, 0.1f),  // SHADOW_STAR: 黒
+            glm::vec3(1.0f, 0.4f, 0.8f)   // IMMERSIVE_STAR: ピンク
+        };
+        
+        glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
+        
+        // 現在のステージでクリア済みのSECRET STARタイプを取得
+        std::set<int> clearedTypes;
+        if (secretStarCleared.count(currentStage) > 0) {
+            clearedTypes = secretStarCleared.at(currentStage);
+        }
+        
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
+            bool isCleared = (clearedTypes.count(secretStarTypes[i]) > 0);
+            glm::vec3 starColor = isCleared ? secretStarColors[secretStarTypes[i]] : inactiveColor;
+            renderStar(starPos, starColor, starsConfig.scale);
+        }
+    } else {
+        // 通常モードの場合
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
+            glm::vec3 starColor = (i < existingStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
+            renderStar(starPos, starColor, starsConfig.scale);
+        }
     }
 }
 
@@ -332,16 +371,21 @@ void UIRenderer::renderLivesAndTimeUI(int lives, float remainingTime, float time
     renderExplanationText("time", glm::vec2(800, 120));
 }
 
-void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars,
+                                            int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     GameUIState state;
     state.showTime = true;
-    state.showGoal = true;
+    // SECRET STARモードの場合はGOAL表示を非表示
+    state.showGoal = (selectedSecretStarType < 0);
     state.showStars = true;
     state.showLives = true;
     state.remainingTime = remainingTime;
     state.timeLimit = timeLimit;
     state.existingStars = existingStars;
     state.lives = lives;
+    state.currentStage = currentStage;
+    state.selectedSecretStarType = selectedSecretStarType;
+    state.secretStarCleared = secretStarCleared;
     
     renderGameUI(state);
     

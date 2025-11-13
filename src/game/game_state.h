@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 #include <glm/glm.hpp>
 #include "../core/types/platform_types.h"
@@ -204,6 +205,20 @@ struct GameState {
     float staffRollTimer = 0.0f;
     float endingMessageTimer = 0.0f;
     bool isEndingSequence = false;
+    bool isGameCleared = false;  // ゲームクリア済み（スタッフロールが流れたかどうか）
+    
+    // SECRET STAR関連状態
+    enum class SecretStarType {
+        NONE,
+        MAX_SPEED_STAR,    // 水色
+        SHADOW_STAR,       // 黒
+        IMMERSIVE_STAR     // ピンク
+    };
+    bool showSecretStarExplanationUI = false;  // SECRET STAR説明UI表示フラグ
+    bool showSecretStarSelectionUI = false;    // SECRET STAR選択UI表示フラグ
+    SecretStarType selectedSecretStarType = SecretStarType::MAX_SPEED_STAR;  // 選択中のSECRET STARタイプ
+    // 各ステージでクリア済みのSECRET STARタイプを記録（ステージ番号 -> クリア済みSECRET STARタイプのセット）
+    std::map<int, std::set<SecretStarType>> secretStarCleared;
     
     // ステージ解放確認UI状態
     bool showUnlockConfirmUI = false;
@@ -226,6 +241,9 @@ struct GameState {
     
     // 初回ステージ0入場チュートリアルUI状態
     bool showStage0Tutorial = true;
+    
+    // タイトル画面状態
+    bool showTitleScreen = true;  // デフォルトでタイトル画面を表示
     
     // EASYモード説明UI状態
     bool showEasyModeExplanationUI = false;

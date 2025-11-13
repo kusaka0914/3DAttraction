@@ -1,6 +1,7 @@
 #include "ui_config_manager.h"
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include <ctime>
 #ifdef _WIN32
@@ -59,6 +60,47 @@ namespace UIConfig {
         replayFastForwardMarkConfig.position.offsetY = -80.0f;
         replayFastForwardMarkConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         replayFastForwardMarkConfig.scale = 5.0f;
+        
+        // リプレイ常時表示マーク（画面下に並べて配置）
+        replayRewindMarkAlwaysConfig.position.useRelative = true;
+        replayRewindMarkAlwaysConfig.position.offsetX = -300.0f;
+        replayRewindMarkAlwaysConfig.position.offsetY = -120.0f;
+        replayRewindMarkAlwaysConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayRewindMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        replayRewindMarkAlwaysConfig.scale = 2.0f;
+        
+        replayPauseMarkAlwaysConfig.position.useRelative = true;
+        replayPauseMarkAlwaysConfig.position.offsetX = 0.0f;
+        replayPauseMarkAlwaysConfig.position.offsetY = -120.0f;
+        replayPauseMarkAlwaysConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPauseMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        replayPauseMarkAlwaysConfig.scale = 2.0f;
+        
+        replayFastForwardMarkAlwaysConfig.position.useRelative = true;
+        replayFastForwardMarkAlwaysConfig.position.offsetX = 300.0f;
+        replayFastForwardMarkAlwaysConfig.position.offsetY = -120.0f;
+        replayFastForwardMarkAlwaysConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayFastForwardMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        replayFastForwardMarkAlwaysConfig.scale = 2.0f;
+        
+        // リプレイPRESSキー表示
+        replayPressAConfig.position.useRelative = true;
+        replayPressAConfig.position.offsetX = -300.0f;
+        replayPressAConfig.position.offsetY = -80.0f;
+        replayPressAConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPressAConfig.scale = 1.0f;
+        
+        replayPressSpaceConfig.position.useRelative = true;
+        replayPressSpaceConfig.position.offsetX = 0.0f;
+        replayPressSpaceConfig.position.offsetY = -80.0f;
+        replayPressSpaceConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPressSpaceConfig.scale = 1.0f;
+        
+        replayPressDConfig.position.useRelative = true;
+        replayPressDConfig.position.offsetX = 300.0f;
+        replayPressDConfig.position.offsetY = -80.0f;
+        replayPressDConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        replayPressDConfig.scale = 1.0f;
         
         // リプレイ速度ラベル（REPLAY SPEED）
         replaySpeedLabelConfig.position.useRelative = true;
@@ -163,6 +205,18 @@ namespace UIConfig {
         readyPressTConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         readyPressTConfig.scale = 1.2f;
         
+        // タイトル画面UI設定
+        titleLogoConfig.position.useRelative = true;
+        titleLogoConfig.position.offsetX = 0.0f;
+        titleLogoConfig.position.offsetY = -200.0f;
+        titleLogoConfig.scale = 1.0f;
+        
+        titleStartButtonConfig.position.useRelative = true;
+        titleStartButtonConfig.position.offsetX = 0.0f;
+        titleStartButtonConfig.position.offsetY = 100.0f;
+        titleStartButtonConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        titleStartButtonConfig.scale = 2.0f;
+        
         tpsFpsLabelConfig.position.useRelative = true;
         tpsFpsLabelConfig.position.offsetX = 190.0f;
         tpsFpsLabelConfig.position.offsetY = -70.0f;
@@ -234,6 +288,55 @@ namespace UIConfig {
         stageClearStarsConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         stageClearStarsConfig.scale = 10.0f;
         
+        // Time Attack Clear UI設定
+        timeAttackClearCompletedTextConfig.position.useRelative = true;
+        timeAttackClearCompletedTextConfig.position.offsetX = -500.0f;
+        timeAttackClearCompletedTextConfig.position.offsetY = -400.0f;
+        timeAttackClearCompletedTextConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        timeAttackClearCompletedTextConfig.scale = 2.5f;
+        
+        timeAttackClearClearTextConfig.position.useRelative = true;
+        timeAttackClearClearTextConfig.position.offsetX = -450.0f;
+        timeAttackClearClearTextConfig.position.offsetY = -400.0f;
+        timeAttackClearClearTextConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        timeAttackClearClearTextConfig.scale = 2.5f;
+        
+        timeAttackClearClearTimeConfig.position.useRelative = true;
+        timeAttackClearClearTimeConfig.position.offsetX = -460.0f;
+        timeAttackClearClearTimeConfig.position.offsetY = -280.0f;
+        timeAttackClearClearTimeConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        timeAttackClearClearTimeConfig.scale = 1.8f;
+        
+        timeAttackClearBestTimeConfig.position.useRelative = true;
+        timeAttackClearBestTimeConfig.position.offsetX = -460.0f;
+        timeAttackClearBestTimeConfig.position.offsetY = -200.0f;
+        timeAttackClearBestTimeConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        timeAttackClearBestTimeConfig.scale = 1.8f;
+        
+        timeAttackClearNewRecordConfig.position.useRelative = true;
+        timeAttackClearNewRecordConfig.position.offsetX = -460.0f;
+        timeAttackClearNewRecordConfig.position.offsetY = -120.0f;
+        timeAttackClearNewRecordConfig.color = glm::vec3(1.0f, 0.5f, 0.0f);
+        timeAttackClearNewRecordConfig.scale = 2.0f;
+        
+        timeAttackClearReturnFieldConfig.position.useRelative = true;
+        timeAttackClearReturnFieldConfig.position.offsetX = -460.0f;
+        timeAttackClearReturnFieldConfig.position.offsetY = -70.0f;
+        timeAttackClearReturnFieldConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        timeAttackClearReturnFieldConfig.scale = 1.0f;
+        
+        timeAttackClearRetryConfig.position.useRelative = true;
+        timeAttackClearRetryConfig.position.offsetX = -230.0f;
+        timeAttackClearRetryConfig.position.offsetY = -70.0f;
+        timeAttackClearRetryConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        timeAttackClearRetryConfig.scale = 1.0f;
+        
+        timeAttackClearReplayConfig.position.useRelative = true;
+        timeAttackClearReplayConfig.position.offsetX = 0.0f;
+        timeAttackClearReplayConfig.position.offsetY = -70.0f;
+        timeAttackClearReplayConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        timeAttackClearReplayConfig.scale = 1.0f;
+        
         // Game Over UI設定
         gameOverTextConfig.position.useRelative = true;
         gameOverTextConfig.position.offsetX = -300.0f;
@@ -281,6 +384,13 @@ namespace UIConfig {
         modeSelectionTimeAttackTextConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         modeSelectionTimeAttackTextConfig.scale = 2.0f;
         
+        modeSelectionSecretStarTextConfig.position.useRelative = true;
+        modeSelectionSecretStarTextConfig.position.offsetX = 170.0f;
+        modeSelectionSecretStarTextConfig.position.offsetY = -50.0f;
+        modeSelectionSecretStarTextConfig.selectedColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        modeSelectionSecretStarTextConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        modeSelectionSecretStarTextConfig.scale = 2.0f;
+        
         modeSelectionPressTConfig.position.useRelative = true;
         modeSelectionPressTConfig.position.offsetX = -80.0f;
         modeSelectionPressTConfig.position.offsetY = 50.0f;
@@ -306,6 +416,12 @@ namespace UIConfig {
         tutorialMessageConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         tutorialMessageConfig.completedColor = glm::vec3(0.2f, 0.8f, 0.2f);
         tutorialMessageConfig.scale = 1.5f;
+        
+        // 各ステップのメッセージ設定のデフォルト値（デフォルトは共通設定を使用）
+        for (int i = 0; i < 11; i++) {
+            tutorialMessageConfigs[i] = tutorialMessageConfig;
+            tutorialMessageConfigs[i].position.useRelative = true; // デフォルトは相対位置
+        }
         
         tutorialPressEnterConfig.position.useRelative = true;
         tutorialPressEnterConfig.position.offsetX = -150.0f;
@@ -502,6 +618,119 @@ namespace UIConfig {
         stage0TutorialOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         stage0TutorialOkButtonConfig.scale = 1.5f;
         
+        // SECRET STAR Explanation UI設定
+        secretStarExplanationLine1Config.position.useRelative = true;
+        secretStarExplanationLine1Config.position.offsetX = -600.0f;
+        secretStarExplanationLine1Config.position.offsetY = -350.0f;
+        secretStarExplanationLine1Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine1Config.scale = 1.5f;
+        
+        secretStarExplanationLine2Config.position.useRelative = true;
+        secretStarExplanationLine2Config.position.offsetX = -550.0f;
+        secretStarExplanationLine2Config.position.offsetY = -300.0f;
+        secretStarExplanationLine2Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine2Config.scale = 1.5f;
+        
+        secretStarExplanationLine3Config.position.useRelative = true;
+        secretStarExplanationLine3Config.position.offsetX = -580.0f;
+        secretStarExplanationLine3Config.position.offsetY = -200.0f;
+        secretStarExplanationLine3Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine3Config.scale = 1.2f;
+        
+        secretStarExplanationLine3bConfig.position.useRelative = true;
+        secretStarExplanationLine3bConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine3bConfig.position.offsetY = -150.0f;
+        secretStarExplanationLine3bConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine3bConfig.scale = 1.2f;
+        
+        secretStarExplanationLine4Config.position.useRelative = true;
+        secretStarExplanationLine4Config.position.offsetX = -580.0f;
+        secretStarExplanationLine4Config.position.offsetY = -50.0f;
+        secretStarExplanationLine4Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine4Config.scale = 1.2f;
+        
+        secretStarExplanationLine4bConfig.position.useRelative = true;
+        secretStarExplanationLine4bConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine4bConfig.position.offsetY = 0.0f;
+        secretStarExplanationLine4bConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine4bConfig.scale = 1.2f;
+        
+        secretStarExplanationLine4cConfig.position.useRelative = true;
+        secretStarExplanationLine4cConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine4cConfig.position.offsetY = 50.0f;
+        secretStarExplanationLine4cConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine4cConfig.scale = 1.2f;
+        
+        secretStarExplanationLine5Config.position.useRelative = true;
+        secretStarExplanationLine5Config.position.offsetX = -580.0f;
+        secretStarExplanationLine5Config.position.offsetY = 150.0f;
+        secretStarExplanationLine5Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine5Config.scale = 1.2f;
+        
+        secretStarExplanationLine5bConfig.position.useRelative = true;
+        secretStarExplanationLine5bConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine5bConfig.position.offsetY = 200.0f;
+        secretStarExplanationLine5bConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine5bConfig.scale = 1.2f;
+        
+        secretStarExplanationOkButtonConfig.position.useRelative = true;
+        secretStarExplanationOkButtonConfig.position.offsetX = -400.0f;
+        secretStarExplanationOkButtonConfig.position.offsetY = 300.0f;
+        secretStarExplanationOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        secretStarExplanationOkButtonConfig.scale = 1.5f;
+        
+        // SECRET STAR Selection UI設定
+        secretStarSelectionTitleConfig.position.useRelative = true;
+        secretStarSelectionTitleConfig.position.offsetX = -400.0f;
+        secretStarSelectionTitleConfig.position.offsetY = -350.0f;
+        secretStarSelectionTitleConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        secretStarSelectionTitleConfig.scale = 2.0f;
+        
+        secretStarSelectionStar1Config.useRelative = true;
+        secretStarSelectionStar1Config.offsetX = -500.0f;
+        secretStarSelectionStar1Config.offsetY = -200.0f;
+        
+        secretStarSelectionStar2Config.useRelative = true;
+        secretStarSelectionStar2Config.offsetX = -400.0f;
+        secretStarSelectionStar2Config.offsetY = -200.0f;
+        
+        secretStarSelectionStar3Config.useRelative = true;
+        secretStarSelectionStar3Config.offsetX = -300.0f;
+        secretStarSelectionStar3Config.offsetY = -200.0f;
+        
+        secretStarSelectionName1Config.position.useRelative = true;
+        secretStarSelectionName1Config.position.offsetX = -500.0f;
+        secretStarSelectionName1Config.position.offsetY = -100.0f;
+        secretStarSelectionName1Config.selectedColor = glm::vec3(0.4f, 0.8f, 1.0f);
+        secretStarSelectionName1Config.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        secretStarSelectionName1Config.scale = 1.5f;
+        
+        secretStarSelectionName2Config.position.useRelative = true;
+        secretStarSelectionName2Config.position.offsetX = -400.0f;
+        secretStarSelectionName2Config.position.offsetY = -100.0f;
+        secretStarSelectionName2Config.selectedColor = glm::vec3(0.2f, 0.2f, 0.2f);
+        secretStarSelectionName2Config.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        secretStarSelectionName2Config.scale = 1.5f;
+        
+        secretStarSelectionName3Config.position.useRelative = true;
+        secretStarSelectionName3Config.position.offsetX = -300.0f;
+        secretStarSelectionName3Config.position.offsetY = -100.0f;
+        secretStarSelectionName3Config.selectedColor = glm::vec3(1.0f, 0.6f, 0.8f);
+        secretStarSelectionName3Config.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        secretStarSelectionName3Config.scale = 1.5f;
+        
+        secretStarSelectionPressTConfig.position.useRelative = true;
+        secretStarSelectionPressTConfig.position.offsetX = -400.0f;
+        secretStarSelectionPressTConfig.position.offsetY = 50.0f;
+        secretStarSelectionPressTConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        secretStarSelectionPressTConfig.scale = 1.2f;
+        
+        secretStarSelectionConfirmConfig.position.useRelative = true;
+        secretStarSelectionConfirmConfig.position.offsetX = -400.0f;
+        secretStarSelectionConfirmConfig.position.offsetY = 100.0f;
+        secretStarSelectionConfirmConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        secretStarSelectionConfirmConfig.scale = 1.2f;
+        
         // Easy Mode Explanation UI設定
         easyModeExplanationTitleConfig.position.useRelative = true;
         easyModeExplanationTitleConfig.position.offsetX = -350.0f;
@@ -617,6 +846,14 @@ namespace UIConfig {
         gameUIBestTimeConfig.position.absoluteY = 60.0f;
         gameUIBestTimeConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         gameUIBestTimeConfig.scale = 1.8f;
+        
+        gameUITimeAttackSpeedDisplayPosition.useRelative = false;
+        gameUITimeAttackSpeedDisplayPosition.absoluteX = 970.0f;
+        gameUITimeAttackSpeedDisplayPosition.absoluteY = 30.0f;
+        
+        gameUITimeAttackPressTPosition.useRelative = false;
+        gameUITimeAttackPressTPosition.absoluteX = 960.0f;
+        gameUITimeAttackPressTPosition.absoluteY = 65.0f;
         
         gameUIGoalDisplayConfig.position.useRelative = false;
         gameUIGoalDisplayConfig.position.absoluteX = 962.0f;
@@ -746,6 +983,9 @@ namespace UIConfig {
             file >> jsonData;
             file.close();
             
+            // JSONデータをキャッシュ（動的アクセス用）
+            cachedJsonData = jsonData;
+            
             // ステージ情報
             if (jsonData.contains("stageInfo")) {
                 auto& cfg = jsonData["stageInfo"];
@@ -838,6 +1078,105 @@ namespace UIConfig {
                         replayFastForwardMarkConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) replayFastForwardMarkConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("rewindMarkAlways")) {
+                    auto& cfg = replay["rewindMarkAlways"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayRewindMarkAlwaysConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayRewindMarkAlwaysConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayRewindMarkAlwaysConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayRewindMarkAlwaysConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayRewindMarkAlwaysConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayRewindMarkAlwaysConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayRewindMarkAlwaysConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pauseMarkAlways")) {
+                    auto& cfg = replay["pauseMarkAlways"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPauseMarkAlwaysConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPauseMarkAlwaysConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPauseMarkAlwaysConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPauseMarkAlwaysConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPauseMarkAlwaysConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPauseMarkAlwaysConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("activeColor")) {
+                        replayPauseMarkAlwaysConfig.activeColor = glm::vec3(cfg["activeColor"][0], cfg["activeColor"][1], cfg["activeColor"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPauseMarkAlwaysConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("fastForwardMarkAlways")) {
+                    auto& cfg = replay["fastForwardMarkAlways"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayFastForwardMarkAlwaysConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayFastForwardMarkAlwaysConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayFastForwardMarkAlwaysConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayFastForwardMarkAlwaysConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayFastForwardMarkAlwaysConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayFastForwardMarkAlwaysConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayFastForwardMarkAlwaysConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pressA")) {
+                    auto& cfg = replay["pressA"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPressAConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPressAConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPressAConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPressAConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPressAConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPressAConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPressAConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pressSpace")) {
+                    auto& cfg = replay["pressSpace"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPressSpaceConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPressSpaceConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPressSpaceConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPressSpaceConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPressSpaceConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPressSpaceConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPressSpaceConfig.scale = cfg["scale"];
+                }
+                
+                if (replay.contains("pressD")) {
+                    auto& cfg = replay["pressD"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) replayPressDConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) replayPressDConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) replayPressDConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) replayPressDConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) replayPressDConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        replayPressDConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) replayPressDConfig.scale = cfg["scale"];
                 }
                 
                 if (replay.contains("speedLabel")) {
@@ -989,6 +1328,40 @@ namespace UIConfig {
                         controlsTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) controlsTextConfig.scale = cfg["scale"];
+                }
+            }
+            
+            // タイトル画面UI
+            if (jsonData.contains("titleScreen")) {
+                auto& title = jsonData["titleScreen"];
+                
+                if (title.contains("titleLogo")) {
+                    auto& cfg = title["titleLogo"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) titleLogoConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) titleLogoConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) titleLogoConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) titleLogoConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) titleLogoConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("scale")) titleLogoConfig.scale = cfg["scale"];
+                }
+                
+                if (title.contains("startButton")) {
+                    auto& cfg = title["startButton"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) titleStartButtonConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) titleStartButtonConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) titleStartButtonConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) titleStartButtonConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) titleStartButtonConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        titleStartButtonConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) titleStartButtonConfig.scale = cfg["scale"];
                 }
             }
             
@@ -1211,6 +1584,139 @@ namespace UIConfig {
                 }
             }
             
+            // Time Attack Clear UI
+            if (jsonData.contains("timeAttackClear")) {
+                auto& timeAttackClear = jsonData["timeAttackClear"];
+                
+                if (timeAttackClear.contains("completedText")) {
+                    auto& cfg = timeAttackClear["completedText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearCompletedTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearCompletedTextConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearCompletedTextConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearCompletedTextConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearCompletedTextConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearCompletedTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearCompletedTextConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("clearText")) {
+                    auto& cfg = timeAttackClear["clearText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearClearTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearClearTextConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearClearTextConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearClearTextConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearClearTextConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearClearTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearClearTextConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("clearTime")) {
+                    auto& cfg = timeAttackClear["clearTime"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearClearTimeConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearClearTimeConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearClearTimeConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearClearTimeConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearClearTimeConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearClearTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearClearTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("bestTime")) {
+                    auto& cfg = timeAttackClear["bestTime"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearBestTimeConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearBestTimeConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearBestTimeConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearBestTimeConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearBestTimeConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearBestTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearBestTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("newRecord")) {
+                    auto& cfg = timeAttackClear["newRecord"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearNewRecordConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearNewRecordConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearNewRecordConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearNewRecordConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearNewRecordConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearNewRecordConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearNewRecordConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("returnField")) {
+                    auto& cfg = timeAttackClear["returnField"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearReturnFieldConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearReturnFieldConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearReturnFieldConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearReturnFieldConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearReturnFieldConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearReturnFieldConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearReturnFieldConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("retry")) {
+                    auto& cfg = timeAttackClear["retry"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearRetryConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearRetryConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearRetryConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearRetryConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearRetryConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearRetryConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearRetryConfig.scale = cfg["scale"];
+                }
+                
+                if (timeAttackClear.contains("replay")) {
+                    auto& cfg = timeAttackClear["replay"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) timeAttackClearReplayConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) timeAttackClearReplayConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) timeAttackClearReplayConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) timeAttackClearReplayConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) timeAttackClearReplayConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        timeAttackClearReplayConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) timeAttackClearReplayConfig.scale = cfg["scale"];
+                }
+            }
+            
             // Game Over UI
             if (jsonData.contains("gameOver")) {
                 auto& gameOver = jsonData["gameOver"];
@@ -1320,6 +1826,22 @@ namespace UIConfig {
                     if (cfg.contains("scale")) modeSelectionTimeAttackTextConfig.scale = cfg["scale"];
                 }
                 
+                if (modeSel.contains("secretStarText")) {
+                    auto& cfg = modeSel["secretStarText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) modeSelectionSecretStarTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) modeSelectionSecretStarTextConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        modeSelectionSecretStarTextConfig.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        modeSelectionSecretStarTextConfig.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) modeSelectionSecretStarTextConfig.scale = cfg["scale"];
+                }
+                
                 if (modeSel.contains("pressT")) {
                     auto& cfg = modeSel["pressT"];
                     if (cfg.contains("position")) {
@@ -1396,6 +1918,32 @@ namespace UIConfig {
                 // Tutorial Step-specific UI
                 if (tutorial.contains("steps")) {
                     auto& steps = tutorial["steps"];
+                    
+                    // 各ステップ（step0-10）のメッセージ設定を読み込む
+                    for (int step = 0; step < 11; step++) {
+                        std::string stepKey = "step" + std::to_string(step);
+                        if (steps.contains(stepKey)) {
+                            auto& stepData = steps[stepKey];
+                            if (stepData.contains("message")) {
+                                auto& cfg = stepData["message"];
+                                if (cfg.contains("position")) {
+                                    auto& pos = cfg["position"];
+                                    if (pos.contains("offsetX")) tutorialMessageConfigs[step].position.offsetX = pos["offsetX"];
+                                    if (pos.contains("offsetY")) tutorialMessageConfigs[step].position.offsetY = pos["offsetY"];
+                                    if (pos.contains("absoluteX")) tutorialMessageConfigs[step].position.absoluteX = pos["absoluteX"];
+                                    if (pos.contains("absoluteY")) tutorialMessageConfigs[step].position.absoluteY = pos["absoluteY"];
+                                    if (pos.contains("useRelative")) tutorialMessageConfigs[step].position.useRelative = pos["useRelative"];
+                                }
+                                if (cfg.contains("completedColor")) {
+                                    tutorialMessageConfigs[step].completedColor = glm::vec3(cfg["completedColor"][0], cfg["completedColor"][1], cfg["completedColor"][2]);
+                                }
+                                if (cfg.contains("normalColor")) {
+                                    tutorialMessageConfigs[step].color = glm::vec3(cfg["normalColor"][0], cfg["normalColor"][1], cfg["normalColor"][2]);
+                                }
+                                if (cfg.contains("scale")) tutorialMessageConfigs[step].scale = cfg["scale"];
+                            }
+                        }
+                    }
                     
                     // Step 5
                     if (steps.contains("step5")) {
@@ -1824,6 +2372,260 @@ namespace UIConfig {
                 }
             }
             
+            // SECRET STAR Explanation UI
+            if (jsonData.contains("secretStarExplanation")) {
+                auto& secret = jsonData["secretStarExplanation"];
+                
+                if (secret.contains("line1")) {
+                    auto& cfg = secret["line1"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine1Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine1Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine1Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine1Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line2")) {
+                    auto& cfg = secret["line2"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine2Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine2Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine2Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine2Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line3")) {
+                    auto& cfg = secret["line3"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine3Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine3Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine3Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine3Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line3b")) {
+                    auto& cfg = secret["line3b"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine3bConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine3bConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine3bConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine3bConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line4")) {
+                    auto& cfg = secret["line4"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine4Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine4Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine4Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine4Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line4b")) {
+                    auto& cfg = secret["line4b"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine4bConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine4bConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine4bConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine4bConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line4c")) {
+                    auto& cfg = secret["line4c"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine4cConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine4cConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine4cConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine4cConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line5")) {
+                    auto& cfg = secret["line5"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine5Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine5Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine5Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine5Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line5b")) {
+                    auto& cfg = secret["line5b"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine5bConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine5bConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine5bConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine5bConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("okButton")) {
+                    auto& cfg = secret["okButton"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationOkButtonConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationOkButtonConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationOkButtonConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationOkButtonConfig.scale = cfg["scale"];
+                }
+            }
+            
+            // SECRET STAR Selection UI
+            if (jsonData.contains("secretStarSelection")) {
+                auto& secretSel = jsonData["secretStarSelection"];
+                
+                if (secretSel.contains("title")) {
+                    auto& cfg = secretSel["title"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionTitleConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionTitleConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarSelectionTitleConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionTitleConfig.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("star1")) {
+                    auto& cfg = secretSel["star1"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionStar1Config.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionStar1Config.offsetY = pos["offsetY"];
+                    }
+                }
+                
+                if (secretSel.contains("star2")) {
+                    auto& cfg = secretSel["star2"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionStar2Config.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionStar2Config.offsetY = pos["offsetY"];
+                    }
+                }
+                
+                if (secretSel.contains("star3")) {
+                    auto& cfg = secretSel["star3"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionStar3Config.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionStar3Config.offsetY = pos["offsetY"];
+                    }
+                }
+                
+                if (secretSel.contains("name1")) {
+                    auto& cfg = secretSel["name1"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionName1Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionName1Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        secretStarSelectionName1Config.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        secretStarSelectionName1Config.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionName1Config.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("name2")) {
+                    auto& cfg = secretSel["name2"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionName2Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionName2Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        secretStarSelectionName2Config.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        secretStarSelectionName2Config.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionName2Config.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("name3")) {
+                    auto& cfg = secretSel["name3"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionName3Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionName3Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        secretStarSelectionName3Config.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        secretStarSelectionName3Config.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionName3Config.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("pressT")) {
+                    auto& cfg = secretSel["pressT"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionPressTConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionPressTConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarSelectionPressTConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionPressTConfig.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("confirm")) {
+                    auto& cfg = secretSel["confirm"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionConfirmConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionConfirmConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarSelectionConfirmConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionConfirmConfig.scale = cfg["scale"];
+                }
+            }
+            
             // Easy Mode Explanation UI
             if (jsonData.contains("easyModeExplanation")) {
                 auto& easy = jsonData["easyModeExplanation"];
@@ -2090,6 +2892,24 @@ namespace UIConfig {
                         gameUIBestTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) gameUIBestTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (gameUI.contains("timeAttackSpeedDisplayPosition")) {
+                    auto& pos = gameUI["timeAttackSpeedDisplayPosition"];
+                    if (pos.contains("absoluteX")) gameUITimeAttackSpeedDisplayPosition.absoluteX = pos["absoluteX"];
+                    if (pos.contains("absoluteY")) gameUITimeAttackSpeedDisplayPosition.absoluteY = pos["absoluteY"];
+                    if (pos.contains("useRelative")) gameUITimeAttackSpeedDisplayPosition.useRelative = pos["useRelative"];
+                    if (pos.contains("offsetX")) gameUITimeAttackSpeedDisplayPosition.offsetX = pos["offsetX"];
+                    if (pos.contains("offsetY")) gameUITimeAttackSpeedDisplayPosition.offsetY = pos["offsetY"];
+                }
+                
+                if (gameUI.contains("timeAttackPressTPosition")) {
+                    auto& pos = gameUI["timeAttackPressTPosition"];
+                    if (pos.contains("absoluteX")) gameUITimeAttackPressTPosition.absoluteX = pos["absoluteX"];
+                    if (pos.contains("absoluteY")) gameUITimeAttackPressTPosition.absoluteY = pos["absoluteY"];
+                    if (pos.contains("useRelative")) gameUITimeAttackPressTPosition.useRelative = pos["useRelative"];
+                    if (pos.contains("offsetX")) gameUITimeAttackPressTPosition.offsetX = pos["offsetX"];
+                    if (pos.contains("offsetY")) gameUITimeAttackPressTPosition.offsetY = pos["offsetY"];
                 }
                 
                 if (gameUI.contains("goalDisplay")) {
@@ -2418,6 +3238,13 @@ namespace UIConfig {
         return false;
     }
     
+    UITextConfig UIConfigManager::getTutorialMessageConfigForStep(int step) const {
+        if (step >= 0 && step < 11) {
+            return tutorialMessageConfigs[step];
+        }
+        return tutorialMessageConfig; // 範囲外の場合はデフォルト設定を返す
+    }
+    
     glm::vec2 UIConfigManager::calculatePosition(const UIPosition& pos, int windowWidth, int windowHeight) const {
         if (pos.useRelative) {
             // 相対位置（画面中央基準）
@@ -2432,5 +3259,200 @@ namespace UIConfig {
             return glm::vec2(pos.absoluteX, y);
         }
     }
+    
+    // JSONパスから値を取得（内部用）
+    nlohmann::json UIConfigManager::getJsonValue(const std::string& jsonPath) const {
+        if (!configLoaded || cachedJsonData.is_null()) {
+            return nlohmann::json();
+        }
+        
+        // パスを分割（例: "gameUI.timeDisplay" -> ["gameUI", "timeDisplay"]）
+        std::vector<std::string> parts;
+        std::string current;
+        for (char c : jsonPath) {
+            if (c == '.') {
+                if (!current.empty()) {
+                    parts.push_back(current);
+                    current.clear();
+                }
+            } else {
+                current += c;
+            }
+        }
+        if (!current.empty()) {
+            parts.push_back(current);
+        }
+        
+        // JSONを辿る
+        nlohmann::json result = cachedJsonData;
+        for (const auto& part : parts) {
+            if (result.is_object() && result.contains(part)) {
+                result = result[part];
+            } else {
+                return nlohmann::json();  // パスが見つからない
+            }
+        }
+        
+        return result;
+    }
+    
+    // JSONからUIPositionを解析
+    UIPosition UIConfigManager::parseUIPosition(const nlohmann::json& json) const {
+        UIPosition pos;
+        if (json.is_null() || !json.is_object()) {
+            return pos;
+        }
+        
+        if (json.contains("position") && json["position"].is_object()) {
+            auto& posJson = json["position"];
+            if (posJson.contains("useRelative")) pos.useRelative = posJson["useRelative"];
+            if (posJson.contains("offsetX")) pos.offsetX = posJson["offsetX"];
+            if (posJson.contains("offsetY")) pos.offsetY = posJson["offsetY"];
+            if (posJson.contains("absoluteX")) pos.absoluteX = posJson["absoluteX"];
+            if (posJson.contains("absoluteY")) pos.absoluteY = posJson["absoluteY"];
+        } else if (json.contains("useRelative") || json.contains("offsetX") || json.contains("absoluteX")) {
+            // positionオブジェクトがなく、直接位置情報が含まれている場合
+            if (json.contains("useRelative")) pos.useRelative = json["useRelative"];
+            if (json.contains("offsetX")) pos.offsetX = json["offsetX"];
+            if (json.contains("offsetY")) pos.offsetY = json["offsetY"];
+            if (json.contains("absoluteX")) pos.absoluteX = json["absoluteX"];
+            if (json.contains("absoluteY")) pos.absoluteY = json["absoluteY"];
+        }
+        
+        return pos;
+    }
+    
+    // JSONからUITextConfigを解析
+    UITextConfig UIConfigManager::parseUITextConfig(const nlohmann::json& json) const {
+        UITextConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("color") && json["color"].is_array() && json["color"].size() >= 3) {
+            config.color = glm::vec3(json["color"][0], json["color"][1], json["color"][2]);
+        }
+        
+        if (json.contains("completedColor") && json["completedColor"].is_array() && json["completedColor"].size() >= 3) {
+            config.completedColor = glm::vec3(json["completedColor"][0], json["completedColor"][1], json["completedColor"][2]);
+        }
+        
+        if (json.contains("activeColor") && json["activeColor"].is_array() && json["activeColor"].size() >= 3) {
+            config.activeColor = glm::vec3(json["activeColor"][0], json["activeColor"][1], json["activeColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        return config;
+    }
+    
+    // JSONからUISelectableConfigを解析
+    UISelectableConfig UIConfigManager::parseUISelectableConfig(const nlohmann::json& json) const {
+        UISelectableConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("selectedColor") && json["selectedColor"].is_array() && json["selectedColor"].size() >= 3) {
+            config.selectedColor = glm::vec3(json["selectedColor"][0], json["selectedColor"][1], json["selectedColor"][2]);
+        }
+        
+        if (json.contains("unselectedColor") && json["unselectedColor"].is_array() && json["unselectedColor"].size() >= 3) {
+            config.unselectedColor = glm::vec3(json["unselectedColor"][0], json["unselectedColor"][1], json["unselectedColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        if (json.contains("spacing")) {
+            config.spacing = json["spacing"];
+        }
+        
+        return config;
+    }
+    
+    // JSONからUITimeDisplayConfigを解析
+    UITimeDisplayConfig UIConfigManager::parseUITimeDisplayConfig(const nlohmann::json& json) const {
+        UITimeDisplayConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("normalColor") && json["normalColor"].is_array() && json["normalColor"].size() >= 3) {
+            config.normalColor = glm::vec3(json["normalColor"][0], json["normalColor"][1], json["normalColor"][2]);
+        }
+        
+        if (json.contains("warningColor") && json["warningColor"].is_array() && json["warningColor"].size() >= 3) {
+            config.warningColor = glm::vec3(json["warningColor"][0], json["warningColor"][1], json["warningColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        return config;
+    }
+    
+    // JSONからUISkillConfigを解析
+    UISkillConfig UIConfigManager::parseUISkillConfig(const nlohmann::json& json) const {
+        UISkillConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("countOffset")) {
+            config.countOffset = json["countOffset"];
+        }
+        
+        if (json.contains("instructionOffset")) {
+            config.instructionOffset = json["instructionOffset"];
+        }
+        
+        if (json.contains("color") && json["color"].is_array() && json["color"].size() >= 3) {
+            config.color = glm::vec3(json["color"][0], json["color"][1], json["color"][2]);
+        }
+        
+        if (json.contains("disabledColor") && json["disabledColor"].is_array() && json["disabledColor"].size() >= 3) {
+            config.disabledColor = glm::vec3(json["disabledColor"][0], json["disabledColor"][1], json["disabledColor"][2]);
+        }
+        
+        if (json.contains("activeColor") && json["activeColor"].is_array() && json["activeColor"].size() >= 3) {
+            config.activeColor = glm::vec3(json["activeColor"][0], json["activeColor"][1], json["activeColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        if (json.contains("countScale")) {
+            config.countScale = json["countScale"];
+        }
+        
+        if (json.contains("instructionScale")) {
+            config.instructionScale = json["instructionScale"];
+        }
+        
+        if (json.contains("activePosition") && json["activePosition"].is_object()) {
+            config.activePosition = parseUIPosition(json["activePosition"]);
+        }
+        
+        if (json.contains("activeScale")) {
+            config.activeScale = json["activeScale"];
+        }
+        
+        return config;
+    }
+    
 }
 
