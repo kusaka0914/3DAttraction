@@ -1,6 +1,7 @@
 #include "ui_config_manager.h"
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include <ctime>
 #ifdef _WIN32
@@ -732,6 +733,9 @@ namespace UIConfig {
             nlohmann::json jsonData;
             file >> jsonData;
             file.close();
+            
+            // JSONデータをキャッシュ（動的アクセス用）
+            cachedJsonData = jsonData;
             
             // ステージ情報
             if (jsonData.contains("stageInfo")) {
@@ -2374,5 +2378,196 @@ namespace UIConfig {
             return glm::vec2(pos.absoluteX, y);
         }
     }
+    
+    // JSONパスから値を取得（内部用）
+    nlohmann::json UIConfigManager::getJsonValue(const std::string& jsonPath) const {
+        if (!configLoaded || cachedJsonData.is_null()) {
+            return nlohmann::json();
+        }
+        
+        // パスを分割（例: "gameUI.timeDisplay" -> ["gameUI", "timeDisplay"]）
+        std::vector<std::string> parts;
+        std::string current;
+        for (char c : jsonPath) {
+            if (c == '.') {
+                if (!current.empty()) {
+                    parts.push_back(current);
+                    current.clear();
+                }
+            } else {
+                current += c;
+            }
+        }
+        if (!current.empty()) {
+            parts.push_back(current);
+        }
+        
+        // JSONを辿る
+        nlohmann::json result = cachedJsonData;
+        for (const auto& part : parts) {
+            if (result.is_object() && result.contains(part)) {
+                result = result[part];
+            } else {
+                return nlohmann::json();  // パスが見つからない
+            }
+        }
+        
+        return result;
+    }
+    
+    // JSONからUIPositionを解析
+    UIPosition UIConfigManager::parseUIPosition(const nlohmann::json& json) const {
+        UIPosition pos;
+        if (json.is_null() || !json.is_object()) {
+            return pos;
+        }
+        
+        if (json.contains("position") && json["position"].is_object()) {
+            auto& posJson = json["position"];
+            if (posJson.contains("useRelative")) pos.useRelative = posJson["useRelative"];
+            if (posJson.contains("offsetX")) pos.offsetX = posJson["offsetX"];
+            if (posJson.contains("offsetY")) pos.offsetY = posJson["offsetY"];
+            if (posJson.contains("absoluteX")) pos.absoluteX = posJson["absoluteX"];
+            if (posJson.contains("absoluteY")) pos.absoluteY = posJson["absoluteY"];
+        } else if (json.contains("useRelative") || json.contains("offsetX") || json.contains("absoluteX")) {
+            // positionオブジェクトがなく、直接位置情報が含まれている場合
+            if (json.contains("useRelative")) pos.useRelative = json["useRelative"];
+            if (json.contains("offsetX")) pos.offsetX = json["offsetX"];
+            if (json.contains("offsetY")) pos.offsetY = json["offsetY"];
+            if (json.contains("absoluteX")) pos.absoluteX = json["absoluteX"];
+            if (json.contains("absoluteY")) pos.absoluteY = json["absoluteY"];
+        }
+        
+        return pos;
+    }
+    
+    // JSONからUITextConfigを解析
+    UITextConfig UIConfigManager::parseUITextConfig(const nlohmann::json& json) const {
+        UITextConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("color") && json["color"].is_array() && json["color"].size() >= 3) {
+            config.color = glm::vec3(json["color"][0], json["color"][1], json["color"][2]);
+        }
+        
+        if (json.contains("completedColor") && json["completedColor"].is_array() && json["completedColor"].size() >= 3) {
+            config.completedColor = glm::vec3(json["completedColor"][0], json["completedColor"][1], json["completedColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        return config;
+    }
+    
+    // JSONからUISelectableConfigを解析
+    UISelectableConfig UIConfigManager::parseUISelectableConfig(const nlohmann::json& json) const {
+        UISelectableConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("selectedColor") && json["selectedColor"].is_array() && json["selectedColor"].size() >= 3) {
+            config.selectedColor = glm::vec3(json["selectedColor"][0], json["selectedColor"][1], json["selectedColor"][2]);
+        }
+        
+        if (json.contains("unselectedColor") && json["unselectedColor"].is_array() && json["unselectedColor"].size() >= 3) {
+            config.unselectedColor = glm::vec3(json["unselectedColor"][0], json["unselectedColor"][1], json["unselectedColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        if (json.contains("spacing")) {
+            config.spacing = json["spacing"];
+        }
+        
+        return config;
+    }
+    
+    // JSONからUITimeDisplayConfigを解析
+    UITimeDisplayConfig UIConfigManager::parseUITimeDisplayConfig(const nlohmann::json& json) const {
+        UITimeDisplayConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("normalColor") && json["normalColor"].is_array() && json["normalColor"].size() >= 3) {
+            config.normalColor = glm::vec3(json["normalColor"][0], json["normalColor"][1], json["normalColor"][2]);
+        }
+        
+        if (json.contains("warningColor") && json["warningColor"].is_array() && json["warningColor"].size() >= 3) {
+            config.warningColor = glm::vec3(json["warningColor"][0], json["warningColor"][1], json["warningColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        return config;
+    }
+    
+    // JSONからUISkillConfigを解析
+    UISkillConfig UIConfigManager::parseUISkillConfig(const nlohmann::json& json) const {
+        UISkillConfig config;
+        if (json.is_null() || !json.is_object()) {
+            return config;
+        }
+        
+        config.position = parseUIPosition(json);
+        
+        if (json.contains("countOffset")) {
+            config.countOffset = json["countOffset"];
+        }
+        
+        if (json.contains("instructionOffset")) {
+            config.instructionOffset = json["instructionOffset"];
+        }
+        
+        if (json.contains("color") && json["color"].is_array() && json["color"].size() >= 3) {
+            config.color = glm::vec3(json["color"][0], json["color"][1], json["color"][2]);
+        }
+        
+        if (json.contains("disabledColor") && json["disabledColor"].is_array() && json["disabledColor"].size() >= 3) {
+            config.disabledColor = glm::vec3(json["disabledColor"][0], json["disabledColor"][1], json["disabledColor"][2]);
+        }
+        
+        if (json.contains("activeColor") && json["activeColor"].is_array() && json["activeColor"].size() >= 3) {
+            config.activeColor = glm::vec3(json["activeColor"][0], json["activeColor"][1], json["activeColor"][2]);
+        }
+        
+        if (json.contains("scale")) {
+            config.scale = json["scale"];
+        }
+        
+        if (json.contains("countScale")) {
+            config.countScale = json["countScale"];
+        }
+        
+        if (json.contains("instructionScale")) {
+            config.instructionScale = json["instructionScale"];
+        }
+        
+        if (json.contains("activePosition") && json["activePosition"].is_object()) {
+            config.activePosition = parseUIPosition(json["activePosition"]);
+        }
+        
+        if (json.contains("activeScale")) {
+            config.activeScale = json["activeScale"];
+        }
+        
+        return config;
+    }
+    
 }
 

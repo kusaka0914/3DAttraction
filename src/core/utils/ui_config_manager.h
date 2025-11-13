@@ -3,6 +3,8 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <map>
+#include <type_traits>
+#include <nlohmann/json.hpp>
 
 namespace UIConfig {
     struct UIPosition {
@@ -196,6 +198,36 @@ namespace UIConfig {
         // 位置を計算（ウィンドウサイズを考慮）
         glm::vec2 calculatePosition(const UIPosition& pos, int windowWidth, int windowHeight) const;
         
+        // 動的UI要素登録システム
+        // JSONパスを指定して設定を取得（例: "gameUI.timeDisplay", "readyScreen.title"）
+        template<typename T>
+        T getUIConfig(const std::string& jsonPath) const {
+            nlohmann::json jsonValue = getJsonValue(jsonPath);
+            
+            if (jsonValue.is_null()) {
+                // パスが見つからない場合はデフォルト値を返す
+                printf("UI Config Warning: Path '%s' not found, using default values\n", jsonPath.c_str());
+                T defaultConfig;
+                return defaultConfig;
+            }
+            
+            // 型に応じて解析
+            if constexpr (std::is_same_v<T, UITextConfig>) {
+                return parseUITextConfig(jsonValue);
+            } else if constexpr (std::is_same_v<T, UISelectableConfig>) {
+                return parseUISelectableConfig(jsonValue);
+            } else if constexpr (std::is_same_v<T, UITimeDisplayConfig>) {
+                return parseUITimeDisplayConfig(jsonValue);
+            } else if constexpr (std::is_same_v<T, UISkillConfig>) {
+                return parseUISkillConfig(jsonValue);
+            } else {
+                // 未知の型
+                printf("UI Config Error: Unsupported type for path '%s'\n", jsonPath.c_str());
+                T defaultConfig;
+                return defaultConfig;
+            }
+        }
+        
     private:
         UIConfigManager() = default;
         ~UIConfigManager() = default;
@@ -208,6 +240,17 @@ namespace UIConfig {
         std::string configFilePath;
         bool configLoaded = false;
         time_t lastFileModificationTime = 0;  // ファイル監視用
+        nlohmann::json cachedJsonData;  // JSONデータのキャッシュ（動的アクセス用）
+        
+        // JSONから構造体への変換ヘルパー関数
+        UITextConfig parseUITextConfig(const nlohmann::json& json) const;
+        UISelectableConfig parseUISelectableConfig(const nlohmann::json& json) const;
+        UITimeDisplayConfig parseUITimeDisplayConfig(const nlohmann::json& json) const;
+        UISkillConfig parseUISkillConfig(const nlohmann::json& json) const;
+        UIPosition parseUIPosition(const nlohmann::json& json) const;
+        
+        // JSONパスから値を取得（内部用）
+        nlohmann::json getJsonValue(const std::string& jsonPath) const;
         
         // UI設定
         UITextConfig stageInfoConfig;
