@@ -308,6 +308,12 @@ namespace UIConfig {
         tutorialMessageConfig.completedColor = glm::vec3(0.2f, 0.8f, 0.2f);
         tutorialMessageConfig.scale = 1.5f;
         
+        // 各ステップのメッセージ設定のデフォルト値（デフォルトは共通設定を使用）
+        for (int i = 0; i < 11; i++) {
+            tutorialMessageConfigs[i] = tutorialMessageConfig;
+            tutorialMessageConfigs[i].position.useRelative = true; // デフォルトは相対位置
+        }
+        
         tutorialPressEnterConfig.position.useRelative = true;
         tutorialPressEnterConfig.position.offsetX = -150.0f;
         tutorialPressEnterConfig.position.offsetY = 190.0f;  // 以前のcenterY=500基準に合わせて調整 (500+50-360=190)
@@ -1401,6 +1407,32 @@ namespace UIConfig {
                 if (tutorial.contains("steps")) {
                     auto& steps = tutorial["steps"];
                     
+                    // 各ステップ（step0-10）のメッセージ設定を読み込む
+                    for (int step = 0; step < 11; step++) {
+                        std::string stepKey = "step" + std::to_string(step);
+                        if (steps.contains(stepKey)) {
+                            auto& stepData = steps[stepKey];
+                            if (stepData.contains("message")) {
+                                auto& cfg = stepData["message"];
+                                if (cfg.contains("position")) {
+                                    auto& pos = cfg["position"];
+                                    if (pos.contains("offsetX")) tutorialMessageConfigs[step].position.offsetX = pos["offsetX"];
+                                    if (pos.contains("offsetY")) tutorialMessageConfigs[step].position.offsetY = pos["offsetY"];
+                                    if (pos.contains("absoluteX")) tutorialMessageConfigs[step].position.absoluteX = pos["absoluteX"];
+                                    if (pos.contains("absoluteY")) tutorialMessageConfigs[step].position.absoluteY = pos["absoluteY"];
+                                    if (pos.contains("useRelative")) tutorialMessageConfigs[step].position.useRelative = pos["useRelative"];
+                                }
+                                if (cfg.contains("completedColor")) {
+                                    tutorialMessageConfigs[step].completedColor = glm::vec3(cfg["completedColor"][0], cfg["completedColor"][1], cfg["completedColor"][2]);
+                                }
+                                if (cfg.contains("normalColor")) {
+                                    tutorialMessageConfigs[step].color = glm::vec3(cfg["normalColor"][0], cfg["normalColor"][1], cfg["normalColor"][2]);
+                                }
+                                if (cfg.contains("scale")) tutorialMessageConfigs[step].scale = cfg["scale"];
+                            }
+                        }
+                    }
+                    
                     // Step 5
                     if (steps.contains("step5")) {
                         auto& step5 = steps["step5"];
@@ -2420,6 +2452,13 @@ namespace UIConfig {
         }
         
         return false;
+    }
+    
+    UITextConfig UIConfigManager::getTutorialMessageConfigForStep(int step) const {
+        if (step >= 0 && step < 11) {
+            return tutorialMessageConfigs[step];
+        }
+        return tutorialMessageConfig; // 範囲外の場合はデフォルト設定を返す
     }
     
     glm::vec2 UIConfigManager::calculatePosition(const UIPosition& pos, int windowWidth, int windowHeight) const {

@@ -385,71 +385,186 @@
       "scale": 1.2
     },
     "steps": {
+      "step0": {
+        "message": {
+          "position": {
+            "offsetX": -480,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
+      "step1": {
+        "message": {
+          "position": {
+            "offsetX": -450,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
+      "step2": {
+        "message": {
+          "position": {
+            "offsetX": -480,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
+      "step3": {
+        "message": {
+          "position": {
+            "offsetX": -450,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
+      "step4": {
+        "message": {
+          "position": {
+            "offsetX": -450,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
       "step5": {
+        "message": {
+          "position": {
+            "offsetX": -430,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        },
         "explainText1": {
           "position": {
-            "offsetX": -50,
-            "offsetY": -400
+            "offsetX": -350,
+            "offsetY": -500
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         }
       },
+      "step6": {
+        "message": {
+          "position": {
+            "offsetX": -335,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
+      "step7": {
+        "message": {
+          "position": {
+            "offsetX": -380,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
+      "step8": {
+        "message": {
+          "position": {
+            "offsetX": -335,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        }
+      },
       "step9": {
+        "message": {
+          "position": {
+            "offsetX": -335,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        },
         "explainText1": {
           "position": {
-            "offsetX": -200,
-            "offsetY": 50
+            "offsetX": -150,
+            "offsetY": -90
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         },
         "explainText2": {
           "position": {
-            "offsetX": -120,
-            "offsetY": 90
+            "offsetX": -90,
+            "offsetY": -50
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         },
         "explainText3": {
           "position": {
-            "offsetX": -200,
-            "offsetY": 130
+            "offsetX": -150,
+            "offsetY": -10
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         },
         "explainText4": {
           "position": {
-            "offsetX": -150,
-            "offsetY": 170
+            "offsetX": -100,
+            "offsetY": 30
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         }
       },
       "step10": {
+        "message": {
+          "position": {
+            "offsetX": -335,
+            "offsetY": -50
+          },
+          "completedColor": [0.2, 0.8, 0.2],
+          "normalColor": [1.0, 1.0, 1.0],
+          "scale": 1.5
+        },
         "explainText1": {
           "position": {
-            "offsetX": -190,
-            "offsetY": 50
+            "offsetX": -460,
+            "offsetY": -10
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         },
         "explainText2": {
           "position": {
-            "offsetX": -300,
-            "offsetY": 90
+            "offsetX": -570,
+            "offsetY": 30
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2
         },
         "explainText3": {
           "position": {
-            "offsetX": -90,
-            "offsetY": 130
+            "offsetX": -370,
+            "offsetY": 70
           },
           "color": [1.0, 1.0, 1.0],
           "scale": 1.2

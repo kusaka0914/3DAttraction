@@ -113,6 +113,7 @@ namespace UIConfig {
         // Tutorial UI
         UITextConfig getTutorialStepTextConfig() const { return tutorialStepTextConfig; }
         UITextConfig getTutorialMessageConfig() const { return tutorialMessageConfig; }
+        UITextConfig getTutorialMessageConfigForStep(int step) const;
         UITextConfig getTutorialPressEnterConfig() const { return tutorialPressEnterConfig; }
         
         // Tutorial Step-specific UI
@@ -308,6 +309,7 @@ namespace UIConfig {
         // Tutorial UI設定
         UITextConfig tutorialStepTextConfig;
         UITextConfig tutorialMessageConfig;
+        UITextConfig tutorialMessageConfigs[11]; // step0-10用の個別設定
         UITextConfig tutorialPressEnterConfig;
         
         // Tutorial Step-specific UI設定
