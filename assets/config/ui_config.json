@@ -753,7 +753,7 @@
   "ending": {
     "thankYou": {
       "position": {
-        "offsetX": -700,
+        "offsetX": -500,
         "offsetY": -400
       },
       "color": [1.0, 1.0, 0.0],
@@ -761,7 +761,7 @@
     },
     "congratulations": {
       "position": {
-        "offsetX": -850,
+        "offsetX": -650,
         "offsetY": -300
       },
       "color": [1.0, 1.0, 0.0],
@@ -769,7 +769,7 @@
     },
     "seeYouAgain": {
       "position": {
-        "offsetX": -700,
+        "offsetX": -500,
         "offsetY": -200
       },
       "color": [1.0, 1.0, 0.0],
@@ -777,8 +777,8 @@
     },
     "skip": {
       "position": {
-        "offsetX": 880,
-        "offsetY": -690
+        "offsetX": 100,
+        "offsetY": -850
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.2
@@ -1146,15 +1146,15 @@
   "staffRoll": {
     "skip": {
       "position": {
-        "offsetX": -70,
-        "offsetY": -650
+        "offsetX": 100,
+        "offsetY": -550
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.5
     },
     "title": {
       "position": {
-        "offsetX": -600,
+        "offsetX": -420,
         "offsetY": 0
       },
       "color": [1.0, 1.0, 1.0],
@@ -1162,7 +1162,7 @@
     },
     "role": {
       "position": {
-        "offsetX": -750,
+        "offsetX": -570,
         "offsetY": 0
       },
       "color": [1.0, 1.0, 1.0],
@@ -1170,7 +1170,7 @@
     },
     "name": {
       "position": {
-        "offsetX": -500,
+        "offsetX": -320,
         "offsetY": 0
       },
       "color": [1.0, 1.0, 1.0],

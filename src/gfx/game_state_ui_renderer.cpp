@@ -443,11 +443,6 @@ void GameStateUIRenderer::renderEndingMessage(int width, int height, float timer
     glm::vec2 seeYouAgainPos = uiConfig.calculatePosition(seeYouAgainConfig.position, width, height);
     renderText("SEE YOU AGAIN SOMEWHERE!", seeYouAgainPos, seeYouAgainConfig.color, seeYouAgainConfig.scale);
     
-    // スキッププロンプトを右上に表示
-    auto skipConfig = uiConfig.getEndingSkipConfig();
-    glm::vec2 skipPos = uiConfig.calculatePosition(skipConfig.position, width, height);
-    renderText("SKIP : ENTER", skipPos, skipConfig.color, skipConfig.scale);
-    
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
