@@ -23,6 +23,7 @@
 #include "../io/audio_manager.h"
 #include "../gfx/minimap_renderer.h"
 #include "../game/replay_manager.h"
+#include "../game/save_manager.h"
 #include "../game/stage_editor.h"
 #include "tutorial_manager.h"
 #include <set>
@@ -254,6 +255,8 @@ namespace GameLoop {
 
             // エスケープキーでゲームを終了
             if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+                // ゲームデータをセーブ
+                SaveManager::saveGameData(gameState);
                 gameRunning = false;
             }
 
@@ -264,43 +267,62 @@ namespace GameLoop {
                     state.update(glfwGetKey(window, key) == GLFW_PRESS);
                 }
                 
-                // ENTERキーでゲーム開始（チュートリアルへ）
+                // ENTERキーでゲーム開始
                 if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                     gameState.showTitleScreen = false;
-                    // チュートリアルステージ（ステージ6）を読み込む
-                    stageManager.loadStage(6, gameState, platformSystem);
-                    // Ready画面とカウントダウンをスキップして直接ゲーム開始
-                    gameState.showReadyScreen = false;
-                    gameState.readyScreenShown = true;  // Ready画面をスキップしたことを記録
-                    gameState.isCountdownActive = false;  // カウントダウンもスキップ
-                    gameState.countdownTimer = 0.0f;
-                    // カウントダウン終了時の処理を直接実行
-                    resetStageStartTime();
                     
-                    // タイムアタックモードの場合、開始時刻を記録
-                    if (gameState.isTimeAttackMode) {
-                        gameState.timeAttackStartTime = gameState.gameTime;
-                        gameState.currentTimeAttackTime = 0.0f;
+                    // チュートリアル（ステージ6）がクリア済みかチェック
+                    bool hasClearedTutorial = (gameState.stageStars.count(6) > 0 && gameState.stageStars[6] > 0);
+                    
+                    if (hasClearedTutorial) {
+                        // クリア済み: ステージ選択フィールド（ステージ0）に直接遷移
+                        resetStageStartTime();
+                        stageManager.goToStage(0, gameState, platformSystem);
+                        gameState.showReadyScreen = false;
+                        gameState.readyScreenShown = false;
+                        gameState.timeScale = 1.0f;
+                        gameState.timeScaleLevel = 0;
                         
-                        // リプレイ記録を開始
-                        gameState.isRecordingReplay = true;
-                        gameState.replayBuffer.clear();
-                        gameState.replayRecordTimer = 0.0f;
+                        // ステージ選択フィールドではTPSモードに戻す
+                        gameState.isFirstPersonMode = false;
+                        gameState.isFirstPersonView = false;
+                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    } else {
+                        // 未クリア: チュートリアルステージ（ステージ6）を読み込む
+                        stageManager.loadStage(6, gameState, platformSystem);
+                        // Ready画面とカウントダウンをスキップして直接ゲーム開始
+                        gameState.showReadyScreen = false;
+                        gameState.readyScreenShown = true;  // Ready画面をスキップしたことを記録
+                        gameState.isCountdownActive = false;  // カウントダウンもスキップ
+                        gameState.countdownTimer = 0.0f;
+                        // カウントダウン終了時の処理を直接実行
+                        resetStageStartTime();
                         
-                        // 最初のフレームを記録
-                        GameState::ReplayFrame firstFrame;
-                        firstFrame.timestamp = 0.0f;
-                        firstFrame.playerPosition = gameState.playerPosition;
-                        firstFrame.playerVelocity = gameState.playerVelocity;
-                        // アイテムの収集状態を記録
-                        firstFrame.itemCollectedStates.clear();
-                        for (const auto& item : gameState.items) {
-                            firstFrame.itemCollectedStates.push_back(item.isCollected);
+                        // タイムアタックモードの場合、開始時刻を記録
+                        if (gameState.isTimeAttackMode) {
+                            gameState.timeAttackStartTime = gameState.gameTime;
+                            gameState.currentTimeAttackTime = 0.0f;
+                            
+                            // リプレイ記録を開始
+                            gameState.isRecordingReplay = true;
+                            gameState.replayBuffer.clear();
+                            gameState.replayRecordTimer = 0.0f;
+                            
+                            // 最初のフレームを記録
+                            GameState::ReplayFrame firstFrame;
+                            firstFrame.timestamp = 0.0f;
+                            firstFrame.playerPosition = gameState.playerPosition;
+                            firstFrame.playerVelocity = gameState.playerVelocity;
+                            // アイテムの収集状態を記録
+                            firstFrame.itemCollectedStates.clear();
+                            for (const auto& item : gameState.items) {
+                                firstFrame.itemCollectedStates.push_back(item.isCollected);
+                            }
+                            gameState.replayBuffer.push_back(firstFrame);
+                            
+                            printf("TIME ATTACK: Started at %.2f\n", gameState.timeAttackStartTime);
+                            printf("REPLAY: Recording started\n");
                         }
-                        gameState.replayBuffer.push_back(firstFrame);
-                        
-                        printf("TIME ATTACK: Started at %.2f\n", gameState.timeAttackStartTime);
-                        printf("REPLAY: Recording started\n");
                     }
                 }
                 
