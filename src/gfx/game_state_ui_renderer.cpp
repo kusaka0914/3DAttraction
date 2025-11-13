@@ -59,7 +59,7 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
         
         auto explainText2Config = uiConfig.getTutorialStep9ExplainText2Config();
         glm::vec2 explainText2Pos = uiConfig.calculatePosition(explainText2Config.position, width, height);
-        std::string explainText2 = "RED, BLUE, AND GREEN !";
+        std::string explainText2 = "BRONZE, SILVER, AND GOLD !";
         renderText(explainText2, explainText2Pos, explainText2Config.color, explainText2Config.scale);
         
         auto explainText3Config = uiConfig.getTutorialStep9ExplainText3Config();
@@ -88,8 +88,8 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
         renderText(explainText3, explainText3Pos, explainText3Config.color, explainText3Config.scale);
     }
     
-    // メッセージ表示
-    auto messageConfig = uiConfig.getTutorialMessageConfig();
+    // メッセージ表示（現在のステップに応じた設定を使用）
+    auto messageConfig = uiConfig.getTutorialMessageConfigForStep(currentStep);
     glm::vec2 messagePos = uiConfig.calculatePosition(messageConfig.position, width, height);
     glm::vec3 messageColor = stepCompleted ? messageConfig.completedColor : messageConfig.color;
     renderText(message, messagePos, messageColor, messageConfig.scale);
@@ -98,12 +98,9 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
     if (stepCompleted) {
         auto pressEnterConfig = uiConfig.getTutorialPressEnterConfig();
         glm::vec2 pressEnterPos = uiConfig.calculatePosition(pressEnterConfig.position, width, height);
-        if (currentStep == 9) {
-            // ステップ9の場合は位置を少し調整
-            pressEnterPos.x += 200.0f;
-            pressEnterPos.y -= 45.0f;
+        if (currentStep != 10) {
+            renderText("PRESS ENTER TO CONTINUE", pressEnterPos, pressEnterConfig.color, pressEnterConfig.scale);
         }
-        renderText("PRESS ENTER TO CONTINUE", pressEnterPos, pressEnterConfig.color, pressEnterConfig.scale);
     }
     
     // 3D描画モードに戻す
