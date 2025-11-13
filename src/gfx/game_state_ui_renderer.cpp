@@ -4,6 +4,8 @@
 
 #include "game_state_ui_renderer.h"
 #include "../core/utils/ui_config_manager.h"
+#include "texture_manager.h"
+#include "../core/utils/resource_path.h"
 #include <iostream>
 #include <cmath>
 
@@ -566,6 +568,97 @@ void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height
     auto okButtonConfig = uiConfig.getStarInsufficientOkButtonConfig();
     glm::vec2 okButtonPos = uiConfig.calculatePosition(okButtonConfig.position, width, height);
     renderText("OK: SPACE", okButtonPos, okButtonConfig.color, okButtonConfig.scale);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void GameStateUIRenderer::renderTitleScreen(int width, int height) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // タイトル背景テクスチャを表示
+    GLuint titleBgTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_bg.png"));
+    if (titleBgTexture != 0) {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        TextureManager::bindTexture(titleBgTexture);
+        
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(width, 0);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(width, height);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(0, height);
+        glEnd();
+        
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+    } else {
+        // テクスチャが読み込めない場合は黒背景
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+        glBegin(GL_QUADS);
+        glVertex2f(0, 0);
+        glVertex2f(width, 0);
+        glVertex2f(width, height);
+        glVertex2f(0, height);
+        glEnd();
+        glDisable(GL_BLEND);
+    }
+    
+    // タイトルロゴテクスチャを表示
+    auto logoConfig = uiConfig.getTitleLogoConfig();
+    glm::vec2 logoPos = uiConfig.calculatePosition(logoConfig.position, width, height);
+    
+    GLuint titleLogoTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_logo.png"));
+    if (titleLogoTexture != 0) {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        TextureManager::bindTexture(titleLogoTexture);
+        
+        // ロゴのサイズを計算（スケールを考慮）
+        float logoWidth = 400.0f * logoConfig.scale;  // 仮の幅、実際のテクスチャサイズに合わせて調整
+        float logoHeight = 400.0f * logoConfig.scale;  // 仮の高さ
+        
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y - logoHeight / 2);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y - logoHeight / 2);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y + logoHeight / 2);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y + logoHeight / 2);
+        glEnd();
+        
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+    }
+    
+    // "PLAY START : ENTER"テキストを表示（ロゴの下）
+    auto startButtonConfig = uiConfig.getTitleStartButtonConfig();
+    glm::vec2 startButtonPos = uiConfig.calculatePosition(startButtonConfig.position, width, height);
+    renderText("PLAY START : ENTER", startButtonPos, startButtonConfig.color, startButtonConfig.scale);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);

@@ -179,8 +179,11 @@ int main(int argc, char* argv[]) {
         gameState.isEndingSequence = true;
         gameState.showStaffRoll = true;
         gameState.staffRollTimer = 0.0f;
+        gameState.showTitleScreen = false;  // エンドロール表示時はタイトル画面をスキップ
     } else {
-        stageManager.loadStage(initialStage, gameState, platformSystem);
+        // タイトル画面から開始（showTitleScreenはデフォルトでtrue）
+        // タイトル画面でENTERを押すとチュートリアル（ステージ6）が開始される
+        gameState.showTitleScreen = true;
     }
 
     // ゲームパッド初期化

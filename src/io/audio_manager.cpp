@@ -22,6 +22,7 @@ AudioManager::AudioManager()
     , m_bgmPaused(false)
     , m_bgmMusic(nullptr)
     , m_bgmModTime(0)
+    , m_mp3Supported(false)
 {
 }
 
@@ -40,9 +41,23 @@ bool AudioManager::initialize() {
         return false;
     }
     
+    // SDL_mixerのフォーマットサポートを初期化（MP3、OGG、FLACなど）
+    int initFlags = MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_FLAC;
+    int initialized = Mix_Init(initFlags);
+    m_mp3Supported = (initialized & MIX_INIT_MP3) != 0;
+    if ((initialized & initFlags) != initFlags) {
+        std::cerr << "Warning: Some audio formats failed to initialize: " << Mix_GetError() << std::endl;
+        // MP3が利用できない場合は警告を出すが、続行する
+        if (!m_mp3Supported) {
+            std::cerr << "Warning: MP3 support is not available. MP3 files will not be playable." << std::endl;
+            std::cerr << "Please use OGG format or recompile SDL_mixer with MP3 support." << std::endl;
+        }
+    }
+    
     // SDL_mixer初期化
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         std::cerr << "Failed to initialize SDL_mixer: " << Mix_GetError() << std::endl;
+        Mix_Quit();
         SDL_Quit();
         return false;
     }
@@ -80,6 +95,7 @@ void AudioManager::shutdown() {
     
     // SDL_mixer終了
     Mix_CloseAudio();
+    Mix_Quit();  // Mix_Init()で初期化したフォーマットをクリーンアップ
     SDL_Quit();
     
     m_initialized = false;
@@ -107,7 +123,18 @@ bool AudioManager::loadBGM(const std::string& filename) {
     // 新しいBGMを読み込み
     m_bgmMusic = Mix_LoadMUS(filename.c_str());
     if (!m_bgmMusic) {
-        std::cerr << "Failed to load BGM: " << filename << " - " << Mix_GetError() << std::endl;
+        std::string error = Mix_GetError();
+        // MP3ファイルでMP3サポートが無い場合、エラーメッセージを抑制（既に警告を出しているため）
+        if (!m_mp3Supported && filename.find(".mp3") != std::string::npos) {
+            // MP3サポートが無い場合は、エラーメッセージを1回だけ表示
+            static bool mp3ErrorShown = false;
+            if (!mp3ErrorShown) {
+                std::cerr << "Failed to load BGM (MP3): " << filename << " - MP3 support not available" << std::endl;
+                mp3ErrorShown = true;
+            }
+        } else {
+            std::cerr << "Failed to load BGM: " << filename << " - " << error << std::endl;
+        }
         return false;
     }
     
@@ -210,7 +237,18 @@ bool AudioManager::loadSFX(const std::string& name, const std::string& filename)
     // 新しいSFXを読み込み
     Mix_Chunk* chunk = Mix_LoadWAV(filename.c_str());
     if (!chunk) {
-        std::cerr << "Failed to load SFX: " << filename << " - " << Mix_GetError() << std::endl;
+        std::string error = Mix_GetError();
+        // MP3ファイルでMP3サポートが無い場合、エラーメッセージを抑制（既に警告を出しているため）
+        if (!m_mp3Supported && filename.find(".mp3") != std::string::npos) {
+            // MP3サポートが無い場合は、エラーメッセージを1回だけ表示
+            static bool mp3SFXErrorShown = false;
+            if (!mp3SFXErrorShown) {
+                std::cerr << "Failed to load SFX (MP3): " << filename << " - MP3 support not available" << std::endl;
+                mp3SFXErrorShown = true;
+            }
+        } else {
+            std::cerr << "Failed to load SFX: " << filename << " - " << error << std::endl;
+        }
         return false;
     }
     

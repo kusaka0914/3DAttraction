@@ -78,6 +78,7 @@ namespace GameLoop {
                     std::unique_ptr<gfx::OpenGLRenderer>& renderer,
                     std::unique_ptr<gfx::UIRenderer>& uiRenderer,
                     std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
+                    std::map<int, InputUtils::KeyState>& keyStates,
                     float deltaTime = 0.016f);
     
     // 入力処理の統合

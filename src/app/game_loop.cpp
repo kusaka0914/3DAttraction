@@ -138,13 +138,13 @@ namespace GameLoop {
         
         // SE（効果音）の初期化
         if (gameState.audioEnabled) {
-            audioManager.loadSFX("jump", ResourcePath::getResourcePath("assets/audio/se/jump.mp3"));
-            audioManager.loadSFX("clear", ResourcePath::getResourcePath("assets/audio/se/clear.mp3"));
-            audioManager.loadSFX("item", ResourcePath::getResourcePath("assets/audio/se/item.mp3"));
-            audioManager.loadSFX("on_ground", ResourcePath::getResourcePath("assets/audio/se/on_ground.mp3"));
-            audioManager.loadSFX("flying", ResourcePath::getResourcePath("assets/audio/se/flying.mp3"));
-            audioManager.loadSFX("countdown", ResourcePath::getResourcePath("assets/audio/se/countdown.mp3"));
-            audioManager.loadSFX("tutorial_ok", ResourcePath::getResourcePath("assets/audio/se/tutorial_ok.mp3"));
+            audioManager.loadSFX("jump", ResourcePath::getResourcePath("assets/audio/se/jump.ogg"));
+            audioManager.loadSFX("clear", ResourcePath::getResourcePath("assets/audio/se/clear.ogg"));
+            audioManager.loadSFX("item", ResourcePath::getResourcePath("assets/audio/se/item.ogg"));
+            audioManager.loadSFX("on_ground", ResourcePath::getResourcePath("assets/audio/se/on_ground.ogg"));
+            audioManager.loadSFX("flying", ResourcePath::getResourcePath("assets/audio/se/flying.ogg"));
+            audioManager.loadSFX("countdown", ResourcePath::getResourcePath("assets/audio/se/countdown.ogg"));
+            audioManager.loadSFX("tutorial_ok", ResourcePath::getResourcePath("assets/audio/se/tutorial_ok.ogg"));
         }
         
         auto lastFrameTime = startTime;
@@ -173,32 +173,32 @@ namespace GameLoop {
                 // ステージに応じてBGMを決定
                 switch (currentStage) {
                     case 0: // ステージ選択画面
-                        targetBGM = "stage_select_field.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage_select_field.mp3");
+                        targetBGM = "stage_select_field.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage_select_field.ogg");
                         break;
                     case 1: // ステージ1
-                        targetBGM = "stage1.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage1.mp3");
+                        targetBGM = "stage1.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage1.ogg");
                         break;
                     case 2: // ステージ2
-                        targetBGM = "stage2.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage2.mp3");
+                        targetBGM = "stage2.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage2.ogg");
                         break;
                     case 3: // ステージ3
-                        targetBGM = "stage3.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage3.mp3");
+                        targetBGM = "stage3.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage3.ogg");
                         break;
                     case 4: // ステージ4
-                        targetBGM = "stage4.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage4.mp3");
+                        targetBGM = "stage4.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage4.ogg");
                         break;
                     case 5: // ステージ5
-                        targetBGM = "stage5.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage5.mp3");
+                        targetBGM = "stage5.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage5.ogg");
                         break;
                     case 6: // チュートリアルステージ
-                        targetBGM = "tutorial.mp3";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/tutorial.mp3");
+                        targetBGM = "tutorial.ogg";
+                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/tutorial.ogg");
                         break;
                     default:
                         // その他のステージはBGMなし
@@ -257,11 +257,65 @@ namespace GameLoop {
                 gameRunning = false;
             }
 
+            // タイトル画面の処理
+            if (gameState.showTitleScreen) {
+                // キー状態更新
+                for (auto& [key, state] : keyStates) {
+                    state.update(glfwGetKey(window, key) == GLFW_PRESS);
+                }
+                
+                // ENTERキーでゲーム開始（チュートリアルへ）
+                if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                    gameState.showTitleScreen = false;
+                    // チュートリアルステージ（ステージ6）を読み込む
+                    stageManager.loadStage(6, gameState, platformSystem);
+                    // Ready画面とカウントダウンをスキップして直接ゲーム開始
+                    gameState.showReadyScreen = false;
+                    gameState.readyScreenShown = true;  // Ready画面をスキップしたことを記録
+                    gameState.isCountdownActive = false;  // カウントダウンもスキップ
+                    gameState.countdownTimer = 0.0f;
+                    // カウントダウン終了時の処理を直接実行
+                    resetStageStartTime();
+                    
+                    // タイムアタックモードの場合、開始時刻を記録
+                    if (gameState.isTimeAttackMode) {
+                        gameState.timeAttackStartTime = gameState.gameTime;
+                        gameState.currentTimeAttackTime = 0.0f;
+                        
+                        // リプレイ記録を開始
+                        gameState.isRecordingReplay = true;
+                        gameState.replayBuffer.clear();
+                        gameState.replayRecordTimer = 0.0f;
+                        
+                        // 最初のフレームを記録
+                        GameState::ReplayFrame firstFrame;
+                        firstFrame.timestamp = 0.0f;
+                        firstFrame.playerPosition = gameState.playerPosition;
+                        firstFrame.playerVelocity = gameState.playerVelocity;
+                        // アイテムの収集状態を記録
+                        firstFrame.itemCollectedStates.clear();
+                        for (const auto& item : gameState.items) {
+                            firstFrame.itemCollectedStates.push_back(item.isCollected);
+                        }
+                        gameState.replayBuffer.push_back(firstFrame);
+                        
+                        printf("TIME ATTACK: Started at %.2f\n", gameState.timeAttackStartTime);
+                        printf("REPLAY: Recording started\n");
+                    }
+                }
+                
+                // 描画
+                renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
+                
+                glfwPollEvents();
+                continue;  // タイトル画面中は他の処理をスキップ
+            }
+
             // ゲーム状態の更新
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
 
             // 描画
-            renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, deltaTime);
+            renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
             
             // フレームレート制限
             std::this_thread::sleep_for(std::chrono::milliseconds(GameConstants::FRAME_DELAY_MS));
@@ -1197,6 +1251,7 @@ namespace GameLoop {
                     std::unique_ptr<gfx::OpenGLRenderer>& renderer,
                     std::unique_ptr<gfx::UIRenderer>& uiRenderer,
                     std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
+                    std::map<int, InputUtils::KeyState>& keyStates,
                     float deltaTime) {
         // エディタ状態をGameStateから取得（updateGameStateと共有）
         EditorState* editorState = gameState.editorState;
@@ -1216,6 +1271,15 @@ namespace GameLoop {
         
         int width, height;
         prepareFrame(window, gameState, stageManager, renderer, width, height);
+        
+        // タイトル画面の処理
+        if (gameState.showTitleScreen) {
+            // タイトル画面を描画
+            gameStateUIRenderer->renderTitleScreen(width, height);
+            
+            renderer->endFrame();
+            return;  // タイトル画面中は他の処理をスキップ
+        }
         
         // エディタモード中はグリッドとプレビューを表示
         if (editorState->isActive) {

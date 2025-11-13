@@ -205,6 +205,18 @@ namespace UIConfig {
         readyPressTConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         readyPressTConfig.scale = 1.2f;
         
+        // タイトル画面UI設定
+        titleLogoConfig.position.useRelative = true;
+        titleLogoConfig.position.offsetX = 0.0f;
+        titleLogoConfig.position.offsetY = -200.0f;
+        titleLogoConfig.scale = 1.0f;
+        
+        titleStartButtonConfig.position.useRelative = true;
+        titleStartButtonConfig.position.offsetX = 0.0f;
+        titleStartButtonConfig.position.offsetY = 100.0f;
+        titleStartButtonConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        titleStartButtonConfig.scale = 2.0f;
+        
         tpsFpsLabelConfig.position.useRelative = true;
         tpsFpsLabelConfig.position.offsetX = 190.0f;
         tpsFpsLabelConfig.position.offsetY = -70.0f;
@@ -1196,6 +1208,40 @@ namespace UIConfig {
                         controlsTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) controlsTextConfig.scale = cfg["scale"];
+                }
+            }
+            
+            // タイトル画面UI
+            if (jsonData.contains("titleScreen")) {
+                auto& title = jsonData["titleScreen"];
+                
+                if (title.contains("titleLogo")) {
+                    auto& cfg = title["titleLogo"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) titleLogoConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) titleLogoConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) titleLogoConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) titleLogoConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) titleLogoConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("scale")) titleLogoConfig.scale = cfg["scale"];
+                }
+                
+                if (title.contains("startButton")) {
+                    auto& cfg = title["startButton"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) titleStartButtonConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) titleStartButtonConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) titleStartButtonConfig.position.useRelative = pos["useRelative"];
+                        if (pos.contains("absoluteX")) titleStartButtonConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) titleStartButtonConfig.position.absoluteY = pos["absoluteY"];
+                    }
+                    if (cfg.contains("color")) {
+                        titleStartButtonConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) titleStartButtonConfig.scale = cfg["scale"];
                 }
             }
             

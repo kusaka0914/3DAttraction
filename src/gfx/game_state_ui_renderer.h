@@ -17,6 +17,7 @@ public:
     void renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars);
     void renderWarpTutorialBackground(int width, int height, int targetStage);
     void renderGameOverBackground(int width, int height);
+    void renderTitleScreen(int width, int height);
     void renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode);
     void renderCountdown(int width, int height, int count);
     void renderStage0Tutorial(int width, int height);

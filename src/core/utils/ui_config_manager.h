@@ -85,6 +85,10 @@ namespace UIConfig {
         UITextConfig getPressEConfig() const { return pressEConfig; }
         UITextConfig getControlsTextConfig() const { return controlsTextConfig; }
         
+        // タイトル画面UI要素の設定を取得
+        UITextConfig getTitleLogoConfig() const { return titleLogoConfig; }
+        UITextConfig getTitleStartButtonConfig() const { return titleStartButtonConfig; }
+        
         // Ready画面UI要素の設定を取得
         UITextConfig getReadyTextConfig() const { return readyTextConfig; }
         UITextConfig getPlaySpeedLabelConfig() const { return playSpeedLabelConfig; }
@@ -291,6 +295,8 @@ namespace UIConfig {
         UITextConfig replaySpeedDisplayConfig;
         UITextConfig replayPressTConfig;
         UITextConfig replayInstructionsConfig;
+        UITextConfig titleLogoConfig;
+        UITextConfig titleStartButtonConfig;
         UITextConfig worldTitleConfig;
         UITextConfig starIconConfig;
         UITextConfig starCountConfig;

@@ -227,6 +227,9 @@ struct GameState {
     // 初回ステージ0入場チュートリアルUI状態
     bool showStage0Tutorial = true;
     
+    // タイトル画面状態
+    bool showTitleScreen = true;  // デフォルトでタイトル画面を表示
+    
     // EASYモード説明UI状態
     bool showEasyModeExplanationUI = false;
     
