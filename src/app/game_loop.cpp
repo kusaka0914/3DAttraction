@@ -164,7 +164,8 @@ namespace GameLoop {
             // 速度倍率を適用したdeltaTimeを計算（全ステージで有効）
             float scaledDeltaTime = deltaTime * gameState.timeScale;
             
-            // BGM管理：各ステージに対応するBGMを再生
+            // BGM管理：各ステージに対応するBGMを再生（タイトル画面中はスキップ）
+            if (!gameState.showTitleScreen) {
             int currentStage = stageManager.getCurrentStage();
             if (gameState.audioEnabled && !gameState.isGoalReached) {
                 std::string targetBGM = "";
@@ -229,6 +230,7 @@ namespace GameLoop {
                     gameState.currentBGM = "";
                     std::cout << "BGM stopped" << std::endl;
                 }
+                }
             }
 
             // Ready画面表示中の処理
@@ -259,23 +261,102 @@ namespace GameLoop {
 
             // タイトル画面の処理
             if (gameState.showTitleScreen) {
+                // ステージ遷移アニメーションの処理（タイトル画面中でも必要）
+                if (gameState.isTransitioning) {
+                    const float FADE_DURATION = 0.5f;  // フェード時間（秒）
+                    gameState.transitionTimer += deltaTime;
+                    
+                    if (gameState.transitionType == GameState::TransitionType::FADE_OUT) {
+                        // フェードアウト中
+                        if (gameState.transitionTimer >= FADE_DURATION) {
+                            // フェードアウト完了：実際のステージ遷移を実行
+                            if (gameState.pendingStageTransition >= 0) {
+                                // タイトル画面を非表示
+                                gameState.showTitleScreen = false;
+                                
+                                // チュートリアルステージを読み込む
+                                stageManager.loadStage(6, gameState, platformSystem);
+                                gameState.showReadyScreen = false;
+                                gameState.readyScreenShown = true;
+                                gameState.isCountdownActive = false;
+                                gameState.countdownTimer = 0.0f;
+                                resetStageStartTime();
+                                
+                                // フェードインに切り替え
+                                gameState.transitionType = GameState::TransitionType::FADE_IN;
+                                gameState.transitionTimer = 0.0f;
+                            }
+                        }
+                    } else if (gameState.transitionType == GameState::TransitionType::FADE_IN) {
+                        // フェードイン中
+                        if (gameState.transitionTimer >= FADE_DURATION) {
+                            // フェードイン完了：遷移終了
+                            gameState.isTransitioning = false;
+                            gameState.transitionType = GameState::TransitionType::NONE;
+                            gameState.transitionTimer = 0.0f;
+                            gameState.pendingStageTransition = -1;
+                            gameState.pendingReadyScreen = false;
+                            gameState.pendingSkipCountdown = false;
+                        }
+                    }
+                }
+                
+                // タイトル画面のアニメーションタイマーを更新
+                gameState.titleScreenTimer += deltaTime;
+                
+                // フェーズの遷移
+                const float BACKGROUND_FADE_DURATION = 1.5f;  // 背景フェードイン時間
+                const float LOGO_ANIMATION_DURATION = 1.0f;    // ロゴアニメーション時間
+                
+                if (gameState.titleScreenPhase == GameState::TitleScreenPhase::BACKGROUND_FADE_IN) {
+                    if (gameState.titleScreenTimer >= BACKGROUND_FADE_DURATION) {
+                        gameState.titleScreenPhase = GameState::TitleScreenPhase::LOGO_ANIMATION;
+                        gameState.titleScreenTimer = 0.0f;  // タイマーリセット
+                    }
+                } else if (gameState.titleScreenPhase == GameState::TitleScreenPhase::LOGO_ANIMATION) {
+                    if (gameState.titleScreenTimer >= LOGO_ANIMATION_DURATION) {
+                        gameState.titleScreenPhase = GameState::TitleScreenPhase::SHOW_TEXT;
+                        gameState.titleScreenTimer = 0.0f;  // タイマーリセット
+                    }
+                }
+                
+                // タイトル画面のBGMを再生
+                if (gameState.audioEnabled) {
+                    std::string titleBGM = "title.ogg";
+                    if (gameState.currentBGM != titleBGM) {
+                        // 現在のBGMを停止
+                        if (gameState.bgmPlaying) {
+                            audioManager.stopBGM();
+                            gameState.bgmPlaying = false;
+                        }
+                        
+                        // タイトルBGMを読み込み・再生
+                        std::string bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/title.ogg");
+                        if (audioManager.loadBGM(bgmPath)) {
+                            audioManager.playBGM();
+                            gameState.currentBGM = titleBGM;
+                            gameState.bgmPlaying = true;
+                            std::cout << "Title BGM started: " << titleBGM << std::endl;
+                        }
+                    }
+                }
+                
                 // キー状態更新
                 for (auto& [key, state] : keyStates) {
                     state.update(glfwGetKey(window, key) == GLFW_PRESS);
                 }
                 
-                // ENTERキーでゲーム開始（チュートリアルへ）
-                if (keyStates[GLFW_KEY_ENTER].justPressed()) {
-                    gameState.showTitleScreen = false;
-                    // チュートリアルステージ（ステージ6）を読み込む
-                    stageManager.loadStage(6, gameState, platformSystem);
-                    // Ready画面とカウントダウンをスキップして直接ゲーム開始
-                    gameState.showReadyScreen = false;
-                    gameState.readyScreenShown = true;  // Ready画面をスキップしたことを記録
-                    gameState.isCountdownActive = false;  // カウントダウンもスキップ
-                    gameState.countdownTimer = 0.0f;
-                    // カウントダウン終了時の処理を直接実行
-                    resetStageStartTime();
+                // ENTERキーでゲーム開始（テキスト表示中のみ、チュートリアルへ）
+                if (keyStates[GLFW_KEY_ENTER].justPressed() && 
+                    gameState.titleScreenPhase == GameState::TitleScreenPhase::SHOW_TEXT &&
+                    !gameState.isTransitioning) {
+                    // 遷移アニメーションを開始
+                    gameState.isTransitioning = true;
+                    gameState.transitionType = GameState::TransitionType::FADE_OUT;
+                    gameState.transitionTimer = 0.0f;
+                    gameState.pendingStageTransition = 6;  // チュートリアルステージ
+                    gameState.pendingReadyScreen = false;  // Ready画面をスキップ
+                    gameState.pendingSkipCountdown = true;  // カウントダウンをスキップ
                     
                     // タイムアタックモードの場合、開始時刻を記録
                     if (gameState.isTimeAttackMode) {
@@ -591,6 +672,49 @@ namespace GameLoop {
             return;
         }
         
+        // ステージ遷移アニメーションの処理（タイトル→チュートリアルのみ）
+        if (gameState.isTransitioning) {
+            const float FADE_DURATION = 0.5f;  // フェード時間（秒）
+            gameState.transitionTimer += deltaTime;
+            
+            if (gameState.transitionType == GameState::TransitionType::FADE_OUT) {
+                // フェードアウト中
+                if (gameState.transitionTimer >= FADE_DURATION) {
+                    // フェードアウト完了：チュートリアルステージを読み込む
+                    if (gameState.pendingStageTransition == 6) {
+                        // タイトル画面を非表示
+                        gameState.showTitleScreen = false;
+                        
+                        // チュートリアルステージを読み込む
+                        stageManager.loadStage(6, gameState, platformSystem);
+                        gameState.showReadyScreen = false;
+                        gameState.readyScreenShown = true;
+                        gameState.isCountdownActive = false;
+                        gameState.countdownTimer = 0.0f;
+                        resetStageStartTime();
+                        
+                        // フェードインに切り替え
+                        gameState.transitionType = GameState::TransitionType::FADE_IN;
+                        gameState.transitionTimer = 0.0f;
+                    }
+                }
+            } else if (gameState.transitionType == GameState::TransitionType::FADE_IN) {
+                // フェードイン中
+                if (gameState.transitionTimer >= FADE_DURATION) {
+                    // フェードイン完了：遷移終了
+                    gameState.isTransitioning = false;
+                    gameState.transitionType = GameState::TransitionType::NONE;
+                    gameState.transitionTimer = 0.0f;
+                    gameState.pendingStageTransition = -1;
+                    gameState.pendingReadyScreen = false;
+                    gameState.pendingSkipCountdown = false;
+                }
+            }
+            
+            // 遷移中は他の処理をスキップ
+            return;
+        }
+        
         // ファイル監視：ステージJSONファイルの変更をチェック（0.5秒ごと）
         // エディタモード中はホットリロードを無効化（エディタで編集中の内容が上書きされないように）
         if (!editorState.isActive) {
@@ -821,11 +945,14 @@ namespace GameLoop {
         handleInputProcessing(window, gameState, stageManager, platformSystem, keyStates, resetStageStartTime, scaledDeltaTime, audioManager);
         
         // リプレイモード中は物理演算をスキップ（位置はリプレイデータから設定される）
-        if (!gameState.isReplayMode) {
+        // ゲームオーバー時も物理演算をスキップ（無限落下を防ぐ）
+        if (!gameState.isReplayMode && !gameState.isGameOver) {
         updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
         } else {
-            // リプレイモード中でも足場の更新は必要（視覚的な動きのため）
-            platformSystem.update(scaledDeltaTime, gameState.playerPosition);
+            // リプレイモード中またはゲームオーバー中でも足場の更新は必要（視覚的な動きのため）
+            if (!gameState.isGameOver) {
+                platformSystem.update(scaledDeltaTime, gameState.playerPosition);
+            }
         }
         
         // アイテムの更新（リプレイモード中はポーズ中でない場合のみ、または通常モード）
@@ -837,6 +964,11 @@ namespace GameLoop {
 
     void updatePhysicsAndCollisions(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
                                    PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime, io::AudioManager& audioManager) {
+        // ゲームオーバー時は物理演算をスキップ
+        if (gameState.isGameOver) {
+            return;
+        }
+        
         // 重力方向の取得
         glm::vec3 gravityDirection = glm::vec3(0, -1, 0);
         bool inGravityZone = PhysicsSystem::isPlayerInGravityZone(gameState, gameState.playerPosition, gravityDirection);
@@ -1129,6 +1261,11 @@ namespace GameLoop {
         
         // 下限チェック（奈落に落ちた場合）
         if (gameState.playerPosition.y < 0) {
+            // ダメージSEを再生（ゲームオーバーでない場合のみ）
+            if (!gameState.isGameOver && gameState.audioEnabled) {
+                audioManager.playSFX("on_ground");  // damageSEとしてon_groundを使用
+            }
+            
             if (gameState.isEasyMode) {
                 // お助けモード：足場の追跡を試行
                 if (gameState.isTrackingPlatform && gameState.lastPlatformIndex >= 0) {
@@ -1162,6 +1299,9 @@ namespace GameLoop {
                 if (gameState.lives <= 0) {
                     gameState.isGameOver = true;
                     gameState.gameOverTimer = 0.0f;
+                    // ゲームオーバー時は位置を固定（無限落下を防ぐ）
+                    gameState.playerPosition.y = 0.0f;
+                    gameState.playerVelocity = glm::vec3(0, 0, 0);
                 } else {
                     // 残機がある場合はチェックポイントにリセット（アイテムは保持）
                     if (gameState.lastCheckpointItemId != -1) {
@@ -1270,16 +1410,70 @@ namespace GameLoop {
         }
         
         int width, height;
-        prepareFrame(window, gameState, stageManager, renderer, width, height);
         
-        // タイトル画面の処理
+        // タイトル画面の処理（背景を描画しない）
         if (gameState.showTitleScreen) {
-            // タイトル画面を描画
-            gameStateUIRenderer->renderTitleScreen(width, height);
+            // タイトル画面の場合は背景を描画せず、直接タイトル画面を描画
+            glfwGetFramebufferSize(window, &width, &height);
+            glViewport(0, 0, width, height);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // 黒でクリア
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
+            // タイトル画面を描画
+            gameStateUIRenderer->renderTitleScreen(width, height, gameState);
+            
+            // ステージ遷移アニメーションのオーバーレイを描画（タイトル画面中でも必要）
+            if (gameState.isTransitioning) {
+                const float FADE_DURATION = 0.5f;
+                float alpha = 0.0f;
+                
+                if (gameState.transitionType == GameState::TransitionType::FADE_OUT) {
+                    // フェードアウト：0.0 → 1.0
+                    alpha = std::min(1.0f, gameState.transitionTimer / FADE_DURATION);
+                } else if (gameState.transitionType == GameState::TransitionType::FADE_IN) {
+                    // フェードイン：1.0 → 0.0
+                    alpha = 1.0f - std::min(1.0f, gameState.transitionTimer / FADE_DURATION);
+                }
+                
+                // 黒いオーバーレイを描画
+                glMatrixMode(GL_PROJECTION);
+                glPushMatrix();
+                glLoadIdentity();
+                glOrtho(0, width, height, 0, -1, 1);
+                
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glLoadIdentity();
+                
+                glDisable(GL_DEPTH_TEST);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glColor4f(0.0f, 0.0f, 0.0f, alpha);
+                
+                glBegin(GL_QUADS);
+                glVertex2f(0, 0);
+                glVertex2f(width, 0);
+                glVertex2f(width, height);
+                glVertex2f(0, height);
+                glEnd();
+                
+                glDisable(GL_BLEND);
+                glEnable(GL_DEPTH_TEST);
+                
+                glMatrixMode(GL_PROJECTION);
+                glPopMatrix();
+                glMatrixMode(GL_MODELVIEW);
+                glPopMatrix();
+            }
+            
+            // フレームバッファをスワップ（Macで確実に表示されるように）
             renderer->endFrame();
+            glfwPollEvents();  // イベントを処理してウィンドウを更新
+            
             return;  // タイトル画面中は他の処理をスキップ
         }
+        
+        prepareFrame(window, gameState, stageManager, renderer, width, height);
         
         // エディタモード中はグリッドとプレビューを表示
         if (editorState->isActive) {
@@ -1836,6 +2030,50 @@ namespace GameLoop {
             StageEditor::renderEditorUI(window, *editorState, gameState, uiRenderer);
         }
         
+        // ステージ遷移アニメーションのオーバーレイを描画
+        if (gameState.isTransitioning) {
+            const float FADE_DURATION = 0.5f;
+            float alpha = 0.0f;
+            
+            if (gameState.transitionType == GameState::TransitionType::FADE_OUT) {
+                // フェードアウト：0.0 → 1.0
+                alpha = std::min(1.0f, gameState.transitionTimer / FADE_DURATION);
+            } else if (gameState.transitionType == GameState::TransitionType::FADE_IN) {
+                // フェードイン：1.0 → 0.0
+                alpha = 1.0f - std::min(1.0f, gameState.transitionTimer / FADE_DURATION);
+            }
+            
+            // 黒いオーバーレイを描画
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, width, height, 0, -1, 1);
+            
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(0.0f, 0.0f, 0.0f, alpha);
+            
+            glBegin(GL_QUADS);
+            glVertex2f(0, 0);
+            glVertex2f(width, 0);
+            glVertex2f(width, height);
+            glVertex2f(0, height);
+            glEnd();
+            
+            glDisable(GL_BLEND);
+            glEnable(GL_DEPTH_TEST);
+            
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+        }
+        
         renderer->endFrame();
     }
 
@@ -2144,8 +2382,6 @@ namespace GameLoop {
                     gameState.timeAttackStartTime = 0.0f;
                     gameState.isNewRecord = false;
                 }
-                
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
         

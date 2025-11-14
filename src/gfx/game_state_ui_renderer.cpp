@@ -6,8 +6,10 @@
 #include "../core/utils/ui_config_manager.h"
 #include "texture_manager.h"
 #include "../core/utils/resource_path.h"
+#include "../game/game_state.h"
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 
 namespace gfx {
 
@@ -579,7 +581,7 @@ void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderTitleScreen(int width, int height) {
+void GameStateUIRenderer::renderTitleScreen(int width, int height, const GameState& gameState) {
     // フォントの初期化を確実に行う
     font.initialize();
     
@@ -598,12 +600,23 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
+    // ========== 1. 背景のフェードイン ==========
+    // 背景は最初から表示（フェードインはオプション）
+    float backgroundAlpha = 1.0f;
+    // フェードイン効果を適用する場合は以下のコメントを外す
+    // const float BACKGROUND_FADE_DURATION = 3.5f;
+    // if (gameState.titleScreenPhase == GameState::TitleScreenPhase::BACKGROUND_FADE_IN) {
+    //     backgroundAlpha = std::min(1.0f, gameState.titleScreenTimer / BACKGROUND_FADE_DURATION);
+    // }
+    
     // タイトル背景テクスチャを表示
-    GLuint titleBgTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_bg.png"));
+    std::string titleBgPath = ResourcePath::getResourcePath("assets/textures/title_bg.png");
+    GLuint titleBgTexture = TextureManager::loadTexture(titleBgPath);
     if (titleBgTexture != 0) {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(1.0f, 1.0f, 1.0f, backgroundAlpha);
         TextureManager::bindTexture(titleBgTexture);
         
         glBegin(GL_QUADS);
@@ -616,10 +629,11 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
     } else {
-        // テクスチャが読み込めない場合は黒背景
+        // テクスチャが読み込めない場合は黒背景（デバッグ用メッセージ）
+        printf("WARNING: Failed to load title background texture from: %s\n", titleBgPath.c_str());
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+        glColor4f(0.0f, 0.0f, 0.0f, backgroundAlpha);
         glBegin(GL_QUADS);
         glVertex2f(0, 0);
         glVertex2f(width, 0);
@@ -629,36 +643,94 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
         glDisable(GL_BLEND);
     }
     
-    // タイトルロゴテクスチャを表示
-    auto logoConfig = uiConfig.getTitleLogoConfig();
-    glm::vec2 logoPos = uiConfig.calculatePosition(logoConfig.position, width, height);
-    
-    GLuint titleLogoTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_logo.png"));
-    if (titleLogoTexture != 0) {
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        TextureManager::bindTexture(titleLogoTexture);
+    // ========== 2. ロゴのアニメーション（スライドイン + スケール拡大 + バウンス）==========
+    if (gameState.titleScreenPhase == GameState::TitleScreenPhase::LOGO_ANIMATION ||
+        gameState.titleScreenPhase == GameState::TitleScreenPhase::SHOW_TEXT) {
         
-        // ロゴのサイズを計算（スケールを考慮）
-        float logoWidth = 400.0f * logoConfig.scale;  // 仮の幅、実際のテクスチャサイズに合わせて調整
-        float logoHeight = 400.0f * logoConfig.scale;  // 仮の高さ
+        auto logoConfig = uiConfig.getTitleLogoConfig();
+        glm::vec2 targetLogoPos = uiConfig.calculatePosition(logoConfig.position, width, height);
         
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y - logoHeight / 2);
-        glTexCoord2f(1.0f, 0.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y - logoHeight / 2);
-        glTexCoord2f(1.0f, 1.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y + logoHeight / 2);
-        glTexCoord2f(0.0f, 1.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y + logoHeight / 2);
-        glEnd();
+        // アニメーション計算
+        float logoAlpha = 1.0f;
+        float logoScale = 1.0f;
+        glm::vec2 logoPos = targetLogoPos;
         
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_BLEND);
+        if (gameState.titleScreenPhase == GameState::TitleScreenPhase::LOGO_ANIMATION) {
+            const float LOGO_ANIMATION_DURATION = 1.0f;
+            float progress = std::min(1.0f, gameState.titleScreenTimer / LOGO_ANIMATION_DURATION);
+            
+            // イージング関数（easeOut）
+            float easeOut = 1.0f - pow(1.0f - progress, 3.0f);
+            
+            // フェードイン
+            logoAlpha = progress;
+            
+            // スライドイン（下から）
+            float slideOffset = height * 0.3f;  // 画面下から30%の位置から開始
+            logoPos.y = targetLogoPos.y + slideOffset * (1.0f - easeOut);
+            
+            // スケール拡大（0.3倍から1.0倍へ）
+            float baseScale = 0.3f + (easeOut * 0.7f);
+            
+            // バウンス効果（目標位置に到達した後、少し跳ね返る）
+            float bounceProgress = progress;
+            if (progress > 0.7f) {
+                // 0.7以降でバウンス
+                float bouncePhase = (progress - 0.7f) / 0.3f;
+                float bounce = sinf(bouncePhase * 3.14159f) * 0.15f * (1.0f - bouncePhase);
+                logoScale = baseScale + bounce;
+            } else {
+                logoScale = baseScale;
+            }
+        }
+        
+        GLuint titleLogoTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_logo.png"));
+        if (titleLogoTexture != 0) {
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(1.0f, 1.0f, 1.0f, logoAlpha);
+            TextureManager::bindTexture(titleLogoTexture);
+            
+            // ロゴのサイズを計算（スケールを考慮）
+            float logoWidth = 400.0f * logoConfig.scale * logoScale;
+            float logoHeight = 400.0f * logoConfig.scale * logoScale;
+            
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 0.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y - logoHeight / 2);
+            glTexCoord2f(1.0f, 0.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y - logoHeight / 2);
+            glTexCoord2f(1.0f, 1.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y + logoHeight / 2);
+            glTexCoord2f(0.0f, 1.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y + logoHeight / 2);
+            glEnd();
+            
+            glDisable(GL_TEXTURE_2D);
+            glDisable(GL_BLEND);
+        }
     }
     
-    // "PLAY START : ENTER"テキストを表示（ロゴの下）
-    auto startButtonConfig = uiConfig.getTitleStartButtonConfig();
-    glm::vec2 startButtonPos = uiConfig.calculatePosition(startButtonConfig.position, width, height);
-    renderText("PLAY START : ENTER", startButtonPos, startButtonConfig.color, startButtonConfig.scale);
+    // ========== 3. テキスト表示（フェードイン + 点滅）==========
+    if (gameState.titleScreenPhase == GameState::TitleScreenPhase::SHOW_TEXT) {
+        auto startButtonConfig = uiConfig.getTitleStartButtonConfig();
+        glm::vec2 startButtonPos = uiConfig.calculatePosition(startButtonConfig.position, width, height);
+        
+        // フェードイン（最初の0.3秒）
+        const float TEXT_FADE_DURATION = 0.3f;
+        float textAlpha = 1.0f;
+        if (gameState.titleScreenTimer < TEXT_FADE_DURATION) {
+            textAlpha = gameState.titleScreenTimer / TEXT_FADE_DURATION;
+        }
+        
+        // 点滅アニメーション（フェードイン後）
+        if (gameState.titleScreenTimer >= TEXT_FADE_DURATION) {
+            float blinkSpeed = 2.0f;  // 点滅速度
+            float blinkTime = gameState.titleScreenTimer - TEXT_FADE_DURATION;
+            float blink = 0.7f + 0.3f * (0.5f + 0.5f * sinf(blinkTime * blinkSpeed * 3.14159f));
+            textAlpha = blink;
+        }
+        
+        glm::vec3 textColor = startButtonConfig.color * textAlpha;
+        renderText("PLAY START : ENTER", startButtonPos, textColor, startButtonConfig.scale);
+    }
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);

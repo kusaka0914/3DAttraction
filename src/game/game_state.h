@@ -229,6 +229,26 @@ struct GameState {
     
     // タイトル画面状態
     bool showTitleScreen = true;  // デフォルトでタイトル画面を表示
+    float titleScreenTimer = 0.0f;  // タイトル画面のアニメーションタイマー
+    enum class TitleScreenPhase {
+        BACKGROUND_FADE_IN,  // 背景フェードイン中
+        LOGO_ANIMATION,      // ロゴアニメーション中
+        SHOW_TEXT           // テキスト表示中
+    };
+    TitleScreenPhase titleScreenPhase = TitleScreenPhase::BACKGROUND_FADE_IN;
+    
+    // ステージ遷移アニメーション状態
+    bool isTransitioning = false;  // 遷移中かどうか
+    float transitionTimer = 0.0f;  // 遷移アニメーションタイマー
+    enum class TransitionType {
+        NONE,
+        FADE_OUT,  // フェードアウト中（画面を暗くする）
+        FADE_IN    // フェードイン中（画面を明るくする）
+    };
+    TransitionType transitionType = TransitionType::NONE;
+    int pendingStageTransition = -1;  // 遷移待ちのステージ番号（-1は遷移なし）
+    bool pendingReadyScreen = false;  // 遷移後にReady画面を表示するか
+    bool pendingSkipCountdown = false;  // 遷移後にカウントダウンをスキップするか
     
     // EASYモード説明UI状態
     bool showEasyModeExplanationUI = false;
