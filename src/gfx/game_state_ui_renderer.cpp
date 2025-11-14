@@ -9,6 +9,7 @@
 #include "../game/game_state.h"
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 
 namespace gfx {
 
@@ -20,10 +21,8 @@ GameStateUIRenderer::~GameStateUIRenderer() {
 }
 
 void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std::string& message, int currentStep, bool stepCompleted) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -33,22 +32,18 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // 画面中央より少し下に表示
     float centerX = width / 2.0f;
     float centerY = height / 2.0f;
     
-    // ステップ表示
     auto stepTextConfig = uiConfig.getTutorialStepTextConfig();
     glm::vec2 stepTextPos = uiConfig.calculatePosition(stepTextConfig.position, width, height);
     std::string stepText = "STEP " + std::to_string(currentStep + 1) + "/11";
     renderText(stepText, stepTextPos, stepTextConfig.color, stepTextConfig.scale);
 
-    // ステップ固有の説明テキスト表示
     if(currentStep == 5){
         auto explainText1Config = uiConfig.getTutorialStep5ExplainText1Config();
         glm::vec2 explainText1Pos = uiConfig.calculatePosition(explainText1Config.position, width, height);
@@ -91,13 +86,11 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
         renderText(explainText3, explainText3Pos, explainText3Config.color, explainText3Config.scale);
     }
     
-    // メッセージ表示（現在のステップに応じた設定を使用）
     auto messageConfig = uiConfig.getTutorialMessageConfigForStep(currentStep);
     glm::vec2 messagePos = uiConfig.calculatePosition(messageConfig.position, width, height);
     glm::vec3 messageColor = stepCompleted ? messageConfig.completedColor : messageConfig.color;
     renderText(message, messagePos, messageColor, messageConfig.scale);
     
-    // ステップ完了時のメッセージ
     if (stepCompleted) {
         auto pressEnterConfig = uiConfig.getTutorialPressEnterConfig();
         glm::vec2 pressEnterPos = uiConfig.calculatePosition(pressEnterConfig.position, width, height);
@@ -106,7 +99,6 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
         }
     }
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -117,12 +109,10 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
 }
 
 void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode,
-                                                      int currentStage, GameState::SecretStarType selectedSecretStarType,
-                                                      const std::map<int, std::set<GameState::SecretStarType>>& secretStarCleared) {
-    // フォントの初期化を確実に行う
+                                                      int currentStage, GameProgressState::SecretStarType selectedSecretStarType,
+                                                      const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared) {
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -132,10 +122,8 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -149,7 +137,6 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // ステージクリアメッセージ
     if (earnedStars == 3) {
         auto completedConfig = uiConfig.getStageClearCompletedTextConfig();
         glm::vec2 completedPos = uiConfig.calculatePosition(completedConfig.position, width, height);
@@ -160,7 +147,6 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
         renderText("STAGE CLEAR!", clearPos, clearConfig.color, clearConfig.scale);
     }
     
-    // クリアタイム（少数第2位まで表示）
     int clearTimeInt = static_cast<int>(clearTime);
     int clearTimeDecimal = static_cast<int>((clearTime - clearTimeInt) * 100);
     std::string clearTimeText = std::to_string(clearTimeInt) + "." + 
@@ -169,21 +155,17 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     glm::vec2 clearTimePos = uiConfig.calculatePosition(clearTimeConfig.position, width, height);
     renderText("CLEAR TIME: " + clearTimeText, clearTimePos, clearTimeConfig.color, clearTimeConfig.scale);
     
-    // 星の表示（タイムアタックモードでは表示しない）
     if (!isTimeAttackMode) {
         auto starsConfig = uiConfig.getStageClearStarsConfig();
         glm::vec2 starsBasePos = uiConfig.calculatePosition(starsConfig.position, width, height);
         
-        // SECRET STARモードの場合
-        if (selectedSecretStarType != GameState::SecretStarType::NONE && currentStage > 0) {
-            // SECRET STARタイプの順序: MAX_SPEED_STAR(0), SHADOW_STAR(1), IMMERSIVE_STAR(2)
-            std::vector<GameState::SecretStarType> secretStarTypes = {
-                GameState::SecretStarType::MAX_SPEED_STAR,
-                GameState::SecretStarType::SHADOW_STAR,
-                GameState::SecretStarType::IMMERSIVE_STAR
+        if (selectedSecretStarType != GameProgressState::SecretStarType::NONE && currentStage > 0) {
+            std::vector<GameProgressState::SecretStarType> secretStarTypes = {
+                GameProgressState::SecretStarType::MAX_SPEED_STAR,
+                GameProgressState::SecretStarType::SHADOW_STAR,
+                GameProgressState::SecretStarType::IMMERSIVE_STAR
             };
             
-            // 各SECRET STARタイプの色定義
             std::vector<glm::vec3> secretStarColors = {
                 glm::vec3(0.2f, 0.8f, 1.0f),  // MAX_SPEED_STAR: 水色
                 glm::vec3(0.1f, 0.1f, 0.1f),  // SHADOW_STAR: 黒
@@ -192,8 +174,7 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
             
             glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
             
-            // 現在のステージでクリア済みのSECRET STARタイプを取得
-            std::set<GameState::SecretStarType> clearedTypes;
+            std::set<GameProgressState::SecretStarType> clearedTypes;
             if (secretStarCleared.count(currentStage) > 0) {
                 clearedTypes = secretStarCleared.at(currentStage);
             }
@@ -205,7 +186,6 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
                 renderStar(starPos, starColor, starsConfig.scale, width, height);
             }
         } else {
-            // 通常モードの場合
             for (int i = 0; i < 3; i++) {
                 glm::vec2 starPos = glm::vec2(starsBasePos.x + i * starsConfig.spacing, starsBasePos.y);
                 glm::vec3 starColor = (i < earnedStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
@@ -214,17 +194,14 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
         }
     }
     
-    // ステージ選択フィールドに戻るボタン
     auto returnFieldConfig = uiConfig.getStageClearReturnFieldConfig();
     glm::vec2 returnFieldPos = uiConfig.calculatePosition(returnFieldConfig.position, width, height);
     renderText("RETURN FIELD: ENTER", returnFieldPos, returnFieldConfig.color, returnFieldConfig.scale);
     
-    // リトライボタン
     auto retryConfig = uiConfig.getStageClearRetryConfig();
     glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
     renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -235,10 +212,8 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
 }
 
 void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -248,10 +223,8 @@ void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height,
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -265,9 +238,7 @@ void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height,
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // ステージクリアメッセージ（STAGE COMPLETEDとSTAGE CLEARは削除）
     
-    // クリアタイム（分:秒.ミリ秒形式）
     int clearTimeInt = static_cast<int>(clearTime);
     int clearTimeMinutes = clearTimeInt / 60;
     int clearTimeSeconds = clearTimeInt % 60;
@@ -279,7 +250,6 @@ void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height,
     glm::vec2 clearTimePos = uiConfig.calculatePosition(clearTimeConfig.position, width, height);
     renderText("CLEAR TIME: " + clearTimeText, clearTimePos, clearTimeConfig.color, clearTimeConfig.scale);
     
-    // ベストタイム（記録がある場合のみ表示）
     if (bestTime > 0.0f) {
         int bestTimeInt = static_cast<int>(bestTime);
         int bestTimeMinutes = bestTimeInt / 60;
@@ -293,29 +263,24 @@ void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height,
         renderText("BEST TIME: " + bestTimeText, bestTimePos, bestTimeConfig.color, bestTimeConfig.scale);
     }
     
-    // 新記録メッセージ（新記録の場合のみ表示）
     if (isNewRecord) {
         auto newRecordConfig = uiConfig.getTimeAttackClearNewRecordConfig();
         glm::vec2 newRecordPos = uiConfig.calculatePosition(newRecordConfig.position, width, height);
         renderText("NEW RECORD!", newRecordPos, newRecordConfig.color, newRecordConfig.scale);
     }
     
-    // ステージ選択フィールドに戻るボタン
     auto returnFieldConfig = uiConfig.getTimeAttackClearReturnFieldConfig();
     glm::vec2 returnFieldPos = uiConfig.calculatePosition(returnFieldConfig.position, width, height);
     renderText("RETURN FIELD: ENTER", returnFieldPos, returnFieldConfig.color, returnFieldConfig.scale);
     
-    // リトライボタン
     auto retryConfig = uiConfig.getTimeAttackClearRetryConfig();
     glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
     renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
     
-    // リプレイボタン
     auto replayConfig = uiConfig.getTimeAttackClearReplayConfig();
     glm::vec2 replayPos = uiConfig.calculatePosition(replayConfig.position, width, height);
     renderText("REPLAY: SPACE", replayPos, replayConfig.color, replayConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -326,10 +291,8 @@ void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height,
 }
 
 void GameStateUIRenderer::renderWarpTutorialBackground(int width, int height, int targetStage) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -339,10 +302,8 @@ void GameStateUIRenderer::renderWarpTutorialBackground(int width, int height, in
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -356,12 +317,10 @@ void GameStateUIRenderer::renderWarpTutorialBackground(int width, int height, in
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getWarpTutorialTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("STAGE " + std::to_string(targetStage) + " HAS BEEN UNLOCKED.", titlePos, titleConfig.color, titleConfig.scale);
     
-    // ワープ機能の説明
     auto desc1Config = uiConfig.getWarpTutorialDescription1Config();
     glm::vec2 desc1Pos = uiConfig.calculatePosition(desc1Config.position, width, height);
     renderText("YOU CAN WARP TO THE STAGE", desc1Pos, desc1Config.color, desc1Config.scale);
@@ -370,12 +329,10 @@ void GameStateUIRenderer::renderWarpTutorialBackground(int width, int height, in
     glm::vec2 desc2Pos = uiConfig.calculatePosition(desc2Config.position, width, height);
     renderText("BY PRESSING KEY " + std::to_string(targetStage) + ".", desc2Pos, desc2Config.color, desc2Config.scale);
     
-    // ステージに入るボタン
     auto enterButtonConfig = uiConfig.getWarpTutorialEnterButtonConfig();
     glm::vec2 enterButtonPos = uiConfig.calculatePosition(enterButtonConfig.position, width, height);
     renderText("ENTER STAGE: ENTER", enterButtonPos, enterButtonConfig.color, enterButtonConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -385,10 +342,8 @@ void GameStateUIRenderer::renderWarpTutorialBackground(int width, int height, in
 }
 
 void GameStateUIRenderer::renderGameOverBackground(int width, int height) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -398,10 +353,8 @@ void GameStateUIRenderer::renderGameOverBackground(int width, int height) {
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -415,22 +368,18 @@ void GameStateUIRenderer::renderGameOverBackground(int width, int height) {
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // ゲームオーバーメッセージ
     auto gameOverTextConfig = uiConfig.getGameOverTextConfig();
     glm::vec2 gameOverTextPos = uiConfig.calculatePosition(gameOverTextConfig.position, width, height);
     renderText("GAME OVER!", gameOverTextPos, gameOverTextConfig.color, gameOverTextConfig.scale);
     
-    // ステージ選択フィールドに戻るボタン
     auto returnFieldConfig = uiConfig.getGameOverReturnFieldConfig();
     glm::vec2 returnFieldPos = uiConfig.calculatePosition(returnFieldConfig.position, width, height);
     renderText("RETURN FIELD: ENTER", returnFieldPos, returnFieldConfig.color, returnFieldConfig.scale);
     
-    // リトライボタン
     auto retryConfig = uiConfig.getGameOverRetryConfig();
     glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
     renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -441,7 +390,6 @@ void GameStateUIRenderer::renderGameOverBackground(int width, int height) {
 }
 
 void GameStateUIRenderer::renderEndingMessage(int width, int height, float timer) {
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -451,10 +399,8 @@ void GameStateUIRenderer::renderEndingMessage(int width, int height, float timer
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 黒い背景で暗転
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -465,22 +411,18 @@ void GameStateUIRenderer::renderEndingMessage(int width, int height, float timer
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // メッセージ1
     auto thankYouConfig = uiConfig.getEndingThankYouConfig();
     glm::vec2 thankYouPos = uiConfig.calculatePosition(thankYouConfig.position, width, height);
     renderText("THANK YOU FOR PLAYING!", thankYouPos, thankYouConfig.color, thankYouConfig.scale);
     
-    // メッセージ2
     auto congratulationsConfig = uiConfig.getEndingCongratulationsConfig();
     glm::vec2 congratulationsPos = uiConfig.calculatePosition(congratulationsConfig.position, width, height);
     renderText("AND CONGRATULATIONS ON CONQUERING WORLD 1!", congratulationsPos, congratulationsConfig.color, congratulationsConfig.scale);
     
-    // メッセージ3
     auto seeYouAgainConfig = uiConfig.getEndingSeeYouAgainConfig();
     glm::vec2 seeYouAgainPos = uiConfig.calculatePosition(seeYouAgainConfig.position, width, height);
     renderText("SEE YOU AGAIN SOMEWHERE!", seeYouAgainPos, seeYouAgainConfig.color, seeYouAgainConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -490,10 +432,8 @@ void GameStateUIRenderer::renderEndingMessage(int width, int height, float timer
 }
 
 void GameStateUIRenderer::renderUnlockConfirmBackground(int width, int height, int targetStage, int requiredStars, int currentStars) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -503,10 +443,8 @@ void GameStateUIRenderer::renderUnlockConfirmBackground(int width, int height, i
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -520,27 +458,22 @@ void GameStateUIRenderer::renderUnlockConfirmBackground(int width, int height, i
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getUnlockConfirmTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("UNLOCK STAGE " + std::to_string(targetStage) + " ?", titlePos, titleConfig.color, titleConfig.scale);
     
-    // 必要な星数
     auto requiredStarsConfig = uiConfig.getUnlockConfirmRequiredStarsConfig();
     glm::vec2 requiredStarsPos = uiConfig.calculatePosition(requiredStarsConfig.position, width, height);
     renderText("YOU MUST USE " + std::to_string(requiredStars) + " STARS !", requiredStarsPos, requiredStarsConfig.color, requiredStarsConfig.scale);
     
-    // 確認ボタン
     auto unlockButtonConfig = uiConfig.getUnlockConfirmUnlockButtonConfig();
     glm::vec2 unlockButtonPos = uiConfig.calculatePosition(unlockButtonConfig.position, width, height);
     renderText("UNLOCK: ENTER", unlockButtonPos, unlockButtonConfig.color, unlockButtonConfig.scale);
     
-    // キャンセルボタン
     auto cancelButtonConfig = uiConfig.getUnlockConfirmCancelButtonConfig();
     glm::vec2 cancelButtonPos = uiConfig.calculatePosition(cancelButtonConfig.position, width, height);
     renderText("CANCEL: SPACE", cancelButtonPos, cancelButtonConfig.color, cancelButtonConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -551,10 +484,8 @@ void GameStateUIRenderer::renderUnlockConfirmBackground(int width, int height, i
 }
 
 void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height, int targetStage, int requiredStars, int currentStars) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -564,10 +495,8 @@ void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -581,27 +510,22 @@ void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getStarInsufficientTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("YOU CAN'T UNLOCK STAGE " + std::to_string(targetStage) + " !", titlePos, titleConfig.color, titleConfig.scale);
     
-    // 必要な星数
     auto requiredStarsConfig = uiConfig.getStarInsufficientRequiredStarsConfig();
     glm::vec2 requiredStarsPos = uiConfig.calculatePosition(requiredStarsConfig.position, width, height);
     renderText("YOU NEED " + std::to_string(requiredStars) + " STARS !", requiredStarsPos, requiredStarsConfig.color, requiredStarsConfig.scale);
     
-    // アドバイス
     auto collectStarsConfig = uiConfig.getStarInsufficientCollectStarsConfig();
     glm::vec2 collectStarsPos = uiConfig.calculatePosition(collectStarsConfig.position, width, height);
     renderText("COLLECT STARS ON OTHER STAGES !", collectStarsPos, collectStarsConfig.color, collectStarsConfig.scale);
     
-    // 閉じるボタン
     auto okButtonConfig = uiConfig.getStarInsufficientOkButtonConfig();
     glm::vec2 okButtonPos = uiConfig.calculatePosition(okButtonConfig.position, width, height);
     renderText("OK: SPACE", okButtonPos, okButtonConfig.color, okButtonConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -611,11 +535,9 @@ void GameStateUIRenderer::renderStarInsufficientBackground(int width, int height
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderTitleScreen(int width, int height) {
-    // フォントの初期化を確実に行う
+void GameStateUIRenderer::renderTitleScreen(int width, int height, const GameState& gameState) {
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -625,17 +547,19 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル背景テクスチャを表示
-    GLuint titleBgTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_bg.png"));
+    float backgroundAlpha = 1.0f;
+    
+    std::string titleBgPath = ResourcePath::getResourcePath("assets/textures/title_bg.png");
+    GLuint titleBgTexture = TextureManager::loadTexture(titleBgPath);
     if (titleBgTexture != 0) {
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(1.0f, 1.0f, 1.0f, backgroundAlpha);
         TextureManager::bindTexture(titleBgTexture);
         
         glBegin(GL_QUADS);
@@ -648,10 +572,10 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
     } else {
-        // テクスチャが読み込めない場合は黒背景
+        printf("WARNING: Failed to load title background texture from: %s\n", titleBgPath.c_str());
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+        glColor4f(0.0f, 0.0f, 0.0f, backgroundAlpha);
         glBegin(GL_QUADS);
         glVertex2f(0, 0);
         glVertex2f(width, 0);
@@ -661,38 +585,83 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
         glDisable(GL_BLEND);
     }
     
-    // タイトルロゴテクスチャを表示
-    auto logoConfig = uiConfig.getTitleLogoConfig();
-    glm::vec2 logoPos = uiConfig.calculatePosition(logoConfig.position, width, height);
-    
-    GLuint titleLogoTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_logo.png"));
-    if (titleLogoTexture != 0) {
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        TextureManager::bindTexture(titleLogoTexture);
+    if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::LOGO_ANIMATION ||
+        gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT) {
         
-        // ロゴのサイズを計算（スケールを考慮）
-        float logoWidth = 400.0f * logoConfig.scale;  // 仮の幅、実際のテクスチャサイズに合わせて調整
-        float logoHeight = 400.0f * logoConfig.scale;  // 仮の高さ
+        auto logoConfig = uiConfig.getTitleLogoConfig();
+        glm::vec2 targetLogoPos = uiConfig.calculatePosition(logoConfig.position, width, height);
         
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y - logoHeight / 2);
-        glTexCoord2f(1.0f, 0.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y - logoHeight / 2);
-        glTexCoord2f(1.0f, 1.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y + logoHeight / 2);
-        glTexCoord2f(0.0f, 1.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y + logoHeight / 2);
-        glEnd();
+        float logoAlpha = 1.0f;
+        float logoScale = 1.0f;
+        glm::vec2 logoPos = targetLogoPos;
         
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_BLEND);
+        if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::LOGO_ANIMATION) {
+            const float LOGO_ANIMATION_DURATION = 1.0f;
+            float progress = std::min(1.0f, gameState.ui.titleScreenTimer / LOGO_ANIMATION_DURATION);
+            
+            float easeOut = 1.0f - pow(1.0f - progress, 3.0f);
+            
+            logoAlpha = progress;
+            
+            float slideOffset = height * 0.3f;  // 画面下から30%の位置から開始
+            logoPos.y = targetLogoPos.y + slideOffset * (1.0f - easeOut);
+            
+            float baseScale = 0.3f + (easeOut * 0.7f);
+            
+            float bounceProgress = progress;
+            if (progress > 0.7f) {
+                float bouncePhase = (progress - 0.7f) / 0.3f;
+                float bounce = sinf(bouncePhase * 3.14159f) * 0.15f * (1.0f - bouncePhase);
+                logoScale = baseScale + bounce;
+            } else {
+                logoScale = baseScale;
+            }
+        }
+        
+        GLuint titleLogoTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/title_logo.png"));
+        if (titleLogoTexture != 0) {
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(1.0f, 1.0f, 1.0f, logoAlpha);
+            TextureManager::bindTexture(titleLogoTexture);
+            
+            float logoWidth = 400.0f * logoConfig.scale * logoScale;
+            float logoHeight = 400.0f * logoConfig.scale * logoScale;
+            
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 0.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y - logoHeight / 2);
+            glTexCoord2f(1.0f, 0.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y - logoHeight / 2);
+            glTexCoord2f(1.0f, 1.0f); glVertex2f(logoPos.x + logoWidth / 2, logoPos.y + logoHeight / 2);
+            glTexCoord2f(0.0f, 1.0f); glVertex2f(logoPos.x - logoWidth / 2, logoPos.y + logoHeight / 2);
+            glEnd();
+            
+            glDisable(GL_TEXTURE_2D);
+            glDisable(GL_BLEND);
+        }
     }
     
-    // "PLAY START : ENTER"テキストを表示（ロゴの下）
-    auto startButtonConfig = uiConfig.getTitleStartButtonConfig();
-    glm::vec2 startButtonPos = uiConfig.calculatePosition(startButtonConfig.position, width, height);
-    renderText("PLAY START : ENTER", startButtonPos, startButtonConfig.color, startButtonConfig.scale);
+    if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT) {
+        auto startButtonConfig = uiConfig.getTitleStartButtonConfig();
+        glm::vec2 startButtonPos = uiConfig.calculatePosition(startButtonConfig.position, width, height);
+        
+        const float TEXT_FADE_DURATION = 0.3f;
+        float textAlpha = 1.0f;
+        if (gameState.ui.titleScreenTimer < TEXT_FADE_DURATION) {
+            textAlpha = gameState.ui.titleScreenTimer / TEXT_FADE_DURATION;
+        }
+        
+        if (gameState.ui.titleScreenTimer >= TEXT_FADE_DURATION) {
+            float blinkSpeed = 2.0f;  // 点滅速度
+            float blinkTime = gameState.ui.titleScreenTimer - TEXT_FADE_DURATION;
+            float blink = 0.7f + 0.3f * (0.5f + 0.5f * sinf(blinkTime * blinkSpeed * 3.14159f));
+            textAlpha = blink;
+        }
+        
+        glm::vec3 textColor = startButtonConfig.color * textAlpha;
+        renderText("PLAY START : ENTER", startButtonPos, textColor, startButtonConfig.scale);
+    }
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -703,10 +672,8 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height) {
 }
 
 void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLevel, bool isFirstPersonMode) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -716,10 +683,8 @@ void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLeve
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -731,23 +696,19 @@ void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLeve
     glEnd();
     glDisable(GL_BLEND);
     
-    // 座標系を1280x720に正規化
     float scaleX = 1280.0f / width;
     float scaleY = 720.0f / height;
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // "Ready?"メッセージ
     auto readyTextConfig = uiConfig.getReadyTextConfig();
     glm::vec2 readyTextPos = uiConfig.calculatePosition(readyTextConfig.position, width, height);
     renderText("READY", glm::vec2(readyTextPos.x * scaleX, readyTextPos.y * scaleY), readyTextConfig.color, readyTextConfig.scale);
     
-    // "PLAY SPEED"ラベル
     auto playSpeedLabelConfig = uiConfig.getPlaySpeedLabelConfig();
     glm::vec2 playSpeedLabelPos = uiConfig.calculatePosition(playSpeedLabelConfig.position, width, height);
     renderText("PLAY SPEED", glm::vec2(playSpeedLabelPos.x * scaleX, playSpeedLabelPos.y * scaleY), playSpeedLabelConfig.color, playSpeedLabelConfig.scale);
     
-    // 速度選択（1x, 2x, 3x）
     auto speedOptionsConfig = uiConfig.getSpeedOptionsConfig();
     glm::vec2 speedOptionsBasePos = uiConfig.calculatePosition(speedOptionsConfig.position, width, height);
     std::vector<std::string> speedTexts = {"1x", "2x", "3x"};
@@ -758,17 +719,14 @@ void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLeve
         renderText(speedTexts[i], glm::vec2(xPos, yPos), color, speedOptionsConfig.scale);
     }
     
-    // "PRESS T"
     auto readyPressTConfig = uiConfig.getReadyPressTConfig();
     glm::vec2 readyPressTPos = uiConfig.calculatePosition(readyPressTConfig.position, width, height);
     renderText("PRESS T", glm::vec2(readyPressTPos.x * scaleX, readyPressTPos.y * scaleY), readyPressTConfig.color, readyPressTConfig.scale);
     
-    // "CONFIRM: ENTER"メッセージ
     auto confirmConfig = uiConfig.getConfirmConfig();
     glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
     renderText("CONFIRM: ENTER", glm::vec2(confirmPos.x * scaleX, confirmPos.y * scaleY), confirmConfig.color, confirmConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -779,10 +737,8 @@ void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLeve
 }
 
 void GameStateUIRenderer::renderCountdown(int width, int height, int count) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -792,10 +748,8 @@ void GameStateUIRenderer::renderCountdown(int width, int height, int count) {
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -811,11 +765,9 @@ void GameStateUIRenderer::renderCountdown(int width, int height, int count) {
     auto countdownConfig = uiConfig.getCountdownNumberConfig();
     glm::vec2 countdownPos = uiConfig.calculatePosition(countdownConfig.position, width, height);
     
-    // カウントダウン数字
     std::string countText = std::to_string(count);
     renderText(countText, countdownPos, countdownConfig.color, countdownConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -826,7 +778,6 @@ void GameStateUIRenderer::renderCountdown(int width, int height, int count) {
 }
 
 void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
     // 2D描画モードに切り替え（difficulty selectionと同じ方法）
@@ -844,11 +795,9 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // 半透明の背景
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // 背景の四角形（画面全体）
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
     glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -858,7 +807,6 @@ void GameStateUIRenderer::renderStage0Tutorial(int width, int height) {
     glEnd();
     glDisable(GL_BLEND);
     
-    // テキストの描画
     auto line1Config = uiConfig.getStage0TutorialLine1Config();
     glm::vec2 line1Pos = uiConfig.calculatePosition(line1Config.position, width, height);
     renderText("THIS IS THE WORLD.", line1Pos, line1Config.color, line1Config.scale);
@@ -898,25 +846,20 @@ void GameStateUIRenderer::renderStageSelectionAssist(int width, int height, int 
         return; // 非表示の場合は何も描画しない
     }
     
-    // フォントの初期化を確実に行う
     font.initialize();
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto assistConfig = uiConfig.getStageSelectionAssistTextConfig();
     glm::vec2 assistPos = uiConfig.calculatePosition(assistConfig.position, width, height);
     
-    // 半透明の背景
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     
-    // テキストの描画（画面中央少し下）
     std::string assistText;
     if (targetStage == 6 || isUnlocked) {
-        // ステージ1は常に解放済み、または解放済みのステージ
         assistText = "ENTER STAGE " + std::to_string(targetStage) + " : ENTER";
     } else { 
-        // 未解放のステージ
         assistText = "UNLOCK STAGE " + std::to_string(targetStage) + " : ENTER";
     }
     
@@ -926,7 +869,6 @@ void GameStateUIRenderer::renderStageSelectionAssist(int width, int height, int 
 }
 
 void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -936,10 +878,8 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 黒い背景で暗転
     glColor3f(0.0f, 0.0f, 0.0f);
     glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -950,7 +890,6 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // スタッフロールの表示（画面中央から開始して上にスクロール）
     float scrollOffset = timer * uiConfig.getStaffRollSpacing(); // 設定ファイルから間隔を取得
     float spacing = uiConfig.getStaffRollSpacing();
     
@@ -958,12 +897,10 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     glm::vec2 skipPos = uiConfig.calculatePosition(skipConfig.position, width, height);
     renderText("SKIP : ENTER", skipPos, skipConfig.color, skipConfig.scale);
     
-    // タイトル（画面中央から開始）
     auto titleConfig = uiConfig.getStaffRollTitleConfig();
     glm::vec2 titleBasePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("STAFF ROLL", glm::vec2(titleBasePos.x, titleBasePos.y - scrollOffset), titleConfig.color, titleConfig.scale);
     
-    // 各スタッフ項目（画面中央から開始）
     auto roleConfig = uiConfig.getStaffRollRoleConfig();
     auto nameConfig = uiConfig.getStaffRollNameConfig();
     glm::vec2 roleBasePos = uiConfig.calculatePosition(roleConfig.position, width, height);
@@ -987,7 +924,6 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     renderText("DEBUG", glm::vec2(roleBasePos.x, roleBasePos.y - scrollOffset + spacing * 6), roleConfig.color, roleConfig.scale);
     renderText("TAKUMI KUSAKA", glm::vec2(nameBasePos.x, nameBasePos.y - scrollOffset + spacing * 6), nameConfig.color, nameConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -997,7 +933,6 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
 }
 
 void GameStateUIRenderer::begin2DMode() {
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1011,7 +946,6 @@ void GameStateUIRenderer::begin2DMode() {
 }
 
 void GameStateUIRenderer::end2DMode() {
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -1022,7 +956,6 @@ void GameStateUIRenderer::end2DMode() {
 }
 
 void GameStateUIRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1032,10 +965,8 @@ void GameStateUIRenderer::renderText(const std::string& text, const glm::vec2& p
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 色を設定
     glColor3f(color.r, color.g, color.b);
     
     float currentX = position.x;
@@ -1051,12 +982,10 @@ void GameStateUIRenderer::renderText(const std::string& text, const glm::vec2& p
             continue;
         }
         
-        // ビットマップフォントで文字を描画
         renderBitmapChar(c, glm::vec2(currentX, position.y), color, scale);
         currentX += charWidth + GameConstants::RenderConstants::CHAR_SPACING * scale;  // 文字間隔を増加
     }
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -1068,7 +997,6 @@ void GameStateUIRenderer::renderText(const std::string& text, const glm::vec2& p
 
 void GameStateUIRenderer::renderBitmapChar(char c, const glm::vec2& position, const glm::vec3& color, float scale) {
     if (!font.hasCharacter(c)) {
-        // 文字が見つからない場合は空白として扱う
         return;
     }
     
@@ -1076,7 +1004,6 @@ void GameStateUIRenderer::renderBitmapChar(char c, const glm::vec2& position, co
     
     glColor3f(color.r, color.g, color.b);
     
-    // 8x12のビットマップを描画
     for (int y = 0; y < 12; y++) {
         for (int x = 0; x < 8; x++) {
             size_t index = y * 8 + x;
@@ -1096,36 +1023,29 @@ void GameStateUIRenderer::renderBitmapChar(char c, const glm::vec2& position, co
 }
 
 void GameStateUIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale, int width, int height) {
-    // 1280x720基準のスケーリングを適用
     float scaleX = static_cast<float>(width) / 1280.0f;
     float scaleY = static_cast<float>(height) / 720.0f;
     float scaledScale = scale * std::min(scaleX, scaleY);
     
     glColor3f(color.r, color.g, color.b);
     
-    // 星の中心点（positionは既にスケーリング済みなのでそのまま使用）
     float centerX = position.x;
     float centerY = position.y;
     
-    // 星の5つの角を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < 5; i++) {
         float angle1 = i * 72.0f * 3.14159f / 180.0f;
         float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
         
-        // 外側の点（scaledScaleを使用）
         float x1 = centerX + cos(angle1) * 12.0f * scaledScale;
         float y1 = centerY + sin(angle1) * 12.0f * scaledScale;
         
-        // 内側の点（scaledScaleを使用）
         float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scaledScale;
         float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scaledScale;
         
-        // 次の外側の点（scaledScaleを使用）
         float x3 = centerX + cos(angle2) * 12.0f * scaledScale;
         float y3 = centerY + sin(angle2) * 12.0f * scaledScale;
         
-        // 中心から各点への三角形を描画（塗りつぶし）
         glVertex2f(centerX, centerY);  // 中心点
         glVertex2f(x1, y1);            // 外側の点1
         glVertex2f(x2, y2);            // 内側の点
@@ -1138,10 +1058,8 @@ void GameStateUIRenderer::renderStar(const glm::vec2& position, const glm::vec3&
 }
 
 void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1151,10 +1069,8 @@ void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -1168,12 +1084,10 @@ void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getEasyModeExplanationTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("DIFFICULTY SELECTION", titlePos, titleConfig.color, titleConfig.scale);
     
-    // 説明文
     auto desc1Config = uiConfig.getEasyModeExplanationDescription1Config();
     glm::vec2 desc1Pos = uiConfig.calculatePosition(desc1Config.position, width, height);
     renderText("YOU CAN CHOOSE BETWEEN EASY AND NORMAL MODES.", desc1Pos, desc1Config.color, desc1Config.scale);
@@ -1202,12 +1116,10 @@ void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
     glm::vec2 item4bPos = uiConfig.calculatePosition(item4bConfig.position, width, height);
     renderText("   YOU WERE LAST STANDING ON.", item4bPos, item4bConfig.color, item4bConfig.scale);
     
-    // 続行ボタン
     auto okButtonConfig = uiConfig.getEasyModeExplanationOkButtonConfig();
     glm::vec2 okButtonPos = uiConfig.calculatePosition(okButtonConfig.position, width, height);
     renderText("OK : ENTER", okButtonPos, okButtonConfig.color, okButtonConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -1217,10 +1129,8 @@ void GameStateUIRenderer::renderEasyModeExplanationUI(int width, int height) {
 }
 
 void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool isEasyMode) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1230,10 +1140,8 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -1247,12 +1155,10 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getModeSelectionTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("SELECT MODE", titlePos, titleConfig.color, titleConfig.scale);
     
-    // NORMAL/EASYの表示（選択された方がオレンジ色、選択されていない方がグレー）
     auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
     glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
     glm::vec3 normalColor = isEasyMode ? normalConfig.unselectedColor : normalConfig.selectedColor;
@@ -1263,7 +1169,6 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glm::vec3 easyColor = isEasyMode ? easyConfig.selectedColor : easyConfig.unselectedColor;
     renderText("EASY", easyPos, easyColor, easyConfig.scale);
     
-    // PRESS T表示
     auto pressTConfig = uiConfig.getModeSelectionPressTConfig();
     glm::vec2 pressTPos = uiConfig.calculatePosition(pressTConfig.position, width, height);
     renderText("PRESS T", pressTPos, pressTConfig.color, pressTConfig.scale);
@@ -1272,7 +1177,6 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
     renderText("CONFIRM: ENTER", confirmPos, confirmConfig.color, confirmConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -1281,11 +1185,9 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameState::SecretStarType secretStarType) {
-    // フォントの初期化を確実に行う
+void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameProgressState::SecretStarType secretStarType) {
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1295,10 +1197,8 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -1312,22 +1212,18 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getModeSelectionTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("SELECT MODE", titlePos, titleConfig.color, titleConfig.scale);
     
-    // モード選択の表示
     auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
     glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
     
     auto timeAttackConfig = uiConfig.getModeSelectionTimeAttackTextConfig();
     glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, width, height);
     
-    // ゲームクリア済みの場合は3択、そうでない場合は2択
     if (isGameCleared) {
-        // 3択: NORMAL / TIME ATTACK / SECRET STAR
-        bool isSecretStarSelected = (secretStarType != GameState::SecretStarType::NONE);
+        bool isSecretStarSelected = (secretStarType != GameProgressState::SecretStarType::NONE);
         
         glm::vec3 normalColor = (isTimeAttackMode || isSecretStarSelected) ? normalConfig.unselectedColor : normalConfig.selectedColor;
         renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
@@ -1340,7 +1236,6 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
         glm::vec3 secretStarColor = isSecretStarSelected ? secretStarConfig.selectedColor : secretStarConfig.unselectedColor;
         renderText("SECRET STAR", secretStarPos, secretStarColor, secretStarConfig.scale);
     } else {
-        // 2択: NORMAL / TIME ATTACK（従来通り）
         glm::vec3 normalColor = isTimeAttackMode ? normalConfig.unselectedColor : normalConfig.selectedColor;
         renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
         
@@ -1348,7 +1243,6 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
         renderText("TIME ATTACK", timeAttackPos, timeAttackColor, timeAttackConfig.scale);
     }
     
-    // PRESS T表示
     auto pressTConfig = uiConfig.getModeSelectionPressTConfig();
     glm::vec2 pressTPos = uiConfig.calculatePosition(pressTConfig.position, width, height);
     renderText("PRESS T", pressTPos, pressTConfig.color, pressTConfig.scale);
@@ -1357,7 +1251,6 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
     glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
     renderText("CONFIRM: ENTER", confirmPos, confirmConfig.color, confirmConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -1367,16 +1260,13 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
 }
 
 void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
-    // フォントの初期化を確実に行う
     font.initialize();
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // 半透明の背景
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // 背景の四角形（画面全体）
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
     glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -1385,7 +1275,6 @@ void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
     glVertex2f(0, height);
     glEnd();
     
-    // テキストの描画
     auto line1Config = uiConfig.getSecretStarExplanationLine1Config();
     glm::vec2 line1Pos = uiConfig.calculatePosition(line1Config.position, width, height);
     renderText("SECRET STARS NOW APPEAR IN EACH STAGE.", line1Pos, line1Config.color, line1Config.scale);
@@ -1394,7 +1283,6 @@ void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
     glm::vec2 line2Pos = uiConfig.calculatePosition(line2Config.position, width, height);
     renderText("THERE ARE THREE TYPES OF SECRET STARS.", line2Pos, line2Config.color, line2Config.scale);
     
-    // 1. MAX SPEED STAR（2行に分割）
     auto line3Config = uiConfig.getSecretStarExplanationLine3Config();
     glm::vec2 line3Pos = uiConfig.calculatePosition(line3Config.position, width, height);
     renderText("1. MAX SPEED STAR: THE WORLD'S SPEED IS ALWAYS TRIPLED AND CANNOT BE CHANGED.", line3Pos, line3Config.color, line3Config.scale);
@@ -1403,7 +1291,6 @@ void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
     glm::vec2 line3bPos = uiConfig.calculatePosition(line3bConfig.position, width, height);
     renderText("AIM FOR THE GOAL IN A WORLD OF LIGHTNING SPEED.", line3bPos, line3bConfig.color, line3bConfig.scale);
     
-    // 2. SHADOW STAR（3行に分割）
     auto line4Config = uiConfig.getSecretStarExplanationLine4Config();
     glm::vec2 line4Pos = uiConfig.calculatePosition(line4Config.position, width, height);
     renderText("2. SHADOW STAR: THE STAGE IS ENGULFED IN DARKNESS,", line4Pos, line4Config.color, line4Config.scale);
@@ -1416,7 +1303,6 @@ void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
     glm::vec2 line4cPos = uiConfig.calculatePosition(line4cConfig.position, width, height);
     renderText("USE THE MINIMAP AND YOUR MEMORY TO TAKE EACH STEP TOWARDS THE GOAL.", line4cPos, line4cConfig.color, line4cConfig.scale);
     
-    // 3. IMMERSIVE STAR（2行に分割）
     auto line5Config = uiConfig.getSecretStarExplanationLine5Config();
     glm::vec2 line5Pos = uiConfig.calculatePosition(line5Config.position, width, height);
     renderText("3. IMMERSIVE STAR: SWITCH TO A FIRST-PERSON PERSPECTIVE.", line5Pos, line5Config.color, line5Config.scale);
@@ -1432,11 +1318,9 @@ void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
     glDisable(GL_BLEND);
 }
 
-void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, GameState::SecretStarType selectedType) {
-    // フォントの初期化を確実に行う
+void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, GameProgressState::SecretStarType selectedType) {
     font.initialize();
     
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1446,10 +1330,8 @@ void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, Gam
     glPushMatrix();
     glLoadIdentity();
     
-    // 深度テストを無効化（UI表示のため）
     glDisable(GL_DEPTH_TEST);
     
-    // 背景オーバーレイ（半透明の黒）
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
@@ -1463,18 +1345,15 @@ void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, Gam
     
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     
-    // タイトル
     auto titleConfig = uiConfig.getSecretStarSelectionTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("SELECT SECRET STAR", titlePos, titleConfig.color, titleConfig.scale);
     
-    // 星の色定義
     glm::vec3 maxSpeedColor = glm::vec3(0.4f, 0.8f, 1.0f);  // 水色
     glm::vec3 shadowColor = glm::vec3(0.2f, 0.2f, 0.2f);   // 黒
     glm::vec3 immersiveColor = glm::vec3(1.0f, 0.6f, 0.8f); // ピンク
     glm::vec3 unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f); // グレー（未選択）
     
-    // 星の位置と色
     auto star1PosConfig = uiConfig.getSecretStarSelectionStar1Config();
     auto star2PosConfig = uiConfig.getSecretStarSelectionStar2Config();
     auto star3PosConfig = uiConfig.getSecretStarSelectionStar3Config();
@@ -1483,20 +1362,16 @@ void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, Gam
     glm::vec2 star2Pos = uiConfig.calculatePosition(star2PosConfig, width, height);
     glm::vec2 star3Pos = uiConfig.calculatePosition(star3PosConfig, width, height);
     
-    glm::vec3 star1Color = (selectedType == GameState::SecretStarType::MAX_SPEED_STAR) ? maxSpeedColor : unselectedColor;
-    glm::vec3 star2Color = (selectedType == GameState::SecretStarType::SHADOW_STAR) ? shadowColor : unselectedColor;
-    glm::vec3 star3Color = (selectedType == GameState::SecretStarType::IMMERSIVE_STAR) ? immersiveColor : unselectedColor;
+    glm::vec3 star1Color = (selectedType == GameProgressState::SecretStarType::MAX_SPEED_STAR) ? maxSpeedColor : unselectedColor;
+    glm::vec3 star2Color = (selectedType == GameProgressState::SecretStarType::SHADOW_STAR) ? shadowColor : unselectedColor;
+    glm::vec3 star3Color = (selectedType == GameProgressState::SecretStarType::IMMERSIVE_STAR) ? immersiveColor : unselectedColor;
     
-    // 星のスケール（ui_config.jsonから読み込む、デフォルトは2.0）
-    // 現在は固定値を使用（UIPositionにscaleがないため）
     float starScale = 2.0f;
     
-    // 星を描画
     renderStar(star1Pos, star1Color, starScale, width, height);
     renderStar(star2Pos, star2Color, starScale, width, height);
     renderStar(star3Pos, star3Color, starScale, width, height);
     
-    // 星の名前を描画
     auto name1Config = uiConfig.getSecretStarSelectionName1Config();
     auto name2Config = uiConfig.getSecretStarSelectionName2Config();
     auto name3Config = uiConfig.getSecretStarSelectionName3Config();
@@ -1505,25 +1380,22 @@ void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, Gam
     glm::vec2 name2Pos = uiConfig.calculatePosition(name2Config.position, width, height);
     glm::vec2 name3Pos = uiConfig.calculatePosition(name3Config.position, width, height);
     
-    glm::vec3 name1Color = (selectedType == GameState::SecretStarType::MAX_SPEED_STAR) ? name1Config.selectedColor : name1Config.unselectedColor;
-    glm::vec3 name2Color = (selectedType == GameState::SecretStarType::SHADOW_STAR) ? name2Config.selectedColor : name2Config.unselectedColor;
-    glm::vec3 name3Color = (selectedType == GameState::SecretStarType::IMMERSIVE_STAR) ? name3Config.selectedColor : name3Config.unselectedColor;
+    glm::vec3 name1Color = (selectedType == GameProgressState::SecretStarType::MAX_SPEED_STAR) ? name1Config.selectedColor : name1Config.unselectedColor;
+    glm::vec3 name2Color = (selectedType == GameProgressState::SecretStarType::SHADOW_STAR) ? name2Config.selectedColor : name2Config.unselectedColor;
+    glm::vec3 name3Color = (selectedType == GameProgressState::SecretStarType::IMMERSIVE_STAR) ? name3Config.selectedColor : name3Config.unselectedColor;
     
     renderText("MAX SPEED STAR", name1Pos, name1Color, name1Config.scale);
     renderText("SHADOW STAR", name2Pos, name2Color, name2Config.scale);
     renderText("IMMERSIVE STAR", name3Pos, name3Color, name3Config.scale);
     
-    // PRESS T表示
     auto pressTConfig = uiConfig.getSecretStarSelectionPressTConfig();
     glm::vec2 pressTPos = uiConfig.calculatePosition(pressTConfig.position, width, height);
     renderText("PRESS T", pressTPos, pressTConfig.color, pressTConfig.scale);
     
-    // CONFIRM表示
     auto confirmConfig = uiConfig.getSecretStarSelectionConfirmConfig();
     glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
     renderText("CONFIRM: ENTER", confirmPos, confirmConfig.color, confirmConfig.scale);
     
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);

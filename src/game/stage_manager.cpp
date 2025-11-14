@@ -8,6 +8,7 @@
 #include "../core/constants/debug_config.h"
 #include "../core/utils/stage_utils.h"
 #include "../core/utils/resource_path.h"
+#include "../core/error_handler.h"
 #include <iostream>
 #include <algorithm>
 #include <tuple>
@@ -25,8 +26,6 @@ namespace Colors = GameConstants::Colors;
 StageManager::StageManager() : currentStage(1), lastFileModificationTime(0) {
     initializeStages();
     
-    // ステージ番号とJSONファイルパスのマッピングを初期化
-    // デフォルトは相対パス（../assets/）を使用
     stageFilePaths[0] = "../assets/stages/stage_selection.json";
     stageFilePaths[1] = "../assets/stages/stage1.json";
     stageFilePaths[2] = "../assets/stages/stage2.json";
@@ -114,7 +113,7 @@ void StageManager::initializeStages() {
 
 bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem) {
     if (stageNumber < 0 || stageNumber >= static_cast<int>(stages.size())) {
-        printf("ERROR: Invalid stage number %d (valid range: 0-%zu)\n", stageNumber, stages.size() - 1);
+        ErrorHandler::logErrorFormat("Invalid stage number %d (valid range: 0-%zu)", stageNumber, stages.size() - 1);
         return false;
     }
     
@@ -122,93 +121,85 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
         [stageNumber](const StageData& stage) { return stage.stageNumber == stageNumber; });
     
     if (stageIt == stages.end()) {
-        printf("ERROR: Stage %d not found in stages vector\n", stageNumber);
+        ErrorHandler::logErrorFormat("Stage %d not found in stages vector", stageNumber);
         return false;
     }
     
     if (!stageIt->isUnlocked) {
-        printf("ERROR: Stage %d is not unlocked yet\n", stageNumber);
+        ErrorHandler::logErrorFormat("Stage %d is not unlocked yet", stageNumber);
         return false;
     }
     
-    // ゲーム状態をリセット
     gameState.platforms.clear();
     gameState.gravityZones.clear();
     gameState.switches.clear();
     gameState.cannons.clear();
-    gameState.items.clear();
-    gameState.collectedItems = 0;
-    gameState.gameWon = false;
+    gameState.items.items.clear();
+    gameState.items.collectedItems = 0;
+    gameState.progress.gameWon = false;
     
-    gameState.timeLimit = stageIt->timeLimit;
-    gameState.remainingTime = gameState.timeLimit;    // 残り時間を設定
-    printf("Time limit: %.1f seconds\n", gameState.timeLimit);
-    gameState.earnedStars = 0;          // 星をリセット
-    gameState.clearTime = 0.0f;         // クリア時間をリセット
-    DEBUG_PRINTF("DEBUG: clearTime reset to 0.0f for stage %d\n", stageNumber);
-    gameState.isTimeUp = false;         // 時間切れフラグをリセット
-    gameState.isStageCompleted = false; // ステージ完了フラグをリセット
-    gameState.showStageClearUI = false; // UIをリセット
-    gameState.stageClearTimer = 0.0f;   // タイマーをリセット
-    gameState.stageClearConfirmed = false; // 確認フラグをリセット
-    gameState.isGoalReached = false;    // ゴール後の移動制限をリセット
-    gameState.isGameOver = false;       // ゲームオーバーフラグをリセット
-    gameState.isTimeUp = false;         // 時間切れフラグをリセット
-    gameState.readyScreenShown = false; // Ready画面表示フラグをリセット
+    gameState.progress.timeLimit = stageIt->timeLimit;
+    gameState.progress.remainingTime = gameState.progress.timeLimit;    // 残り時間を設定
+    printf("Time limit: %.1f seconds\n", gameState.progress.timeLimit);
+    gameState.progress.earnedStars = 0;          // 星をリセット
+    // リプレイモードの場合はclearTimeをリセットしない（リプレイ開始時に設定される）
+    if (!gameState.replay.isReplayMode) {
+        gameState.progress.clearTime = 0.0f;         // クリア時間をリセット
+        DEBUG_PRINTF("DEBUG: clearTime reset to 0.0f for stage %d\n", stageNumber);
+    }
+    gameState.progress.isTimeUp = false;         // 時間切れフラグをリセット
+    gameState.progress.isStageCompleted = false; // ステージ完了フラグをリセット
+    gameState.ui.showStageClearUI = false; // UIをリセット
+    gameState.ui.stageClearTimer = 0.0f;   // タイマーをリセット
+    gameState.ui.stageClearConfirmed = false; // 確認フラグをリセット
+    gameState.progress.isGoalReached = false;    // ゴール後の移動制限をリセット
+    gameState.progress.isGameOver = false;       // ゲームオーバーフラグをリセット
+    gameState.progress.isTimeUp = false;         // 時間切れフラグをリセット
+    gameState.ui.readyScreenShown = false; // Ready画面表示フラグをリセット
     
-    // スキルの使用回数を最大値にリセット
-    gameState.doubleJumpRemainingUses = gameState.doubleJumpMaxUses;
-    gameState.heartFeelRemainingUses = gameState.heartFeelMaxUses;
-    gameState.freeCameraRemainingUses = gameState.freeCameraMaxUses;
-    gameState.burstJumpRemainingUses = gameState.burstJumpMaxUses;
-    gameState.timeStopRemainingUses = gameState.timeStopMaxUses;
+    gameState.skills.doubleJumpRemainingUses = gameState.skills.doubleJumpMaxUses;
+    gameState.skills.heartFeelRemainingUses = gameState.skills.heartFeelMaxUses;
+    gameState.skills.freeCameraRemainingUses = gameState.skills.freeCameraMaxUses;
+    gameState.skills.burstJumpRemainingUses = gameState.skills.burstJumpMaxUses;
+    gameState.skills.timeStopRemainingUses = gameState.skills.timeStopMaxUses;
 
-    gameState.isFirstPersonMode = false;
-    gameState.isFirstPersonView = false;        
+    gameState.camera.isFirstPersonMode = false;
+    gameState.camera.isFirstPersonView = false;        
     
-    // スキルのアクティブ状態をリセット
-    gameState.isFreeCameraActive = false;
-    gameState.freeCameraTimer = 0.0f;
-    gameState.isBurstJumpActive = false;
-    gameState.hasUsedBurstJump = false;
-    gameState.isInBurstJumpAir = false;
-    gameState.burstJumpDelayTimer = 0.0f;
-    gameState.isTimeStopped = false;
-    gameState.timeStopTimer = 0.0f;
+    gameState.skills.isFreeCameraActive = false;
+    gameState.skills.freeCameraTimer = 0.0f;
+    gameState.skills.isBurstJumpActive = false;
+    gameState.skills.hasUsedBurstJump = false;
+    gameState.skills.isInBurstJumpAir = false;
+    gameState.skills.burstJumpDelayTimer = 0.0f;
+    gameState.skills.isTimeStopped = false;
+    gameState.skills.timeStopTimer = 0.0f;
     
-    // チュートリアルステージの状態をリセット
-    gameState.isTutorialStage = false;
-    gameState.tutorialStep = 0;
-    gameState.tutorialStepCompleted = false;
-    gameState.showTutorialUI = false;
+    gameState.progress.isTutorialStage = false;
+    gameState.progress.tutorialStep = 0;
+    gameState.progress.tutorialStepCompleted = false;
+    gameState.ui.showTutorialUI = false;
     
-    // チュートリアルステージ（ステージ6）の場合はSECRET STARモードをリセット
     if (stageNumber == 6) {
-        gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
     }
     
-    // チェックポイントをリセット
-    gameState.lastCheckpoint = stageIt->playerStartPosition;
-    gameState.lastCheckpointItemId = -1;
+    gameState.player.lastCheckpoint = stageIt->playerStartPosition;
+    gameState.player.lastCheckpointItemId = -1;
     
-    // プラットフォームシステムをクリア
     platformSystem.clear();
     
-    // プレイヤーとゴール位置を設定
-    gameState.playerPosition = stageIt->playerStartPosition;
-    gameState.goalPosition = stageIt->goalPosition;
-    gameState.currentStage = stageNumber;
+    gameState.player.position = stageIt->playerStartPosition;
+    gameState.progress.goalPosition = stageIt->goalPosition;
+    gameState.progress.currentStage = stageNumber;
     
-    // ステージ生成関数を実行
     stageIt->generateFunction(gameState, platformSystem);
     
-    // MAX_SPEED_STARが選択されている場合は時間倍率を3倍に設定（ステージ0とステージ6を除く）
-    if (stageNumber != 0 && stageNumber != 6 && gameState.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
-        gameState.timeScale = 3.0f;
-        gameState.timeScaleLevel = 2;  // 3倍に設定
+    if (stageNumber != 0 && stageNumber != 6 && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::MAX_SPEED_STAR) {
+        gameState.progress.timeScale = 3.0f;
+        gameState.progress.timeScaleLevel = 2;  // 3倍に設定
     }
     
-    // 現在のステージのファイル情報を更新
     updateCurrentStageFileInfo(stageNumber);
     
     currentStage = stageNumber;
@@ -216,9 +207,8 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
 }
 
 bool StageManager::unlockStage(int stageNumber, GameState* gameState) {
-    // ステージ番号の範囲チェック
     if (stageNumber < 0 || stageNumber >= static_cast<int>(stages.size())) {
-        printf("ERROR: Invalid stage number %d for unlock (valid range: 0-%zu)\n", stageNumber, stages.size() - 1);
+        ErrorHandler::logErrorFormat("Invalid stage number %d for unlock (valid range: 0-%zu)", stageNumber, stages.size() - 1);
         return false;
     }
     
@@ -226,7 +216,7 @@ bool StageManager::unlockStage(int stageNumber, GameState* gameState) {
         [stageNumber](const StageData& stage) { return stage.stageNumber == stageNumber; });
     
     if (stageIt == stages.end()) {
-        printf("ERROR: Stage %d not found for unlock\n", stageNumber);
+        ErrorHandler::logErrorFormat("Stage %d not found for unlock", stageNumber);
         return false;
     }
     
@@ -235,12 +225,10 @@ bool StageManager::unlockStage(int stageNumber, GameState* gameState) {
         return true; // 既にアンロック済みでも成功とする
     }
     
-    // ステージをアンロック
     stageIt->isUnlocked = true;
     
-    // GameStateも同期（nullptrでない場合のみ）
     if (gameState != nullptr) {
-        gameState->unlockedStages[stageNumber] = true;
+        gameState->progress.unlockedStages[stageNumber] = true;
     }
     
     printf("Stage %d unlocked successfully\n", stageNumber);
@@ -248,21 +236,18 @@ bool StageManager::unlockStage(int stageNumber, GameState* gameState) {
 }
 
 bool StageManager::unlockStageWithStars(int stageNumber, int requiredStars, GameState& gameState) {
-    // ステージ番号の範囲チェック
     if (stageNumber < 0 || stageNumber >= static_cast<int>(stages.size())) {
-        printf("ERROR: Invalid stage number %d for star unlock (valid range: 0-%zu)\n", stageNumber, stages.size() - 1);
+        ErrorHandler::logErrorFormat("Invalid stage number %d for star unlock (valid range: 0-%zu)", stageNumber, stages.size() - 1);
         return false;
     }
     
-    // 必要スター数のチェック
     if (requiredStars < 0) {
-        printf("ERROR: Invalid required stars %d (must be >= 0)\n", requiredStars);
+        ErrorHandler::logErrorFormat("Invalid required stars %d (must be >= 0)", requiredStars);
         return false;
     }
     
-    // 現在のスター数チェック
-    if (gameState.totalStars < requiredStars) {
-        printf("ERROR: Insufficient stars. Required: %d, Available: %d\n", requiredStars, gameState.totalStars);
+    if (gameState.progress.totalStars < requiredStars) {
+        ErrorHandler::logErrorFormat("Insufficient stars. Required: %d, Available: %d", requiredStars, gameState.progress.totalStars);
         return false;
     }
     
@@ -270,7 +255,7 @@ bool StageManager::unlockStageWithStars(int stageNumber, int requiredStars, Game
         [stageNumber](const StageData& stage) { return stage.stageNumber == stageNumber; });
     
     if (stageIt == stages.end()) {
-        printf("ERROR: Stage %d not found for star unlock\n", stageNumber);
+        ErrorHandler::logErrorFormat("Stage %d not found for star unlock", stageNumber);
         return false;
     }
     
@@ -279,13 +264,12 @@ bool StageManager::unlockStageWithStars(int stageNumber, int requiredStars, Game
         return true; // 既にアンロック済みでも成功とする
     }
     
-    // アトミックに実行：星を消費してステージを解放
-    gameState.totalStars -= requiredStars;
+    gameState.progress.totalStars -= requiredStars;
     stageIt->isUnlocked = true;
-    gameState.unlockedStages[stageNumber] = true;
+    gameState.progress.unlockedStages[stageNumber] = true;
     
     printf("Stage %d unlocked with %d stars! Remaining stars: %d\n", 
-           stageNumber, requiredStars, gameState.totalStars);
+           stageNumber, requiredStars, gameState.progress.totalStars);
     return true;
 }
 
@@ -296,16 +280,13 @@ void StageManager::completeStage(int stageNumber) {
     if (stageIt != stages.end()) {
         stageIt->isCompleted = true;
         
-        // 次のステージをアンロック（GameStateなしで呼び出し）
         if (stageNumber + 1 < static_cast<int>(stages.size())) {
-            // 一時的なGameStateを作成してunlockStageを呼び出し
-            // 実際の実装では、GameStateの参照を渡すべき
             printf("Stage %d completed, attempting to unlock next stage %d\n", stageNumber, stageNumber + 1);
         }
         
         printf("Stage %d completed successfully\n", stageNumber);
     } else {
-        printf("ERROR: Stage %d not found for completion\n", stageNumber);
+        ErrorHandler::logErrorFormat("Stage %d not found for completion", stageNumber);
     }
 }
 
@@ -356,96 +337,81 @@ bool StageManager::goToPreviousStage(GameState& gameState, PlatformSystem& platf
 }
 
 bool StageManager::goToStage(int stageNumber, GameState& gameState, PlatformSystem& platformSystem) {
-    // ステージ番号の範囲チェック
     if (stageNumber < 0 || stageNumber >= static_cast<int>(stages.size())) {
-        printf("ERROR: Invalid stage number %d for goToStage (valid range: 0-%zu)\n", stageNumber, stages.size() - 1);
+        ErrorHandler::logErrorFormat("Invalid stage number %d for goToStage (valid range: 0-%zu)", stageNumber, stages.size() - 1);
         return false;
     }
     
-    // loadStageを呼び出し（内部でアンロック状態もチェックされる）
     return loadStage(stageNumber, gameState, platformSystem);
 }
 
-// ======================================================
-// 各ステージの生成関数
-// ======================================================
 
 void StageManager::generateStage1(GameState& gameState, PlatformSystem& platformSystem) {
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage1.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load stage1 from JSON\n");
+        ErrorHandler::logError("Failed to load stage1 from JSON");
         return;
     }
     printf("Successfully loaded stage1 from JSON\n");
 }
 
 void StageManager::generateStage2(GameState& gameState, PlatformSystem& platformSystem) {
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage2.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load stage2 from JSON\n");
+        ErrorHandler::logError("Failed to load stage2 from JSON");
         return;
     }
     printf("Successfully loaded stage2 from JSON\n");
 }
 
 void StageManager::generateStage3(GameState& gameState, PlatformSystem& platformSystem) {
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage3.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load stage3 from JSON\n");
+        ErrorHandler::logError("Failed to load stage3 from JSON");
         return;
     }
     printf("Successfully loaded stage3 from JSON\n");
 }
 
 void StageManager::generateStage4(GameState& gameState, PlatformSystem& platformSystem) {
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage4.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load stage4 from JSON\n");
+        ErrorHandler::logError("Failed to load stage4 from JSON");
         return;
     }
     printf("Successfully loaded stage4 from JSON\n");
 }
 
 void StageManager::generateStage5(GameState& gameState, PlatformSystem& platformSystem) {
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage5.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load stage5 from JSON\n");
+        ErrorHandler::logError("Failed to load stage5 from JSON");
         return;
     }
     printf("Successfully loaded stage5 from JSON\n");
 }
 
-// ステージ選択フィールドの生成
 void StageManager::generateStageSelectionField(GameState& gameState, PlatformSystem& platformSystem) {
     platformSystem.clear();
     
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/stage_selection.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load stage selection from JSON\n");
+        ErrorHandler::logError("Failed to load stage selection from JSON");
         return;
     }
     printf("Successfully loaded stage selection from JSON\n");
     
-    // 以下は元のコード（条件付きで追加の足場を生成する場合に使用）
     /*
     std::vector<std::vector<glm::vec3>> patrolPaths={
         {{14, 0, 10}, {18, 0, 10}, {18, 0, 10}, {18, 0, 10}, {14, 0, 10}},
         {{22, 0, 14}, {22, 0, 10}, {22, 0, 10}, {22, 0, 10}, {22, 0, 14}},
         {{22, 0, 18}, {22, 4, 18}, {22, 4, 18}, {22, 4, 18}, {22, 0, 18}},
     };
-    if (gameState.stageStars.count(2) && gameState.stageStars.at(2) > 0) {
+    if (gameState.progress.stageStars.count(2) && gameState.progress.stageStars.at(2) > 0) {
         patrolPaths.push_back({{18, 4, 22}, {14, 4, 22}, {14, 4, 22}, {14, 4, 22}, {18, 4, 22}});
         patrolPaths.push_back({ {8, 0, 28}, {8, 0, 32}, {8, 0, 32}, {8, 0, 32}, {8, 0, 28} });
     }
-    // ターゲット位置を冒頭で定義
     std::vector<glm::vec3> targetPositions = {
         {8, 0, 10},
         {8, 0, 13},
         {8, 0, 16},
         {8, 0, 19}
     };
-    // ステージ4クリア時のみ最後の足場を出現
-    if ((gameState.stageStars.count(4) && gameState.stageStars.at(4) > 0)) {
+    if ((gameState.progress.stageStars.count(4) && gameState.progress.stageStars.at(4) > 0)) {
         targetPositions.push_back({8, 0, 39});
     }
 
@@ -455,47 +421,34 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
     cycleConfigs.push_back({ {-7, 1, 23}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
     cycleConfigs.push_back({ {-3, 2, 23}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
     cycleConfigs.push_back({ {-3, 3, 27}, {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
-   if (gameState.stageStars.count(3) && gameState.stageStars.at(3) > 0) {
+   if (gameState.progress.stageStars.count(3) && gameState.progress.stageStars.at(3) > 0) {
         cycleConfigs.push_back({ {1, 3, 23},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
         cycleConfigs.push_back({ {8, 0, 36},  {3, 1, 3}, Colors::ORANGE, 8.0f, 6.0f, 1.0f, "サイクル消える足場1" });
     }
     
-    // メインの選択フィールド（画像のような長方形）
     StageUtils::createStaticPlatforms(gameState, platformSystem, {
-        // メインフィールド（1つ目）
         {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y - 1, GameConstants::STAGE_AREAS[0].z}, {10, 1, 10}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Right"},
 
-        // ステージ1選択エリア（解放済みかどうかで色を変更）
-        {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z}, {1, 1, 1}, gameState.unlockedStages[1] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 1 Selection Area"},
+        {{GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z}, {1, 1, 1}, gameState.progress.unlockedStages[1] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 1 Selection Area"},
 
-        // {{-26, 0, 0}, {2, 1, 2}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Center"},
         
-        // メインフィールド（2つ目）
         {{GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y - 1, GameConstants::STAGE_AREAS[1].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ2選択エリア（解放済みかどうかで色を変更）
-        {{GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y, GameConstants::STAGE_AREAS[1].z}, {1, 1, 1}, gameState.unlockedStages[2] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
+        {{GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y, GameConstants::STAGE_AREAS[1].z}, {1, 1, 1}, gameState.progress.unlockedStages[2] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 2 Selection Area"},
         {{-7, 0, 19}, {3, 1, 3}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
-        // メインフィールド（3つ目）
         {{GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y - 1, GameConstants::STAGE_AREAS[2].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
 
-        // ステージ3選択エリア（解放済みかどうかで色を変更）
-        {{GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y, GameConstants::STAGE_AREAS[2].z}, {1, 1, 1}, gameState.unlockedStages[3] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
+        {{GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y, GameConstants::STAGE_AREAS[2].z}, {1, 1, 1}, gameState.progress.unlockedStages[3] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 3 Selection Area"},
 
-        // メインフィールド（4つ目）
         {{GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y - 1, GameConstants::STAGE_AREAS[3].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
         
-        // ステージ4選択エリア（解放済みかどうかで色を変更）
-        {{GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y, GameConstants::STAGE_AREAS[3].z}, {1, 1, 1}, gameState.unlockedStages[4] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
+        {{GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y, GameConstants::STAGE_AREAS[3].z}, {1, 1, 1}, gameState.progress.unlockedStages[4] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 4 Selection Area"},
         
-        // メインフィールド（5つ目）
         {{GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y - 1, GameConstants::STAGE_AREAS[4].z}, {6, 1, 6}, glm::vec3(0.3f, 0.3f, 0.3f), "Main Field Left"},
 
-        // ステージ5選択エリア（解放済みかどうかで色を変更）
-        {{GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z}, {1, 1, 1}, gameState.unlockedStages[5] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
+        {{GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z}, {1, 1, 1}, gameState.progress.unlockedStages[5] ? glm::vec3(0.2f, 1.0f, 0.2f) : glm::vec3(0.5f, 0.5f, 0.5f), "Stage 5 Selection Area"},
     });
 
-    // ターゲット位置を元に飛行足場を自動生成
     std::vector<std::tuple<std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, std::tuple<float, float, float>, float, float, std::string>> flyingPlatforms3;
     for (const auto& target : targetPositions) {
         flyingPlatforms3.push_back({
@@ -512,71 +465,56 @@ void StageManager::generateStageSelectionField(GameState& gameState, PlatformSys
     
     StageUtils::createPatrolPlatforms(gameState, platformSystem, patrolPaths, "ステージ選択エリア");
  
-    // 可変長サイクリングディスアピアリングプラットフォーム生成（個別配置）    
     StageUtils::createCyclingDisappearingPlatforms(gameState, platformSystem, cycleConfigs);
     
     
     */
 }
 
-// 星数管理メソッドの実装
 int StageManager::getStageStars(int stageNumber) const {
-    // この実装は後で修正が必要
     return 0;
 }
 
 int StageManager::getTotalStars() const {
-    // この実装は後で修正が必要
     return 0;
 }
 
 void StageManager::updateStageStars(int stageNumber, int newStars) {
-    // この実装は後で修正が必要
     printf("Stage %d stars updated to %d\n", stageNumber, newStars);
 }
 
 int StageManager::calculateStarDifference(int stageNumber, int newStars) const {
-    // この実装は後で修正が必要
     return newStars;
 }
 
-// チュートリアルステージの生成関数
 void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& platformSystem) {
 
-    // チュートリアルステージの初期化
-    gameState.isTutorialStage = true;
-    gameState.tutorialStep = 0;
-    gameState.tutorialStepCompleted = false;
-    gameState.tutorialStartPosition = gameState.playerPosition;
-    gameState.tutorialRequiredDistance = 5.0f;  // 移動距離を小さくする
-    gameState.showTutorialUI = true;
-    gameState.tutorialInputEnabled = true;
-    gameState.tutorialMessage = "MOVING FORWARD: PRESS W";
+    gameState.progress.isTutorialStage = true;
+    gameState.progress.tutorialStep = 0;
+    gameState.progress.tutorialStepCompleted = false;
+    gameState.progress.tutorialStartPosition = gameState.player.position;
+    gameState.progress.tutorialRequiredDistance = 5.0f;  // 移動距離を小さくする
+    gameState.ui.showTutorialUI = true;
+    gameState.progress.tutorialInputEnabled = true;
+    gameState.ui.tutorialMessage = "MOVING FORWARD: PRESS W";
     
-    // SECRET STARモードをリセット（チュートリアルでは使用しない）
-    gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
     
-    // チュートリアル用のアイテム管理を初期化
-    gameState.earnedItems = 0;
-    gameState.totalItems = 3;
+    gameState.items.earnedItems = 0;
+    gameState.items.totalItems = 3;
 
-    // JSONファイルから読み込み
     if (!JsonStageLoader::loadStageFromJSON(ResourcePath::getResourcePath("assets/stages/tutorial.json"), gameState, platformSystem)) {
-        printf("ERROR: Failed to load tutorial from JSON\n");
+        ErrorHandler::logError("Failed to load tutorial from JSON");
         return;
     }
     printf("Successfully loaded tutorial from JSON\n");
     
-    // JSON読み込み後にチュートリアル開始位置を再設定（復活用）
-    gameState.tutorialStartPosition = gameState.playerPosition;
+    gameState.progress.tutorialStartPosition = gameState.player.position;
     printf("TUTORIAL: Start position set to (%.1f, %.1f, %.1f)\n", 
-           gameState.tutorialStartPosition.x, gameState.tutorialStartPosition.y, gameState.tutorialStartPosition.z);
+           gameState.progress.tutorialStartPosition.x, gameState.progress.tutorialStartPosition.y, gameState.progress.tutorialStartPosition.z);
     
 }
 
-// ======================================================
-// ファイル監視機能（自動リロード用）
-// ======================================================
 
 std::time_t StageManager::getFileModificationTime(const std::string& filepath) {
 #ifdef _WIN32
@@ -584,7 +522,6 @@ std::time_t StageManager::getFileModificationTime(const std::string& filepath) {
     if (_stat(filepath.c_str(), &fileInfo) == 0) {
         return fileInfo.st_mtime;
     }
-    // 代替パスも試す
     std::string altPath = filepath;
     if (altPath.find("../") == 0) {
         altPath = altPath.substr(3);
@@ -599,7 +536,6 @@ std::time_t StageManager::getFileModificationTime(const std::string& filepath) {
     if (stat(filepath.c_str(), &fileInfo) == 0) {
         return fileInfo.st_mtime;
     }
-    // 代替パスも試す
     std::string altPath = filepath;
     if (altPath.find("../") == 0) {
         altPath = altPath.substr(3);
@@ -614,10 +550,8 @@ std::time_t StageManager::getFileModificationTime(const std::string& filepath) {
 }
 
 std::string StageManager::getStageFilePath(int stageNumber) {
-    // まずマッピングから取得
     auto it = stageFilePaths.find(stageNumber);
     if (it != stageFilePaths.end()) {
-        // ファイルが存在するか確認
         std::ifstream file(it->second);
         if (file.good()) {
             file.close();
@@ -626,7 +560,6 @@ std::string StageManager::getStageFilePath(int stageNumber) {
         file.close();
     }
     
-    // マッピングにない、またはファイルが見つからない場合は代替パスを試す
     std::vector<std::string> alternativePaths;
     switch (stageNumber) {
         case 0: alternativePaths = {"assets/stages/stage_selection.json", "../assets/stages/stage_selection.json"}; break;
@@ -662,32 +595,25 @@ void StageManager::updateCurrentStageFileInfo(int stageNumber) {
 }
 
 bool StageManager::checkAndReloadStage(GameState& gameState, PlatformSystem& platformSystem) {
-    // ファイルパスが設定されていない場合はスキップ
     if (currentStageFilePath.empty()) {
         return false;
     }
     
-    // ファイルの存在確認（パスが変わった可能性がある）
     std::string actualPath = getStageFilePath(currentStage);
     if (actualPath != currentStageFilePath) {
-        // パスが変わった場合は更新
         updateCurrentStageFileInfo(currentStage);
         return false;
     }
     
-    // ファイルの更新時刻を取得
     std::time_t currentModTime = getFileModificationTime(currentStageFilePath);
     
-    // 更新時刻が変わった場合はリロード
     if (currentModTime > 0 && currentModTime != lastFileModificationTime && lastFileModificationTime > 0) {
         printf("Stage file changed! Reloading stage %d...\n", currentStage);
         lastFileModificationTime = currentModTime;
         
-        // ステージを再読み込み
         return loadStage(currentStage, gameState, platformSystem);
     }
     
-    // 初回の場合は更新時刻を記録
     if (lastFileModificationTime == 0 && currentModTime > 0) {
         lastFileModificationTime = currentModTime;
     }

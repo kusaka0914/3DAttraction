@@ -1,3 +1,8 @@
+/**
+ * @file input_constants.h
+ * @brief 入力定数
+ * @details キーボード入力に関する定数を定義します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

@@ -1,3 +1,8 @@
+/**
+ * @file rendering_constants.h
+ * @brief レンダリング定数
+ * @details レンダリングに関する定数を定義します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

@@ -35,26 +35,22 @@ bool AudioManager::initialize() {
         return true;
     }
     
-    // SDL初期化
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
         return false;
     }
     
-    // SDL_mixerのフォーマットサポートを初期化（MP3、OGG、FLACなど）
     int initFlags = MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_FLAC;
     int initialized = Mix_Init(initFlags);
     m_mp3Supported = (initialized & MIX_INIT_MP3) != 0;
     if ((initialized & initFlags) != initFlags) {
         std::cerr << "Warning: Some audio formats failed to initialize: " << Mix_GetError() << std::endl;
-        // MP3が利用できない場合は警告を出すが、続行する
         if (!m_mp3Supported) {
             std::cerr << "Warning: MP3 support is not available. MP3 files will not be playable." << std::endl;
             std::cerr << "Please use OGG format or recompile SDL_mixer with MP3 support." << std::endl;
         }
     }
     
-    // SDL_mixer初期化
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         std::cerr << "Failed to initialize SDL_mixer: " << Mix_GetError() << std::endl;
         Mix_Quit();
@@ -64,10 +60,8 @@ bool AudioManager::initialize() {
     
     m_initialized = true;
     
-    // SE音量を最大に設定
     setSFXVolume(1.0f);
     
-    // BGM音量を設定
     setBGMVolume(0.4f);
     
     std::cout << "AudioManager initialized successfully" << std::endl;
@@ -81,19 +75,16 @@ void AudioManager::shutdown() {
     
     stopBGM();
     
-    // BGMのクリーンアップ
     if (m_bgmMusic) {
         Mix_FreeMusic(m_bgmMusic);
         m_bgmMusic = nullptr;
     }
     
-    // SFXのクリーンアップ
     for (auto& pair : m_sfxChunks) {
         Mix_FreeChunk(pair.second);
     }
     m_sfxChunks.clear();
     
-    // SDL_mixer終了
     Mix_CloseAudio();
     Mix_Quit();  // Mix_Init()で初期化したフォーマットをクリーンアップ
     SDL_Quit();
@@ -108,25 +99,20 @@ bool AudioManager::loadBGM(const std::string& filename) {
         return false;
     }
     
-    // ファイルの存在確認
     if (!std::filesystem::exists(filename)) {
         std::cerr << "BGM file not found: " << filename << std::endl;
         return false;
     }
     
-    // 既存のBGMをクリーンアップ
     if (m_bgmMusic) {
         Mix_FreeMusic(m_bgmMusic);
         m_bgmMusic = nullptr;
     }
     
-    // 新しいBGMを読み込み
     m_bgmMusic = Mix_LoadMUS(filename.c_str());
     if (!m_bgmMusic) {
         std::string error = Mix_GetError();
-        // MP3ファイルでMP3サポートが無い場合、エラーメッセージを抑制（既に警告を出しているため）
         if (!m_mp3Supported && filename.find(".mp3") != std::string::npos) {
-            // MP3サポートが無い場合は、エラーメッセージを1回だけ表示
             static bool mp3ErrorShown = false;
             if (!mp3ErrorShown) {
                 std::cerr << "Failed to load BGM (MP3): " << filename << " - MP3 support not available" << std::endl;
@@ -139,7 +125,6 @@ bool AudioManager::loadBGM(const std::string& filename) {
     }
     
     m_currentBGM = filename;
-    // 更新時刻を記録
     m_bgmModTime = getFileModificationTime(filename);
     std::cout << "BGM loaded: " << filename << std::endl;
     return true;
@@ -221,26 +206,21 @@ bool AudioManager::loadSFX(const std::string& name, const std::string& filename)
         return false;
     }
     
-    // ファイルの存在確認
     if (!std::filesystem::exists(filename)) {
         std::cerr << "SFX file not found: " << filename << std::endl;
         return false;
     }
     
-    // 既存のSFXをクリーンアップ
     auto it = m_sfxChunks.find(name);
     if (it != m_sfxChunks.end()) {
         Mix_FreeChunk(it->second);
         m_sfxChunks.erase(it);
     }
     
-    // 新しいSFXを読み込み
     Mix_Chunk* chunk = Mix_LoadWAV(filename.c_str());
     if (!chunk) {
         std::string error = Mix_GetError();
-        // MP3ファイルでMP3サポートが無い場合、エラーメッセージを抑制（既に警告を出しているため）
         if (!m_mp3Supported && filename.find(".mp3") != std::string::npos) {
-            // MP3サポートが無い場合は、エラーメッセージを1回だけ表示
             static bool mp3SFXErrorShown = false;
             if (!mp3SFXErrorShown) {
                 std::cerr << "Failed to load SFX (MP3): " << filename << " - MP3 support not available" << std::endl;
@@ -252,13 +232,11 @@ bool AudioManager::loadSFX(const std::string& name, const std::string& filename)
         return false;
     }
     
-    // 音量を設定
     int sdlVolume = static_cast<int>(m_sfxVolume * m_masterVolume * MIX_MAX_VOLUME);
     Mix_VolumeChunk(chunk, sdlVolume);
     
     m_sfxChunks[name] = chunk;
     m_sfxFiles[name] = filename;
-    // 更新時刻を記録
     m_sfxModTimes[name] = getFileModificationTime(filename);
     std::cout << "SFX loaded: " << name << " -> " << filename << std::endl;
     return true;
@@ -296,11 +274,9 @@ void AudioManager::setMasterVolume(float volume) {
     m_masterVolume = std::max(0.0f, std::min(1.0f, volume));
     
     if (m_initialized) {
-        // BGM音量を更新
         int bgmVolume = static_cast<int>(m_bgmVolume * m_masterVolume * MIX_MAX_VOLUME);
         Mix_VolumeMusic(bgmVolume);
         
-        // SFX音量を更新
         int sfxVolume = static_cast<int>(m_sfxVolume * m_masterVolume * MIX_MAX_VOLUME);
         for (auto& pair : m_sfxChunks) {
             Mix_VolumeChunk(pair.second, sfxVolume);
@@ -318,7 +294,6 @@ std::time_t AudioManager::getFileModificationTime(const std::string& filepath) {
     if (_stat(filepath.c_str(), &fileInfo) == 0) {
         return fileInfo.st_mtime;
     }
-    // 代替パスも試す
     std::string altPath = filepath;
     if (altPath.find("../") == 0) {
         altPath = altPath.substr(3);
@@ -333,7 +308,6 @@ std::time_t AudioManager::getFileModificationTime(const std::string& filepath) {
     if (stat(filepath.c_str(), &fileInfo) == 0) {
         return fileInfo.st_mtime;
     }
-    // 代替パスも試す
     std::string altPath = filepath;
     if (altPath.find("../") == 0) {
         altPath = altPath.substr(3);
@@ -354,14 +328,11 @@ void AudioManager::reloadBGM() {
     
     bool wasPlaying = m_bgmPlaying && !m_bgmPaused;
     
-    // 古いBGMを停止・削除
     if (m_bgmPlaying) {
         stopBGM();
     }
     
-    // 新しいBGMを読み込み
     if (loadBGM(m_currentBGM)) {
-        // 再生中だった場合は再開
         if (wasPlaying) {
             playBGM();
         }
@@ -377,7 +348,6 @@ void AudioManager::reloadSFX(const std::string& name) {
     
     const std::string& filename = it->second;
     
-    // 再読み込み
     if (loadSFX(name, filename)) {
         std::cout << "SFX reloaded: " << name << " -> " << filename << std::endl;
     }
@@ -388,18 +358,15 @@ void AudioManager::checkAndReloadAudio() {
         return;
     }
     
-    // BGMの監視
     if (!m_currentBGM.empty()) {
         std::time_t currentModTime = getFileModificationTime(m_currentBGM);
         if (currentModTime > 0 && currentModTime != m_bgmModTime && m_bgmModTime > 0) {
             reloadBGM();
         } else if (m_bgmModTime == 0 && currentModTime > 0) {
-            // 初回の場合は更新時刻を記録
             m_bgmModTime = currentModTime;
         }
     }
     
-    // SFXの監視
     for (auto& pair : m_sfxModTimes) {
         const std::string& name = pair.first;
         std::time_t& lastModTime = pair.second;
@@ -414,7 +381,6 @@ void AudioManager::checkAndReloadAudio() {
         if (currentModTime > 0 && currentModTime != lastModTime && lastModTime > 0) {
             reloadSFX(name);
         } else if (lastModTime == 0 && currentModTime > 0) {
-            // 初回の場合は更新時刻を記録
             lastModTime = currentModTime;
         }
     }

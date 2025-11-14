@@ -1,3 +1,8 @@
+/**
+ * @file minimap_renderer.h
+ * @brief ミニマップレンダラー
+ * @details ミニマップの描画を管理します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

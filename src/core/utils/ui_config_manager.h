@@ -1,3 +1,8 @@
+/**
+ * @file ui_config_manager.h
+ * @brief UI設定マネージャー
+ * @details JSONファイルからUI設定を読み込み、管理します。
+ */
 #pragma once
 
 #include <string>
@@ -5,32 +10,49 @@
 #include <map>
 #include <type_traits>
 #include <nlohmann/json.hpp>
+#include "../error_handler.h"
 
 namespace UIConfig {
+    /**
+     * @brief UI位置の構造体
+     * @details 画面中央からの相対位置または画面左上基準の絶対位置を保持します。
+     */
     struct UIPosition {
-        float offsetX = 0.0f;  // 画面中央からのオフセットX（相対位置）
-        float offsetY = 0.0f;  // 画面中央からのオフセットY（相対位置）
-        float absoluteX = 0.0f;  // 絶対位置X（画面左上基準）
-        float absoluteY = 0.0f;  // 絶対位置Y（画面左上基準）
-        bool useRelative = true;  // true: 相対位置を使用、false: 絶対位置を使用
+        float offsetX = 0.0f;
+        float offsetY = 0.0f;
+        float absoluteX = 0.0f;
+        float absoluteY = 0.0f;
+        bool useRelative = true;
     };
     
+    /**
+     * @brief UIテキスト設定の構造体
+     * @details テキストUI要素の位置、色、スケールを保持します。
+     */
     struct UITextConfig {
         UIPosition position;
         glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-        glm::vec3 completedColor = glm::vec3(1.0f, 1.0f, 1.0f);  // 完了時の色（チュートリアルメッセージ用）
-        glm::vec3 activeColor = glm::vec3(1.0f, 1.0f, 1.0f);  // アクティブ時の色（リプレイポーズマーク用）
+        glm::vec3 completedColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 activeColor = glm::vec3(1.0f, 1.0f, 1.0f);
         float scale = 1.0f;
     };
     
+    /**
+     * @brief UI選択可能要素設定の構造体
+     * @details 選択可能なUI要素の位置、色、スケール、間隔を保持します。
+     */
     struct UISelectableConfig {
         UIPosition position;
         glm::vec3 selectedColor = glm::vec3(1.0f, 0.8f, 0.2f);
         glm::vec3 unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         float scale = 1.0f;
-        float spacing = 0.0f;  // 複数要素間の間隔（speedOptions用）
+        float spacing = 0.0f;
     };
     
+    /**
+     * @brief UI時間表示設定の構造体
+     * @details 時間表示UI要素の位置、色、スケールを保持します。
+     */
     struct UITimeDisplayConfig {
         UIPosition position;
         glm::vec3 normalColor = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -38,6 +60,10 @@ namespace UIConfig {
         float scale = 1.0f;
     };
     
+    /**
+     * @brief UIスキル設定の構造体
+     * @details スキルUI要素の位置、色、スケール、オフセットを保持します。
+     */
     struct UISkillConfig {
         UIPosition position;
         float countOffset = 0.0f;
@@ -48,17 +74,42 @@ namespace UIConfig {
         float scale = 1.0f;
         float countScale = 1.0f;
         float instructionScale = 1.0f;
-        UIPosition activePosition;  // freeCamera用
-        float activeScale = 1.0f;   // freeCamera用
+        UIPosition activePosition;
+        float activeScale = 1.0f;
     };
     
+    /**
+     * @brief UI設定マネージャー
+     * @details UI要素の設定をJSONファイルから読み込み、管理します。
+     */
     class UIConfigManager {
     public:
+        /**
+         * @brief シングルトンインスタンスを取得する
+         * @return UIConfigManagerの参照
+         */
         static UIConfigManager& getInstance();
         
+        /**
+         * @brief 設定を読み込む
+         * @param filepath 設定ファイルのパス
+         * @return 読み込み成功時true
+         */
         bool loadConfig(const std::string& filepath = "assets/config/ui_config.json");
+        
+        /**
+         * @brief 設定を再読み込みする
+         * @details 設定ファイルを再読み込みします。
+         */
         void reloadConfig();
-        bool checkAndReloadConfig();  // ファイル変更をチェックして再読み込み
+        
+        /**
+         * @brief ファイル変更をチェックして再読み込みする
+         * @details 設定ファイルが変更されていた場合、自動的に再読み込みします。
+         * 
+         * @return 再読み込みが発生した場合true
+         */
+        bool checkAndReloadConfig();
         
         // UI要素の設定を取得
         UITextConfig getStageInfoConfig() const { return stageInfoConfig; }
@@ -272,7 +323,7 @@ namespace UIConfig {
                 return parseUISkillConfig(jsonValue);
             } else {
                 // 未知の型
-                printf("UI Config Error: Unsupported type for path '%s'\n", jsonPath.c_str());
+                ErrorHandler::logErrorFormat("UI Config Error: Unsupported type for path '%s'", jsonPath.c_str());
                 T defaultConfig;
                 return defaultConfig;
             }
@@ -289,8 +340,8 @@ namespace UIConfig {
         
         std::string configFilePath;
         bool configLoaded = false;
-        time_t lastFileModificationTime = 0;  // ファイル監視用
-        nlohmann::json cachedJsonData;  // JSONデータのキャッシュ（動的アクセス用）
+        time_t lastFileModificationTime = 0;
+        nlohmann::json cachedJsonData;
         
         // JSONから構造体への変換ヘルパー関数
         UITextConfig parseUITextConfig(const nlohmann::json& json) const;

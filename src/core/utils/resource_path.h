@@ -1,21 +1,34 @@
+/**
+ * @file resource_path.h
+ * @brief リソースパスユーティリティ
+ * @details リソースファイルのパス解決を提供します。
+ */
 #pragma once
 
 #include <string>
 #include <fstream>
 #include <vector>
 
+/**
+ * @brief リソースパスユーティリティ
+ * @details リソースファイルのパス解決を提供します。
+ */
 namespace ResourcePath {
-    // リソースファイルのパスを取得（複数の候補を試す）
-    // 開発中（buildディレクトリから実行）でもリリース（実行ファイルと同じディレクトリにassetsがある）でも動作
+    /**
+     * @brief リソースファイルのパスを取得する
+     * @details 複数の候補パスを試してリソースファイルを探します。
+     * 開発環境（buildディレクトリから実行）とリリース環境（実行ファイルと同じディレクトリにassetsがある）の両方に対応します。
+     * 
+     * @param relativePath 相対パス
+     * @return 実際のリソースパス
+     */
     inline std::string getResourcePath(const std::string& relativePath) {
-        // 試すパスのリスト
         std::vector<std::string> candidates = {
-            relativePath,                    // ./assets/... (実行ファイルの隣、リリースビルド用)
-            "../" + relativePath,            // ../assets/... (buildディレクトリから実行)
-            "../../" + relativePath,         // ../../assets/... (build/Releaseディレクトリから実行)
+            relativePath,
+            "../" + relativePath,
+            "../../" + relativePath,
         };
         
-        // 各候補を試してファイルが存在するか確認
         for (const auto& path : candidates) {
             std::ifstream file(path);
             if (file.good()) {
@@ -24,8 +37,6 @@ namespace ResourcePath {
             }
         }
         
-        // 見つからない場合は元のパスを返す（エラー処理は呼び出し側で）
         return relativePath;
     }
 }
-

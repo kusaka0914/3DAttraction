@@ -2,626 +2,26 @@
 #define NOMINMAX
 #endif
 
-#include "game_loop.h"
-#include "game_updater.h"
 #include "game_renderer.h"
-#include "input_handler.h"
-#include <iostream>
-#include <algorithm>
-#include <thread>
-#include <variant>
-#include <glm/gtc/matrix_transform.hpp>
 #include "../core/constants/game_constants.h"
-#include "../core/constants/debug_config.h"
 #include "../gfx/camera_system.h"
 #include "../gfx/texture_manager.h"
-#include "../game/gravity_system.h"
-#include "../game/switch_system.h"
-#include "../game/cannon_system.h"
-#include "../physics/physics_system.h"
-#include "../core/utils/physics_utils.h"
 #include "../core/utils/ui_config_manager.h"
 #include "../core/utils/resource_path.h"
-#include "../io/input_system.h"
-#include "../io/audio_manager.h"
 #include "../gfx/minimap_renderer.h"
-#include "../game/replay_manager.h"
-#include "../game/save_manager.h"
 #include "../game/stage_editor.h"
-#include "tutorial_manager.h"
-#include <set>
-#include <map>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
+#ifdef __APPLE__
+    #include <OpenGL/gl.h>
+#else
+    #include <GL/gl.h>
+#endif
+#include <GLFW/glfw3.h>
 #include <algorithm>
+#include <set>
+#include <vector>
 
 namespace GameLoop {
-
-    template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-    template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-
-
-    void run(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-            PlatformSystem& platformSystem,
-            std::unique_ptr<gfx::OpenGLRenderer>& renderer,
-            std::unique_ptr<gfx::UIRenderer>& uiRenderer,
-            std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
-            std::map<int, InputUtils::KeyState>& keyStates,
-            std::function<void()> resetStageStartTime,
-            std::chrono::high_resolution_clock::time_point& startTime,
-            io::AudioManager& audioManager) {
-        
-        if (gameState.audioEnabled) {
-            audioManager.loadSFX("jump", ResourcePath::getResourcePath("assets/audio/se/jump.ogg"));
-            audioManager.loadSFX("clear", ResourcePath::getResourcePath("assets/audio/se/clear.ogg"));
-            audioManager.loadSFX("item", ResourcePath::getResourcePath("assets/audio/se/item.ogg"));
-            audioManager.loadSFX("on_ground", ResourcePath::getResourcePath("assets/audio/se/on_ground.ogg"));
-            audioManager.loadSFX("flying", ResourcePath::getResourcePath("assets/audio/se/flying.ogg"));
-            audioManager.loadSFX("countdown", ResourcePath::getResourcePath("assets/audio/se/countdown.ogg"));
-            audioManager.loadSFX("tutorial_ok", ResourcePath::getResourcePath("assets/audio/se/tutorial_ok.ogg"));
-            audioManager.loadSFX("damage", ResourcePath::getResourcePath("assets/audio/se/damage.ogg"));
-        }
-        
-        auto lastFrameTime = startTime;
-        bool gameRunning = true;
-
-        while (!glfwWindowShouldClose(window) && gameRunning) {
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
-            
-            deltaTime = std::min(deltaTime, GameConstants::MAX_DELTA_TIME);
-            
-            lastFrameTime = currentTime;
-            
-            // リプレイモード中はgameTimeを更新しない（リプレイのタイムスタンプを使用するため）
-            if (!gameState.replay.isReplayMode) {
-                gameState.progress.gameTime = std::chrono::duration<float>(currentTime - startTime).count();
-            }
-            
-            float scaledDeltaTime = deltaTime * gameState.progress.timeScale;
-            
-            if (!gameState.ui.showTitleScreen) {
-            int currentStage = stageManager.getCurrentStage();
-            if (gameState.audioEnabled && !gameState.progress.isGoalReached && !gameState.ui.showTitleScreen) {
-                std::string targetBGM = "";
-                std::string bgmPath = "";
-                
-                switch (currentStage) {
-                    case 0: // ステージ選択画面
-                        targetBGM = "stage_select_field.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage_select_field.ogg");
-                        break;
-                    case 1: // ステージ1
-                        targetBGM = "stage1.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage1.ogg");
-                        break;
-                    case 2: // ステージ2
-                        targetBGM = "stage2.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage2.ogg");
-                        break;
-                    case 3: // ステージ3
-                        targetBGM = "stage3.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage3.ogg");
-                        break;
-                    case 4: // ステージ4
-                        targetBGM = "stage4.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage4.ogg");
-                        break;
-                    case 5: // ステージ5
-                        targetBGM = "stage5.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/stage5.ogg");
-                        break;
-                    case 6: // チュートリアルステージ
-                        targetBGM = "tutorial.ogg";
-                        bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/tutorial.ogg");
-                        break;
-                    default:
-                        break;
-                }
-                
-                if (!targetBGM.empty()) {
-                    if (gameState.currentBGM != targetBGM) {
-                        if (gameState.bgmPlaying) {
-                            audioManager.stopBGM();
-                            gameState.bgmPlaying = false;
-                        }
-                        
-                        if (audioManager.loadBGM(bgmPath)) {
-                            audioManager.playBGM();
-                            gameState.currentBGM = targetBGM;
-                            gameState.bgmPlaying = true;
-                            std::cout << "BGM started: " << targetBGM << std::endl;
-                        }
-                    }
-                } else if (gameState.bgmPlaying) {
-                    audioManager.stopBGM();
-                    gameState.bgmPlaying = false;
-                    gameState.currentBGM = "";
-                    std::cout << "BGM stopped" << std::endl;
-                }
-                }
-            }
-
-            if (gameState.ui.showReadyScreen) {
-                handleReadyScreen(window, gameState, stageManager, platformSystem, renderer, gameStateUIRenderer, keyStates, resetStageStartTime, audioManager, deltaTime);
-                glfwPollEvents();
-                continue; // Ready画面表示中は他の処理をスキップ
-            }
-            
-            if (gameState.ui.isCountdownActive) {
-                handleCountdown(window, gameState, stageManager, platformSystem, renderer, gameStateUIRenderer, keyStates, resetStageStartTime, deltaTime);
-                glfwPollEvents();
-                continue; // カウントダウン中は他の処理をスキップ
-            }
-
-            if (gameState.ui.isEndingSequence) {
-                handleEndingSequence(window, gameState, stageManager, platformSystem, renderer, gameStateUIRenderer, keyStates, deltaTime);
-                glfwPollEvents();
-                continue; // エンディングシーケンス中は他の処理をスキップ
-            }
-
-            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-                SaveManager::saveGameData(gameState);
-                gameRunning = false;
-            }
-
-            if (gameState.ui.showTitleScreen) {
-                if (gameState.ui.isTransitioning) {
-                    const float FADE_DURATION = 0.5f;  // フェード時間（秒）
-                    gameState.ui.transitionTimer += deltaTime;
-                    
-                    if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
-                        if (gameState.ui.transitionTimer >= FADE_DURATION) {
-                            if (gameState.ui.pendingStageTransition >= 0) {
-                                // 次のフレームでshowTitleScreen = falseにしてステージを読み込むようにフラグを設定
-                                gameState.ui.pendingFadeIn = true;
-                            }
-                        }
-                    }
-                    // フェードイン処理はタイトル画面外で行う（showTitleScreen = falseになった後）
-                }
-                
-                // pendingFadeInがtrueの場合、showTitleScreen = falseにしてステージを読み込む
-                if (gameState.ui.pendingFadeIn && gameState.ui.isTransitioning) {
-                    gameState.ui.showTitleScreen = false;
-                    
-                    int targetStage = gameState.ui.pendingStageTransition;
-                    if (targetStage == 6) {
-                        // チュートリアルステージ
-                        stageManager.loadStage(6, gameState, platformSystem);
-                        gameState.ui.showReadyScreen = false;
-                        gameState.ui.readyScreenShown = true;
-                        gameState.ui.isCountdownActive = false;
-                        gameState.ui.countdownTimer = 0.0f;
-                        resetStageStartTime();
-                    } else if (targetStage == 0) {
-                        // ステージ選択画面
-                        resetStageStartTime();
-                        stageManager.goToStage(0, gameState, platformSystem);
-                        gameState.ui.showReadyScreen = false;
-                        gameState.ui.readyScreenShown = false;
-                        gameState.progress.timeScale = 1.0f;
-                        gameState.progress.timeScaleLevel = 0;
-                        
-                        gameState.camera.isFirstPersonMode = false;
-                        gameState.camera.isFirstPersonView = false;
-                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                        
-                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
-                    }
-                    // このフレームではまだpendingFadeInをtrueのままにして、次のフレームでフェードインを開始
-                }
-                
-                gameState.ui.titleScreenTimer += deltaTime;
-                
-                const float BACKGROUND_FADE_DURATION = 1.5f;  // 背景フェードイン時間
-                const float LOGO_ANIMATION_DURATION = 1.0f;    // ロゴアニメーション時間
-                
-                if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::BACKGROUND_FADE_IN) {
-                    if (gameState.ui.titleScreenTimer >= BACKGROUND_FADE_DURATION) {
-                        gameState.ui.titleScreenPhase = UIState::TitleScreenPhase::LOGO_ANIMATION;
-                        gameState.ui.titleScreenTimer = 0.0f;  // タイマーリセット
-                    }
-                } else if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::LOGO_ANIMATION) {
-                    if (gameState.ui.titleScreenTimer >= LOGO_ANIMATION_DURATION) {
-                        gameState.ui.titleScreenPhase = UIState::TitleScreenPhase::SHOW_TEXT;
-                        gameState.ui.titleScreenTimer = 0.0f;  // タイマーリセット
-                    }
-                }
-                
-                if (gameState.audioEnabled && !gameState.ui.isTransitioning) {
-                    std::string titleBGM = "title.ogg";
-                    if (gameState.currentBGM != titleBGM) {
-                        if (gameState.bgmPlaying) {
-                            audioManager.stopBGM();
-                            gameState.bgmPlaying = false;
-                        }
-                        
-                        std::string bgmPath = ResourcePath::getResourcePath("assets/audio/bgm/title.ogg");
-                        if (audioManager.loadBGM(bgmPath)) {
-                            audioManager.playBGM();
-                            gameState.currentBGM = titleBGM;
-                            gameState.bgmPlaying = true;
-                            std::cout << "Title BGM started: " << titleBGM << std::endl;
-                        }
-                    }
-                }
-                
-                for (auto& [key, state] : keyStates) {
-                    state.update(glfwGetKey(window, key) == GLFW_PRESS);
-                }
-                
-                if (keyStates[GLFW_KEY_ENTER].justPressed() && 
-                    gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT &&
-                    !gameState.ui.isTransitioning) {
-                    if (gameState.bgmPlaying && gameState.currentBGM == "title.ogg") {
-                        audioManager.stopBGM();
-                        gameState.bgmPlaying = false;
-                        gameState.currentBGM = "";
-                    }
-                    
-                    // チュートリアルクリア判定: stageStars[6]があるか、ステージ1がアンロックされているか、チュートリアル説明が非表示
-                    bool hasClearedTutorial = (gameState.progress.stageStars.count(6) > 0 && gameState.progress.stageStars[6] > 0) ||
-                                             (gameState.progress.unlockedStages.count(1) > 0 && gameState.progress.unlockedStages[1]) ||
-                                             !gameState.ui.showStage0Tutorial;
-                    
-                    if (hasClearedTutorial) {
-                        gameState.ui.isTransitioning = true;
-                        gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
-                        gameState.ui.transitionTimer = 0.0f;
-                        gameState.ui.pendingStageTransition = 0;  // ステージ選択画面
-                        gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
-                        gameState.ui.pendingSkipCountdown = true;  // カウントダウンをスキップ
-                    } else {
-                        gameState.ui.isTransitioning = true;
-                        gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
-                        gameState.ui.transitionTimer = 0.0f;
-                        gameState.ui.pendingStageTransition = 6;  // チュートリアルステージ
-                        gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
-                        gameState.ui.pendingSkipCountdown = true;  // カウントダウンをスキップ
-                    }
-                }
-                
-                GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
-                
-                glfwPollEvents();
-                // showTitleScreen = falseになった場合は、次のフレームで新しいステージを描画するためcontinueしない
-                if (gameState.ui.showTitleScreen) {
-                    continue;  // タイトル画面中は他の処理をスキップ
-                }
-            }
-
-            // タイトル画面から遷移した後も、フェードイン処理を続ける
-            if (gameState.ui.isTransitioning && gameState.ui.pendingFadeIn && !gameState.ui.showTitleScreen) {
-                // showTitleScreen = falseになった後のフレーム：フェードインを開始
-                gameState.ui.pendingFadeIn = false;
-                gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
-                gameState.ui.transitionTimer = 0.0f;
-            }
-            
-            if (gameState.ui.isTransitioning && gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
-                const float FADE_DURATION = 0.5f;
-                gameState.ui.transitionTimer += deltaTime;
-                if (gameState.ui.transitionTimer >= FADE_DURATION) {
-                    gameState.ui.isTransitioning = false;
-                    gameState.ui.transitionType = UIState::TransitionType::NONE;
-                    gameState.ui.transitionTimer = 0.0f;
-                    gameState.ui.pendingStageTransition = -1;
-                    gameState.ui.pendingReadyScreen = false;
-                    gameState.ui.pendingSkipCountdown = false;
-                    gameState.ui.pendingFadeIn = false;
-                }
-            }
-
-            updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
-
-            GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
-            
-            std::this_thread::sleep_for(std::chrono::milliseconds(GameConstants::FRAME_DELAY_MS));
-            
-            glfwPollEvents();
-        }
-    }
-
-    void handleReadyScreen(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                          PlatformSystem& platformSystem,
-                          std::unique_ptr<gfx::OpenGLRenderer>& renderer,
-                          std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
-                          std::map<int, InputUtils::KeyState>& keyStates,
-                          std::function<void()> resetStageStartTime,
-                          io::AudioManager& audioManager,
-                          float deltaTime) {
-        static float readyScreenFileCheckTimer = 0.0f;
-        readyScreenFileCheckTimer += deltaTime;
-        if (readyScreenFileCheckTimer >= 0.5f) {
-            readyScreenFileCheckTimer = 0.0f;
-            UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
-        }
-        
-        int width, height;
-        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
-        
-        GameLoop::GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
-        
-        GameLoop::GameRenderer::renderPlayer(gameState, renderer);
-        
-        gameStateUIRenderer->renderReadyScreen(width, height, gameState.ui.readyScreenSpeedLevel, gameState.camera.isFirstPersonMode);
-        
-        renderer->endFrame();
-        
-        for (auto& [key, state] : keyStates) {
-            state.update(glfwGetKey(window, key) == GLFW_PRESS);
-        }
-        
-        if (keyStates[GLFW_KEY_T].justPressed()) {
-            gameState.ui.readyScreenSpeedLevel = (gameState.ui.readyScreenSpeedLevel + 1) % 3;
-        }
-        
-        
-        if (keyStates[GLFW_KEY_ENTER].justPressed()) {
-            gameState.ui.showReadyScreen = false;
-            gameState.ui.isCountdownActive = true;
-            gameState.ui.countdownTimer = 3.0f;
-            
-            if (gameState.audioEnabled) {
-                audioManager.playSFX("countdown");
-            }
-            
-            gameState.camera.isFirstPersonView = gameState.camera.isFirstPersonMode;
-            
-            if (gameState.camera.isFirstPersonMode) {
-                gameState.camera.yaw = 90.0f;
-                gameState.camera.pitch = -10.0f;
-                gameState.camera.firstMouse = true;
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            } else {
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            }
-            
-            switch (gameState.ui.readyScreenSpeedLevel) {
-                case 0:
-                    gameState.progress.timeScale = 1.0f;
-                    gameState.progress.timeScaleLevel = 0;
-                    break;
-                case 1:
-                    gameState.progress.timeScale = 2.0f;
-                    gameState.progress.timeScaleLevel = 1;
-                    break;
-                case 2:
-                    gameState.progress.timeScale = 3.0f;
-                    gameState.progress.timeScaleLevel = 2;
-                    break;
-            }
-        }
-    }
-
-    void handleCountdown(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                        PlatformSystem& platformSystem,
-                        std::unique_ptr<gfx::OpenGLRenderer>& renderer,
-                        std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
-                        std::map<int, InputUtils::KeyState>& keyStates,
-                        std::function<void()> resetStageStartTime,
-                        float deltaTime) {
-        
-        if (!gameState.progress.timeLimitApplied) {
-            float baseTimeLimit = gameState.progress.timeLimit;
-            
-            if (gameState.camera.isFirstPersonMode) {
-                baseTimeLimit += GameConstants::FIRST_PERSON_TIME_BONUS;
-                printf("COUNTDOWN: FPS MODE +%.1fs applied\n", GameConstants::FIRST_PERSON_TIME_BONUS);
-            }
-            if (gameState.progress.isEasyMode) {
-                baseTimeLimit += GameConstants::EASY_MODE_TIME_BONUS;
-                printf("COUNTDOWN: EASY MODE +%.1fs applied\n", GameConstants::EASY_MODE_TIME_BONUS);
-            }
-            
-            gameState.progress.timeLimit = baseTimeLimit;
-            gameState.progress.remainingTime = baseTimeLimit;
-            gameState.progress.timeLimitApplied = true;
-            printf("COUNTDOWN: Final time limit set to %.1f seconds\n", baseTimeLimit);
-        }
-        
-        int width, height;
-        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
-        
-        GameLoop::GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
-        
-        GameLoop::GameRenderer::renderPlayer(gameState, renderer);
-        
-        int count = (int)gameState.ui.countdownTimer + 1;
-        if (count > 0) {
-            gameStateUIRenderer->renderCountdown(width, height, count);
-        }
-        
-        renderer->endFrame();
-        
-        for (auto& [key, state] : keyStates) {
-            state.update(glfwGetKey(window, key) == GLFW_PRESS);
-        }
-        
-        gameState.ui.countdownTimer -= deltaTime;
-        
-        if (gameState.ui.countdownTimer <= 0.0f) {
-            gameState.ui.isCountdownActive = false;
-            resetStageStartTime();
-            
-            if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::MAX_SPEED_STAR) {
-                gameState.progress.timeScale = 3.0f;
-                gameState.progress.timeScaleLevel = 2;  // 3倍に設定
-            }
-            
-            if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::IMMERSIVE_STAR) {
-                gameState.camera.isFirstPersonView = true;
-                gameState.camera.yaw = 90.0f;
-                gameState.camera.pitch = -10.0f;
-                gameState.camera.firstMouse = true;
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            }
-            
-            if (gameState.progress.isTimeAttackMode) {
-                gameState.progress.timeAttackStartTime = gameState.progress.gameTime;
-                gameState.progress.currentTimeAttackTime = 0.0f;
-                
-                gameState.replay.isRecordingReplay = true;
-                gameState.replay.replayBuffer.clear();
-                gameState.replay.replayRecordTimer = 0.0f;
-                
-                ReplayFrame firstFrame;
-                firstFrame.timestamp = 0.0f;
-                firstFrame.playerPosition = gameState.player.position;
-                firstFrame.playerVelocity = gameState.player.velocity;
-                firstFrame.itemCollectedStates.clear();
-                for (const auto& item : gameState.items.items) {
-                    firstFrame.itemCollectedStates.push_back(item.isCollected);
-                }
-                gameState.replay.replayBuffer.push_back(firstFrame);
-                
-                printf("TIME ATTACK: Started at %.2f\n", gameState.progress.timeAttackStartTime);
-                printf("REPLAY: Recording started\n");
-            }
-        }
-    }
-
-    void handleEndingSequence(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                             PlatformSystem& platformSystem,
-                             std::unique_ptr<gfx::OpenGLRenderer>& renderer,
-                             std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
-                             std::map<int, InputUtils::KeyState>& keyStates,
-                             float deltaTime) {
-        int width, height;
-        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
-        
-        if (gameState.ui.showStaffRoll) {
-            gameState.ui.staffRollTimer += deltaTime;
-            
-            if (gameState.ui.staffRollTimer >= 14.0f) {
-                gameState.ui.showStaffRoll = false;
-                gameState.ui.showEndingMessage = true;
-                gameState.ui.endingMessageTimer = 0.0f;
-            } else {
-                gameStateUIRenderer->renderStaffRoll(width, height, gameState.ui.staffRollTimer);
-            }
-        }
-        
-        if (gameState.ui.showEndingMessage) {
-            gameState.ui.endingMessageTimer += deltaTime;
-            
-            if (gameState.ui.endingMessageTimer >= 5.0f) {
-                gameState.ui.isEndingSequence = false;
-                gameState.ui.showStaffRoll = false;
-                gameState.ui.showEndingMessage = false;
-                gameState.ui.staffRollTimer = 0.0f;
-                gameState.ui.endingMessageTimer = 0.0f;
-                
-                gameState.progress.isGameCleared = true;
-                gameState.ui.showSecretStarExplanationUI = true;
-                
-                GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
-            } else {
-                gameStateUIRenderer->renderEndingMessage(width, height, gameState.ui.endingMessageTimer);
-            }
-        }
-        
-        if (keyStates[GLFW_KEY_ENTER].justPressed()) {
-            gameState.ui.isEndingSequence = false;
-            gameState.ui.showStaffRoll = false;
-            gameState.ui.showEndingMessage = false;
-            gameState.ui.staffRollTimer = 0.0f;
-            gameState.ui.endingMessageTimer = 0.0f;
-            
-            gameState.progress.isGameCleared = true;
-            gameState.ui.showSecretStarExplanationUI = true;
-            
-            GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
-        }
-        
-        renderer->endFrame();
-        
-        for (auto& [key, state] : keyStates) {
-            state.update(glfwGetKey(window, key) == GLFW_PRESS);
-        }
-    }
-
-    float savedClearTime = 0.0f;
-
-    void updateGameState(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                        PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime,
-                        std::map<int, InputUtils::KeyState>& keyStates,
-                        std::function<void()> resetStageStartTime, io::AudioManager& audioManager) {
-        GameLoop::GameUpdater::updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
-    }
-
-
-    void updatePhysicsAndCollisions(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                                   PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime, io::AudioManager& audioManager) {
-        GameLoop::GameUpdater::updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
-    }
-
-    void updateItems(GameState& gameState, float scaledDeltaTime, io::AudioManager& audioManager) {
-        GameLoop::GameUpdater::updateItems(gameState, scaledDeltaTime, audioManager);
-    }
-
-
-    void handleStageSelectionArea(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                                 PlatformSystem& platformSystem, std::function<void()> resetStageStartTime) {
-        if (stageManager.getCurrentStage() == 0) {
-            int selectedStage = -1;
-            for (int stage = 0; stage < 5; stage++) {
-                const auto& stageArea = GameConstants::STAGE_AREAS[stage];
-                if (gameState.player.position.x > stageArea.x - GameConstants::STAGE_SELECTION_RANGE && 
-                    gameState.player.position.x < stageArea.x + GameConstants::STAGE_SELECTION_RANGE && 
-                    gameState.player.position.z > stageArea.z - GameConstants::STAGE_SELECTION_RANGE && 
-                    gameState.player.position.z < stageArea.z + GameConstants::STAGE_SELECTION_RANGE
-                ) {
-                    selectedStage = stage + 1;
-                    break;
-                }
-            }
-            
-            if (selectedStage > 0) {
-                gameState.ui.showStageSelectionAssist = true;
-                gameState.ui.assistTargetStage = selectedStage;
-            } else {
-                gameState.ui.showStageSelectionAssist = false;
-                gameState.ui.assistTargetStage = 0;
-            }
-            
-            if (!gameState.ui.showWarpTutorialUI && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-                if (selectedStage > 0) {
-                    InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
-                }
-            }
-        }
-    }
-
-    void renderFrame(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                    PlatformSystem& platformSystem,
-                    std::unique_ptr<gfx::OpenGLRenderer>& renderer,
-                    std::unique_ptr<gfx::UIRenderer>& uiRenderer,
-                    std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
-                    std::map<int, InputUtils::KeyState>& keyStates,
-                    float deltaTime) {
-        GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
-    }
-
-    void prepareFrame(GLFWwindow* window, GameState& gameState, StageManager& stageManager,
-                     std::unique_ptr<gfx::OpenGLRenderer>& renderer, int& width, int& height, float deltaTime) {
-        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
-    }
-
-    void renderPlatforms(PlatformSystem& platformSystem, 
-                        std::unique_ptr<gfx::OpenGLRenderer>& renderer,
-                        GameState& gameState,
-                        StageManager& stageManager) {
-        GameLoop::GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
-    }
-
-    void renderPlayer(GameState& gameState, std::unique_ptr<gfx::OpenGLRenderer>& renderer) {
-        GameLoop::GameRenderer::renderPlayer(gameState, renderer);
-    }
-
-    void _old_renderFrame_removed(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
+void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
                     PlatformSystem& platformSystem,
                     std::unique_ptr<gfx::OpenGLRenderer>& renderer,
                     std::unique_ptr<gfx::UIRenderer>& uiRenderer,
@@ -697,7 +97,7 @@ namespace GameLoop {
             return;  // タイトル画面中は他の処理をスキップ
         }
         
-        prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
+        GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
         
         if (editorState->isActive) {
             CameraConfig cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window, deltaTime);
@@ -720,7 +120,7 @@ namespace GameLoop {
         
         uiRenderer->setWindowSize(width, height);
         
-        renderPlatforms(platformSystem, renderer, gameState, stageManager);
+        GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
         
         for (const auto& zone : gameState.gravityZones) {
             if (zone.isActive) {
@@ -792,7 +192,7 @@ namespace GameLoop {
         }
         
         if (!gameState.camera.isFirstPersonView) {
-            renderPlayer(gameState, renderer);
+            GameRenderer::renderPlayer(gameState, renderer);
         }
         
         if (gameState.progress.isTutorialStage && gameState.ui.showTutorialUI) {
@@ -1165,7 +565,7 @@ namespace GameLoop {
             auto worldTitleConfig = uiConfig.getWorldTitleConfig();
             glm::vec2 worldTitlePos = uiConfig.calculatePosition(worldTitleConfig.position, width, height);
             uiRenderer->renderText("WORLD 1", worldTitlePos, worldTitleConfig.color, worldTitleConfig.scale);
-           
+            
             auto starIconConfig = uiConfig.getStarIconConfig();
             glm::vec2 starIconPos = uiConfig.calculatePosition(starIconConfig.position, width, height);
             uiRenderer->renderStar(starIconPos, starIconConfig.color, starIconConfig.scale);
@@ -1281,6 +681,183 @@ namespace GameLoop {
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
             glPopMatrix();
-        }   
+        }
+        
+        renderer->endFrame();
     }
+void GameRenderer::prepareFrame(GLFWwindow* window, GameState& gameState, StageManager& stageManager,
+                     std::unique_ptr<gfx::OpenGLRenderer>& renderer, int& width, int& height, float deltaTime) {
+        renderer->beginFrameWithBackground(stageManager.getCurrentStage());
+        
+        if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+        
+        auto cameraConfig = CameraSystem::calculateCameraConfig(gameState, stageManager, window, deltaTime);
+        CameraSystem::applyCameraConfig(renderer.get(), cameraConfig, window);
+        
+        auto [w, h] = CameraSystem::getWindowSize(window);
+        width = w; height = h;
+    }
+void GameRenderer::renderPlatforms(PlatformSystem& platformSystem, 
+                        std::unique_ptr<gfx::OpenGLRenderer>& renderer,
+                        GameState& gameState,
+                        StageManager& stageManager) {
+        auto positions = platformSystem.getPositions();
+        auto sizes = platformSystem.getSizes();
+        auto colors = platformSystem.getColors();
+        auto visibility = platformSystem.getVisibility();
+        auto isRotating = platformSystem.getIsRotating();
+        auto rotationAngles = platformSystem.getRotationAngles();
+        auto rotationAxes = platformSystem.getRotationAxes();
+        auto blinkAlphas = platformSystem.getBlinkAlphas();
+        auto platformTypes = platformSystem.getPlatformTypes();
+        
+        std::vector<bool> shadowVisibility = visibility;
+        if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
+            for (size_t i = 0; i < shadowVisibility.size(); i++) {
+                shadowVisibility[i] = false;
+            }
+            
+            glm::vec3 playerSize = glm::vec3(1.0f, 2.0f, 1.0f);
+            auto collisionResult = platformSystem.checkCollisionWithIndex(gameState.player.position, playerSize);
+            int currentPlatformIndex = collisionResult.second;
+            
+            if (currentPlatformIndex >= 0 && currentPlatformIndex < static_cast<int>(shadowVisibility.size())) {
+                shadowVisibility[currentPlatformIndex] = true;
+            }
+        }
+        
+        static GLuint staticPlatformTexture = 0;
+        if (staticPlatformTexture == 0) {
+            staticPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/static_platform.png"));
+            if (staticPlatformTexture == 0) {
+                staticPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/static_platform.png");
+            }
+        }
+        static GLuint goalPlatformTexture = 0;
+        if (goalPlatformTexture == 0) {
+            goalPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/goal_platform.png"));
+            if (goalPlatformTexture == 0) {
+                goalPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/goal_platform.png");
+            }
+        }
+        static GLuint startPlatformTexture = 0;
+        if (startPlatformTexture == 0) {
+            startPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/start_platform.png"));
+            if (startPlatformTexture == 0) {
+                startPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/start_platform.png");
+            }
+        }
+        
+        static GLuint movingPlatformTexture = 0;
+        if (movingPlatformTexture == 0) {
+            movingPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/moving_platform.png"));
+            if (movingPlatformTexture == 0) {
+                movingPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/moving_platform.png");
+            }
+        }
+
+        static GLuint cyclingDisappearTexture = 0;
+        if (cyclingDisappearTexture == 0) {
+            cyclingDisappearTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/cyclingdisappearing_platform.png"));
+            if (cyclingDisappearTexture == 0) {
+                cyclingDisappearTexture = gfx::TextureManager::loadTexture("assets/textures/cyclingdisappearing_platform.png");
+            }
+        }
+
+        static GLuint flyingPlatformTexture = 0;
+        if (flyingPlatformTexture == 0) {
+            flyingPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/flying_platform.png"));
+            if (flyingPlatformTexture == 0) {
+                flyingPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/flying_platform.png");
+            }
+        }
+        
+        static GLuint lockPlatformTexture = 0;
+        if (lockPlatformTexture == 0) {
+            lockPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/lock_platform.png"));
+            if (lockPlatformTexture == 0) {
+                lockPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/lock_platform.png");
+            }
+        }
+        
+        static GLuint unlockPlatformTexture = 0;
+        if (unlockPlatformTexture == 0) {
+            unlockPlatformTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/unlock_platform.png"));
+            if (unlockPlatformTexture == 0) {
+                unlockPlatformTexture = gfx::TextureManager::loadTexture("assets/textures/unlock_platform.png");
+            }
+        }
+        
+        for (size_t i = 0; i < positions.size(); i++) {
+            bool shouldRender = (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR) 
+                                ? shadowVisibility[i] 
+                                : visibility[i];
+            if (!shouldRender || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;
+            
+            if (isRotating[i]) {
+                renderer->renderer3D.renderRotatedBox(positions[i], colors[i], sizes[i], rotationAxes[i], rotationAngles[i]);
+            } else if (platformTypes[i] == "static" && (staticPlatformTexture != 0 || goalPlatformTexture != 0 || startPlatformTexture != 0 || lockPlatformTexture != 0 || unlockPlatformTexture != 0)) {
+                bool isGoalColor = (colors[i].r > 0.9f && colors[i].g > 0.9f && colors[i].b < 0.1f);
+                bool isStartColor = (colors[i].r < 0.1f && colors[i].g > 0.9f && colors[i].b < 0.1f);
+                bool isUnlockColor = (colors[i].r < 0.3f && colors[i].g > 0.9f && colors[i].b < 0.3f); // 緑色（アンロック済み）
+                bool isLockColor = (colors[i].r > 0.4f && colors[i].g > 0.4f && colors[i].b > 0.4f && 
+                                   colors[i].r < 0.6f && colors[i].g < 0.6f && colors[i].b < 0.6f); // 灰色（ロック中）
+                
+                GLuint tex = staticPlatformTexture; // デフォルト
+                if (isGoalColor && goalPlatformTexture != 0) {
+                    tex = goalPlatformTexture;
+                } else if (isStartColor && startPlatformTexture != 0) {
+                    tex = startPlatformTexture;
+                } else if (isUnlockColor && unlockPlatformTexture != 0) {
+                    tex = unlockPlatformTexture;
+                } else if (isLockColor && lockPlatformTexture != 0) {
+                    tex = lockPlatformTexture;
+                }
+                
+                renderer->renderer3D.renderTexturedBoxWithAlpha(positions[i], sizes[i], tex, blinkAlphas[i]);
+            } else if ((platformTypes[i] == "moving" || platformTypes[i] == "patrolling") && movingPlatformTexture != 0) {
+                renderer->renderer3D.renderTexturedBoxWithAlpha(positions[i], sizes[i], movingPlatformTexture, blinkAlphas[i]);
+            } else if (platformTypes[i] == "cycle_disappearing" && cyclingDisappearTexture != 0) {
+                renderer->renderer3D.renderTexturedBoxWithAlpha(positions[i], sizes[i], cyclingDisappearTexture, blinkAlphas[i]);
+            } else if (platformTypes[i] == "flying" && flyingPlatformTexture != 0) {
+                renderer->renderer3D.renderTexturedBoxWithAlpha(positions[i], sizes[i], flyingPlatformTexture, blinkAlphas[i]);
+            } else {
+                renderer->renderer3D.renderRealisticBox(positions[i], colors[i], sizes[i], blinkAlphas[i]);
+            }
+        }
+    }
+void GameRenderer::renderPlayer(GameState& gameState, 
+                  std::unique_ptr<gfx::OpenGLRenderer>& renderer) {
+    static GLuint playerTexture = 0;
+    static GLuint playerFrontTexture = 0;
+    
+    if (playerTexture == 0) {
+        playerTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/player.png"));
+        if (playerTexture == 0) {
+            playerTexture = gfx::TextureManager::loadTexture("assets/textures/player.png");
+        }
+    }
+    
+    if (playerFrontTexture == 0) {
+        playerFrontTexture = gfx::TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/player_front.png"));
+        if (playerFrontTexture == 0) {
+            playerFrontTexture = gfx::TextureManager::loadTexture("assets/textures/player_front.png");
+        }
+    }
+    
+    if (playerTexture != 0 && playerFrontTexture != 0) {
+        glm::vec3 playerSize = glm::vec3(GameConstants::PLAYER_SCALE);
+        
+        if (gameState.player.isShowingFrontTexture) {
+            renderer->renderer3D.renderTexturedBox(gameState.player.position, playerSize, playerFrontTexture, playerTexture);
+        } else {
+            renderer->renderer3D.renderTexturedBox(gameState.player.position, playerSize, playerTexture);
+        }
+    } else {
+        renderer->renderer3D.renderCube(gameState.player.position, gameState.player.color, GameConstants::PLAYER_SCALE);
+    }
+}
 } // namespace GameLoop

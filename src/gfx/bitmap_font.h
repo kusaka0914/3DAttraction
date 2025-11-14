@@ -1,3 +1,8 @@
+/**
+ * @file bitmap_font.h
+ * @brief ビットマップフォント
+ * @details ビットマップベースのフォント描画を管理します。
+ */
 #pragma once
 
 #include <map>
@@ -6,31 +11,45 @@
 
 namespace gfx {
 
+/**
+ * @brief ビットマップフォント
+ * @details ビットマップベースのフォント描画を管理します。
+ */
 class BitmapFont {
 public:
     BitmapFont();
     ~BitmapFont();
     
-    // フォントの初期化
+    /**
+     * @brief フォントを初期化する
+     * @details フォントデータを読み込み、初期化します。
+     */
     void initialize();
     
-    // 文字データの取得
+    /**
+     * @brief 文字データを取得する
+     * @param c 取得する文字
+     * @return 文字のビットマップデータ
+     */
     const std::vector<bool>& getCharacter(char c) const;
     
-    // フォントの初期化状態確認
+    /**
+     * @brief フォントが初期化済みか確認する
+     * @return 初期化済みの場合true
+     */
     bool isInitialized() const;
     
-    // 指定文字の存在確認
+    /**
+     * @brief 指定文字が存在するか確認する
+     * @param c 確認する文字
+     * @return 存在する場合true
+     */
     bool hasCharacter(char c) const;
 
 private:
-    // 文字データの格納
     std::map<char, std::vector<bool>> characters;
-    
-    // 初期化状態
     bool initialized;
     
-    // 各文字のビットマップデータを定義
     void defineCharacters();
 };
 

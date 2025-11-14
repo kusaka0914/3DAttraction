@@ -1,4 +1,5 @@
 #include "ui_config_manager.h"
+#include "../error_handler.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -19,49 +20,42 @@ namespace UIConfig {
     }
     
     void UIConfigManager::setDefaultValues() {
-        // ステージ情報（STAGE X / TUTORIAL）
         stageInfoConfig.position.useRelative = false;
         stageInfoConfig.position.absoluteX = 30.0f;
         stageInfoConfig.position.absoluteY = 30.0f;
         stageInfoConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
         stageInfoConfig.scale = 2.0f;
         
-        // 速度倍率表示（3xなど）
         speedDisplayConfig.position.useRelative = false;
         speedDisplayConfig.position.absoluteX = 880.0f;
         speedDisplayConfig.position.absoluteY = 25.0f;
         speedDisplayConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         speedDisplayConfig.scale = 2.0f;
         
-        // PRESS T表示（通常モード）
         pressTConfig.position.useRelative = false;
         pressTConfig.position.absoluteX = 870.0f;
         pressTConfig.position.absoluteY = 65.0f;
         pressTConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         pressTConfig.scale = 1.0f;
         
-        // リプレイポーズマーク（||）
         replayPauseMarkConfig.position.useRelative = true;
         replayPauseMarkConfig.position.offsetX = -200.0f;
         replayPauseMarkConfig.position.offsetY = -280.0f;
         replayPauseMarkConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         replayPauseMarkConfig.scale = 5.0f;
         
-        // リプレイ巻き戻しマーク（<<）
         replayRewindMarkConfig.position.useRelative = true;
         replayRewindMarkConfig.position.offsetX = -60.0f;
         replayRewindMarkConfig.position.offsetY = -80.0f;
         replayRewindMarkConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         replayRewindMarkConfig.scale = 5.0f;
         
-        // リプレイ早送りマーク（>>）
         replayFastForwardMarkConfig.position.useRelative = true;
         replayFastForwardMarkConfig.position.offsetX = -60.0f;
         replayFastForwardMarkConfig.position.offsetY = -80.0f;
         replayFastForwardMarkConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         replayFastForwardMarkConfig.scale = 5.0f;
         
-        // リプレイ常時表示マーク（画面下に並べて配置）
         replayRewindMarkAlwaysConfig.position.useRelative = true;
         replayRewindMarkAlwaysConfig.position.offsetX = -300.0f;
         replayRewindMarkAlwaysConfig.position.offsetY = -120.0f;
@@ -83,7 +77,6 @@ namespace UIConfig {
         replayFastForwardMarkAlwaysConfig.activeColor = glm::vec3(1.0f, 0.8f, 0.2f);
         replayFastForwardMarkAlwaysConfig.scale = 2.0f;
         
-        // リプレイPRESSキー表示
         replayPressAConfig.position.useRelative = true;
         replayPressAConfig.position.offsetX = -300.0f;
         replayPressAConfig.position.offsetY = -80.0f;
@@ -102,49 +95,42 @@ namespace UIConfig {
         replayPressDConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         replayPressDConfig.scale = 1.0f;
         
-        // リプレイ速度ラベル（REPLAY SPEED）
         replaySpeedLabelConfig.position.useRelative = true;
         replaySpeedLabelConfig.position.offsetX = -80.0f;
         replaySpeedLabelConfig.position.offsetY = 60.0f;
         replaySpeedLabelConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
         replaySpeedLabelConfig.scale = 1.2f;
         
-        // リプレイ速度表示（1.0xなど）
         replaySpeedDisplayConfig.position.useRelative = true;
         replaySpeedDisplayConfig.position.offsetX = -40.0f;
         replaySpeedDisplayConfig.position.offsetY = 100.0f;
         replaySpeedDisplayConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
         replaySpeedDisplayConfig.scale = 1.5f;
         
-        // リプレイPRESS T表示
         replayPressTConfig.position.useRelative = true;
         replayPressTConfig.position.offsetX = -60.0f;
         replayPressTConfig.position.offsetY = 140.0f;
         replayPressTConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
         replayPressTConfig.scale = 1.0f;
         
-        // リプレイ操作説明
         replayInstructionsConfig.position.useRelative = true;
         replayInstructionsConfig.position.offsetX = -300.0f;
         replayInstructionsConfig.position.offsetY = -50.0f;  // 画面下から50px上
         replayInstructionsConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
         replayInstructionsConfig.scale = 1.0f;
         
-        // WORLD 1表示
         worldTitleConfig.position.useRelative = true;
         worldTitleConfig.position.offsetX = -50.0f;
         worldTitleConfig.position.offsetY = -690.0f;  // 画面上部（30px下）
         worldTitleConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
         worldTitleConfig.scale = 1.5f;
         
-        // 星数表示
         starCountConfig.position.useRelative = false;
         starCountConfig.position.absoluteX = 72.0f;
         starCountConfig.position.absoluteY = 27.0f;
         starCountConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
         starCountConfig.scale = 1.5f;
         
-        // EASY/NORMAL表示
         normalModeTextConfig.position.useRelative = false;
         normalModeTextConfig.position.absoluteX = 140.0f;
         normalModeTextConfig.position.absoluteY = 20.0f;
@@ -157,28 +143,24 @@ namespace UIConfig {
         easyModeTextConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         easyModeTextConfig.scale = 1.5f;
         
-        // PRESS E表示
         pressEConfig.position.useRelative = false;
         pressEConfig.position.absoluteX = 155.0f;
         pressEConfig.position.absoluteY = 50.0f;
         pressEConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         pressEConfig.scale = 0.8f;
         
-        // 星アイコン（ステージ選択フィールド）
         starIconConfig.position.useRelative = false;
         starIconConfig.position.absoluteX = 70.0f;
         starIconConfig.position.absoluteY = 70.0f;
         starIconConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
         starIconConfig.scale = 3.0f;
         
-        // 操作説明テキスト
         controlsTextConfig.position.useRelative = false;
         controlsTextConfig.position.absoluteX = 10.0f;
         controlsTextConfig.position.offsetY = -30.0f;  // 画面下から30px上（相対）
         controlsTextConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
         controlsTextConfig.scale = 1.0f;
         
-        // Ready画面UI設定
         readyTextConfig.position.useRelative = true;
         readyTextConfig.position.offsetX = -230.0f;
         readyTextConfig.position.offsetY = -300.0f;
@@ -205,7 +187,6 @@ namespace UIConfig {
         readyPressTConfig.color = glm::vec3(1.0f, 0.8f, 0.2f);
         readyPressTConfig.scale = 1.2f;
         
-        // タイトル画面UI設定
         titleLogoConfig.position.useRelative = true;
         titleLogoConfig.position.offsetX = 0.0f;
         titleLogoConfig.position.offsetY = -200.0f;
@@ -249,7 +230,6 @@ namespace UIConfig {
         confirmConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         confirmConfig.scale = 1.2f;
         
-        // Stage Clear UI設定
         stageClearCompletedTextConfig.position.useRelative = true;
         stageClearCompletedTextConfig.position.offsetX = -300.0f;
         stageClearCompletedTextConfig.position.offsetY = -80.0f;
@@ -288,7 +268,6 @@ namespace UIConfig {
         stageClearStarsConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         stageClearStarsConfig.scale = 10.0f;
         
-        // Time Attack Clear UI設定
         timeAttackClearCompletedTextConfig.position.useRelative = true;
         timeAttackClearCompletedTextConfig.position.offsetX = -500.0f;
         timeAttackClearCompletedTextConfig.position.offsetY = -400.0f;
@@ -337,7 +316,6 @@ namespace UIConfig {
         timeAttackClearReplayConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         timeAttackClearReplayConfig.scale = 1.0f;
         
-        // Game Over UI設定
         gameOverTextConfig.position.useRelative = true;
         gameOverTextConfig.position.offsetX = -300.0f;
         gameOverTextConfig.position.offsetY = -100.0f;
@@ -356,7 +334,6 @@ namespace UIConfig {
         gameOverRetryConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
         gameOverRetryConfig.scale = 1.5f;
         
-        // Mode Selection UI設定
         modeSelectionTitleConfig.position.useRelative = true;
         modeSelectionTitleConfig.position.offsetX = -250.0f;
         modeSelectionTitleConfig.position.offsetY = -200.0f;
@@ -403,7 +380,6 @@ namespace UIConfig {
         modeSelectionConfirmConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         modeSelectionConfirmConfig.scale = 1.5f;
         
-        // Tutorial UI設定
         tutorialStepTextConfig.position.useRelative = true;
         tutorialStepTextConfig.position.offsetX = -70.0f;
         tutorialStepTextConfig.position.offsetY = 90.0f;  // 以前のcenterY=500基準に合わせて調整 (500-50-360=90)
@@ -417,7 +393,6 @@ namespace UIConfig {
         tutorialMessageConfig.completedColor = glm::vec3(0.2f, 0.8f, 0.2f);
         tutorialMessageConfig.scale = 1.5f;
         
-        // 各ステップのメッセージ設定のデフォルト値（デフォルトは共通設定を使用）
         for (int i = 0; i < 11; i++) {
             tutorialMessageConfigs[i] = tutorialMessageConfig;
             tutorialMessageConfigs[i].position.useRelative = true; // デフォルトは相対位置
@@ -429,15 +404,12 @@ namespace UIConfig {
         tutorialPressEnterConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         tutorialPressEnterConfig.scale = 1.2f;
         
-        // Tutorial Step-specific UI設定
-        // Step 5
         tutorialStep5ExplainText1Config.position.useRelative = true;
         tutorialStep5ExplainText1Config.position.offsetX = -50.0f;
         tutorialStep5ExplainText1Config.position.offsetY = -400.0f;
         tutorialStep5ExplainText1Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
         tutorialStep5ExplainText1Config.scale = 1.2f;
         
-        // Step 9
         tutorialStep9ExplainText1Config.position.useRelative = true;
         tutorialStep9ExplainText1Config.position.offsetX = -200.0f;
         tutorialStep9ExplainText1Config.position.offsetY = 50.0f;
@@ -462,7 +434,6 @@ namespace UIConfig {
         tutorialStep9ExplainText4Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
         tutorialStep9ExplainText4Config.scale = 1.2f;
         
-        // Step 10
         tutorialStep10ExplainText1Config.position.useRelative = true;
         tutorialStep10ExplainText1Config.position.offsetX = -190.0f;
         tutorialStep10ExplainText1Config.position.offsetY = 50.0f;
@@ -481,7 +452,6 @@ namespace UIConfig {
         tutorialStep10ExplainText3Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
         tutorialStep10ExplainText3Config.scale = 1.2f;
         
-        // Unlock Confirm UI設定
         unlockConfirmTitleConfig.position.useRelative = true;
         unlockConfirmTitleConfig.position.offsetX = -250.0f;
         unlockConfirmTitleConfig.position.offsetY = -200.0f;
@@ -506,7 +476,6 @@ namespace UIConfig {
         unlockConfirmCancelButtonConfig.color = glm::vec3(0.8f, 0.2f, 0.2f);
         unlockConfirmCancelButtonConfig.scale = 1.5f;
         
-        // Star Insufficient UI設定
         starInsufficientTitleConfig.position.useRelative = true;
         starInsufficientTitleConfig.position.offsetX = -350.0f;
         starInsufficientTitleConfig.position.offsetY = -200.0f;
@@ -531,7 +500,6 @@ namespace UIConfig {
         starInsufficientOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         starInsufficientOkButtonConfig.scale = 1.5f;
         
-        // Ending UI設定
         endingThankYouConfig.position.useRelative = true;
         endingThankYouConfig.position.offsetX = -700.0f;
         endingThankYouConfig.position.offsetY = -400.0f;
@@ -556,7 +524,6 @@ namespace UIConfig {
         endingSkipConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         endingSkipConfig.scale = 1.2f;
         
-        // Warp Tutorial UI設定
         warpTutorialTitleConfig.position.useRelative = true;
         warpTutorialTitleConfig.position.offsetX = -350.0f;
         warpTutorialTitleConfig.position.offsetY = -200.0f;
@@ -581,7 +548,6 @@ namespace UIConfig {
         warpTutorialEnterButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         warpTutorialEnterButtonConfig.scale = 1.5f;
         
-        // Stage 0 Tutorial UI設定
         stage0TutorialLine1Config.position.useRelative = true;
         stage0TutorialLine1Config.position.offsetX = -250.0f;
         stage0TutorialLine1Config.position.offsetY = -250.0f;
@@ -618,7 +584,6 @@ namespace UIConfig {
         stage0TutorialOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         stage0TutorialOkButtonConfig.scale = 1.5f;
         
-        // SECRET STAR Explanation UI設定
         secretStarExplanationLine1Config.position.useRelative = true;
         secretStarExplanationLine1Config.position.offsetX = -600.0f;
         secretStarExplanationLine1Config.position.offsetY = -350.0f;
@@ -679,7 +644,6 @@ namespace UIConfig {
         secretStarExplanationOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         secretStarExplanationOkButtonConfig.scale = 1.5f;
         
-        // SECRET STAR Selection UI設定
         secretStarSelectionTitleConfig.position.useRelative = true;
         secretStarSelectionTitleConfig.position.offsetX = -400.0f;
         secretStarSelectionTitleConfig.position.offsetY = -350.0f;
@@ -731,7 +695,6 @@ namespace UIConfig {
         secretStarSelectionConfirmConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         secretStarSelectionConfirmConfig.scale = 1.2f;
         
-        // Easy Mode Explanation UI設定
         easyModeExplanationTitleConfig.position.useRelative = true;
         easyModeExplanationTitleConfig.position.offsetX = -350.0f;
         easyModeExplanationTitleConfig.position.offsetY = -300.0f;
@@ -786,21 +749,18 @@ namespace UIConfig {
         easyModeExplanationOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         easyModeExplanationOkButtonConfig.scale = 1.5f;
         
-        // Countdown UI設定
         countdownNumberConfig.position.useRelative = true;
         countdownNumberConfig.position.offsetX = -100.0f;
         countdownNumberConfig.position.offsetY = -100.0f;
         countdownNumberConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         countdownNumberConfig.scale = 5.0f;
         
-        // Stage Selection Assist UI設定
         stageSelectionAssistTextConfig.position.useRelative = true;
         stageSelectionAssistTextConfig.position.offsetX = -200.0f;
         stageSelectionAssistTextConfig.position.offsetY = 100.0f;
         stageSelectionAssistTextConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         stageSelectionAssistTextConfig.scale = 1.3f;
         
-        // Staff Roll UI設定
         staffRollSkipConfig.position.useRelative = true;
         staffRollSkipConfig.position.offsetX = -70.0f;
         staffRollSkipConfig.position.offsetY = -650.0f;
@@ -827,7 +787,6 @@ namespace UIConfig {
         
         staffRollSpacing = 100.0f;
         
-        // Game UI設定
         gameUITimeDisplayConfig.position.useRelative = false;
         gameUITimeDisplayConfig.position.absoluteX = 1170.0f;
         gameUITimeDisplayConfig.position.absoluteY = 30.0f;
@@ -895,7 +854,6 @@ namespace UIConfig {
         gameUIHeartsConfig.unselectedColor = glm::vec3(0.3f, 0.3f, 0.3f);
         gameUIHeartsConfig.scale = 1.0f;
         
-        // Skills設定
         gameUITimeStopSkillConfig.position.useRelative = false;
         gameUITimeStopSkillConfig.position.absoluteX = 30.0f;
         gameUITimeStopSkillConfig.position.absoluteY = 650.0f;
@@ -967,7 +925,6 @@ namespace UIConfig {
         
         std::ifstream file(filepath);
         if (!file.is_open()) {
-            // 代替パスを試す
             std::string altPath = "../" + filepath;
             file.open(altPath);
             if (!file.is_open()) {
@@ -983,10 +940,8 @@ namespace UIConfig {
             file >> jsonData;
             file.close();
             
-            // JSONデータをキャッシュ（動的アクセス用）
             cachedJsonData = jsonData;
             
-            // ステージ情報
             if (jsonData.contains("stageInfo")) {
                 auto& cfg = jsonData["stageInfo"];
                 if (cfg.contains("position")) {
@@ -1003,7 +958,6 @@ namespace UIConfig {
                 if (cfg.contains("scale")) stageInfoConfig.scale = cfg["scale"];
             }
             
-            // 速度倍率表示
             if (jsonData.contains("speedDisplay")) {
                 auto& cfg = jsonData["speedDisplay"];
                 if (cfg.contains("position")) {
@@ -1020,7 +974,6 @@ namespace UIConfig {
                 if (cfg.contains("scale")) speedDisplayConfig.scale = cfg["scale"];
             }
             
-            // PRESS T表示（通常モード）
             if (jsonData.contains("pressT")) {
                 auto& cfg = jsonData["pressT"];
                 if (cfg.contains("position")) {
@@ -1037,7 +990,6 @@ namespace UIConfig {
                 if (cfg.contains("scale")) pressTConfig.scale = cfg["scale"];
             }
             
-            // リプレイUI設定
             if (jsonData.contains("replayUI")) {
                 auto& replay = jsonData["replayUI"];
                 
@@ -1232,7 +1184,6 @@ namespace UIConfig {
                 }
             }
             
-            // ステージ選択フィールドUI
             if (jsonData.contains("stageSelection")) {
                 auto& sel = jsonData["stageSelection"];
                 
@@ -1331,7 +1282,6 @@ namespace UIConfig {
                 }
             }
             
-            // タイトル画面UI
             if (jsonData.contains("titleScreen")) {
                 auto& title = jsonData["titleScreen"];
                 
@@ -1365,7 +1315,6 @@ namespace UIConfig {
                 }
             }
             
-            // Ready画面UI
             if (jsonData.contains("readyScreen")) {
                 auto& ready = jsonData["readyScreen"];
                 
@@ -1497,7 +1446,6 @@ namespace UIConfig {
                 }
             }
             
-            // Stage Clear UI
             if (jsonData.contains("stageClear")) {
                 auto& stageClear = jsonData["stageClear"];
                 
@@ -1584,7 +1532,6 @@ namespace UIConfig {
                 }
             }
             
-            // Time Attack Clear UI
             if (jsonData.contains("timeAttackClear")) {
                 auto& timeAttackClear = jsonData["timeAttackClear"];
                 
@@ -1717,7 +1664,6 @@ namespace UIConfig {
                 }
             }
             
-            // Game Over UI
             if (jsonData.contains("gameOver")) {
                 auto& gameOver = jsonData["gameOver"];
                 
@@ -1761,7 +1707,6 @@ namespace UIConfig {
                 }
             }
             
-            // Mode Selection UI
             if (jsonData.contains("modeSelection")) {
                 auto& modeSel = jsonData["modeSelection"];
                 
@@ -1869,7 +1814,6 @@ namespace UIConfig {
                 }
             }
             
-            // Tutorial UI
             if (jsonData.contains("tutorial")) {
                 auto& tutorial = jsonData["tutorial"];
                 
@@ -1915,11 +1859,9 @@ namespace UIConfig {
                     if (cfg.contains("scale")) tutorialPressEnterConfig.scale = cfg["scale"];
                 }
                 
-                // Tutorial Step-specific UI
                 if (tutorial.contains("steps")) {
                     auto& steps = tutorial["steps"];
                     
-                    // 各ステップ（step0-10）のメッセージ設定を読み込む
                     for (int step = 0; step < 11; step++) {
                         std::string stepKey = "step" + std::to_string(step);
                         if (steps.contains(stepKey)) {
@@ -1945,7 +1887,6 @@ namespace UIConfig {
                         }
                     }
                     
-                    // Step 5
                     if (steps.contains("step5")) {
                         auto& step5 = steps["step5"];
                         if (step5.contains("explainText1")) {
@@ -1962,7 +1903,6 @@ namespace UIConfig {
                         }
                     }
                     
-                    // Step 9
                     if (steps.contains("step9")) {
                         auto& step9 = steps["step9"];
                         if (step9.contains("explainText1")) {
@@ -2015,7 +1955,6 @@ namespace UIConfig {
                         }
                     }
                     
-                    // Step 10
                     if (steps.contains("step10")) {
                         auto& step10 = steps["step10"];
                         if (step10.contains("explainText1")) {
@@ -2058,7 +1997,6 @@ namespace UIConfig {
                 }
             }
             
-            // Unlock Confirm UI
             if (jsonData.contains("unlockConfirm")) {
                 auto& unlock = jsonData["unlockConfirm"];
                 
@@ -2115,7 +2053,6 @@ namespace UIConfig {
                 }
             }
             
-            // Star Insufficient UI
             if (jsonData.contains("starInsufficient")) {
                 auto& starIns = jsonData["starInsufficient"];
                 
@@ -2172,7 +2109,6 @@ namespace UIConfig {
                 }
             }
             
-            // Ending UI
             if (jsonData.contains("ending")) {
                 auto& ending = jsonData["ending"];
                 
@@ -2232,7 +2168,6 @@ namespace UIConfig {
                 }
             }
             
-            // Warp Tutorial UI
             if (jsonData.contains("warpTutorial")) {
                 auto& warp = jsonData["warpTutorial"];
                 
@@ -2289,7 +2224,6 @@ namespace UIConfig {
                 }
             }
             
-            // Stage 0 Tutorial UI
             if (jsonData.contains("stage0Tutorial")) {
                 auto& stage0 = jsonData["stage0Tutorial"];
                 
@@ -2372,7 +2306,6 @@ namespace UIConfig {
                 }
             }
             
-            // SECRET STAR Explanation UI
             if (jsonData.contains("secretStarExplanation")) {
                 auto& secret = jsonData["secretStarExplanation"];
                 
@@ -2507,7 +2440,6 @@ namespace UIConfig {
                 }
             }
             
-            // SECRET STAR Selection UI
             if (jsonData.contains("secretStarSelection")) {
                 auto& secretSel = jsonData["secretStarSelection"];
                 
@@ -2626,7 +2558,6 @@ namespace UIConfig {
                 }
             }
             
-            // Easy Mode Explanation UI
             if (jsonData.contains("easyModeExplanation")) {
                 auto& easy = jsonData["easyModeExplanation"];
                 
@@ -2748,7 +2679,6 @@ namespace UIConfig {
                 }
             }
             
-            // Countdown UI
             if (jsonData.contains("countdown")) {
                 auto& countdown = jsonData["countdown"];
                 
@@ -2766,7 +2696,6 @@ namespace UIConfig {
                 }
             }
             
-            // Stage Selection Assist UI
             if (jsonData.contains("stageSelectionAssist")) {
                 auto& assist = jsonData["stageSelectionAssist"];
                 
@@ -2784,7 +2713,6 @@ namespace UIConfig {
                 }
             }
             
-            // Staff Roll UI
             if (jsonData.contains("staffRoll")) {
                 auto& staff = jsonData["staffRoll"];
                 
@@ -2845,7 +2773,6 @@ namespace UIConfig {
                 }
             }
             
-            // Game UI
             if (jsonData.contains("gameUI")) {
                 auto& gameUI = jsonData["gameUI"];
                 
@@ -3007,7 +2934,6 @@ namespace UIConfig {
                 if (gameUI.contains("skills")) {
                     auto& skills = gameUI["skills"];
                     
-                    // timeStop
                     if (skills.contains("timeStop")) {
                         auto& cfg = skills["timeStop"];
                         if (cfg.contains("position")) {
@@ -3032,7 +2958,6 @@ namespace UIConfig {
                         if (cfg.contains("instructionScale")) gameUITimeStopSkillConfig.instructionScale = cfg["instructionScale"];
                     }
                     
-                    // doubleJump
                     if (skills.contains("doubleJump")) {
                         auto& cfg = skills["doubleJump"];
                         if (cfg.contains("position")) {
@@ -3057,7 +2982,6 @@ namespace UIConfig {
                         if (cfg.contains("instructionScale")) gameUIDoubleJumpSkillConfig.instructionScale = cfg["instructionScale"];
                     }
                     
-                    // heartFeel
                     if (skills.contains("heartFeel")) {
                         auto& cfg = skills["heartFeel"];
                         if (cfg.contains("position")) {
@@ -3082,7 +3006,6 @@ namespace UIConfig {
                         if (cfg.contains("instructionScale")) gameUIHeartFeelSkillConfig.instructionScale = cfg["instructionScale"];
                     }
                     
-                    // freeCamera
                     if (skills.contains("freeCamera")) {
                         auto& cfg = skills["freeCamera"];
                         if (cfg.contains("position")) {
@@ -3114,7 +3037,6 @@ namespace UIConfig {
                         if (cfg.contains("activeScale")) gameUIFreeCameraSkillConfig.activeScale = cfg["activeScale"];
                     }
                     
-                    // burstJump
                     if (skills.contains("burstJump")) {
                         auto& cfg = skills["burstJump"];
                         if (cfg.contains("position")) {
@@ -3143,14 +3065,13 @@ namespace UIConfig {
             
             configLoaded = true;
             
-            // ファイルの更新時刻を記録
             lastFileModificationTime = getFileModificationTime(configFilePath);
             
             printf("UI Config: Loaded successfully from %s\n", configFilePath.c_str());
             return true;
             
         } catch (const std::exception& e) {
-            printf("UI Config: Error loading config: %s\n", e.what());
+            ErrorHandler::logErrorFormat("UI Config: Error loading config: %s", e.what());
             configLoaded = false;
             return false;
         }
@@ -3168,7 +3089,6 @@ namespace UIConfig {
         if (_stat(filepath.c_str(), &fileInfo) == 0) {
             return fileInfo.st_mtime;
         }
-        // 代替パスも試す
         std::string altPath = filepath;
         if (altPath.find("../") == 0) {
             altPath = altPath.substr(3);
@@ -3183,7 +3103,6 @@ namespace UIConfig {
         if (stat(filepath.c_str(), &fileInfo) == 0) {
             return fileInfo.st_mtime;
         }
-        // 代替パスも試す
         std::string altPath = filepath;
         if (altPath.find("../") == 0) {
             altPath = altPath.substr(3);
@@ -3198,15 +3117,12 @@ namespace UIConfig {
     }
     
     bool UIConfigManager::checkAndReloadConfig() {
-        // ファイルパスが設定されていない場合はスキップ
         if (configFilePath.empty()) {
             return false;
         }
         
-        // ファイルの更新時刻を取得（複数のパスを試す）
         time_t currentModTime = getFileModificationTime(configFilePath);
         
-        // パスが見つからない場合は代替パスを試す
         if (currentModTime == 0) {
             std::string altPath = configFilePath;
             if (altPath.find("../") == 0) {
@@ -3216,12 +3132,10 @@ namespace UIConfig {
             }
             currentModTime = getFileModificationTime(altPath);
             if (currentModTime > 0) {
-                // 代替パスが見つかった場合は、それをconfigFilePathに設定
                 configFilePath = altPath;
             }
         }
         
-        // 更新時刻が変わった場合はリロード
         if (currentModTime > 0 && currentModTime != lastFileModificationTime && lastFileModificationTime > 0) {
             printf("UI Config: File changed! Reloading from %s...\n", configFilePath.c_str());
             lastFileModificationTime = currentModTime;
@@ -3229,7 +3143,6 @@ namespace UIConfig {
             return true;
         }
         
-        // 初回の場合は更新時刻を記録
         if (lastFileModificationTime == 0 && currentModTime > 0) {
             lastFileModificationTime = currentModTime;
             printf("UI Config: Initial file modification time recorded: %ld\n", lastFileModificationTime);
@@ -3247,12 +3160,9 @@ namespace UIConfig {
     
     glm::vec2 UIConfigManager::calculatePosition(const UIPosition& pos, int windowWidth, int windowHeight) const {
         if (pos.useRelative) {
-            // 相対位置（画面中央基準）
             return glm::vec2(windowWidth / 2.0f + pos.offsetX, windowHeight / 2.0f + pos.offsetY);
         } else {
-            // 絶対位置（画面左上基準）
             float y = pos.absoluteY;
-            // offsetYが設定されている場合は画面下からの相対位置として扱う
             if (pos.offsetY != 0.0f) {
                 y = windowHeight + pos.offsetY;
             }
@@ -3260,13 +3170,11 @@ namespace UIConfig {
         }
     }
     
-    // JSONパスから値を取得（内部用）
     nlohmann::json UIConfigManager::getJsonValue(const std::string& jsonPath) const {
         if (!configLoaded || cachedJsonData.is_null()) {
             return nlohmann::json();
         }
         
-        // パスを分割（例: "gameUI.timeDisplay" -> ["gameUI", "timeDisplay"]）
         std::vector<std::string> parts;
         std::string current;
         for (char c : jsonPath) {
@@ -3283,7 +3191,6 @@ namespace UIConfig {
             parts.push_back(current);
         }
         
-        // JSONを辿る
         nlohmann::json result = cachedJsonData;
         for (const auto& part : parts) {
             if (result.is_object() && result.contains(part)) {
@@ -3296,7 +3203,6 @@ namespace UIConfig {
         return result;
     }
     
-    // JSONからUIPositionを解析
     UIPosition UIConfigManager::parseUIPosition(const nlohmann::json& json) const {
         UIPosition pos;
         if (json.is_null() || !json.is_object()) {
@@ -3311,7 +3217,6 @@ namespace UIConfig {
             if (posJson.contains("absoluteX")) pos.absoluteX = posJson["absoluteX"];
             if (posJson.contains("absoluteY")) pos.absoluteY = posJson["absoluteY"];
         } else if (json.contains("useRelative") || json.contains("offsetX") || json.contains("absoluteX")) {
-            // positionオブジェクトがなく、直接位置情報が含まれている場合
             if (json.contains("useRelative")) pos.useRelative = json["useRelative"];
             if (json.contains("offsetX")) pos.offsetX = json["offsetX"];
             if (json.contains("offsetY")) pos.offsetY = json["offsetY"];
@@ -3322,7 +3227,6 @@ namespace UIConfig {
         return pos;
     }
     
-    // JSONからUITextConfigを解析
     UITextConfig UIConfigManager::parseUITextConfig(const nlohmann::json& json) const {
         UITextConfig config;
         if (json.is_null() || !json.is_object()) {
@@ -3350,7 +3254,6 @@ namespace UIConfig {
         return config;
     }
     
-    // JSONからUISelectableConfigを解析
     UISelectableConfig UIConfigManager::parseUISelectableConfig(const nlohmann::json& json) const {
         UISelectableConfig config;
         if (json.is_null() || !json.is_object()) {
@@ -3378,7 +3281,6 @@ namespace UIConfig {
         return config;
     }
     
-    // JSONからUITimeDisplayConfigを解析
     UITimeDisplayConfig UIConfigManager::parseUITimeDisplayConfig(const nlohmann::json& json) const {
         UITimeDisplayConfig config;
         if (json.is_null() || !json.is_object()) {
@@ -3402,7 +3304,6 @@ namespace UIConfig {
         return config;
     }
     
-    // JSONからUISkillConfigを解析
     UISkillConfig UIConfigManager::parseUISkillConfig(const nlohmann::json& json) const {
         UISkillConfig config;
         if (json.is_null() || !json.is_object()) {

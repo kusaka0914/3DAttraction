@@ -1,3 +1,8 @@
+/**
+ * @file color_constants.h
+ * @brief 色定数
+ * @details ゲームで使用する色の定数を定義します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

@@ -1,3 +1,8 @@
+/**
+ * @file physics_constants.h
+ * @brief 物理定数
+ * @details 物理演算に関する定数を定義します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

@@ -1,3 +1,8 @@
+/**
+ * @file game_constants.h
+ * @brief ゲーム定数
+ * @details ゲーム全体で使用する定数を集約したヘッダーファイルです。
+ */
 #pragma once
 
 #include "window_constants.h"

@@ -1,3 +1,8 @@
+/**
+ * @file window_constants.h
+ * @brief ウィンドウ定数
+ * @details ウィンドウサイズや表示に関する定数を定義します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

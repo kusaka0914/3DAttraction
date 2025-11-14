@@ -197,42 +197,33 @@ std::vector<std::string> PlatformSystem::getPlatformTypes() const {
     return platformTypes;
 }
 
-// 各足場タイプの更新処理
 void PlatformSystem::updateStaticPlatform(StaticPlatform& platform, float deltaTime) {
-    // 静的足場は何もしない
     (void)platform;
     (void)deltaTime;
 }
 
 void PlatformSystem::updateMovingPlatform(MovingPlatform& platform, float deltaTime) {
-    // 前フレームの位置を保存
     platform.previousPosition = platform.position;
     
     if (platform.hasPlayerOnBoard) {
         platform.moveTimer += deltaTime;
         
-        // 目標位置と開始位置を決定
         glm::vec3 targetPos = platform.moveTargetPosition;
         glm::vec3 startPos = platform.originalPosition;
         
-        // 2点間の距離を計算
         float distance = glm::length(targetPos - startPos);
         float timeToTarget = distance / platform.moveSpeed;
         
-        // 現在のタイマーで補間位置を計算
         float t = platform.moveTimer / timeToTarget;
         
         if (t >= 1.0f) {
-            // 目標に到達
             platform.position = targetPos;
             platform.moveTimer = 0.0f;
             platform.returnToOriginal = true;
         } else {
-            // 2点間を線形補間で滑らかに移動
             platform.position = glm::mix(startPos, targetPos, t);
         }
     } else if (platform.returnToOriginal) {
-        // 元の位置に戻る
         platform.moveTimer += deltaTime;
         
         glm::vec3 targetPos = platform.originalPosition;
@@ -244,12 +235,10 @@ void PlatformSystem::updateMovingPlatform(MovingPlatform& platform, float deltaT
         float t = platform.moveTimer / timeToTarget;
         
         if (t >= 1.0f) {
-            // 元の位置に到達
             platform.position = targetPos;
             platform.moveTimer = 0.0f;
             platform.returnToOriginal = false;
         } else {
-            // 元の位置に向かって移動
             platform.position = glm::mix(startPos, targetPos, t);
         }
     }
@@ -257,7 +246,6 @@ void PlatformSystem::updateMovingPlatform(MovingPlatform& platform, float deltaT
 
 void PlatformSystem::updateRotatingPlatform(RotatingPlatform& platform, float deltaTime) {
     platform.rotationAngle += platform.rotationSpeed * deltaTime;
-    // 360度を超えたら0度に戻す
     if (platform.rotationAngle >= 360.0f) {
         platform.rotationAngle -= 360.0f;
     }
@@ -266,31 +254,25 @@ void PlatformSystem::updateRotatingPlatform(RotatingPlatform& platform, float de
 void PlatformSystem::updatePatrollingPlatform(PatrollingPlatform& platform, float deltaTime) {
     if (platform.patrolPoints.empty()) return;
     
-    // 前フレームの位置を保存
     platform.previousPosition = platform.position;
     
     platform.patrolTimer += deltaTime;
     
-    // 現在の目標点と次の目標点を取得
     int currentIndex = platform.currentPatrolIndex;
     int nextIndex = (currentIndex + 1) % platform.patrolPoints.size();
     
     glm::vec3 currentPoint = platform.patrolPoints[currentIndex];
     glm::vec3 nextPoint = platform.patrolPoints[nextIndex];
     
-    // 2点間の距離を計算
     float distance = glm::length(nextPoint - currentPoint);
     float timeToNext = distance / platform.patrolSpeed;
     
-    // 現在のタイマーで補間位置を計算
     float t = platform.patrolTimer / timeToNext;
     if (t >= 1.0f) {
-        // 次の点に到達
         platform.currentPatrolIndex = nextIndex;
         platform.patrolTimer = 0.0f;
         platform.position = nextPoint;
     } else {
-        // 2点間を線形補間
         platform.position = glm::mix(currentPoint, nextPoint, t);
     }
 }
@@ -302,7 +284,6 @@ void PlatformSystem::updateTeleportPlatform(TeleportPlatform& platform, float de
 }
 
 void PlatformSystem::updateJumpPad(JumpPad& platform, float deltaTime) {
-    // ジャンプパッドは何もしない
     (void)platform;
     (void)deltaTime;
 }
@@ -310,27 +291,22 @@ void PlatformSystem::updateJumpPad(JumpPad& platform, float deltaTime) {
 void PlatformSystem::updateCycleDisappearingPlatform(CycleDisappearingPlatform& platform, float deltaTime) {
     platform.cycleTimer += deltaTime;
     
-    // サイクル時間を超えたらリセット
     if (platform.cycleTimer >= platform.cycleTime) {
         platform.cycleTimer -= platform.cycleTime;
     }
     
-    // 点滅開始タイミングを計算
     float blinkStartTime = platform.visibleTime - platform.blinkTime;
     
     if (platform.cycleTimer < blinkStartTime) {
-        // 完全に見える時間
         platform.isCurrentlyVisible = true;
         platform.isBlinking = false;
         platform.blinkAlpha = 1.0f;
         platform.size = platform.originalSize;
     } else if (platform.cycleTimer < platform.visibleTime) {
-        // 点滅時間
         platform.isCurrentlyVisible = true;
         platform.isBlinking = true;
         platform.blinkTimer += deltaTime;
         
-        // 点滅の透明度を計算（0.2秒周期で点滅）
         float blinkCycle = 0.2f;
         float blinkProgress = std::fmod(platform.blinkTimer, blinkCycle);
         if (blinkProgress < blinkCycle * 0.5f) {
@@ -341,7 +317,6 @@ void PlatformSystem::updateCycleDisappearingPlatform(CycleDisappearingPlatform& 
         
         platform.size = platform.originalSize;
     } else {
-        // 完全に消える時間
         platform.isCurrentlyVisible = false;
         platform.isBlinking = false;
         platform.blinkAlpha = 0.0f;
@@ -357,10 +332,8 @@ void PlatformSystem::updateDisappearingPlatform(DisappearingPlatform& platform, 
 }
 
 void PlatformSystem::updateFlyingPlatform(FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos) {
-    // プレイヤーとターゲット位置との距離をチェック
     float distanceToTarget = glm::length(playerPos - platform.targetPosition);
     
-    // プレイヤーが検知範囲内に入ったら発動
     if (!platform.hasSpawned && distanceToTarget <= platform.detectionRange) {
         platform.hasSpawned = true;
         platform.isFlying = true;
@@ -369,7 +342,6 @@ void PlatformSystem::updateFlyingPlatform(FlyingPlatform& platform, float deltaT
         platform.size = glm::vec3(3, 0.5, 3); // 元のサイズに戻す
     }
     
-    // 飛行ロジックの実装
     if (platform.isFlying) {
         glm::vec3 targetPos;
         if (platform.isReturning) {
@@ -396,7 +368,6 @@ void PlatformSystem::updateFlyingPlatform(FlyingPlatform& platform, float deltaT
         }
     }
     
-    // プレイヤーが目標位置から離れたら戻る処理
     if (!platform.isFlying && platform.hasSpawned && !platform.isReturning) {
         float distanceToTarget = glm::length(playerPos - platform.targetPosition);
         if (distanceToTarget > 5.0f) { // プレイヤーが5単位以上離れたら
@@ -425,7 +396,6 @@ bool PlatformSystem::checkCollisionWithBase(const BasePlatform& platform, const 
     glm::vec3 playerMin = playerPos - playerSize * 0.5f;
     glm::vec3 playerMax = playerPos + playerSize * 0.5f;
     
-    // 衝突判定
     return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
             playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
             playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
@@ -434,74 +404,59 @@ bool PlatformSystem::checkCollisionWithBase(const BasePlatform& platform, const 
 bool PlatformSystem::checkCollisionWithRotatingPlatform(const RotatingPlatform& platform, const glm::vec3& playerPos, const glm::vec3& playerSize) {
     if (!platform.isVisible) return false;
     
-    // 回転した足場の当たり判定
     glm::vec3 halfSize = platform.size * 0.5f;
     
-    // Y軸回転の場合の特別な処理
     if (glm::length(platform.rotationAxis - glm::vec3(0, 1, 0)) < 0.1f) {
-        // Y軸回転の場合、XZ平面での回転のみを考慮
         float angle = glm::radians(platform.rotationAngle);
         float cosAngle = cos(angle);
         float sinAngle = sin(angle);
         
-        // プレイヤーの位置を足場のローカル座標系に変換
         glm::vec3 localPlayerPos = playerPos - platform.position;
         
-        // XZ平面での逆回転
         float newX = localPlayerPos.x * cosAngle + localPlayerPos.z * sinAngle;
         float newZ = -localPlayerPos.x * sinAngle + localPlayerPos.z * cosAngle;
         
         glm::vec3 unrotatedPlayerPos = platform.position + glm::vec3(newX, localPlayerPos.y, newZ);
         
-        // 回転を考慮しない通常の当たり判定
         glm::vec3 platformMin = platform.position - halfSize;
         glm::vec3 platformMax = platform.position + halfSize;
         glm::vec3 playerMin = unrotatedPlayerPos - playerSize * 0.5f;
         glm::vec3 playerMax = unrotatedPlayerPos + playerSize * 0.5f;
         
-        // 衝突判定
         return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                 playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
                 playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
     } else if (glm::length(platform.rotationAxis - glm::vec3(1, 0, 0)) < 0.1f) {
-        // X軸回転（縦回転）の場合、YZ平面での回転のみを考慮
         float angle = glm::radians(platform.rotationAngle);
         float cosAngle = cos(angle);
         float sinAngle = sin(angle);
         
-        // プレイヤーの位置を足場のローカル座標系に変換
         glm::vec3 localPlayerPos = playerPos - platform.position;
         
-        // YZ平面での逆回転
         float newY = localPlayerPos.y * cosAngle - localPlayerPos.z * sinAngle;
         float newZ = localPlayerPos.y * sinAngle + localPlayerPos.z * cosAngle;
         
         glm::vec3 unrotatedPlayerPos = platform.position + glm::vec3(localPlayerPos.x, newY, newZ);
         
-        // 回転を考慮しない通常の当たり判定
         glm::vec3 platformMin = platform.position - halfSize;
         glm::vec3 platformMax = platform.position + halfSize;
         glm::vec3 playerMin = unrotatedPlayerPos - playerSize * 0.5f;
         glm::vec3 playerMax = unrotatedPlayerPos + playerSize * 0.5f;
         
-        // 衝突判定
         return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                 playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
                 playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
     } else {
-        // その他の軸回転の場合、一般的な回転行列を使用
         glm::vec3 localPlayerPos = playerPos - platform.position;
         glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-platform.rotationAngle), platform.rotationAxis);
         glm::vec4 rotatedPlayerPos = rotationMatrix * glm::vec4(localPlayerPos, 1.0f);
         glm::vec3 unrotatedPlayerPos = glm::vec3(rotatedPlayerPos) + platform.position;
         
-        // 回転を考慮しない通常の当たり判定
         glm::vec3 platformMin = platform.position - halfSize;
         glm::vec3 platformMax = platform.position + halfSize;
         glm::vec3 playerMin = unrotatedPlayerPos - playerSize * 0.5f;
         glm::vec3 playerMax = unrotatedPlayerPos + playerSize * 0.5f;
         
-        // 衝突判定
         return (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
                 playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
                 playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
