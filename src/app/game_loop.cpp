@@ -1345,9 +1345,9 @@ namespace GameLoop {
                 // 通常モード：残機を減らす
                 gameState.lives--;
                 
-                // ダメージSEを再生（damage.oggが存在しないためon_groundを使用）
+                // ダメージSEを再生
                 if (gameState.audioEnabled) {
-                    audioManager.playSFX("on_ground");
+                    audioManager.playSFX("damage");
                 }
                 
                 if (gameState.lives <= 0) {
