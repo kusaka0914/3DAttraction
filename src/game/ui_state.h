@@ -54,6 +54,7 @@ struct UIState {
     bool pendingReadyScreen = false;
     bool pendingSkipCountdown = false;
     bool pendingFadeIn = false;  // フェードアウト完了後、次のフレームでフェードインを開始するためのフラグ
+    bool stageLoadedForFadeIn = false;  // ステージが読み込まれた後、描画が完了するまで待つためのフラグ
     
     bool showEasyModeExplanationUI = false;
     
