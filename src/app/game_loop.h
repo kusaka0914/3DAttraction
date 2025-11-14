@@ -92,7 +92,9 @@ namespace GameLoop {
                      std::unique_ptr<gfx::OpenGLRenderer>& renderer, int& width, int& height);
     
     void renderPlatforms(PlatformSystem& platformSystem, 
-                        std::unique_ptr<gfx::OpenGLRenderer>& renderer);
+                        std::unique_ptr<gfx::OpenGLRenderer>& renderer,
+                        GameState& gameState,
+                        StageManager& stageManager);
     
     void renderPlayer(GameState& gameState, 
                      std::unique_ptr<gfx::OpenGLRenderer>& renderer);

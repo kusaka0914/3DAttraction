@@ -384,6 +384,13 @@ namespace UIConfig {
         modeSelectionTimeAttackTextConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
         modeSelectionTimeAttackTextConfig.scale = 2.0f;
         
+        modeSelectionSecretStarTextConfig.position.useRelative = true;
+        modeSelectionSecretStarTextConfig.position.offsetX = 170.0f;
+        modeSelectionSecretStarTextConfig.position.offsetY = -50.0f;
+        modeSelectionSecretStarTextConfig.selectedColor = glm::vec3(1.0f, 0.8f, 0.2f);
+        modeSelectionSecretStarTextConfig.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        modeSelectionSecretStarTextConfig.scale = 2.0f;
+        
         modeSelectionPressTConfig.position.useRelative = true;
         modeSelectionPressTConfig.position.offsetX = -80.0f;
         modeSelectionPressTConfig.position.offsetY = 50.0f;
@@ -610,6 +617,119 @@ namespace UIConfig {
         stage0TutorialOkButtonConfig.position.offsetY = 280.0f;
         stage0TutorialOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
         stage0TutorialOkButtonConfig.scale = 1.5f;
+        
+        // SECRET STAR Explanation UI設定
+        secretStarExplanationLine1Config.position.useRelative = true;
+        secretStarExplanationLine1Config.position.offsetX = -600.0f;
+        secretStarExplanationLine1Config.position.offsetY = -350.0f;
+        secretStarExplanationLine1Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine1Config.scale = 1.5f;
+        
+        secretStarExplanationLine2Config.position.useRelative = true;
+        secretStarExplanationLine2Config.position.offsetX = -550.0f;
+        secretStarExplanationLine2Config.position.offsetY = -300.0f;
+        secretStarExplanationLine2Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine2Config.scale = 1.5f;
+        
+        secretStarExplanationLine3Config.position.useRelative = true;
+        secretStarExplanationLine3Config.position.offsetX = -580.0f;
+        secretStarExplanationLine3Config.position.offsetY = -200.0f;
+        secretStarExplanationLine3Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine3Config.scale = 1.2f;
+        
+        secretStarExplanationLine3bConfig.position.useRelative = true;
+        secretStarExplanationLine3bConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine3bConfig.position.offsetY = -150.0f;
+        secretStarExplanationLine3bConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine3bConfig.scale = 1.2f;
+        
+        secretStarExplanationLine4Config.position.useRelative = true;
+        secretStarExplanationLine4Config.position.offsetX = -580.0f;
+        secretStarExplanationLine4Config.position.offsetY = -50.0f;
+        secretStarExplanationLine4Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine4Config.scale = 1.2f;
+        
+        secretStarExplanationLine4bConfig.position.useRelative = true;
+        secretStarExplanationLine4bConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine4bConfig.position.offsetY = 0.0f;
+        secretStarExplanationLine4bConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine4bConfig.scale = 1.2f;
+        
+        secretStarExplanationLine4cConfig.position.useRelative = true;
+        secretStarExplanationLine4cConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine4cConfig.position.offsetY = 50.0f;
+        secretStarExplanationLine4cConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine4cConfig.scale = 1.2f;
+        
+        secretStarExplanationLine5Config.position.useRelative = true;
+        secretStarExplanationLine5Config.position.offsetX = -580.0f;
+        secretStarExplanationLine5Config.position.offsetY = 150.0f;
+        secretStarExplanationLine5Config.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine5Config.scale = 1.2f;
+        
+        secretStarExplanationLine5bConfig.position.useRelative = true;
+        secretStarExplanationLine5bConfig.position.offsetX = -580.0f;
+        secretStarExplanationLine5bConfig.position.offsetY = 200.0f;
+        secretStarExplanationLine5bConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        secretStarExplanationLine5bConfig.scale = 1.2f;
+        
+        secretStarExplanationOkButtonConfig.position.useRelative = true;
+        secretStarExplanationOkButtonConfig.position.offsetX = -400.0f;
+        secretStarExplanationOkButtonConfig.position.offsetY = 300.0f;
+        secretStarExplanationOkButtonConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        secretStarExplanationOkButtonConfig.scale = 1.5f;
+        
+        // SECRET STAR Selection UI設定
+        secretStarSelectionTitleConfig.position.useRelative = true;
+        secretStarSelectionTitleConfig.position.offsetX = -400.0f;
+        secretStarSelectionTitleConfig.position.offsetY = -350.0f;
+        secretStarSelectionTitleConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        secretStarSelectionTitleConfig.scale = 2.0f;
+        
+        secretStarSelectionStar1Config.useRelative = true;
+        secretStarSelectionStar1Config.offsetX = -500.0f;
+        secretStarSelectionStar1Config.offsetY = -200.0f;
+        
+        secretStarSelectionStar2Config.useRelative = true;
+        secretStarSelectionStar2Config.offsetX = -400.0f;
+        secretStarSelectionStar2Config.offsetY = -200.0f;
+        
+        secretStarSelectionStar3Config.useRelative = true;
+        secretStarSelectionStar3Config.offsetX = -300.0f;
+        secretStarSelectionStar3Config.offsetY = -200.0f;
+        
+        secretStarSelectionName1Config.position.useRelative = true;
+        secretStarSelectionName1Config.position.offsetX = -500.0f;
+        secretStarSelectionName1Config.position.offsetY = -100.0f;
+        secretStarSelectionName1Config.selectedColor = glm::vec3(0.4f, 0.8f, 1.0f);
+        secretStarSelectionName1Config.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        secretStarSelectionName1Config.scale = 1.5f;
+        
+        secretStarSelectionName2Config.position.useRelative = true;
+        secretStarSelectionName2Config.position.offsetX = -400.0f;
+        secretStarSelectionName2Config.position.offsetY = -100.0f;
+        secretStarSelectionName2Config.selectedColor = glm::vec3(0.2f, 0.2f, 0.2f);
+        secretStarSelectionName2Config.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        secretStarSelectionName2Config.scale = 1.5f;
+        
+        secretStarSelectionName3Config.position.useRelative = true;
+        secretStarSelectionName3Config.position.offsetX = -300.0f;
+        secretStarSelectionName3Config.position.offsetY = -100.0f;
+        secretStarSelectionName3Config.selectedColor = glm::vec3(1.0f, 0.6f, 0.8f);
+        secretStarSelectionName3Config.unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        secretStarSelectionName3Config.scale = 1.5f;
+        
+        secretStarSelectionPressTConfig.position.useRelative = true;
+        secretStarSelectionPressTConfig.position.offsetX = -400.0f;
+        secretStarSelectionPressTConfig.position.offsetY = 50.0f;
+        secretStarSelectionPressTConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        secretStarSelectionPressTConfig.scale = 1.2f;
+        
+        secretStarSelectionConfirmConfig.position.useRelative = true;
+        secretStarSelectionConfirmConfig.position.offsetX = -400.0f;
+        secretStarSelectionConfirmConfig.position.offsetY = 100.0f;
+        secretStarSelectionConfirmConfig.color = glm::vec3(0.2f, 0.8f, 0.2f);
+        secretStarSelectionConfirmConfig.scale = 1.2f;
         
         // Easy Mode Explanation UI設定
         easyModeExplanationTitleConfig.position.useRelative = true;
@@ -1706,6 +1826,22 @@ namespace UIConfig {
                     if (cfg.contains("scale")) modeSelectionTimeAttackTextConfig.scale = cfg["scale"];
                 }
                 
+                if (modeSel.contains("secretStarText")) {
+                    auto& cfg = modeSel["secretStarText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) modeSelectionSecretStarTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) modeSelectionSecretStarTextConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        modeSelectionSecretStarTextConfig.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        modeSelectionSecretStarTextConfig.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) modeSelectionSecretStarTextConfig.scale = cfg["scale"];
+                }
+                
                 if (modeSel.contains("pressT")) {
                     auto& cfg = modeSel["pressT"];
                     if (cfg.contains("position")) {
@@ -2233,6 +2369,260 @@ namespace UIConfig {
                         stage0TutorialOkButtonConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) stage0TutorialOkButtonConfig.scale = cfg["scale"];
+                }
+            }
+            
+            // SECRET STAR Explanation UI
+            if (jsonData.contains("secretStarExplanation")) {
+                auto& secret = jsonData["secretStarExplanation"];
+                
+                if (secret.contains("line1")) {
+                    auto& cfg = secret["line1"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine1Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine1Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine1Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine1Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line2")) {
+                    auto& cfg = secret["line2"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine2Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine2Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine2Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine2Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line3")) {
+                    auto& cfg = secret["line3"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine3Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine3Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine3Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine3Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line3b")) {
+                    auto& cfg = secret["line3b"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine3bConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine3bConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine3bConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine3bConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line4")) {
+                    auto& cfg = secret["line4"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine4Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine4Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine4Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine4Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line4b")) {
+                    auto& cfg = secret["line4b"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine4bConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine4bConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine4bConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine4bConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line4c")) {
+                    auto& cfg = secret["line4c"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine4cConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine4cConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine4cConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine4cConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line5")) {
+                    auto& cfg = secret["line5"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine5Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine5Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine5Config.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine5Config.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("line5b")) {
+                    auto& cfg = secret["line5b"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationLine5bConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationLine5bConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationLine5bConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationLine5bConfig.scale = cfg["scale"];
+                }
+                
+                if (secret.contains("okButton")) {
+                    auto& cfg = secret["okButton"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarExplanationOkButtonConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarExplanationOkButtonConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarExplanationOkButtonConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarExplanationOkButtonConfig.scale = cfg["scale"];
+                }
+            }
+            
+            // SECRET STAR Selection UI
+            if (jsonData.contains("secretStarSelection")) {
+                auto& secretSel = jsonData["secretStarSelection"];
+                
+                if (secretSel.contains("title")) {
+                    auto& cfg = secretSel["title"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionTitleConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionTitleConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarSelectionTitleConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionTitleConfig.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("star1")) {
+                    auto& cfg = secretSel["star1"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionStar1Config.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionStar1Config.offsetY = pos["offsetY"];
+                    }
+                }
+                
+                if (secretSel.contains("star2")) {
+                    auto& cfg = secretSel["star2"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionStar2Config.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionStar2Config.offsetY = pos["offsetY"];
+                    }
+                }
+                
+                if (secretSel.contains("star3")) {
+                    auto& cfg = secretSel["star3"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionStar3Config.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionStar3Config.offsetY = pos["offsetY"];
+                    }
+                }
+                
+                if (secretSel.contains("name1")) {
+                    auto& cfg = secretSel["name1"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionName1Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionName1Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        secretStarSelectionName1Config.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        secretStarSelectionName1Config.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionName1Config.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("name2")) {
+                    auto& cfg = secretSel["name2"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionName2Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionName2Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        secretStarSelectionName2Config.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        secretStarSelectionName2Config.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionName2Config.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("name3")) {
+                    auto& cfg = secretSel["name3"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionName3Config.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionName3Config.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("selectedColor")) {
+                        secretStarSelectionName3Config.selectedColor = glm::vec3(cfg["selectedColor"][0], cfg["selectedColor"][1], cfg["selectedColor"][2]);
+                    }
+                    if (cfg.contains("unselectedColor")) {
+                        secretStarSelectionName3Config.unselectedColor = glm::vec3(cfg["unselectedColor"][0], cfg["unselectedColor"][1], cfg["unselectedColor"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionName3Config.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("pressT")) {
+                    auto& cfg = secretSel["pressT"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionPressTConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionPressTConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarSelectionPressTConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionPressTConfig.scale = cfg["scale"];
+                }
+                
+                if (secretSel.contains("confirm")) {
+                    auto& cfg = secretSel["confirm"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) secretStarSelectionConfirmConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) secretStarSelectionConfirmConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        secretStarSelectionConfirmConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) secretStarSelectionConfirmConfig.scale = cfg["scale"];
                 }
             }
             

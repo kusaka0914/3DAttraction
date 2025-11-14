@@ -204,7 +204,7 @@
     },
     "playSpeedLabel": {
       "position": {
-        "offsetX": -400,
+        "offsetX": -100,
         "offsetY": -70
       },
       "color": [1.0, 1.0, 1.0],
@@ -212,7 +212,7 @@
     },
     "speedOptions": {
       "position": {
-        "offsetX": -450,
+        "offsetX": -170,
         "offsetY": 0,
         "spacing": 150
       },
@@ -222,7 +222,7 @@
     },
     "pressT": {
       "position": {
-        "offsetX": -350,
+        "offsetX": -50,
         "offsetY": 100
       },
       "color": [1.0, 0.8, 0.2],
@@ -264,7 +264,7 @@
     },
     "confirm": {
       "position": {
-        "offsetX": -150,
+        "offsetX": -110,
         "offsetY": 250
       },
       "color": [0.2, 0.8, 0.2],
@@ -451,10 +451,19 @@
       "unselectedColor": [0.5, 0.5, 0.5],
       "scale": 2.0
     },
+    "secretStarText": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -230
+      },
+      "selectedColor": [1.0, 0.8, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 2.0
+    },
     "pressT": {
       "position": {
         "offsetX": -335,
-        "offsetY": -230
+        "offsetY": -180
       },
       "color": [1.0, 0.8, 0.2],
       "scale": 1.2
@@ -462,7 +471,7 @@
     "confirm": {
       "position": {
         "offsetX": -400,
-        "offsetY": -180
+        "offsetY": -130
       },
       "color": [0.2, 0.8, 0.2],
       "scale": 1.5
@@ -753,7 +762,7 @@
   "ending": {
     "thankYou": {
       "position": {
-        "offsetX": -700,
+        "offsetX": -500,
         "offsetY": -400
       },
       "color": [1.0, 1.0, 0.0],
@@ -761,7 +770,7 @@
     },
     "congratulations": {
       "position": {
-        "offsetX": -850,
+        "offsetX": -650,
         "offsetY": -300
       },
       "color": [1.0, 1.0, 0.0],
@@ -769,7 +778,7 @@
     },
     "seeYouAgain": {
       "position": {
-        "offsetX": -700,
+        "offsetX": -500,
         "offsetY": -200
       },
       "color": [1.0, 1.0, 0.0],
@@ -777,8 +786,8 @@
     },
     "skip": {
       "position": {
-        "offsetX": 880,
-        "offsetY": -690
+        "offsetX": 100,
+        "offsetY": -850
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.2
@@ -1146,15 +1155,15 @@
   "staffRoll": {
     "skip": {
       "position": {
-        "offsetX": -70,
-        "offsetY": -650
+        "offsetX": 100,
+        "offsetY": -550
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 1.5
     },
     "title": {
       "position": {
-        "offsetX": -600,
+        "offsetX": -420,
         "offsetY": 0
       },
       "color": [1.0, 1.0, 1.0],
@@ -1162,7 +1171,7 @@
     },
     "role": {
       "position": {
-        "offsetX": -750,
+        "offsetX": -570,
         "offsetY": 0
       },
       "color": [1.0, 1.0, 1.0],
@@ -1170,12 +1179,168 @@
     },
     "name": {
       "position": {
-        "offsetX": -500,
+        "offsetX": -320,
         "offsetY": 0
       },
       "color": [1.0, 1.0, 1.0],
       "scale": 2.0
     },
     "spacing": 100
+  },
+  "secretStarExplanation": {
+    "line1": {
+      "position": {
+        "offsetX": -670,
+        "offsetY": -500
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "line2": {
+      "position": {
+        "offsetX": -580,
+        "offsetY": -420
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.5
+    },
+    "line3": {
+      "position": {
+        "offsetX": -740,
+        "offsetY": -350
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "line3b": {
+      "position": {
+        "offsetX": -708,
+        "offsetY": -300
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "line4": {
+      "position": {
+        "offsetX": -740,
+        "offsetY": -250
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "line4b": {
+      "position": {
+        "offsetX": -708,
+        "offsetY": -200
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "line4c": {
+      "position": {
+        "offsetX": -708,
+        "offsetY": -150
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "line5": {
+      "position": {
+        "offsetX": -740,
+        "offsetY": -100
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "line5b": {
+      "position": {
+        "offsetX": -708,
+        "offsetY": -50
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 1.2
+    },
+    "okButton": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": 20
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.5
+    }
+  },
+  "secretStarSelection": {
+    "title": {
+      "position": {
+        "offsetX": -480,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "star1": {
+      "position": {
+        "offsetX": -350,
+        "offsetY": -100
+      },
+      "scale": 2.0
+    },
+    "star2": {
+      "position": {
+        "offsetX": 0,
+        "offsetY": -100
+      },
+      "scale": 2.0
+    },
+    "star3": {
+      "position": {
+        "offsetX": 320,
+        "offsetY": -100
+      },
+      "scale": 2.0
+    },
+    "name1": {
+      "position": {
+        "offsetX": -650,
+        "offsetY": -250
+      },
+      "selectedColor": [0.4, 0.8, 1.0],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 1.5
+    },
+    "name2": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -250
+      },
+      "selectedColor": [0.2, 0.2, 0.2],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 1.5
+    },
+    "name3": {
+      "position": {
+        "offsetX": -200,
+        "offsetY": -250
+      },
+      "selectedColor": [1.0, 0.6, 0.8],
+      "unselectedColor": [0.5, 0.5, 0.5],
+      "scale": 1.5
+    },
+    "pressT": {
+      "position": {
+        "offsetX": -370,
+        "offsetY": -180
+      },
+      "color": [1.0, 1.0, 0.2],
+      "scale": 1.5
+    },
+    "confirm": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -100
+      },
+      "color": [0.2, 0.8, 0.2],
+      "scale": 1.2
+    }
   }
 }

@@ -182,6 +182,11 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.tutorialStepCompleted = false;
     gameState.showTutorialUI = false;
     
+    // チュートリアルステージ（ステージ6）の場合はSECRET STARモードをリセット
+    if (stageNumber == 6) {
+        gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
+    }
+    
     // チェックポイントをリセット
     gameState.lastCheckpoint = stageIt->playerStartPosition;
     gameState.lastCheckpointItemId = -1;
@@ -196,6 +201,12 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     
     // ステージ生成関数を実行
     stageIt->generateFunction(gameState, platformSystem);
+    
+    // MAX_SPEED_STARが選択されている場合は時間倍率を3倍に設定（ステージ0とステージ6を除く）
+    if (stageNumber != 0 && stageNumber != 6 && gameState.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+        gameState.timeScale = 3.0f;
+        gameState.timeScaleLevel = 2;  // 3倍に設定
+    }
     
     // 現在のステージのファイル情報を更新
     updateCurrentStageFileInfo(stageNumber);
@@ -541,6 +552,9 @@ void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& p
     gameState.showTutorialUI = true;
     gameState.tutorialInputEnabled = true;
     gameState.tutorialMessage = "MOVING FORWARD: PRESS W";
+    
+    // SECRET STARモードをリセット（チュートリアルでは使用しない）
+    gameState.selectedSecretStarType = GameState::SecretStarType::NONE;
     
     // チュートリアル用のアイテム管理を初期化
     gameState.earnedItems = 0;

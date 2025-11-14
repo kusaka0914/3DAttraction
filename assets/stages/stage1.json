@@ -38,7 +38,13 @@
       "description": "基本的なジャンプセクション"
     },
     {
-      "position": [0, 7, -10],
+      "position": [0, 5, -10],
+      "size": [3, 1, 3],
+      "color": [0.0, 0.0, 1.0],
+      "description": "少し高いジャンプ"
+    },
+    {
+      "position": [-5, 5, 0],
       "size": [3, 1, 3],
       "color": [0.0, 0.0, 1.0],
       "description": "少し高いジャンプ"

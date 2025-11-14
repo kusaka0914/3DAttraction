@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <string>
+#include <map>
+#include <set>
 #include "../core/constants/game_constants.h"
 #include "bitmap_font.h"
 
@@ -18,6 +20,11 @@ struct GameUIState {
     float timeLimit = 0.0f;
     int existingStars = 0;
     int lives = 6;
+    
+    // SECRET STARモード用の情報
+    int currentStage = -1;  // -1の場合は通常モード
+    int selectedSecretStarType = -1;  // -1の場合は通常モード、0=MAX_SPEED_STAR, 1=SHADOW_STAR, 2=IMMERSIVE_STAR
+    std::map<int, std::set<int>> secretStarCleared;  // ステージ番号 -> クリア済みSECRET STARタイプのセット
 };
 
 // スキルUI設定を管理する構造体
@@ -52,11 +59,13 @@ public:
     void renderGameUI(const GameUIState& state);
     
     // 個別UI描画関数（後方互換性のため残す）
-    void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives);
+    void renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives, 
+                      int currentStage = -1, int selectedSecretStarType = -1, const std::map<int, std::set<int>>& secretStarCleared = {});
     void renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives, float timeScale, bool isReplayMode = false);  // タイムアタック用
     void renderLivesWithExplanation(int lives);
     void renderLivesAndTimeUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
-    void renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars);
+    void renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars,
+                                   int currentStage = -1, int selectedSecretStarType = -1, const std::map<int, std::set<int>>& secretStarCleared = {});
     
     // 統合されたスキルUI描画関数
     void renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool isActive, 
@@ -83,7 +92,7 @@ private:
     void renderTimeDisplay(float remainingTime, float timeLimit);
     void renderTimeAttackDisplay(float currentTime, float bestTime);  // タイムアタック用
     void renderGoalDisplay(float timeLimit);
-    void renderStarsDisplay(int existingStars);
+    void renderStarsDisplay(int existingStars, int currentStage = -1, int selectedSecretStarType = -1, const std::map<int, std::set<int>>& secretStarCleared = {});
     void renderLivesDisplay(int lives);
     
     // 説明テキストの共通化関数

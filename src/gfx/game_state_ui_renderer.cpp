@@ -117,7 +117,9 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode) {
+void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode,
+                                                      int currentStage, GameState::SecretStarType selectedSecretStarType,
+                                                      const std::map<int, std::set<GameState::SecretStarType>>& secretStarCleared) {
     // フォントの初期化を確実に行う
     font.initialize();
     
@@ -172,10 +174,44 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     if (!isTimeAttackMode) {
         auto starsConfig = uiConfig.getStageClearStarsConfig();
         glm::vec2 starsBasePos = uiConfig.calculatePosition(starsConfig.position, width, height);
-        for (int i = 0; i < 3; i++) {
-            glm::vec2 starPos = glm::vec2(starsBasePos.x + i * starsConfig.spacing, starsBasePos.y);
-            glm::vec3 starColor = (i < earnedStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
-            renderStar(starPos, starColor, starsConfig.scale, width, height);
+        
+        // SECRET STARモードの場合
+        if (selectedSecretStarType != GameState::SecretStarType::NONE && currentStage > 0) {
+            // SECRET STARタイプの順序: MAX_SPEED_STAR(0), SHADOW_STAR(1), IMMERSIVE_STAR(2)
+            std::vector<GameState::SecretStarType> secretStarTypes = {
+                GameState::SecretStarType::MAX_SPEED_STAR,
+                GameState::SecretStarType::SHADOW_STAR,
+                GameState::SecretStarType::IMMERSIVE_STAR
+            };
+            
+            // 各SECRET STARタイプの色定義
+            std::vector<glm::vec3> secretStarColors = {
+                glm::vec3(0.2f, 0.8f, 1.0f),  // MAX_SPEED_STAR: 水色
+                glm::vec3(0.1f, 0.1f, 0.1f),  // SHADOW_STAR: 黒
+                glm::vec3(1.0f, 0.4f, 0.8f)   // IMMERSIVE_STAR: ピンク
+            };
+            
+            glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
+            
+            // 現在のステージでクリア済みのSECRET STARタイプを取得
+            std::set<GameState::SecretStarType> clearedTypes;
+            if (secretStarCleared.count(currentStage) > 0) {
+                clearedTypes = secretStarCleared.at(currentStage);
+            }
+            
+            for (int i = 0; i < 3; i++) {
+                glm::vec2 starPos = glm::vec2(starsBasePos.x + i * starsConfig.spacing, starsBasePos.y);
+                bool isCleared = (clearedTypes.count(secretStarTypes[i]) > 0);
+                glm::vec3 starColor = isCleared ? secretStarColors[i] : inactiveColor;
+                renderStar(starPos, starColor, starsConfig.scale, width, height);
+            }
+        } else {
+            // 通常モードの場合
+            for (int i = 0; i < 3; i++) {
+                glm::vec2 starPos = glm::vec2(starsBasePos.x + i * starsConfig.spacing, starsBasePos.y);
+                glm::vec3 starColor = (i < earnedStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
+                renderStar(starPos, starColor, starsConfig.scale, width, height);
+            }
         }
     }
     
@@ -444,11 +480,6 @@ void GameStateUIRenderer::renderEndingMessage(int width, int height, float timer
     auto seeYouAgainConfig = uiConfig.getEndingSeeYouAgainConfig();
     glm::vec2 seeYouAgainPos = uiConfig.calculatePosition(seeYouAgainConfig.position, width, height);
     renderText("SEE YOU AGAIN SOMEWHERE!", seeYouAgainPos, seeYouAgainConfig.color, seeYouAgainConfig.scale);
-    
-    // スキッププロンプトを右上に表示
-    auto skipConfig = uiConfig.getEndingSkipConfig();
-    glm::vec2 skipPos = uiConfig.calculatePosition(skipConfig.position, width, height);
-    renderText("SKIP : ENTER", skipPos, skipConfig.color, skipConfig.scale);
     
     // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
@@ -802,26 +833,6 @@ void GameStateUIRenderer::renderReadyScreen(int width, int height, int speedLeve
     auto readyPressTConfig = uiConfig.getReadyPressTConfig();
     glm::vec2 readyPressTPos = uiConfig.calculatePosition(readyPressTConfig.position, width, height);
     renderText("PRESS T", glm::vec2(readyPressTPos.x * scaleX, readyPressTPos.y * scaleY), readyPressTConfig.color, readyPressTConfig.scale);
-    
-    // "TPS FPS"ラベル
-    auto tpsFpsLabelConfig = uiConfig.getTpsFpsLabelConfig();
-    glm::vec2 tpsFpsLabelPos = uiConfig.calculatePosition(tpsFpsLabelConfig.position, width, height);
-    renderText("TPS FPS", glm::vec2(tpsFpsLabelPos.x * scaleX, tpsFpsLabelPos.y * scaleY), tpsFpsLabelConfig.color, tpsFpsLabelConfig.scale);
-    
-    // モード選択（TPS/FPS）
-    auto tpsOptionConfig = uiConfig.getTpsOptionConfig();
-    auto fpsOptionConfig = uiConfig.getFpsOptionConfig();
-    glm::vec2 tpsPos = uiConfig.calculatePosition(tpsOptionConfig.position, width, height);
-    glm::vec2 fpsPos = uiConfig.calculatePosition(fpsOptionConfig.position, width, height);
-    renderText("TPS", glm::vec2(tpsPos.x * scaleX, tpsPos.y * scaleY), 
-               isFirstPersonMode ? tpsOptionConfig.unselectedColor : tpsOptionConfig.selectedColor, tpsOptionConfig.scale);
-    renderText("FPS", glm::vec2(fpsPos.x * scaleX, fpsPos.y * scaleY), 
-               isFirstPersonMode ? fpsOptionConfig.selectedColor : fpsOptionConfig.unselectedColor, fpsOptionConfig.scale);
-    
-    // "PRESS F"
-    auto readyPressFConfig = uiConfig.getReadyPressFConfig();
-    glm::vec2 readyPressFPos = uiConfig.calculatePosition(readyPressFConfig.position, width, height);
-    renderText("PRESS F", glm::vec2(readyPressFPos.x * scaleX, readyPressFPos.y * scaleY), readyPressFConfig.color, readyPressFConfig.scale);
     
     // "CONFIRM: ENTER"メッセージ
     auto confirmConfig = uiConfig.getConfirmConfig();
@@ -1320,7 +1331,7 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode) {
+void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameState::SecretStarType secretStarType) {
     // フォントの初期化を確実に行う
     font.initialize();
     
@@ -1356,16 +1367,36 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("SELECT MODE", titlePos, titleConfig.color, titleConfig.scale);
     
-    // NORMAL/TIME ATTACKの表示（選択された方がオレンジ色、選択されていない方がグレー）
+    // モード選択の表示
     auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
     glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
-    glm::vec3 normalColor = isTimeAttackMode ? normalConfig.unselectedColor : normalConfig.selectedColor;
-    renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
     
     auto timeAttackConfig = uiConfig.getModeSelectionTimeAttackTextConfig();
     glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, width, height);
-    glm::vec3 timeAttackColor = isTimeAttackMode ? timeAttackConfig.selectedColor : timeAttackConfig.unselectedColor;
-    renderText("TIME ATTACK", timeAttackPos, timeAttackColor, timeAttackConfig.scale);
+    
+    // ゲームクリア済みの場合は3択、そうでない場合は2択
+    if (isGameCleared) {
+        // 3択: NORMAL / TIME ATTACK / SECRET STAR
+        bool isSecretStarSelected = (secretStarType != GameState::SecretStarType::NONE);
+        
+        glm::vec3 normalColor = (isTimeAttackMode || isSecretStarSelected) ? normalConfig.unselectedColor : normalConfig.selectedColor;
+        renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
+        
+        glm::vec3 timeAttackColor = isTimeAttackMode ? timeAttackConfig.selectedColor : timeAttackConfig.unselectedColor;
+        renderText("TIME ATTACK", timeAttackPos, timeAttackColor, timeAttackConfig.scale);
+        
+        auto secretStarConfig = uiConfig.getModeSelectionSecretStarTextConfig();
+        glm::vec2 secretStarPos = uiConfig.calculatePosition(secretStarConfig.position, width, height);
+        glm::vec3 secretStarColor = isSecretStarSelected ? secretStarConfig.selectedColor : secretStarConfig.unselectedColor;
+        renderText("SECRET STAR", secretStarPos, secretStarColor, secretStarConfig.scale);
+    } else {
+        // 2択: NORMAL / TIME ATTACK（従来通り）
+        glm::vec3 normalColor = isTimeAttackMode ? normalConfig.unselectedColor : normalConfig.selectedColor;
+        renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
+        
+        glm::vec3 timeAttackColor = isTimeAttackMode ? timeAttackConfig.selectedColor : timeAttackConfig.unselectedColor;
+        renderText("TIME ATTACK", timeAttackPos, timeAttackColor, timeAttackConfig.scale);
+    }
     
     // PRESS T表示
     auto pressTConfig = uiConfig.getModeSelectionPressTConfig();
@@ -1373,6 +1404,172 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
     renderText("PRESS T", pressTPos, pressTConfig.color, pressTConfig.scale);
     
     auto confirmConfig = uiConfig.getModeSelectionConfirmConfig();
+    glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
+    renderText("CONFIRM: ENTER", confirmPos, confirmConfig.color, confirmConfig.scale);
+    
+    // 3D描画モードに戻す
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 背景の四角形（画面全体）
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // テキストの描画
+    auto line1Config = uiConfig.getSecretStarExplanationLine1Config();
+    glm::vec2 line1Pos = uiConfig.calculatePosition(line1Config.position, width, height);
+    renderText("SECRET STARS NOW APPEAR IN EACH STAGE.", line1Pos, line1Config.color, line1Config.scale);
+    
+    auto line2Config = uiConfig.getSecretStarExplanationLine2Config();
+    glm::vec2 line2Pos = uiConfig.calculatePosition(line2Config.position, width, height);
+    renderText("THERE ARE THREE TYPES OF SECRET STARS.", line2Pos, line2Config.color, line2Config.scale);
+    
+    // 1. MAX SPEED STAR（2行に分割）
+    auto line3Config = uiConfig.getSecretStarExplanationLine3Config();
+    glm::vec2 line3Pos = uiConfig.calculatePosition(line3Config.position, width, height);
+    renderText("1. MAX SPEED STAR: THE WORLD'S SPEED IS ALWAYS TRIPLED AND CANNOT BE CHANGED.", line3Pos, line3Config.color, line3Config.scale);
+    
+    auto line3bConfig = uiConfig.getSecretStarExplanationLine3bConfig();
+    glm::vec2 line3bPos = uiConfig.calculatePosition(line3bConfig.position, width, height);
+    renderText("AIM FOR THE GOAL IN A WORLD OF LIGHTNING SPEED.", line3bPos, line3bConfig.color, line3bConfig.scale);
+    
+    // 2. SHADOW STAR（3行に分割）
+    auto line4Config = uiConfig.getSecretStarExplanationLine4Config();
+    glm::vec2 line4Pos = uiConfig.calculatePosition(line4Config.position, width, height);
+    renderText("2. SHADOW STAR: THE STAGE IS ENGULFED IN DARKNESS,", line4Pos, line4Config.color, line4Config.scale);
+    
+    auto line4bConfig = uiConfig.getSecretStarExplanationLine4bConfig();
+    glm::vec2 line4bPos = uiConfig.calculatePosition(line4bConfig.position, width, height);
+    renderText("AND YOU CAN ONLY SEE THE GROUND BENEATH YOUR FEET.", line4bPos, line4bConfig.color, line4bConfig.scale);
+    
+    auto line4cConfig = uiConfig.getSecretStarExplanationLine4cConfig();
+    glm::vec2 line4cPos = uiConfig.calculatePosition(line4cConfig.position, width, height);
+    renderText("USE THE MINIMAP AND YOUR MEMORY TO TAKE EACH STEP TOWARDS THE GOAL.", line4cPos, line4cConfig.color, line4cConfig.scale);
+    
+    // 3. IMMERSIVE STAR（2行に分割）
+    auto line5Config = uiConfig.getSecretStarExplanationLine5Config();
+    glm::vec2 line5Pos = uiConfig.calculatePosition(line5Config.position, width, height);
+    renderText("3. IMMERSIVE STAR: SWITCH TO A FIRST-PERSON PERSPECTIVE.", line5Pos, line5Config.color, line5Config.scale);
+    
+    auto line5bConfig = uiConfig.getSecretStarExplanationLine5bConfig();
+    glm::vec2 line5bPos = uiConfig.calculatePosition(line5bConfig.position, width, height);
+    renderText("ENJOY THE IMMERSIVE EXPERIENCE", line5bPos, line5bConfig.color, line5bConfig.scale);
+    
+    auto okButtonConfig = uiConfig.getSecretStarExplanationOkButtonConfig();
+    glm::vec2 okButtonPos = uiConfig.calculatePosition(okButtonConfig.position, width, height);
+    renderText("OK : ENTER", okButtonPos, okButtonConfig.color, okButtonConfig.scale);
+    
+    glDisable(GL_BLEND);
+}
+
+void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, GameState::SecretStarType selectedType) {
+    // フォントの初期化を確実に行う
+    font.initialize();
+    
+    // 2D描画モードに切り替え
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    // 深度テストを無効化（UI表示のため）
+    glDisable(GL_DEPTH_TEST);
+    
+    // 背景オーバーレイ（半透明の黒）
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // タイトル
+    auto titleConfig = uiConfig.getSecretStarSelectionTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText("SELECT SECRET STAR", titlePos, titleConfig.color, titleConfig.scale);
+    
+    // 星の色定義
+    glm::vec3 maxSpeedColor = glm::vec3(0.4f, 0.8f, 1.0f);  // 水色
+    glm::vec3 shadowColor = glm::vec3(0.2f, 0.2f, 0.2f);   // 黒
+    glm::vec3 immersiveColor = glm::vec3(1.0f, 0.6f, 0.8f); // ピンク
+    glm::vec3 unselectedColor = glm::vec3(0.5f, 0.5f, 0.5f); // グレー（未選択）
+    
+    // 星の位置と色
+    auto star1PosConfig = uiConfig.getSecretStarSelectionStar1Config();
+    auto star2PosConfig = uiConfig.getSecretStarSelectionStar2Config();
+    auto star3PosConfig = uiConfig.getSecretStarSelectionStar3Config();
+    
+    glm::vec2 star1Pos = uiConfig.calculatePosition(star1PosConfig, width, height);
+    glm::vec2 star2Pos = uiConfig.calculatePosition(star2PosConfig, width, height);
+    glm::vec2 star3Pos = uiConfig.calculatePosition(star3PosConfig, width, height);
+    
+    glm::vec3 star1Color = (selectedType == GameState::SecretStarType::MAX_SPEED_STAR) ? maxSpeedColor : unselectedColor;
+    glm::vec3 star2Color = (selectedType == GameState::SecretStarType::SHADOW_STAR) ? shadowColor : unselectedColor;
+    glm::vec3 star3Color = (selectedType == GameState::SecretStarType::IMMERSIVE_STAR) ? immersiveColor : unselectedColor;
+    
+    // 星のスケール（ui_config.jsonから読み込む、デフォルトは2.0）
+    // 現在は固定値を使用（UIPositionにscaleがないため）
+    float starScale = 2.0f;
+    
+    // 星を描画
+    renderStar(star1Pos, star1Color, starScale, width, height);
+    renderStar(star2Pos, star2Color, starScale, width, height);
+    renderStar(star3Pos, star3Color, starScale, width, height);
+    
+    // 星の名前を描画
+    auto name1Config = uiConfig.getSecretStarSelectionName1Config();
+    auto name2Config = uiConfig.getSecretStarSelectionName2Config();
+    auto name3Config = uiConfig.getSecretStarSelectionName3Config();
+    
+    glm::vec2 name1Pos = uiConfig.calculatePosition(name1Config.position, width, height);
+    glm::vec2 name2Pos = uiConfig.calculatePosition(name2Config.position, width, height);
+    glm::vec2 name3Pos = uiConfig.calculatePosition(name3Config.position, width, height);
+    
+    glm::vec3 name1Color = (selectedType == GameState::SecretStarType::MAX_SPEED_STAR) ? name1Config.selectedColor : name1Config.unselectedColor;
+    glm::vec3 name2Color = (selectedType == GameState::SecretStarType::SHADOW_STAR) ? name2Config.selectedColor : name2Config.unselectedColor;
+    glm::vec3 name3Color = (selectedType == GameState::SecretStarType::IMMERSIVE_STAR) ? name3Config.selectedColor : name3Config.unselectedColor;
+    
+    renderText("MAX SPEED STAR", name1Pos, name1Color, name1Config.scale);
+    renderText("SHADOW STAR", name2Pos, name2Color, name2Config.scale);
+    renderText("IMMERSIVE STAR", name3Pos, name3Color, name3Config.scale);
+    
+    // PRESS T表示
+    auto pressTConfig = uiConfig.getSecretStarSelectionPressTConfig();
+    glm::vec2 pressTPos = uiConfig.calculatePosition(pressTConfig.position, width, height);
+    renderText("PRESS T", pressTPos, pressTConfig.color, pressTConfig.scale);
+    
+    // CONFIRM表示
+    auto confirmConfig = uiConfig.getSecretStarSelectionConfirmConfig();
     glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
     renderText("CONFIRM: ENTER", confirmPos, confirmConfig.color, confirmConfig.scale);
     

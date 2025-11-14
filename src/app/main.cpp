@@ -17,6 +17,7 @@
 #include "../gfx/opengl_renderer.h"
 #include "../game/game_state.h"
 #include "../game/stage_manager.h"
+#include "../game/save_manager.h"
 #include "../game/platform_system.h"
 #include "../physics/physics_system.h"
 #include "../io/input_system.h"
@@ -114,6 +115,9 @@ int main(int argc, char* argv[]) {
     
     // ゲーム状態の初期化
     initializeGameState(gameState);
+    
+    // セーブデータをロード
+    SaveManager::loadGameData(gameState);
     
     // コマンドライン引数で初期ステージを指定することができる
     int initialStage = 6;  // デフォルトはチュートリアルステージ

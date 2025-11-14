@@ -63,6 +63,7 @@ add_executable(SlimesSkyTravel
     src/game/switch_system.cpp
     src/game/gravity_system.cpp
     src/game/replay_manager.cpp
+    src/game/save_manager.cpp
     src/physics/physics_system.cpp
     src/io/input_system.cpp
     src/io/audio_manager.cpp

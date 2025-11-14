@@ -118,7 +118,7 @@ void UIRenderer::renderGameUI(const GameUIState& state) {
     
     // 星表示
     if (state.showStars) {
-        renderStarsDisplay(state.existingStars);
+        renderStarsDisplay(state.existingStars, state.currentStage, state.selectedSecretStarType, state.secretStarCleared);
     }
     
     // ライフ表示
@@ -129,16 +129,21 @@ void UIRenderer::renderGameUI(const GameUIState& state) {
     end2DMode();
 }
 
-void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives) {
+void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedStars, int existingStars, int lives,
+                               int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     GameUIState state;
     state.showTime = true;
-    state.showGoal = true;
+    // SECRET STARモードの場合はGOAL表示を非表示
+    state.showGoal = (selectedSecretStarType < 0);
     state.showStars = true;
     state.showLives = true;
     state.remainingTime = remainingTime;
     state.timeLimit = timeLimit;
     state.existingStars = existingStars;
     state.lives = lives;
+    state.currentStage = currentStage;
+    state.selectedSecretStarType = selectedSecretStarType;
+    state.secretStarCleared = secretStarCleared;
     
     renderGameUI(state);
 }
@@ -238,15 +243,44 @@ void UIRenderer::renderGoalDisplay(float timeLimit) {
 }
 
 // 星表示の描画
-void UIRenderer::renderStarsDisplay(int existingStars) {
+void UIRenderer::renderStarsDisplay(int existingStars, int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto starsConfig = uiConfig.getGameUIStarsConfig();
     glm::vec2 basePos = uiConfig.calculatePosition(starsConfig.position, windowWidth, windowHeight);
     
-    for (int i = 0; i < 3; i++) {
-        glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
-        glm::vec3 starColor = (i < existingStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
-        renderStar(starPos, starColor, starsConfig.scale);
+    // SECRET STARモードの場合
+    if (selectedSecretStarType >= 0 && currentStage >= 0) {
+        // SECRET STARタイプの順序: MAX_SPEED_STAR(0), SHADOW_STAR(1), IMMERSIVE_STAR(2)
+        std::vector<int> secretStarTypes = {0, 1, 2}; // 0=MAX_SPEED_STAR, 1=SHADOW_STAR, 2=IMMERSIVE_STAR
+        
+        // 各SECRET STARタイプの色定義
+        std::vector<glm::vec3> secretStarColors = {
+            glm::vec3(0.2f, 0.8f, 1.0f),  // MAX_SPEED_STAR: 水色
+            glm::vec3(0.1f, 0.1f, 0.1f),  // SHADOW_STAR: 黒
+            glm::vec3(1.0f, 0.4f, 0.8f)   // IMMERSIVE_STAR: ピンク
+        };
+        
+        glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
+        
+        // 現在のステージでクリア済みのSECRET STARタイプを取得
+        std::set<int> clearedTypes;
+        if (secretStarCleared.count(currentStage) > 0) {
+            clearedTypes = secretStarCleared.at(currentStage);
+        }
+        
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
+            bool isCleared = (clearedTypes.count(secretStarTypes[i]) > 0);
+            glm::vec3 starColor = isCleared ? secretStarColors[secretStarTypes[i]] : inactiveColor;
+            renderStar(starPos, starColor, starsConfig.scale);
+        }
+    } else {
+        // 通常モードの場合
+        for (int i = 0; i < 3; i++) {
+            glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
+            glm::vec3 starColor = (i < existingStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
+            renderStar(starPos, starColor, starsConfig.scale);
+        }
     }
 }
 
@@ -337,16 +371,21 @@ void UIRenderer::renderLivesAndTimeUI(int lives, float remainingTime, float time
     renderExplanationText("time", glm::vec2(800, 120));
 }
 
-void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars) {
+void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float timeLimit, int earnedStars, int existingStars,
+                                            int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     GameUIState state;
     state.showTime = true;
-    state.showGoal = true;
+    // SECRET STARモードの場合はGOAL表示を非表示
+    state.showGoal = (selectedSecretStarType < 0);
     state.showStars = true;
     state.showLives = true;
     state.remainingTime = remainingTime;
     state.timeLimit = timeLimit;
     state.existingStars = existingStars;
     state.lives = lives;
+    state.currentStage = currentStage;
+    state.selectedSecretStarType = selectedSecretStarType;
+    state.secretStarCleared = secretStarCleared;
     
     renderGameUI(state);
     
