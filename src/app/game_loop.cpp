@@ -1165,7 +1165,7 @@ namespace GameLoop {
             auto worldTitleConfig = uiConfig.getWorldTitleConfig();
             glm::vec2 worldTitlePos = uiConfig.calculatePosition(worldTitleConfig.position, width, height);
             uiRenderer->renderText("WORLD 1", worldTitlePos, worldTitleConfig.color, worldTitleConfig.scale);
-            
+           
             auto starIconConfig = uiConfig.getStarIconConfig();
             glm::vec2 starIconPos = uiConfig.calculatePosition(starIconConfig.position, width, height);
             uiRenderer->renderStar(starIconPos, starIconConfig.color, starIconConfig.scale);
