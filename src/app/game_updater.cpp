@@ -80,7 +80,7 @@ void GameUpdater::updateGameState(
                     resetStageStartTime();
                     
                     gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
-                    gameState.ui.transitionTimer = 0.0f;
+                    gameState.ui.transitionTimer = deltaTime;  // 最初のフレームで少し進めておく
                 }
             }
         } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
@@ -163,9 +163,13 @@ void GameUpdater::updateGameState(
             if (gameState.replay.replayPlaybackTime >= gameState.replay.currentReplay.frames.back().timestamp) {
                 gameState.replay.replayPlaybackTime = gameState.replay.currentReplay.frames.back().timestamp;
                 
+                // リプレイ終了時に、右上に表示されていた値（replayPlaybackTime）をclearTimeに設定
+                gameState.progress.clearTime = gameState.replay.replayPlaybackTime;
+                
                 gameState.replay.isReplayMode = false;
                 gameState.replay.isReplayPaused = false;
                 gameState.ui.showStageClearUI = true;
+                gameState.progress.gameWon = true;  // ゴール処理をスキップするために設定
                 gameState.progress.isStageCompleted = true;
                 gameState.progress.isGoalReached = true;
                 gameState.replay.replayPlaybackTime = 0.0f;
@@ -384,7 +388,9 @@ void GameUpdater::updatePhysicsAndCollisions(
                         gameState.progress.isStageCompleted = true;
                         gameState.progress.isGoalReached = true;
                         
-                        if (!gameState.replay.isReplayMode) {
+                        // リプレイモードでない場合、かつリプレイのクリアタイムが設定されていない場合のみclearTimeを更新
+                        if (!gameState.replay.isReplayMode && 
+                            (gameState.replay.currentReplay.frames.empty() || gameState.replay.currentReplay.clearTime <= 0.0f)) {
                             gameState.progress.clearTime = gameState.progress.gameTime;
                         }
                         
@@ -455,12 +461,13 @@ void GameUpdater::updatePhysicsAndCollisions(
                                 }
                             }
                             
-                            int oldStars = gameState.progress.stageStars[currentStage];
+                            int oldStars = (gameState.progress.stageStars.count(currentStage) > 0) ? gameState.progress.stageStars[currentStage] : 0;
                             int starDifference = gameState.progress.earnedStars - oldStars;
                             
                             if (starDifference > 0) {
                                 gameState.progress.stageStars[currentStage] = gameState.progress.earnedStars;
                                 gameState.progress.totalStars += starDifference;
+                                SaveManager::saveGameData(gameState);  // チュートリアルクリア時も確実に保存
                             }
                         }
                         

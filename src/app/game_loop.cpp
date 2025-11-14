@@ -74,7 +74,10 @@ namespace GameLoop {
             
             lastFrameTime = currentTime;
             
-            gameState.progress.gameTime = std::chrono::duration<float>(currentTime - startTime).count();
+            // リプレイモード中はgameTimeを更新しない（リプレイのタイムスタンプを使用するため）
+            if (!gameState.replay.isReplayMode) {
+                gameState.progress.gameTime = std::chrono::duration<float>(currentTime - startTime).count();
+            }
             
             float scaledDeltaTime = deltaTime * gameState.progress.timeScale;
             
@@ -171,29 +174,43 @@ namespace GameLoop {
                     if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
                         if (gameState.ui.transitionTimer >= FADE_DURATION) {
                             if (gameState.ui.pendingStageTransition >= 0) {
-                                gameState.ui.showTitleScreen = false;
-                                
-                                stageManager.loadStage(6, gameState, platformSystem);
-                                gameState.ui.showReadyScreen = false;
-                                gameState.ui.readyScreenShown = true;
-                                gameState.ui.isCountdownActive = false;
-                                gameState.ui.countdownTimer = 0.0f;
-                                resetStageStartTime();
-                                
-                                gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
-                                gameState.ui.transitionTimer = 0.0f;
+                                // 次のフレームでshowTitleScreen = falseにしてステージを読み込むようにフラグを設定
+                                gameState.ui.pendingFadeIn = true;
                             }
                         }
-                    } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
-                        if (gameState.ui.transitionTimer >= FADE_DURATION) {
-                            gameState.ui.isTransitioning = false;
-                            gameState.ui.transitionType = UIState::TransitionType::NONE;
-                            gameState.ui.transitionTimer = 0.0f;
-                            gameState.ui.pendingStageTransition = -1;
-                            gameState.ui.pendingReadyScreen = false;
-                            gameState.ui.pendingSkipCountdown = false;
-                        }
                     }
+                    // フェードイン処理はタイトル画面外で行う（showTitleScreen = falseになった後）
+                }
+                
+                // pendingFadeInがtrueの場合、showTitleScreen = falseにしてステージを読み込む
+                if (gameState.ui.pendingFadeIn && gameState.ui.isTransitioning) {
+                    gameState.ui.showTitleScreen = false;
+                    
+                    int targetStage = gameState.ui.pendingStageTransition;
+                    if (targetStage == 6) {
+                        // チュートリアルステージ
+                        stageManager.loadStage(6, gameState, platformSystem);
+                        gameState.ui.showReadyScreen = false;
+                        gameState.ui.readyScreenShown = true;
+                        gameState.ui.isCountdownActive = false;
+                        gameState.ui.countdownTimer = 0.0f;
+                        resetStageStartTime();
+                    } else if (targetStage == 0) {
+                        // ステージ選択画面
+                        resetStageStartTime();
+                        stageManager.goToStage(0, gameState, platformSystem);
+                        gameState.ui.showReadyScreen = false;
+                        gameState.ui.readyScreenShown = false;
+                        gameState.progress.timeScale = 1.0f;
+                        gameState.progress.timeScaleLevel = 0;
+                        
+                        gameState.camera.isFirstPersonMode = false;
+                        gameState.camera.isFirstPersonView = false;
+                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                        
+                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
+                    }
+                    // このフレームではまだpendingFadeInをtrueのままにして、次のフレームでフェードインを開始
                 }
                 
                 gameState.ui.titleScreenTimer += deltaTime;
@@ -213,7 +230,7 @@ namespace GameLoop {
                     }
                 }
                 
-                if (gameState.audioEnabled) {
+                if (gameState.audioEnabled && !gameState.ui.isTransitioning) {
                     std::string titleBGM = "title.ogg";
                     if (gameState.currentBGM != titleBGM) {
                         if (gameState.bgmPlaying) {
@@ -244,21 +261,18 @@ namespace GameLoop {
                         gameState.currentBGM = "";
                     }
                     
-                    bool hasClearedTutorial = (gameState.progress.stageStars.count(6) > 0 && gameState.progress.stageStars[6] > 0);
+                    // チュートリアルクリア判定: stageStars[6]があるか、ステージ1がアンロックされているか、チュートリアル説明が非表示
+                    bool hasClearedTutorial = (gameState.progress.stageStars.count(6) > 0 && gameState.progress.stageStars[6] > 0) ||
+                                             (gameState.progress.unlockedStages.count(1) > 0 && gameState.progress.unlockedStages[1]) ||
+                                             !gameState.ui.showStage0Tutorial;
                     
                     if (hasClearedTutorial) {
-                        resetStageStartTime();
-                        stageManager.goToStage(0, gameState, platformSystem);
-                        gameState.ui.showReadyScreen = false;
-                        gameState.ui.readyScreenShown = false;
-                        gameState.progress.timeScale = 1.0f;
-                        gameState.progress.timeScaleLevel = 0;
-                        
-                        gameState.camera.isFirstPersonMode = false;
-                        gameState.camera.isFirstPersonView = false;
-                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                        
-                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
+                        gameState.ui.isTransitioning = true;
+                        gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
+                        gameState.ui.transitionTimer = 0.0f;
+                        gameState.ui.pendingStageTransition = 0;  // ステージ選択画面
+                        gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
+                        gameState.ui.pendingSkipCountdown = true;  // カウントダウンをスキップ
                     } else {
                         gameState.ui.isTransitioning = true;
                         gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
@@ -272,7 +286,32 @@ namespace GameLoop {
                 GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
                 
                 glfwPollEvents();
-                continue;  // タイトル画面中は他の処理をスキップ
+                // showTitleScreen = falseになった場合は、次のフレームで新しいステージを描画するためcontinueしない
+                if (gameState.ui.showTitleScreen) {
+                    continue;  // タイトル画面中は他の処理をスキップ
+                }
+            }
+
+            // タイトル画面から遷移した後も、フェードイン処理を続ける
+            if (gameState.ui.isTransitioning && gameState.ui.pendingFadeIn && !gameState.ui.showTitleScreen) {
+                // showTitleScreen = falseになった後のフレーム：フェードインを開始
+                gameState.ui.pendingFadeIn = false;
+                gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
+                gameState.ui.transitionTimer = 0.0f;
+            }
+            
+            if (gameState.ui.isTransitioning && gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
+                const float FADE_DURATION = 0.5f;
+                gameState.ui.transitionTimer += deltaTime;
+                if (gameState.ui.transitionTimer >= FADE_DURATION) {
+                    gameState.ui.isTransitioning = false;
+                    gameState.ui.transitionType = UIState::TransitionType::NONE;
+                    gameState.ui.transitionTimer = 0.0f;
+                    gameState.ui.pendingStageTransition = -1;
+                    gameState.ui.pendingReadyScreen = false;
+                    gameState.ui.pendingSkipCountdown = false;
+                    gameState.ui.pendingFadeIn = false;
+                }
             }
 
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
@@ -478,15 +517,7 @@ namespace GameLoop {
                 gameState.progress.isGameCleared = true;
                 gameState.ui.showSecretStarExplanationUI = true;
                 
-                stageManager.goToStage(0, gameState, platformSystem);
-                gameState.player.position = glm::vec3(8, 0, 0);
-                gameState.player.velocity = glm::vec3(0, 0, 0);
-                
-                gameState.camera.isFirstPersonMode = false;
-                gameState.camera.isFirstPersonView = false;
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                
-                gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
+                GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
             } else {
                 gameStateUIRenderer->renderEndingMessage(width, height, gameState.ui.endingMessageTimer);
             }
@@ -502,15 +533,7 @@ namespace GameLoop {
             gameState.progress.isGameCleared = true;
             gameState.ui.showSecretStarExplanationUI = true;
             
-            stageManager.goToStage(0, gameState, platformSystem);
-            gameState.player.position = glm::vec3(8, 0, 0);
-            gameState.player.velocity = glm::vec3(0, 0, 0);
-            
-            gameState.camera.isFirstPersonMode = false;
-            gameState.camera.isFirstPersonView = false;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            
-            gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
+            GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
         }
         
         renderer->endFrame();

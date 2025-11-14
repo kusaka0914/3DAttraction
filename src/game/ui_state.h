@@ -53,6 +53,7 @@ struct UIState {
     int pendingStageTransition = -1;
     bool pendingReadyScreen = false;
     bool pendingSkipCountdown = false;
+    bool pendingFadeIn = false;  // フェードアウト完了後、次のフレームでフェードインを開始するためのフラグ
     
     bool showEasyModeExplanationUI = false;
     

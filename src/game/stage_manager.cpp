@@ -142,8 +142,11 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.progress.remainingTime = gameState.progress.timeLimit;    // 残り時間を設定
     printf("Time limit: %.1f seconds\n", gameState.progress.timeLimit);
     gameState.progress.earnedStars = 0;          // 星をリセット
-    gameState.progress.clearTime = 0.0f;         // クリア時間をリセット
-    DEBUG_PRINTF("DEBUG: clearTime reset to 0.0f for stage %d\n", stageNumber);
+    // リプレイモードの場合はclearTimeをリセットしない（リプレイ開始時に設定される）
+    if (!gameState.replay.isReplayMode) {
+        gameState.progress.clearTime = 0.0f;         // クリア時間をリセット
+        DEBUG_PRINTF("DEBUG: clearTime reset to 0.0f for stage %d\n", stageNumber);
+    }
     gameState.progress.isTimeUp = false;         // 時間切れフラグをリセット
     gameState.progress.isStageCompleted = false; // ステージ完了フラグをリセット
     gameState.ui.showStageClearUI = false; // UIをリセット

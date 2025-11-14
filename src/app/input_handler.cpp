@@ -500,35 +500,11 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         if (gameState.ui.showStageClearUI) {
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                 int clearedStage = stageManager.getCurrentStage();
-                
-                
                 stageManager.completeStage(clearedStage);
-                stageManager.goToStage(0, gameState, platformSystem);
-                gameState.progress.timeScale = 1.0f;
-                gameState.progress.timeScaleLevel = 0;
                 
-                gameState.camera.isFirstPersonMode = false;
-                gameState.camera.isFirstPersonView = false;
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                
-                gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
-                
-                glm::vec3 returnPosition;
-                switch (clearedStage) {
-                    case 1: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z-1); break;
-                    case 2: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y, GameConstants::STAGE_AREAS[1].z-1); break;
-                    case 3: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y, GameConstants::STAGE_AREAS[2].z-1); break;
-                    case 4: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y, GameConstants::STAGE_AREAS[3].z-1); break;
-                    case 5: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z-1); break;
-                    default: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z-1); break;
-                }
-                
-                gameState.player.position = returnPosition;
-                gameState.player.velocity = glm::vec3(0, 0, 0);
+                InputHandler::returnToField(window, gameState, stageManager, platformSystem, clearedStage);
                 
                 gameState.ui.showStageClearUI = false;
-                gameState.progress.gameWon = false;
-                gameState.progress.isGoalReached = false;
             }
             
             if (keyStates[GLFW_KEY_R].justPressed()) {
@@ -555,12 +531,11 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     int currentStage = stageManager.getCurrentStage();
                     if (ReplayManager::replayExists(currentStage)) {
                         if (ReplayManager::loadReplay(gameState.replay.currentReplay, currentStage)) {
+                            resetStageStartTime();  // ゲームタイムをリセット
                             stageManager.goToStage(currentStage, gameState, platformSystem);
                             
-                            // savedClearTime is defined in game_loop.cpp
-                            // This should be handled in game_loop.cpp instead
-                            
-                            gameState.progress.clearTime = gameState.replay.currentReplay.clearTime;
+                            // リプレイ開始時はclearTimeを0に初期化（リプレイ終了時にreplayPlaybackTimeが設定される）
+                            gameState.progress.clearTime = 0.0f;
                             
                             gameState.replay.isReplayMode = true;
                             gameState.replay.isReplayPaused = false;
@@ -708,5 +683,43 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         if (gameState.progress.isTutorialStage) {
             TutorialManager::processTutorialProgress(window, gameState, keyStates);
         }
+    }
+    
+    void InputHandler::returnToField(
+        GLFWwindow* window,
+        GameState& gameState,
+        StageManager& stageManager,
+        PlatformSystem& platformSystem,
+        int clearedStage
+    ) {
+        stageManager.goToStage(0, gameState, platformSystem);
+        
+        // 共通のリセット処理
+        gameState.progress.timeScale = 1.0f;
+        gameState.progress.timeScaleLevel = 0;
+        gameState.camera.isFirstPersonMode = false;
+        gameState.camera.isFirstPersonView = false;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
+        gameState.progress.gameWon = false;
+        gameState.progress.isGoalReached = false;
+        
+        // プレイヤー位置の設定
+        if (clearedStage > 0 && clearedStage <= 5) {
+            glm::vec3 returnPosition;
+            switch (clearedStage) {
+                case 1: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z-1); break;
+                case 2: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[1].x, GameConstants::STAGE_AREAS[1].y, GameConstants::STAGE_AREAS[1].z-1); break;
+                case 3: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[2].x, GameConstants::STAGE_AREAS[2].y, GameConstants::STAGE_AREAS[2].z-1); break;
+                case 4: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[3].x, GameConstants::STAGE_AREAS[3].y, GameConstants::STAGE_AREAS[3].z-1); break;
+                case 5: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[4].x, GameConstants::STAGE_AREAS[4].y, GameConstants::STAGE_AREAS[4].z-1); break;
+                default: returnPosition = glm::vec3(GameConstants::STAGE_AREAS[0].x, GameConstants::STAGE_AREAS[0].y, GameConstants::STAGE_AREAS[0].z-1); break;
+            }
+            gameState.player.position = returnPosition;
+        } else {
+            // デフォルト位置（スタッフロール終了時など）
+            gameState.player.position = glm::vec3(8, 0, 0);
+        }
+        gameState.player.velocity = glm::vec3(0, 0, 0);
     }
 } // namespace GameLoop

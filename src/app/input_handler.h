@@ -75,6 +75,24 @@ public:
         std::function<void()> resetStageStartTime,
         GLFWwindow* window
     );
+    
+    /**
+     * @brief フィールド（ステージ0）に戻る共通処理
+     * @details ステージクリア後やスタッフロール終了後にフィールドに戻る際の共通処理を実行します。
+     * 
+     * @param window GLFWウィンドウ
+     * @param gameState ゲーム状態
+     * @param stageManager ステージマネージャー
+     * @param platformSystem プラットフォームシステム
+     * @param clearedStage クリアしたステージ番号（-1の場合はデフォルト位置に戻る）
+     */
+    static void returnToField(
+        GLFWwindow* window,
+        GameState& gameState,
+        StageManager& stageManager,
+        PlatformSystem& platformSystem,
+        int clearedStage = -1
+    );
 };
 
 } // namespace GameLoop
