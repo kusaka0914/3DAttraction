@@ -18,11 +18,9 @@ void UIRenderer::setWindowSize(int width, int height) {
 }
 
 void UIRenderer::begin2DMode() {
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    // 実際のウィンドウサイズを使用
     glOrtho(0, windowWidth, windowHeight, 0, -1, 1);
     
     glMatrixMode(GL_MODELVIEW);
@@ -33,7 +31,6 @@ void UIRenderer::begin2DMode() {
 }
 
 void UIRenderer::end2DMode() {
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -46,7 +43,6 @@ void UIRenderer::end2DMode() {
 void UIRenderer::renderText(const std::string& text, const glm::vec2& position, const glm::vec3& color, float scale) {
     begin2DMode();
     
-    // 1280x720基準の座標を実際のウィンドウサイズにスケーリング
     float scaleX = static_cast<float>(windowWidth) / 1280.0f;
     float scaleY = static_cast<float>(windowHeight) / 720.0f;
     glm::vec2 scaledPosition = glm::vec2(position.x * scaleX, position.y * scaleY);
@@ -83,7 +79,6 @@ void UIRenderer::renderBitmapChar(char c, const glm::vec2& position, const glm::
     
     glColor3f(color.r, color.g, color.b);
     
-    // 8x12のビットマップを描画
     for (int y = 0; y < 12; y++) {
         for (int x = 0; x < 8; x++) {
             size_t index = y * 8 + x;
@@ -102,26 +97,21 @@ void UIRenderer::renderBitmapChar(char c, const glm::vec2& position, const glm::
     }
 }
 
-// 統合されたUI描画関数
 void UIRenderer::renderGameUI(const GameUIState& state) {
     begin2DMode();
     
-    // 時間表示
     if (state.showTime) {
         renderTimeDisplay(state.remainingTime, state.timeLimit);
     }
     
-    // ゴール表示
     if (state.showGoal) {
         renderGoalDisplay(state.timeLimit);
     }
     
-    // 星表示
     if (state.showStars) {
         renderStarsDisplay(state.existingStars, state.currentStage, state.selectedSecretStarType, state.secretStarCleared);
     }
     
-    // ライフ表示
     if (state.showLives) {
         renderLivesDisplay(state.lives);
     }
@@ -133,7 +123,6 @@ void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedSt
                                int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     GameUIState state;
     state.showTime = true;
-    // SECRET STARモードの場合はGOAL表示を非表示
     state.showGoal = (selectedSecretStarType < 0);
     state.showStars = true;
     state.showLives = true;
@@ -148,36 +137,29 @@ void UIRenderer::renderTimeUI(float remainingTime, float timeLimit, int earnedSt
     renderGameUI(state);
 }
 
-// タイムアタック用UI描画
 void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earnedStars, int existingStars, int lives, float timeScale, bool isReplayMode) {
     begin2DMode();
     
-    // 経過時間を表示（ミリ秒まで）
     renderTimeAttackDisplay(currentTime, bestTime);
     
-    // タイムアタックモードでは星は表示しない
     
-    // 速度UIとPRESS Tを時間UIの隣に表示（既存の設定を再利用、位置だけタイムアタック用）
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto speedConfig = uiConfig.getSpeedDisplayConfig();
     auto pressTConfig = uiConfig.getPressTConfig();
     auto timeAttackSpeedPos = uiConfig.getGameUITimeAttackSpeedDisplayPosition();
     auto timeAttackPressTPos = uiConfig.getGameUITimeAttackPressTPosition();
     
-    // 速度UIを表示（色とスケールは既存設定、位置だけタイムアタック用）
     glm::vec2 speedPos = uiConfig.calculatePosition(timeAttackSpeedPos, windowWidth, windowHeight);
     std::string speedText = std::to_string((int)timeScale) + "x";
     glm::vec3 speedColor = (timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : speedConfig.color;
     renderText(speedText, speedPos, speedColor, speedConfig.scale);
     
-    // PRESS Tを表示（リプレイモード中でない場合のみ、色とスケールは既存設定、位置だけタイムアタック用）
     if (!isReplayMode) {
         glm::vec2 pressTPos = uiConfig.calculatePosition(timeAttackPressTPos, windowWidth, windowHeight);
         glm::vec3 pressTColor = (timeScale > 1.0f) ? glm::vec3(1.0f, 0.8f, 0.2f) : pressTConfig.color;
         renderText("PRESS T", pressTPos, pressTColor, pressTConfig.scale);
     }
     
-    // ライフを表示（livesが0より大きい場合のみ）
     if (lives > 0) {
         renderLivesDisplay(lives);
     }
@@ -185,7 +167,6 @@ void UIRenderer::renderTimeAttackUI(float currentTime, float bestTime, int earne
     end2DMode();
 }
 
-// 時間表示の描画
 void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto timeConfig = uiConfig.getGameUITimeDisplayConfig();
@@ -197,13 +178,11 @@ void UIRenderer::renderTimeDisplay(float remainingTime, float timeLimit) {
     renderText(timeText, timePos, timeColor, timeConfig.scale);
 }
 
-// タイムアタック用時間表示の描画
 void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto timeAttackConfig = uiConfig.getGameUITimeAttackDisplayConfig();
     auto bestTimeConfig = uiConfig.getGameUIBestTimeConfig();
     
-    // 経過時間を表示（分:秒.ミリ秒）- "TIME:"プレフィックスなし
     int minutes = static_cast<int>(currentTime) / 60;
     int seconds = static_cast<int>(currentTime) % 60;
     int milliseconds = static_cast<int>((currentTime - static_cast<int>(currentTime)) * 100);
@@ -215,10 +194,8 @@ void UIRenderer::renderTimeAttackDisplay(float currentTime, float bestTime) {
     glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, windowWidth, windowHeight);
     renderText(timeText, timeAttackPos, timeAttackConfig.color, timeAttackConfig.scale);
     
-    // ベストタイムの表示は削除（ゲームプレイ中、リプレイ中に右上に出るBESTのUIは不要）
 }
 
-// ゴール表示の描画
 void UIRenderer::renderGoalDisplay(float timeLimit) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto goalConfig = uiConfig.getGameUIGoalDisplayConfig();
@@ -242,18 +219,14 @@ void UIRenderer::renderGoalDisplay(float timeLimit) {
     }
 }
 
-// 星表示の描画
 void UIRenderer::renderStarsDisplay(int existingStars, int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto starsConfig = uiConfig.getGameUIStarsConfig();
     glm::vec2 basePos = uiConfig.calculatePosition(starsConfig.position, windowWidth, windowHeight);
     
-    // SECRET STARモードの場合
     if (selectedSecretStarType >= 0 && currentStage >= 0) {
-        // SECRET STARタイプの順序: MAX_SPEED_STAR(0), SHADOW_STAR(1), IMMERSIVE_STAR(2)
         std::vector<int> secretStarTypes = {0, 1, 2}; // 0=MAX_SPEED_STAR, 1=SHADOW_STAR, 2=IMMERSIVE_STAR
         
-        // 各SECRET STARタイプの色定義
         std::vector<glm::vec3> secretStarColors = {
             glm::vec3(0.2f, 0.8f, 1.0f),  // MAX_SPEED_STAR: 水色
             glm::vec3(0.1f, 0.1f, 0.1f),  // SHADOW_STAR: 黒
@@ -262,7 +235,6 @@ void UIRenderer::renderStarsDisplay(int existingStars, int currentStage, int sel
         
         glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
         
-        // 現在のステージでクリア済みのSECRET STARタイプを取得
         std::set<int> clearedTypes;
         if (secretStarCleared.count(currentStage) > 0) {
             clearedTypes = secretStarCleared.at(currentStage);
@@ -275,7 +247,6 @@ void UIRenderer::renderStarsDisplay(int existingStars, int currentStage, int sel
             renderStar(starPos, starColor, starsConfig.scale);
         }
     } else {
-        // 通常モードの場合
         for (int i = 0; i < 3; i++) {
             glm::vec2 starPos = glm::vec2(basePos.x + i * starsConfig.spacing, basePos.y);
             glm::vec3 starColor = (i < existingStars) ? starsConfig.selectedColor : starsConfig.unselectedColor;
@@ -284,7 +255,6 @@ void UIRenderer::renderStarsDisplay(int existingStars, int currentStage, int sel
     }
 }
 
-// ライフ表示の描画
 void UIRenderer::renderLivesDisplay(int lives) {
     auto& uiConfig = UIConfig::UIConfigManager::getInstance();
     auto heartsConfig = uiConfig.getGameUIHeartsConfig();
@@ -297,7 +267,6 @@ void UIRenderer::renderLivesDisplay(int lives) {
     }
 }
 
-// 説明テキストの共通化関数
 void UIRenderer::renderExplanationText(const std::string& type, const glm::vec2& position) {
     if (type == "lives") {
         std::string explanation1 = "THESE ARE YOUR LIVES !";
@@ -351,7 +320,6 @@ void UIRenderer::renderLivesWithExplanation(int lives) {
     
     renderGameUI(state);
     
-    // 説明テキストのみ追加
     renderExplanationText("lives", glm::vec2(640.0f, 200.0f));
 }
 
@@ -367,7 +335,6 @@ void UIRenderer::renderLivesAndTimeUI(int lives, float remainingTime, float time
     
     renderGameUI(state);
     
-    // 説明テキストのみ追加
     renderExplanationText("time", glm::vec2(800, 120));
 }
 
@@ -375,7 +342,6 @@ void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float
                                             int currentStage, int selectedSecretStarType, const std::map<int, std::set<int>>& secretStarCleared) {
     GameUIState state;
     state.showTime = true;
-    // SECRET STARモードの場合はGOAL表示を非表示
     state.showGoal = (selectedSecretStarType < 0);
     state.showStars = true;
     state.showLives = true;
@@ -389,11 +355,9 @@ void UIRenderer::renderLivesTimeAndStarsUI(int lives, float remainingTime, float
     
     renderGameUI(state);
     
-    // 説明テキストのみ追加
     renderExplanationText("stars", glm::vec2(590, 100));
 }
 
-// 統合されたスキルUI描画関数
 void UIRenderer::renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool isActive, 
                                int remainingUses, int maxUses, bool isEasyMode) {
     if (!hasSkill) return;
@@ -404,28 +368,22 @@ void UIRenderer::renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool 
     glm::vec3 skillColor = GameConstants::Colors::UI_TEXT_COLOR;
     glm::vec3 usesColor = GameConstants::Colors::UI_TEXT_COLOR;
     
-    // 使用回数が0の場合は灰色
     if (remainingUses <= 0) {
         usesColor = GameConstants::Colors::UI_DISABLED_COLOR;
         skillColor = GameConstants::Colors::UI_DISABLED_COLOR;
     }
     
-    // アクティブ状態の場合は青色
     if (isActive) {
         usesColor = GameConstants::Colors::UI_ACTIVE_COLOR;
         skillColor = GameConstants::Colors::UI_ACTIVE_COLOR;
     }
     
-    // スキル名を描画
     renderText(skillText, glm::vec2(config.skillX, GameConstants::Colors::UILayout::SKILL_START_Y), skillColor, GameConstants::Colors::UILayout::SKILL_SCALE);
     
-    // 使用回数を描画
     renderText(std::to_string(remainingUses), glm::vec2(config.skillX + config.countOffset, GameConstants::Colors::UILayout::SKILL_COUNT_Y), usesColor, GameConstants::Colors::UILayout::SKILL_COUNT_SCALE);
     
-    // 操作説明を描画
     renderText(config.instructionText, glm::vec2(config.skillX + config.instructionOffset, GameConstants::Colors::UILayout::SKILL_INSTRUCTION_Y), usesColor, GameConstants::Colors::UILayout::SKILL_INSTRUCTION_SCALE);
     
-    // アクティブ状態の特別表示
     if (config.hasActiveState && isActive) {
         renderText(config.activeText, config.activePosition, GameConstants::Colors::UI_ACTIVE_COLOR, GameConstants::Colors::UILayout::SKILL_ACTIVE_SCALE);
     }
@@ -433,7 +391,6 @@ void UIRenderer::renderSkillUI(const SkillUIConfig& config, bool hasSkill, bool 
     end2DMode();
 }
 
-// 個別スキルUI描画関数（後方互換性のため）
 void UIRenderer::renderTimeStopUI(bool hasSkill, bool isTimeStopped, float timeStopTimer, int remainingUses, int maxUses) {
     if (!hasSkill) return;
     
@@ -495,7 +452,6 @@ void UIRenderer::renderBurstJumpUI(bool hasSkill, bool isActive, int remainingUs
 }
 
 void UIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, float scale) {
-    // 1280x720基準の座標を実際のウィンドウサイズにスケーリング
     float scaleX = static_cast<float>(windowWidth) / 1280.0f;
     float scaleY = static_cast<float>(windowHeight) / 720.0f;
     glm::vec2 scaledPosition = glm::vec2(position.x * scaleX, position.y * scaleY);
@@ -503,29 +459,23 @@ void UIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, f
     
     glColor3f(color.r, color.g, color.b);
     
-    // 星の中心点
     float centerX = scaledPosition.x;
     float centerY = scaledPosition.y;
     
-    // 星の5つの角を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < 5; i++) {
         float angle1 = i * 72.0f * 3.14159f / 180.0f;
         float angle2 = (i + 2) * 72.0f * 3.14159f / 180.0f;
         
-        // 外側の点
         float x1 = centerX + cos(angle1) * 12.0f * scale;
         float y1 = centerY + sin(angle1) * 12.0f * scale;
         
-        // 内側の点
         float x2 = centerX + cos(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
         float y2 = centerY + sin(angle1 + 36.0f * 3.14159f / 180.0f) * 5.0f * scale;
         
-        // 次の外側の点
         float x3 = centerX + cos(angle2) * 12.0f * scale;
         float y3 = centerY + sin(angle2) * 12.0f * scale;
         
-        // 中心から各点への三角形を描画（塗りつぶし）
         glVertex2f(centerX, centerY);  // 中心点
         glVertex2f(x1, y1);            // 外側の点1
         glVertex2f(x2, y2);            // 内側の点
@@ -538,7 +488,6 @@ void UIRenderer::renderStar(const glm::vec2& position, const glm::vec3& color, f
 }
 
 void UIRenderer::renderHeart(const glm::vec2& position, const glm::vec3& color, float scale) {
-    // 1280x720基準の座標を実際のウィンドウサイズにスケーリング
     float scaleX = static_cast<float>(windowWidth) / 1280.0f;
     float scaleY = static_cast<float>(windowHeight) / 720.0f;
     glm::vec2 scaledPosition = glm::vec2(position.x * scaleX, position.y * scaleY);
@@ -546,14 +495,11 @@ void UIRenderer::renderHeart(const glm::vec2& position, const glm::vec3& color, 
     
     glColor3f(color.r, color.g, color.b);
     
-    // ハートの中心点
     float centerX = scaledPosition.x;
     float centerY = scaledPosition.y;
     
-    // ハートの形状を描画（塗りつぶし）
     glBegin(GL_TRIANGLES);
     
-    // 左側の円形部分
     for (int i = 0; i < 8; i++) {
         float angle1 = i * 45.0f * 3.14159f / 180.0f;
         float angle2 = (i + 1) * 45.0f * 3.14159f / 180.0f;
@@ -568,7 +514,6 @@ void UIRenderer::renderHeart(const glm::vec2& position, const glm::vec3& color, 
         glVertex2f(x2, y2);
     }
     
-    // 右側の円形部分
     for (int i = 0; i < 8; i++) {
         float angle1 = i * 45.0f * 3.14159f / 180.0f;
         float angle2 = (i + 1) * 45.0f * 3.14159f / 180.0f;
@@ -583,7 +528,6 @@ void UIRenderer::renderHeart(const glm::vec2& position, const glm::vec3& color, 
         glVertex2f(x2, y2);
     }
     
-    // 下部の三角形部分
     glVertex2f(centerX, centerY + 12.0f * scale); // 下部の尖った部分
     glVertex2f(centerX - 16.0f * scale, centerY - 4.0f * scale); // 左側
     glVertex2f(centerX + 16.0f * scale, centerY - 4.0f * scale); // 右側

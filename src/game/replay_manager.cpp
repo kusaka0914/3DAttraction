@@ -3,6 +3,7 @@
 #endif
 
 #include "replay_manager.h"
+#include "../core/error_handler.h"
 #include <fstream>
 #include <iostream>
 #include <ctime>
@@ -23,10 +24,8 @@ bool ReplayManager::fileExists(const std::string& filename) {
 }
 
 std::string ReplayManager::getReplayFilePath(int stageNumber) {
-    // assets/replaysディレクトリに保存
     std::string filename = "assets/replays/stage" + std::to_string(stageNumber) + "_best.json";
     
-    // 代替パスも試す
     if (!fileExists(filename)) {
         filename = "../assets/replays/stage" + std::to_string(stageNumber) + "_best.json";
     }
@@ -41,7 +40,6 @@ bool ReplayManager::replayExists(int stageNumber) {
 
 bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stageNumber) {
     try {
-        // ディレクトリが存在するか確認し、なければ作成
         std::string dirPath = "assets/replays";
         #ifdef _WIN32
             if (_access(dirPath.c_str(), 0) != 0) {
@@ -54,7 +52,6 @@ bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stag
             }
         #endif
         
-        // 代替パスも試す
         if (!fileExists(dirPath + "/.gitkeep")) {
             dirPath = "../assets/replays";
             #ifdef _WIN32
@@ -74,7 +71,6 @@ bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stag
         jsonData["recordedDate"] = replayData.recordedDate;
         jsonData["frameRate"] = replayData.frameRate;
         
-        // フレームデータを配列に変換
         nlohmann::json framesArray = nlohmann::json::array();
         for (const auto& frame : replayData.frames) {
             nlohmann::json frameJson;
@@ -82,7 +78,6 @@ bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stag
             frameJson["playerPosition"] = {frame.playerPosition.x, frame.playerPosition.y, frame.playerPosition.z};
             frameJson["playerVelocity"] = {frame.playerVelocity.x, frame.playerVelocity.y, frame.playerVelocity.z};
             
-            // アイテムの収集状態を追加（存在する場合）
             if (!frame.itemCollectedStates.empty()) {
                 frameJson["itemCollectedStates"] = frame.itemCollectedStates;
             }
@@ -91,15 +86,13 @@ bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stag
         }
         jsonData["frames"] = framesArray;
         
-        // ファイルに書き込み
         std::string filepath = getReplayFilePath(stageNumber);
         std::ofstream file(filepath);
         if (!file.is_open()) {
-            // 代替パスを試す
             filepath = "../assets/replays/stage" + std::to_string(stageNumber) + "_best.json";
             file.open(filepath);
             if (!file.is_open()) {
-                printf("ERROR: Failed to open replay file for writing: %s\n", filepath.c_str());
+                ErrorHandler::logErrorFormat("Failed to open replay file for writing: %s", filepath.c_str());
                 return false;
             }
         }
@@ -112,7 +105,7 @@ bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stag
         return true;
         
     } catch (const std::exception& e) {
-        printf("ERROR: Failed to save replay: %s\n", e.what());
+        ErrorHandler::logErrorFormat("Failed to save replay: %s", e.what());
         return false;
     }
 }
@@ -127,7 +120,7 @@ bool ReplayManager::loadReplay(GameState::ReplayData& replayData, int stageNumbe
         
         std::ifstream file(filepath);
         if (!file.is_open()) {
-            printf("ERROR: Failed to open replay file: %s\n", filepath.c_str());
+            ErrorHandler::logErrorFormat("Failed to open replay file: %s", filepath.c_str());
             return false;
         }
         
@@ -135,13 +128,11 @@ bool ReplayManager::loadReplay(GameState::ReplayData& replayData, int stageNumbe
         file >> jsonData;
         file.close();
         
-        // データを読み込み
         replayData.stageNumber = jsonData["stageNumber"].get<int>();
         replayData.clearTime = jsonData["clearTime"].get<float>();
         replayData.recordedDate = jsonData["recordedDate"].get<std::string>();
         replayData.frameRate = jsonData.contains("frameRate") ? jsonData["frameRate"].get<float>() : 0.1f;
         
-        // フレームデータを読み込み
         replayData.frames.clear();
         if (jsonData.contains("frames") && jsonData["frames"].is_array()) {
             for (const auto& frameJson : jsonData["frames"]) {
@@ -162,7 +153,6 @@ bool ReplayManager::loadReplay(GameState::ReplayData& replayData, int stageNumbe
                     vel[2].get<float>()
                 );
                 
-                // アイテムの収集状態を読み込み（存在する場合）
                 if (frameJson.contains("itemCollectedStates") && frameJson["itemCollectedStates"].is_array()) {
                     frame.itemCollectedStates.clear();
                     for (const auto& state : frameJson["itemCollectedStates"]) {
@@ -179,7 +169,7 @@ bool ReplayManager::loadReplay(GameState::ReplayData& replayData, int stageNumbe
         return true;
         
     } catch (const std::exception& e) {
-        printf("ERROR: Failed to load replay: %s\n", e.what());
+        ErrorHandler::logErrorFormat("Failed to load replay: %s", e.what());
         return false;
     }
 }

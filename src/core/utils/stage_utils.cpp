@@ -10,8 +10,8 @@
 namespace StageUtils {
 
 void initializeItems(GameState& gameState) {
-    gameState.items.clear();
-    gameState.collectedItems = 0;
+    gameState.items.items.clear();
+    gameState.items.collectedItems = 0;
 }
 
 void createItemsFromConfig(GameState& gameState, const std::vector<ItemConfig>& itemConfigs) {
@@ -25,7 +25,7 @@ void createItemsFromConfig(GameState& gameState, const std::vector<ItemConfig>& 
         item.rotationAngle = 0.0f;
         item.bobHeight = 0.0f;
         item.bobTimer = 0.0f;
-        gameState.items.push_back(item);
+        gameState.items.items.push_back(item);
         
         printf("Created %s at position (%.1f, %.1f, %.1f)\n", 
                itemConfigs[i].description.c_str(), 
@@ -211,7 +211,6 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
     }
 }
 
-// std::vector版のオーバーロード
 void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& platformSystem,
                                       const std::vector<std::tuple<std::tuple<float, float, float>, int, float, std::tuple<float, float, float>, glm::vec3, float, float, float, float, std::tuple<float, float, float>, bool>>& platforms) {
     for (const auto& platform : platforms) {
@@ -249,7 +248,6 @@ void createConsecutiveCyclingPlatforms(GameState& gameState, PlatformSystem& pla
     }
 }
 
-// JSON用のプラットフォーム生成関数
 void createStaticPlatformsFromConfig(GameState& gameState, PlatformSystem& platformSystem, const std::vector<StaticPlatformConfig>& configs) {
     for (const auto& config : configs) {
         platformSystem.addPlatform(StaticPlatform(

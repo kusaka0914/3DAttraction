@@ -10,7 +10,6 @@
     #include <unistd.h>
 #endif
 
-// STB Image の実装をインクルード
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../third_party/stb_image.h"
 
@@ -20,12 +19,10 @@ std::map<std::string, GLuint> TextureManager::textures;
 std::map<std::string, std::time_t> TextureManager::textureModTimes;
 
 GLuint TextureManager::loadTexture(const std::string& filename) {
-    // 既に読み込まれている場合はキャッシュから返す
     if (textures.find(filename) != textures.end()) {
         return textures[filename];
     }
     
-    // ファイルの存在チェック
     std::ifstream file(filename);
     if (!file.good()) {
         std::cerr << "ERROR: Texture file not found: " << filename << std::endl;
@@ -33,11 +30,9 @@ GLuint TextureManager::loadTexture(const std::string& filename) {
     }
     file.close();
     
-    // テクスチャを読み込む
     GLuint textureID = loadTextureFromFile(filename);
     if (textureID != 0) {
         textures[filename] = textureID;
-        // 更新時刻を記録
         textureModTimes[filename] = getFileModificationTime(filename);
         std::cout << "Loaded texture: " << filename << " (ID: " << textureID << ")" << std::endl;
     }
@@ -58,13 +53,11 @@ GLuint TextureManager::loadTextureFromFile(const std::string& filename) {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
     
-    // テクスチャパラメータを設定
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    // チャンネル数に応じてフォーマットを選択
     GLenum format;
     if (channels == 1) {
         format = GL_LUMINANCE;
@@ -78,10 +71,8 @@ GLuint TextureManager::loadTextureFromFile(const std::string& filename) {
         return 0;
     }
     
-    // テクスチャデータをアップロード
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     
-    // メモリを解放
     stbi_image_free(data);
     
     return textureID;
@@ -108,7 +99,6 @@ std::time_t TextureManager::getFileModificationTime(const std::string& filepath)
     if (_stat(filepath.c_str(), &fileInfo) == 0) {
         return fileInfo.st_mtime;
     }
-    // 代替パスも試す
     std::string altPath = filepath;
     if (altPath.find("../") == 0) {
         altPath = altPath.substr(3);
@@ -123,7 +113,6 @@ std::time_t TextureManager::getFileModificationTime(const std::string& filepath)
     if (stat(filepath.c_str(), &fileInfo) == 0) {
         return fileInfo.st_mtime;
     }
-    // 代替パスも試す
     std::string altPath = filepath;
     if (altPath.find("../") == 0) {
         altPath = altPath.substr(3);
@@ -143,11 +132,9 @@ void TextureManager::reloadTexture(const std::string& filename) {
         return;
     }
     
-    // 古いテクスチャを削除
     glDeleteTextures(1, &it->second);
     textures.erase(it);
     
-    // 新しいテクスチャを読み込み
     GLuint textureID = loadTextureFromFile(filename);
     if (textureID != 0) {
         textures[filename] = textureID;
@@ -165,7 +152,6 @@ void TextureManager::checkAndReloadTextures() {
         if (currentModTime > 0 && currentModTime != lastModTime && lastModTime > 0) {
             reloadTexture(filename);
         } else if (lastModTime == 0 && currentModTime > 0) {
-            // 初回の場合は更新時刻を記録
             lastModTime = currentModTime;
         }
     }

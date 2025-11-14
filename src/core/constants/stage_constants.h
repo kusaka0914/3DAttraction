@@ -5,8 +5,8 @@
 namespace GameConstants {
     // ステージ選択エリアの位置定義
     struct StageArea {
-        float x, y, z;  // エリアの中心位置
-        float height;   // エリアの高さ
+        float x, y, z;
+        float height;
     };
     
     constexpr StageArea STAGE_AREAS[] = {

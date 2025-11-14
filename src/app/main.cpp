@@ -31,28 +31,21 @@
 #include "tutorial_manager.h"
 #include "../core/constants/debug_config.h"
 
-// ======================================================
-//                        main
-// ======================================================
 int main(int argc, char* argv[]) {
     
-    // GLFW初期化を行う
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
     
-    // OpenGL 2.1に設定する
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  // フルスクリーンなのでリサイズ不可
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     
-    // プライマリモニターの解像度を取得
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* videoMode = glfwGetVideoMode(primaryMonitor);
     
-    // ウィンドウの作成（一旦ウィンドウモードで作成）
     GLFWwindow* window = glfwCreateWindow(videoMode->width, videoMode->height, 
                                          GameConstants::WINDOW_TITLE, 
                                          nullptr, nullptr);
@@ -62,42 +55,32 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
-    // OpenGLコンテキストを作成（glfwSetWindowMonitorの前に必要）
     glfwMakeContextCurrent(window);
     
-    // Windows APIを使ってフルスクリーンに切り替え
     #ifdef _WIN32
         HWND hwnd = glfwGetWin32Window(window);
         if (hwnd) {
-            // ウィンドウスタイルを変更（タイトルバーと境界線を削除）
             LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
             style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
             SetWindowLongPtr(hwnd, GWL_STYLE, style);
             
-            // ウィンドウをフルスクリーンに設定
             SetWindowPos(hwnd, HWND_TOP, 0, 0, videoMode->width, videoMode->height, 
                         SWP_FRAMECHANGED | SWP_NOZORDER);
             
-            // ウィンドウを前面に表示
             ShowWindow(hwnd, SW_SHOWMAXIMIZED);
             SetForegroundWindow(hwnd);
         }
     #else
-        // macOS/LinuxではglfwSetWindowMonitorを使用
         glfwSetWindowMonitor(window, primaryMonitor, 0, 0, videoMode->width, videoMode->height, videoMode->refreshRate);
     #endif
     
-    // イベントを処理してウィンドウを確実に表示
     glfwPollEvents();
     
-    // ウィンドウを前面に表示
     glfwShowWindow(window);
     glfwFocusWindow(window);
     
-    // 文字入力を無効化（ゲーム中にテキストが表示されないようにする）
     glfwSetCharCallback(window, nullptr);
     
-    // OpenGLレンダラー初期化
     auto renderer = std::make_unique<gfx::OpenGLRenderer>();
     if (!renderer->initialize(window)) {
         ErrorHandler::handleRendererError("OpenGL renderer initialization");
@@ -106,28 +89,21 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
-    // UI描画クラス系のインスタンス作成
     auto uiRenderer = std::make_unique<gfx::UIRenderer>();
     auto gameStateUIRenderer = std::make_unique<gfx::GameStateUIRenderer>();
     
-    // ゲーム状態の管理
     GameState gameState;
     
-    // ゲーム状態の初期化
     initializeGameState(gameState);
     
-    // セーブデータをロード
     SaveManager::loadGameData(gameState);
     
-    // コマンドライン引数で初期ステージを指定することができる
     int initialStage = 6;  // デフォルトはチュートリアルステージ
     bool debugEnding = false;  // デバッグ用エンドロール表示フラグ
     
     if (argc > 1) {
-        // エンドロール表示フラグのチェック
         if (strcmp(argv[1], "-e") == 0 || strcmp(argv[1], "--ending") == 0) {
             debugEnding = true;
-            //コマンドに関するヘルプ
         } else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Usage: %s [stage_number] [options]\n", argv[0]);
             printf("  stage_number: 0-5 (default: 6 for tutorial)\n");
@@ -141,7 +117,6 @@ int main(int argc, char* argv[]) {
             printf("  %s 5 -e     # Start stage 5 and show ending\n", argv[0]);
             return 0;
         } else {
-            // ステージ番号の処理
             int requestedStage = std::atoi(argv[1]);
             if (requestedStage >= 0 && requestedStage <= 5) {  // ステージ0-5を許可
                 initialStage = requestedStage;
@@ -150,7 +125,6 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        // 2番目の引数でもエンドロール表示フラグをチェック
         if (argc > 2) {
             if (strcmp(argv[2], "-e") == 0 || strcmp(argv[2], "--ending") == 0) {
                 debugEnding = true;
@@ -160,40 +134,30 @@ int main(int argc, char* argv[]) {
     }
     glfwSetWindowUserPointer(window, &gameState);
     
-    // マウスコールバックとスクロールコールバックを設定（1人称視点用）
     glfwSetCursorPosCallback(window, InputSystem::mouse_callback);
     glfwSetScrollCallback(window, InputSystem::scroll_callback);
     
-    // システム初期化
     PlatformSystem platformSystem;
     StageManager stageManager;
     
-    // 音声システム初期化
     io::AudioManager audioManager;
     if (!audioManager.initialize()) {
         std::cerr << "Failed to initialize audio system" << std::endl;
-        // 音声システムの初期化に失敗してもゲームは続行
     }
     
-    // UI設定を読み込み
     UIConfig::UIConfigManager::getInstance().loadConfig("assets/config/ui_config.json");
     
-    // デバッグ用エンドロール表示フラグがtrueの時は開始時にエンドロールが流れる
     if (debugEnding) {
-        gameState.isEndingSequence = true;
-        gameState.showStaffRoll = true;
-        gameState.staffRollTimer = 0.0f;
-        gameState.showTitleScreen = false;  // エンドロール表示時はタイトル画面をスキップ
+        gameState.ui.isEndingSequence = true;
+        gameState.ui.showStaffRoll = true;
+        gameState.ui.staffRollTimer = 0.0f;
+        gameState.ui.showTitleScreen = false;  // エンドロール表示時はタイトル画面をスキップ
     } else {
-        // タイトル画面から開始（showTitleScreenはデフォルトでtrue）
-        // タイトル画面でENTERを押すとチュートリアル（ステージ6）が開始される
-        gameState.showTitleScreen = true;
+        gameState.ui.showTitleScreen = true;
     }
 
-    // ゲームパッド初期化
     InputSystem::initializeGamepad();
 
-    // キー状態管理
     std::map<int, InputUtils::KeyState> keyStates;
     for (int key : {GLFW_KEY_0, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5, GLFW_KEY_6, 
                     GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_ENTER, GLFW_KEY_R, GLFW_KEY_T,
@@ -201,20 +165,16 @@ int main(int argc, char* argv[]) {
         keyStates[key] = InputUtils::KeyState();
     }
 
-    //開始時間を現在に設定
     auto startTime = std::chrono::high_resolution_clock::now();
     
-    // ステージ開始時間を管理するラムダ関数
     auto resetStageStartTime = [&startTime, &gameState]() {
         startTime = std::chrono::high_resolution_clock::now();
-        gameState.timeLimitApplied = false; // カウントダウン時の時間設定フラグをリセット
+        gameState.progress.timeLimitApplied = false; // カウントダウン時の時間設定フラグをリセット
         DEBUG_PRINTF("DEBUG: timeLimitApplied reset to false\n");
     };
     
-    // ゲームループ開始
     GameLoop::run(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, resetStageStartTime, startTime, audioManager);
     
-    // クリーンアップ
     renderer->cleanup();
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -19,33 +19,26 @@ OpenGLRenderer::~OpenGLRenderer() {
 bool OpenGLRenderer::initialize(GLFWwindow* window) {
     this->window = window;
     
-    // OpenGLコンテキストを作成
     glfwMakeContextCurrent(window);
     
-    // ビューポート設定
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
     
-    // 深度テスト有効化
     glEnable(GL_DEPTH_TEST);
     
-    // テクスチャ機能を有効化
     glEnable(GL_TEXTURE_2D);
     
-    // ビットマップフォント初期化
     font.initialize();
     
     return true;
 }
 
 void OpenGLRenderer::cleanup() {
-    // テクスチャをクリーンアップ
     TextureManager::cleanup();
 }
 
 void OpenGLRenderer::beginFrame() {
-    // ビューポートを毎フレーム更新（ウィンドウサイズ変更に対応）
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -55,39 +48,31 @@ void OpenGLRenderer::beginFrame() {
                  GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // プロジェクション行列を設定
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
     
-    // ビュー行列を設定
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(glm::value_ptr(viewMatrix));
 }
 
 void OpenGLRenderer::beginFrameWithBackground(int stageNumber) {
-    // ビューポートを毎フレーム更新（ウィンドウサイズ変更に対応）
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // ステージ6（チュートリアル）の場合は黒背景を設定
     if (stageNumber == 6) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // ステージ別背景を描画（黒背景の上に）
         backgroundRenderer.renderStageBackground(stageNumber);
     } else {
-        // ステージ別背景を描画
         backgroundRenderer.renderStageBackground(stageNumber);
     }
     
-    // プロジェクション行列を設定
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
     
-    // ビュー行列を設定
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(glm::value_ptr(viewMatrix));
 }

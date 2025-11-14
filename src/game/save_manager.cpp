@@ -12,16 +12,12 @@
 #endif
 
 std::string SaveManager::getSaveFilePath() {
-    // assets/saveディレクトリに保存（ReplayManagerと同じロジック）
-    // まず assets/save/save_data.json を試す
     if (fileExists("assets/save/save_data.json")) {
         return "assets/save/save_data.json";
     }
-    // 次に ../assets/save/save_data.json を試す
     if (fileExists("../assets/save/save_data.json")) {
         return "../assets/save/save_data.json";
     }
-    // どちらも存在しない場合は、assets/save/save_data.json を返す（新規作成用）
     return "assets/save/save_data.json";
 }
 
@@ -36,7 +32,6 @@ bool SaveManager::saveFileExists() {
 
 bool SaveManager::saveGameData(const GameState& gameState) {
     try {
-        // ディレクトリが存在するか確認し、なければ作成
         std::string dirPath = "assets/save";
         #ifdef _WIN32
             if (_access(dirPath.c_str(), 0) != 0) {
@@ -49,7 +44,6 @@ bool SaveManager::saveGameData(const GameState& gameState) {
             }
         #endif
         
-        // 代替パスも試す
         if (!fileExists(dirPath + "/.gitkeep")) {
             dirPath = "../assets/save";
             #ifdef _WIN32
@@ -65,39 +59,32 @@ bool SaveManager::saveGameData(const GameState& gameState) {
         
         nlohmann::json saveData;
         
-        // 星数データを保存
-        saveData["totalStars"] = gameState.totalStars;
+        saveData["totalStars"] = gameState.progress.totalStars;
         
-        // 各ステージの星数を保存
         nlohmann::json stageStarsJson;
-        for (const auto& [stageNumber, stars] : gameState.stageStars) {
+        for (const auto& [stageNumber, stars] : gameState.progress.stageStars) {
             stageStarsJson[std::to_string(stageNumber)] = stars;
         }
         saveData["stageStars"] = stageStarsJson;
         
-        // 解放されたステージを保存
         nlohmann::json unlockedStagesJson;
-        for (const auto& [stageNumber, isUnlocked] : gameState.unlockedStages) {
+        for (const auto& [stageNumber, isUnlocked] : gameState.progress.unlockedStages) {
             unlockedStagesJson[std::to_string(stageNumber)] = isUnlocked;
         }
         saveData["unlockedStages"] = unlockedStagesJson;
         
-        // タイムアタックのベストタイムを保存
         nlohmann::json timeAttackRecordsJson;
-        for (const auto& [stageNumber, bestTime] : gameState.timeAttackRecords) {
+        for (const auto& [stageNumber, bestTime] : gameState.progress.timeAttackRecords) {
             timeAttackRecordsJson[std::to_string(stageNumber)] = bestTime;
         }
         saveData["timeAttackRecords"] = timeAttackRecordsJson;
         
-        // 初回チュートリアル表示フラグを保存
-        saveData["showStage0Tutorial"] = gameState.showStage0Tutorial;
+        saveData["showStage0Tutorial"] = gameState.ui.showStage0Tutorial;
         
-        // ゲームクリア済みフラグを保存
-        saveData["isGameCleared"] = gameState.isGameCleared;
+        saveData["isGameCleared"] = gameState.progress.isGameCleared;
         
-        // SECRET STARのクリア状況を保存
         nlohmann::json secretStarClearedJson;
-        for (const auto& [stageNumber, clearedTypes] : gameState.secretStarCleared) {
+        for (const auto& [stageNumber, clearedTypes] : gameState.progress.secretStarCleared) {
             nlohmann::json typesArray = nlohmann::json::array();
             for (auto type : clearedTypes) {
                 typesArray.push_back(static_cast<int>(type));
@@ -106,11 +93,9 @@ bool SaveManager::saveGameData(const GameState& gameState) {
         }
         saveData["secretStarCleared"] = secretStarClearedJson;
         
-        // JSONファイルに書き込み（ReplayManagerと同じロジック）
         std::string filePath = "assets/save/save_data.json";
         std::ofstream file(filePath);
         if (!file.is_open()) {
-            // 代替パスを試す
             filePath = "../assets/save/save_data.json";
             file.open(filePath);
             if (!file.is_open()) {
@@ -132,7 +117,6 @@ bool SaveManager::saveGameData(const GameState& gameState) {
 
 bool SaveManager::loadGameData(GameState& gameState) {
     try {
-        // 複数のパスを試す（ReplayManagerと同じロジック）
         std::string filePath = "assets/save/save_data.json";
         if (!fileExists(filePath)) {
             filePath = "../assets/save/save_data.json";
@@ -152,54 +136,47 @@ bool SaveManager::loadGameData(GameState& gameState) {
         file >> saveData;
         file.close();
         
-        // 総獲得星数を読み込み
         if (saveData.contains("totalStars") && saveData["totalStars"].is_number()) {
-            gameState.totalStars = saveData["totalStars"];
+            gameState.progress.totalStars = saveData["totalStars"];
         }
         
-        // 各ステージの星数を読み込み
         if (saveData.contains("stageStars") && saveData["stageStars"].is_object()) {
-            gameState.stageStars.clear();
+            gameState.progress.stageStars.clear();
             for (auto& [key, value] : saveData["stageStars"].items()) {
                 int stageNumber = std::stoi(key);
                 int stars = value.get<int>();
-                gameState.stageStars[stageNumber] = stars;
+                gameState.progress.stageStars[stageNumber] = stars;
             }
         }
         
-        // 解放されたステージを読み込み
         if (saveData.contains("unlockedStages") && saveData["unlockedStages"].is_object()) {
-            gameState.unlockedStages.clear();
+            gameState.progress.unlockedStages.clear();
             for (auto& [key, value] : saveData["unlockedStages"].items()) {
                 int stageNumber = std::stoi(key);
                 bool isUnlocked = value.get<bool>();
-                gameState.unlockedStages[stageNumber] = isUnlocked;
+                gameState.progress.unlockedStages[stageNumber] = isUnlocked;
             }
         }
         
-        // タイムアタックのベストタイムを読み込み
         if (saveData.contains("timeAttackRecords") && saveData["timeAttackRecords"].is_object()) {
-            gameState.timeAttackRecords.clear();
+            gameState.progress.timeAttackRecords.clear();
             for (auto& [key, value] : saveData["timeAttackRecords"].items()) {
                 int stageNumber = std::stoi(key);
                 float bestTime = value.get<float>();
-                gameState.timeAttackRecords[stageNumber] = bestTime;
+                gameState.progress.timeAttackRecords[stageNumber] = bestTime;
             }
         }
         
-        // 初回チュートリアル表示フラグを読み込み
         if (saveData.contains("showStage0Tutorial") && saveData["showStage0Tutorial"].is_boolean()) {
-            gameState.showStage0Tutorial = saveData["showStage0Tutorial"];
+            gameState.ui.showStage0Tutorial = saveData["showStage0Tutorial"];
         }
         
-        // ゲームクリア済みフラグを読み込み
         if (saveData.contains("isGameCleared") && saveData["isGameCleared"].is_boolean()) {
-            gameState.isGameCleared = saveData["isGameCleared"];
+            gameState.progress.isGameCleared = saveData["isGameCleared"];
         }
         
-        // SECRET STARのクリア状況を読み込み
         if (saveData.contains("secretStarCleared") && saveData["secretStarCleared"].is_object()) {
-            gameState.secretStarCleared.clear();
+            gameState.progress.secretStarCleared.clear();
             for (auto& [key, value] : saveData["secretStarCleared"].items()) {
                 int stageNumber = std::stoi(key);
                 if (value.is_array()) {
@@ -210,7 +187,7 @@ bool SaveManager::loadGameData(GameState& gameState) {
                             clearedTypes.insert(static_cast<GameState::SecretStarType>(typeInt));
                         }
                     }
-                    gameState.secretStarCleared[stageNumber] = clearedTypes;
+                    gameState.progress.secretStarCleared[stageNumber] = clearedTypes;
                 }
             }
         }

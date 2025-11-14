@@ -13,7 +13,6 @@ BackgroundRenderer::~BackgroundRenderer() {
 }
 
 void BackgroundRenderer::begin2DMode() {
-    // 2D描画モードに切り替え
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -27,7 +26,6 @@ void BackgroundRenderer::begin2DMode() {
 }
 
 void BackgroundRenderer::end2DMode() {
-    // 3D描画モードに戻す
     glEnable(GL_DEPTH_TEST);
     
     glMatrixMode(GL_PROJECTION);
@@ -40,7 +38,6 @@ void BackgroundRenderer::end2DMode() {
 void BackgroundRenderer::renderStageBackground(int stageNumber) {
     begin2DMode();
     
-    // ステージ0（選択フィールド）、1、2、3、4、5、6（チュートリアル）は画像ベースの背景を使用
     if (stageNumber == 0) {
         renderStageSelectionWithTexture();
         end2DMode();
@@ -83,7 +80,6 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
         return;
     }
     
-    // ステージ別の背景色とグラデーション
     glm::vec3 topColor, bottomColor;
     
     switch (stageNumber) {
@@ -113,9 +109,7 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
             break;
     }
     
-    // 背景を描画（ステージ0は空と草原を分離）
     if (stageNumber == 0) {
-        // 空の部分（上半分）
         glBegin(GL_QUADS);
         glColor3f(topColor.r, topColor.g, topColor.b);
         glVertex2f(0, 0);
@@ -124,7 +118,6 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
         glVertex2f(0, 360);
         glEnd();
         
-        // 草原の部分（下半分）
         glBegin(GL_QUADS);
         glColor3f(bottomColor.r, bottomColor.g, bottomColor.b);
         glVertex2f(0, 360);
@@ -133,7 +126,6 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
         glVertex2f(0, 720);
         glEnd();
     } else {
-        // 他のステージはグラデーション
         glBegin(GL_QUADS);
         glColor3f(topColor.r, topColor.g, topColor.b);
         glVertex2f(0, 0);
@@ -144,7 +136,6 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
         glEnd();
     }
     
-    // ステージ別の装飾要素を追加
     switch (stageNumber) {
         case 0: // ステージ選択画面 - 草原
             renderGrassland();
@@ -169,7 +160,6 @@ void BackgroundRenderer::renderStageBackground(int stageNumber) {
     end2DMode();
 }
 
-// 共通描画関数
 void BackgroundRenderer::renderCircle(float x, float y, float radius, int segments, 
                                      const glm::vec3& color, float aspectRatio) {
     glColor3f(color.r, color.g, color.b);
@@ -208,7 +198,6 @@ void BackgroundRenderer::renderTriangle(float x, float y, float width, float hei
     glEnd();
 }
 
-// 2Dモード管理の統一関数
 void BackgroundRenderer::renderWith2DMode(std::function<void()> renderFunc) {
     begin2DMode();
     renderFunc();
@@ -216,7 +205,6 @@ void BackgroundRenderer::renderWith2DMode(std::function<void()> renderFunc) {
 }
 
 void BackgroundRenderer::renderGrassland() {
-    // 雲を描画（空の部分）
     for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::CLOUD_COUNT_STAGE_0; i++) {
         float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SPACING + 
                        (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SPACING_OFFSET), 
@@ -231,7 +219,6 @@ void BackgroundRenderer::renderGrassland() {
                     GameConstants::RenderConstants::BackgroundLayout::CLOUD_ASPECT_RATIO);
     }
     
-    // 草を描画
     for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::GRASS_COUNT; i++) {
         float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::GRASS_SPACING + 
                        (i * GameConstants::RenderConstants::BackgroundLayout::GRASS_SPACING_OFFSET), 
@@ -247,10 +234,8 @@ void BackgroundRenderer::renderGrassland() {
         renderTriangle(x, y, width, height, glm::vec3(0.1f, 0.6f, 0.1f));
     }
     
-    // 花を描画
     renderFlowers();
     
-    // 木を描画
     renderTrees();
 }
 
@@ -265,7 +250,6 @@ void BackgroundRenderer::renderFlowers() {
         float size = GameConstants::RenderConstants::BackgroundLayout::FLOWER_SIZE_BASE + 
                      (i % 3) * GameConstants::RenderConstants::BackgroundLayout::FLOWER_SIZE_VARIATION;
         
-        // 花の色（ランダム）
         glm::vec3 flowerColors[] = {
             GameConstants::Colors::FLOWER_RED,     // 赤
             GameConstants::Colors::FLOWER_YELLOW,  // 黄色
@@ -285,7 +269,6 @@ void BackgroundRenderer::renderTrees() {
         float y = GameConstants::RenderConstants::BackgroundLayout::SCREEN_HEIGHT - 
                   GameConstants::RenderConstants::BackgroundLayout::TREE_BASE_Y;
         
-        // 木の幹
         glColor3f(GameConstants::Colors::TREE_TRUNK.r, 
                   GameConstants::Colors::TREE_TRUNK.g, 
                   GameConstants::Colors::TREE_TRUNK.b);
@@ -296,7 +279,6 @@ void BackgroundRenderer::renderTrees() {
         glVertex2f(x - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_WIDTH, y - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_HEIGHT);
         glEnd();
         
-        // 木の葉
         renderCircle(x, y - GameConstants::RenderConstants::BackgroundLayout::TREE_TRUNK_HEIGHT, 
                     GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_RADIUS, 
                     GameConstants::RenderConstants::BackgroundLayout::TREE_LEAVES_SEGMENTS, 
@@ -305,7 +287,6 @@ void BackgroundRenderer::renderTrees() {
 }
 
 void BackgroundRenderer::renderClouds() {
-    // 雲を描画
     for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::CLOUD_COUNT_STAGE_1; i++) {
         float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_BASE_SPACING + 
                        (i * GameConstants::RenderConstants::BackgroundLayout::CLOUD_SPACING_OFFSET), 
@@ -322,7 +303,6 @@ void BackgroundRenderer::renderClouds() {
 }
 
 void BackgroundRenderer::renderSunset() {
-    // 夕日を描画
     renderCircle(GameConstants::RenderConstants::BackgroundLayout::SUNSET_X, 
                 GameConstants::RenderConstants::BackgroundLayout::SUNSET_Y, 
                 GameConstants::RenderConstants::BackgroundLayout::SUNSET_RADIUS, 
@@ -331,7 +311,6 @@ void BackgroundRenderer::renderSunset() {
 }
 
 void BackgroundRenderer::renderStars() {
-    // 星を描画
     for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::STAR_COUNT; i++) {
         float x = fmod(i * GameConstants::RenderConstants::BackgroundLayout::STAR_SPACING_X + 
                        (i * GameConstants::RenderConstants::BackgroundLayout::STAR_SPACING_X_OFFSET), 
@@ -347,7 +326,6 @@ void BackgroundRenderer::renderStars() {
 }
 
 void BackgroundRenderer::renderThunderClouds() {
-    // 雷雲を描画
     for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_COUNT; i++) {
         float x = GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_START_X + 
                   i * GameConstants::RenderConstants::BackgroundLayout::THUNDER_CLOUD_SPACING;
@@ -363,7 +341,6 @@ void BackgroundRenderer::renderThunderClouds() {
 }
 
 void BackgroundRenderer::renderNebula() {
-    // 星雲を描画
     for (int i = 0; i < GameConstants::RenderConstants::BackgroundLayout::NEBULA_COUNT; i++) {
         float x = GameConstants::RenderConstants::BackgroundLayout::NEBULA_START_X + 
                   i * GameConstants::RenderConstants::BackgroundLayout::NEBULA_SPACING;
@@ -372,7 +349,6 @@ void BackgroundRenderer::renderNebula() {
         float size = GameConstants::RenderConstants::BackgroundLayout::NEBULA_BASE_SIZE + 
                      i * GameConstants::RenderConstants::BackgroundLayout::NEBULA_SIZE_OFFSET;
         
-        // 星雲の色（紫、青、ピンク）
         glm::vec3 colors[] = {
             GameConstants::RenderConstants::BackgroundLayout::NEBULA_PURPLE,  // 紫
             GameConstants::RenderConstants::BackgroundLayout::NEBULA_BLUE,    // 青
@@ -386,14 +362,11 @@ void BackgroundRenderer::renderNebula() {
 }
 
 void BackgroundRenderer::renderStage1WithTexture() {
-    // ステージ1の背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage1_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load stage1 background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画
         glm::vec3 topColor = GameConstants::RenderConstants::STAGE_1_TOP_COLOR;
         glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_1_BOTTOM_COLOR;
         
@@ -406,16 +379,13 @@ void BackgroundRenderer::renderStage1WithTexture() {
         glVertex2f(0, 720);
         glEnd();
         
-        // 雲を描画
         renderClouds();
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -423,19 +393,15 @@ void BackgroundRenderer::renderStage1WithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 
 void BackgroundRenderer::renderStage2WithTexture() {
-    // ステージ2の背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage2_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load stage2 background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画
         glm::vec3 topColor = GameConstants::RenderConstants::STAGE_2_TOP_COLOR;
         glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_2_BOTTOM_COLOR;
         
@@ -448,16 +414,13 @@ void BackgroundRenderer::renderStage2WithTexture() {
         glVertex2f(0, 720);
         glEnd();
         
-        // 夕日の雲を描画
         renderSunset();
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -465,19 +428,15 @@ void BackgroundRenderer::renderStage2WithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 
 void BackgroundRenderer::renderStage3WithTexture() {
-    // ステージ3の背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage3_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load stage3 background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画
         glm::vec3 topColor = GameConstants::RenderConstants::STAGE_3_TOP_COLOR;
         glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_3_BOTTOM_COLOR;
         
@@ -490,16 +449,13 @@ void BackgroundRenderer::renderStage3WithTexture() {
         glVertex2f(0, 720);
         glEnd();
         
-        // 星空を描画
         renderStars();
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -507,19 +463,15 @@ void BackgroundRenderer::renderStage3WithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 
 void BackgroundRenderer::renderStage4WithTexture() {
-    // ステージ4の背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage4_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load stage4 background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画
         glm::vec3 topColor = GameConstants::RenderConstants::STAGE_4_TOP_COLOR;
         glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_4_BOTTOM_COLOR;
         
@@ -532,16 +484,13 @@ void BackgroundRenderer::renderStage4WithTexture() {
         glVertex2f(0, 720);
         glEnd();
         
-        // 雷雲を描画
         renderThunderClouds();
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -549,19 +498,15 @@ void BackgroundRenderer::renderStage4WithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 
 void BackgroundRenderer::renderStage5WithTexture() {
-    // ステージ5の背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage5_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load stage5 background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画
         glm::vec3 topColor = GameConstants::RenderConstants::STAGE_5_TOP_COLOR;
         glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_5_BOTTOM_COLOR;
         
@@ -574,16 +519,13 @@ void BackgroundRenderer::renderStage5WithTexture() {
         glVertex2f(0, 720);
         glEnd();
         
-        // 星雲を描画
         renderNebula();
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -591,19 +533,15 @@ void BackgroundRenderer::renderStage5WithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 
 void BackgroundRenderer::renderStageSelectionWithTexture() {
-    // ステージ選択フィールドの背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/stage_selection_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load stage selection background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画
         glm::vec3 topColor = GameConstants::RenderConstants::STAGE_0_TOP_COLOR;
         glm::vec3 bottomColor = GameConstants::RenderConstants::STAGE_0_BOTTOM_COLOR;
         
@@ -616,17 +554,14 @@ void BackgroundRenderer::renderStageSelectionWithTexture() {
         glVertex2f(0, 720);
         glEnd();
         
-        // 草原と雲を描画
         renderGrassland();
         renderClouds();
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -634,19 +569,15 @@ void BackgroundRenderer::renderStageSelectionWithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 
 void BackgroundRenderer::renderTutorialWithTexture() {
-    // チュートリアルステージの背景画像を読み込んで表示
     GLuint backgroundTexture = TextureManager::loadTexture(ResourcePath::getResourcePath("assets/textures/tutorial_bg.png"));
     
     if (backgroundTexture == 0) {
-        // 画像の読み込みに失敗した場合は従来の色ベース背景にフォールバック
         std::cerr << "WARNING: Failed to load tutorial background texture, using fallback" << std::endl;
         
-        // 従来の色ベース背景を描画（チュートリアル用のデフォルト色）
         glm::vec3 topColor = glm::vec3(0.2f, 0.1f, 0.3f);  // 暗い紫
         glm::vec3 bottomColor = glm::vec3(0.1f, 0.05f, 0.2f);  // より暗い紫
         
@@ -661,11 +592,9 @@ void BackgroundRenderer::renderTutorialWithTexture() {
         return;
     }
     
-    // テクスチャを有効化
     glEnable(GL_TEXTURE_2D);
     TextureManager::bindTexture(backgroundTexture);
     
-    // 背景画像を画面全体に描画
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex2f(0, 0);
     glTexCoord2f(1.0f, 0.0f); glVertex2f(1280, 0);
@@ -673,7 +602,6 @@ void BackgroundRenderer::renderTutorialWithTexture() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(0, 720);
     glEnd();
     
-    // テクスチャを無効化
     glDisable(GL_TEXTURE_2D);
 }
 

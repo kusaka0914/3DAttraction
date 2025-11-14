@@ -10,23 +10,54 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
+/**
+ * @brief JSONステージローダー
+ * @details JSONファイルからステージデータを読み込み、保存する機能を提供します。
+ */
 class JsonStageLoader {
 public:
-    // JSONファイルからステージを読み込み
+    /**
+     * @brief JSONファイルからステージを読み込む
+     * @details JSONファイルからステージデータを読み込み、ゲーム状態とプラットフォームシステムに適用します。
+     * 
+     * @param filename ファイル名
+     * @param gameState ゲーム状態
+     * @param platformSystem プラットフォームシステム
+     * @return 読み込み成功時true
+     */
     static bool loadStageFromJSON(const std::string& filename, GameState& gameState, PlatformSystem& platformSystem);
     
-    // ステージ情報のみを読み込み（プレイヤー位置、ゴール位置、制限時間など）
+    /**
+     * @brief ステージ情報のみを読み込む
+     * @details プレイヤー位置、ゴール位置、制限時間などのステージ情報のみを読み込みます。
+     * 
+     * @param filename ファイル名
+     * @param gameState ゲーム状態
+     * @return 読み込み成功時true
+     */
     static bool loadStageInfoFromJSON(const std::string& filename, GameState& gameState);
     
-    // ステージをJSONファイルに保存（エディタ用）
+    /**
+     * @brief ステージをJSONファイルに保存する
+     * @details エディタ用にステージデータをJSONファイルに保存します。
+     * 
+     * @param filename ファイル名
+     * @param gameState ゲーム状態
+     * @param platformSystem プラットフォームシステム
+     * @param stageNumber ステージ番号
+     * @return 保存成功時true
+     */
     static bool saveStageToJSON(const std::string& filename, const GameState& gameState, 
                                 const PlatformSystem& platformSystem, int stageNumber);
     
 private:
-    // JSONファイルの存在確認
+    /**
+     * @brief ファイルが存在するか確認する
+     * @param filename ファイル名
+     * @return 存在する場合true
+     */
     static bool fileExists(const std::string& filename);
     
-    // 各セクションの解析
     static bool parseStageInfo(const nlohmann::json& root, GameState& gameState);
     static bool parseItems(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
     static bool parseStaticPlatforms(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
