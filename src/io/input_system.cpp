@@ -22,29 +22,29 @@ void InputSystem::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
         return;
     }
     
-    if (gameState->firstMouse) {
-        gameState->lastMouseX = xpos;
-        gameState->lastMouseY = ypos;
-        gameState->firstMouse = false;
+    if (gameState->camera.firstMouse) {
+        gameState->camera.lastMouseX = xpos;
+        gameState->camera.lastMouseY = ypos;
+        gameState->camera.firstMouse = false;
     }
-    float xoffset = float(xpos - gameState->lastMouseX);
-    float yoffset = float(ypos - gameState->lastMouseY);
-    gameState->lastMouseX = float(xpos);
-    gameState->lastMouseY = float(ypos);
+    float xoffset = float(xpos - gameState->camera.lastMouseX);
+    float yoffset = float(ypos - gameState->camera.lastMouseY);
+    gameState->camera.lastMouseX = float(xpos);
+    gameState->camera.lastMouseY = float(ypos);
     
     xoffset *= GameConstants::InputConstants::MOUSE_SENSITIVITY;
     yoffset *= GameConstants::InputConstants::MOUSE_SENSITIVITY;
     
-    if (gameState->isFreeCameraActive) {
-        gameState->freeCameraYaw += xoffset;
-        gameState->freeCameraPitch -= yoffset;
-        gameState->freeCameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
-                                             std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->freeCameraPitch));
-    } else if (gameState->isFirstPersonView) {
-        gameState->cameraYaw += xoffset;
-        gameState->cameraPitch -= yoffset;
-        gameState->cameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
-                                        std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->cameraPitch));
+    if (gameState->skills.isFreeCameraActive) {
+        gameState->skills.freeCameraYaw += xoffset;
+        gameState->skills.freeCameraPitch -= yoffset;
+        gameState->skills.freeCameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
+                                             std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->skills.freeCameraPitch));
+    } else if (gameState->camera.isFirstPersonView) {
+        gameState->camera.yaw += xoffset;
+        gameState->camera.pitch -= yoffset;
+        gameState->camera.pitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
+                                        std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->camera.pitch));
     }
 }
 
@@ -53,16 +53,16 @@ void InputSystem::scroll_callback(GLFWwindow* window, double xoffset, double yof
     
     if (gameState->editorState && gameState->editorState->isActive) {
         float sensitivity = 2.0f;
-        gameState->freeCameraYaw += float(xoffset) * sensitivity;
-        gameState->freeCameraPitch -= float(yoffset) * sensitivity;
-        gameState->freeCameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
-                                             std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->freeCameraPitch));
+        gameState->skills.freeCameraYaw += float(xoffset) * sensitivity;
+        gameState->skills.freeCameraPitch -= float(yoffset) * sensitivity;
+        gameState->skills.freeCameraPitch = std::max(GameConstants::InputConstants::MIN_CAMERA_PITCH, 
+                                             std::min(GameConstants::InputConstants::MAX_CAMERA_PITCH, gameState->skills.freeCameraPitch));
         return;
     }
     
-    gameState->cameraDistance -= float(yoffset);
-    gameState->cameraDistance = std::max(GameConstants::InputConstants::MIN_CAMERA_DISTANCE, 
-                                       std::min(GameConstants::InputConstants::MAX_CAMERA_DISTANCE, gameState->cameraDistance));
+    gameState->camera.distance -= float(yoffset);
+    gameState->camera.distance = std::max(GameConstants::InputConstants::MIN_CAMERA_DISTANCE, 
+                                       std::min(GameConstants::InputConstants::MAX_CAMERA_DISTANCE, gameState->camera.distance));
 }
 
 void InputSystem::processInput(GLFWwindow* window, GameState& gameState, float deltaTime) {

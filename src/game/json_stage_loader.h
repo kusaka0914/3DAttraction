@@ -1,3 +1,8 @@
+/**
+ * @file json_stage_loader.h
+ * @brief JSONステージローダー
+ * @details JSONファイルからステージデータを読み込み、保存する機能を提供します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

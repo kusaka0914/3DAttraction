@@ -1,9 +1,15 @@
+/**
+ * @file ui_state.h
+ * @brief UIの状態を管理する構造体
+ * @details タイトル画面、ステージクリア、ステージ選択、チュートリアル、エンディングなどのUI表示状態を保持します。
+ */
 #pragma once
 
 #include <string>
 
 /**
  * @brief UIの状態を管理する構造体
+ * @details タイトル画面、ステージクリア、ステージ選択、チュートリアル、エンディングなどのUI表示状態を保持します。
  */
 struct UIState {
     bool showStageClearUI = false;

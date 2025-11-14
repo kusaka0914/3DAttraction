@@ -1,3 +1,8 @@
+/**
+ * @file ui_renderer.h
+ * @brief UIレンダラー
+ * @details ゲームUIの描画を統合的に管理します。
+ */
 #pragma once
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>

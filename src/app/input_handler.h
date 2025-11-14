@@ -1,3 +1,8 @@
+/**
+ * @file input_handler.h
+ * @brief ゲームの入力処理を担当するクラス
+ * @details リプレイモード、チュートリアルモード、通常モードなど、ゲーム状態に応じた入力処理を統合的に管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX
@@ -49,6 +54,26 @@ public:
         std::function<void()> resetStageStartTime, 
         float scaledDeltaTime, 
         io::AudioManager& audioManager
+    );
+    
+    /**
+     * @brief ステージ選択アクションを処理する
+     * @details ステージ選択時の処理（ワープ、解放確認など）を実行します。
+     * 
+     * @param stageNumber ステージ番号
+     * @param gameState ゲーム状態
+     * @param stageManager ステージマネージャー
+     * @param platformSystem プラットフォームシステム
+     * @param resetStageStartTime ステージ開始時間をリセットする関数
+     * @param window GLFWウィンドウ
+     */
+    static void processStageSelectionAction(
+        int stageNumber,
+        GameState& gameState,
+        StageManager& stageManager,
+        PlatformSystem& platformSystem,
+        std::function<void()> resetStageStartTime,
+        GLFWwindow* window
     );
 };
 

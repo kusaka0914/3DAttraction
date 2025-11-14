@@ -1,3 +1,8 @@
+/**
+ * @file replay_state.h
+ * @brief リプレイシステムの状態を管理する構造体
+ * @details リプレイの記録、再生、一時停止、速度制御などの状態を保持します。
+ */
 #pragma once
 
 #include <vector>
@@ -5,7 +10,8 @@
 #include <glm/glm.hpp>
 
 /**
- * @brief リプレイシステムの状態を管理する構造体
+ * @brief リプレイフレーム
+ * @details リプレイの1フレーム分のデータを保持します。
  */
 struct ReplayFrame {
     float timestamp;

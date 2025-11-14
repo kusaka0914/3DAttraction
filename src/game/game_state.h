@@ -1,3 +1,8 @@
+/**
+ * @file game_state.h
+ * @brief ゲーム全体の状態を管理する構造体
+ * @details 各サブシステムの状態（プレイヤー、カメラ、アイテム、スキル、進行状況、リプレイ、UI）を統合的に管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

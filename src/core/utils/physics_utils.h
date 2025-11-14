@@ -1,3 +1,8 @@
+/**
+ * @file physics_utils.h
+ * @brief 物理ユーティリティ
+ * @details 物理演算に関するユーティリティ関数を提供します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

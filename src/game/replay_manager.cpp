@@ -38,7 +38,7 @@ bool ReplayManager::replayExists(int stageNumber) {
     return fileExists(filepath);
 }
 
-bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stageNumber) {
+bool ReplayManager::saveReplay(const ReplayData& replayData, int stageNumber) {
     try {
         std::string dirPath = "assets/replays";
         #ifdef _WIN32
@@ -110,7 +110,7 @@ bool ReplayManager::saveReplay(const GameState::ReplayData& replayData, int stag
     }
 }
 
-bool ReplayManager::loadReplay(GameState::ReplayData& replayData, int stageNumber) {
+bool ReplayManager::loadReplay(ReplayData& replayData, int stageNumber) {
     try {
         std::string filepath = getReplayFilePath(stageNumber);
         if (!fileExists(filepath)) {
@@ -136,7 +136,7 @@ bool ReplayManager::loadReplay(GameState::ReplayData& replayData, int stageNumbe
         replayData.frames.clear();
         if (jsonData.contains("frames") && jsonData["frames"].is_array()) {
             for (const auto& frameJson : jsonData["frames"]) {
-                GameState::ReplayFrame frame;
+                ReplayFrame frame;
                 frame.timestamp = frameJson["timestamp"].get<float>();
                 
                 auto pos = frameJson["playerPosition"];

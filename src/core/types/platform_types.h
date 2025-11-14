@@ -1,3 +1,8 @@
+/**
+ * @file platform_types.h
+ * @brief プラットフォームタイプ定義
+ * @details 各種プラットフォームタイプ（静的、移動、回転、テレポートなど）の構造体を定義します。
+ */
 #pragma once
 
 #ifndef NOMINMAX
@@ -101,8 +106,8 @@ struct CycleDisappearingPlatform : public BasePlatform {
     CycleDisappearingPlatform(const glm::vec3& pos, const glm::vec3& siz, const glm::vec3& col,
                               float cycle, float visible, float blink, float initial = 0.0f)
         : BasePlatform(pos, siz, col), cycleTime(cycle), visibleTime(visible), 
-          blinkTime(blink), cycleTimer(cycle - initial), originalSize(siz), 
-          isCurrentlyVisible(initial < visible) {}
+          blinkTime(blink), cycleTimer(cycle - initial), isCurrentlyVisible(initial < visible),
+          originalSize(siz) {}
 };
 
 // 消える足場

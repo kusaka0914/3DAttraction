@@ -1,9 +1,15 @@
+/**
+ * @file player_state.h
+ * @brief プレイヤーの状態を管理する構造体
+ * @details プレイヤーの位置、速度、チェックポイント、プラットフォーム追従などの状態を保持します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>
 
 /**
  * @brief プレイヤーの状態を管理する構造体
+ * @details プレイヤーの位置、速度、チェックポイント、プラットフォーム追従などの状態を保持します。
  */
 struct PlayerState {
     glm::vec3 position = glm::vec3(0, 30.0f, 0);

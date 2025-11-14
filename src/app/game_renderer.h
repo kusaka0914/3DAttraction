@@ -1,3 +1,8 @@
+/**
+ * @file game_renderer.h
+ * @brief ゲームの描画処理を担当するクラス
+ * @details フレーム全体の描画、プラットフォームの描画、プレイヤーの描画を統合的に管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

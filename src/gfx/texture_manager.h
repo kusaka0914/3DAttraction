@@ -1,3 +1,8 @@
+/**
+ * @file texture_manager.h
+ * @brief テクスチャマネージャー
+ * @details テクスチャの読み込み、管理、自動リロードを統合的に管理します。
+ */
 #pragma once
 
 #include <string>

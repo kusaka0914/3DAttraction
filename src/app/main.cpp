@@ -31,7 +31,7 @@
 #include "tutorial_manager.h"
 #include "../core/constants/debug_config.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* const argv[]) {
     
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -128,7 +128,6 @@ int main(int argc, char* argv[]) {
         if (argc > 2) {
             if (strcmp(argv[2], "-e") == 0 || strcmp(argv[2], "--ending") == 0) {
                 debugEnding = true;
-                
             }
         }
     }

@@ -1,3 +1,8 @@
+/**
+ * @file bitmap_font.h
+ * @brief ビットマップフォント
+ * @details ビットマップベースのフォント描画を管理します。
+ */
 #pragma once
 
 #include <map>

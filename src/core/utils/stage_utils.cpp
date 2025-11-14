@@ -16,7 +16,7 @@ void initializeItems(GameState& gameState) {
 
 void createItemsFromConfig(GameState& gameState, const std::vector<ItemConfig>& itemConfigs) {
     for (int i = 0; i < itemConfigs.size(); i++) {
-        GameState::Item item;
+        Item item;
         item.position = itemConfigs[i].position + glm::vec3(0, 1, 0);
         item.size = glm::vec3(0.5f, 0.5f, 0.5f);
         item.color = itemConfigs[i].color;

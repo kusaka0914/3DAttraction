@@ -178,7 +178,7 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     gameState.ui.showTutorialUI = false;
     
     if (stageNumber == 6) {
-        gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
     }
     
     gameState.player.lastCheckpoint = stageIt->playerStartPosition;
@@ -192,7 +192,7 @@ bool StageManager::loadStage(int stageNumber, GameState& gameState, PlatformSyst
     
     stageIt->generateFunction(gameState, platformSystem);
     
-    if (stageNumber != 0 && stageNumber != 6 && gameState.progress.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+    if (stageNumber != 0 && stageNumber != 6 && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::MAX_SPEED_STAR) {
         gameState.progress.timeScale = 3.0f;
         gameState.progress.timeScaleLevel = 2;  // 3倍に設定
     }
@@ -225,7 +225,7 @@ bool StageManager::unlockStage(int stageNumber, GameState* gameState) {
     stageIt->isUnlocked = true;
     
     if (gameState != nullptr) {
-        gameState->unlockedStages[stageNumber] = true;
+        gameState->progress.unlockedStages[stageNumber] = true;
     }
     
     printf("Stage %d unlocked successfully\n", stageNumber);
@@ -495,7 +495,7 @@ void StageManager::generateTutorialStage(GameState& gameState, PlatformSystem& p
     gameState.progress.tutorialInputEnabled = true;
     gameState.ui.tutorialMessage = "MOVING FORWARD: PRESS W";
     
-    gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
     
     gameState.items.earnedItems = 0;
     gameState.items.totalItems = 3;

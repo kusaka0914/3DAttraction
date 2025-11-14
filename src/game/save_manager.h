@@ -1,3 +1,8 @@
+/**
+ * @file save_manager.h
+ * @brief セーブマネージャー
+ * @details ゲームデータの保存と読み込みを管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

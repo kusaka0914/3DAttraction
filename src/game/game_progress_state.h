@@ -1,3 +1,8 @@
+/**
+ * @file game_progress_state.h
+ * @brief ゲーム進行の状態を管理する構造体
+ * @details ステージ進行、タイムアタック、SECRET STAR、チュートリアル、EASYモードなどのゲーム進行に関する状態を保持します。
+ */
 #pragma once
 
 #include <map>
@@ -8,6 +13,7 @@
 
 /**
  * @brief ゲーム進行の状態を管理する構造体
+ * @details ステージ進行、タイムアタック、SECRET STAR、チュートリアル、EASYモードなどのゲーム進行に関する状態を保持します。
  */
 struct GameProgressState {
     float gameTime = 0.0f;

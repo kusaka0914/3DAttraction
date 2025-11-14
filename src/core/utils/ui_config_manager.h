@@ -1,3 +1,8 @@
+/**
+ * @file ui_config_manager.h
+ * @brief UI設定マネージャー
+ * @details JSONファイルからUI設定を読み込み、管理します。
+ */
 #pragma once
 
 #include <string>

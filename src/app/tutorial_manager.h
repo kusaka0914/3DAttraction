@@ -1,3 +1,8 @@
+/**
+ * @file tutorial_manager.h
+ * @brief チュートリアルマネージャー
+ * @details チュートリアルステージの進行と入力制御を管理します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

@@ -1,3 +1,8 @@
+/**
+ * @file platform_system.h
+ * @brief プラットフォームシステム
+ * @details 分離型設計のプラットフォームシステム。各種プラットフォームタイプを統合的に管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

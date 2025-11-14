@@ -1,3 +1,8 @@
+/**
+ * @file game_state_ui_renderer.h
+ * @brief ゲーム状態UIレンダラー
+ * @details ゲーム状態に応じたUI要素（タイトル画面、ステージクリア、チュートリアルなど）の描画を統合的に管理します。
+ */
 #pragma once
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -5,6 +10,7 @@
 #include "../core/constants/game_constants.h"
 #include "bitmap_font.h"
 #include "../game/game_state.h"
+#include "../game/game_progress_state.h"
 
 struct GameState;
 
@@ -41,8 +47,8 @@ public:
      * @param secretStarCleared クリア済みSECRET STARのマップ
      */
     void renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode = false,
-                                     int currentStage = -1, GameState::SecretStarType selectedSecretStarType = GameState::SecretStarType::NONE,
-                                     const std::map<int, std::set<GameState::SecretStarType>>& secretStarCleared = {});
+                                     int currentStage = -1, GameProgressState::SecretStarType selectedSecretStarType = GameProgressState::SecretStarType::NONE,
+                                     const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared = {});
     
     /**
      * @brief タイムアタッククリア背景を描画する
@@ -144,7 +150,7 @@ public:
      * @param isGameCleared ゲームクリア済みか
      * @param secretStarType SECRET STARタイプ
      */
-    void renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameState::SecretStarType secretStarType);
+    void renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameProgressState::SecretStarType secretStarType);
     
     /**
      * @brief SECRET STAR説明UIを描画する
@@ -159,7 +165,7 @@ public:
      * @param height ウィンドウ高さ
      * @param selectedType 選択されたタイプ
      */
-    void renderSecretStarSelectionUI(int width, int height, GameState::SecretStarType selectedType);
+    void renderSecretStarSelectionUI(int width, int height, GameProgressState::SecretStarType selectedType);
     
     /**
      * @brief ステージ選択アシストを描画する

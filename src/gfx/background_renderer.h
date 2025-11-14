@@ -1,3 +1,8 @@
+/**
+ * @file background_renderer.h
+ * @brief 背景レンダラー
+ * @details ステージ背景の描画を管理します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

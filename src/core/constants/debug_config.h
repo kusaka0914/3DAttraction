@@ -1,3 +1,8 @@
+/**
+ * @file debug_config.h
+ * @brief デバッグ設定
+ * @details デバッグ出力の制御フラグを定義します。
+ */
 #ifndef DEBUG_CONFIG_H
 #define DEBUG_CONFIG_H
 

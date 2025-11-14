@@ -1,3 +1,8 @@
+/**
+ * @file error_handler.h
+ * @brief エラーハンドラー
+ * @details エラーメッセージとログの管理を提供します。
+ */
 #pragma once
 
 #include <iostream>

@@ -1,3 +1,8 @@
+/**
+ * @file input_system.h
+ * @brief 入力システム
+ * @details キーボード、マウス、ゲームパッドの入力処理を統合的に管理します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

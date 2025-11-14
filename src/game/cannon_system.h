@@ -1,3 +1,8 @@
+/**
+ * @file cannon_system.h
+ * @brief 大砲システム
+ * @details 大砲の更新と衝突判定を管理します。
+ */
 #pragma once
 
 #include "game_state.h"

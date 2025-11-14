@@ -1,3 +1,8 @@
+/**
+ * @file game_loop.h
+ * @brief ゲームループ
+ * @details メインゲームループと各種画面処理（タイトル、Ready、ステージクリアなど）を管理します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

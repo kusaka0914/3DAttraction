@@ -1,3 +1,8 @@
+/**
+ * @file item_state.h
+ * @brief アイテムシステムの状態を管理する構造体
+ * @details アイテムの位置、回転、収集状態、収集数などの情報を保持します。
+ */
 #pragma once
 
 #include <vector>
@@ -5,6 +10,7 @@
 
 /**
  * @brief アイテムの状態を管理する構造体
+ * @details アイテムの位置、サイズ、色、収集状態、ID、アニメーション情報を保持します。
  */
 struct Item {
     glm::vec3 position;

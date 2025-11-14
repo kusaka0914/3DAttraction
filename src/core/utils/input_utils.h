@@ -1,3 +1,8 @@
+/**
+ * @file input_utils.h
+ * @brief 入力ユーティリティ
+ * @details キー入力の状態管理を提供します。
+ */
 #pragma once
 
 /**

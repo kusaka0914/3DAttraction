@@ -1,3 +1,8 @@
+/**
+ * @file opengl_renderer.h
+ * @brief OpenGLレンダラー
+ * @details OpenGLを使用した描画処理を統合的に管理します。
+ */
 #pragma once
 
 #include <GLFW/glfw3.h>

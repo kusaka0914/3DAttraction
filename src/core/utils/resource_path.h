@@ -1,3 +1,8 @@
+/**
+ * @file resource_path.h
+ * @brief リソースパスユーティリティ
+ * @details リソースファイルのパス解決を提供します。
+ */
 #pragma once
 
 #include <string>

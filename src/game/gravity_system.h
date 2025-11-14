@@ -1,3 +1,8 @@
+/**
+ * @file gravity_system.h
+ * @brief 重力システム
+ * @details 重力反転エリアの更新を管理します。
+ */
 #pragma once
 
 #include "game_state.h"

@@ -1,3 +1,8 @@
+/**
+ * @file switch_system.h
+ * @brief スイッチシステム
+ * @details スイッチの更新と衝突判定を管理します。
+ */
 #pragma once
 
 #include "game_state.h"

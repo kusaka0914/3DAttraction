@@ -1,3 +1,8 @@
+/**
+ * @file stage_manager.h
+ * @brief ステージ管理システム
+ * @details ステージの読み込み、解放、進行状況の管理を行います。
+ */
 #pragma once
 
 #include "game_state.h"
@@ -190,9 +195,9 @@ public:
      * @brief 現在のステージファイルパスを取得する
      * @details エディタ用に現在のステージのJSONファイルパスを取得します。
      * 
-     * @return 現在のステージファイルパス
+     * @return 現在のステージファイルパスへのconst参照
      */
-    std::string getCurrentStageFilePath() const { return currentStageFilePath; }
+    const std::string& getCurrentStageFilePath() const { return currentStageFilePath; }
     
 private:
     std::vector<StageData> stages;

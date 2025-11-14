@@ -1,3 +1,8 @@
+/**
+ * @file game_updater.h
+ * @brief ゲーム状態の更新を担当するクラス
+ * @details ゲーム状態の更新、物理演算と衝突判定、アイテムの更新を統合的に管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

@@ -180,11 +180,11 @@ bool SaveManager::loadGameData(GameState& gameState) {
             for (auto& [key, value] : saveData["secretStarCleared"].items()) {
                 int stageNumber = std::stoi(key);
                 if (value.is_array()) {
-                    std::set<GameState::SecretStarType> clearedTypes;
+                    std::set<GameProgressState::SecretStarType> clearedTypes;
                     for (auto& typeValue : value) {
                         if (typeValue.is_number()) {
                             int typeInt = typeValue.get<int>();
-                            clearedTypes.insert(static_cast<GameState::SecretStarType>(typeInt));
+                            clearedTypes.insert(static_cast<GameProgressState::SecretStarType>(typeInt));
                         }
                     }
                     gameState.progress.secretStarCleared[stageNumber] = clearedTypes;

@@ -1,3 +1,8 @@
+/**
+ * @file stage_utils.h
+ * @brief ステージユーティリティ
+ * @details ステージ生成用の設定構造体とユーティリティ関数を提供します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

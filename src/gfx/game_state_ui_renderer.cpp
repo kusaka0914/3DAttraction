@@ -109,8 +109,8 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
 }
 
 void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode,
-                                                      int currentStage, GameState::SecretStarType selectedSecretStarType,
-                                                      const std::map<int, std::set<GameState::SecretStarType>>& secretStarCleared) {
+                                                      int currentStage, GameProgressState::SecretStarType selectedSecretStarType,
+                                                      const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared) {
     font.initialize();
     
     glMatrixMode(GL_PROJECTION);
@@ -159,11 +159,11 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
         auto starsConfig = uiConfig.getStageClearStarsConfig();
         glm::vec2 starsBasePos = uiConfig.calculatePosition(starsConfig.position, width, height);
         
-        if (selectedSecretStarType != GameState::SecretStarType::NONE && currentStage > 0) {
-            std::vector<GameState::SecretStarType> secretStarTypes = {
-                GameState::SecretStarType::MAX_SPEED_STAR,
-                GameState::SecretStarType::SHADOW_STAR,
-                GameState::SecretStarType::IMMERSIVE_STAR
+        if (selectedSecretStarType != GameProgressState::SecretStarType::NONE && currentStage > 0) {
+            std::vector<GameProgressState::SecretStarType> secretStarTypes = {
+                GameProgressState::SecretStarType::MAX_SPEED_STAR,
+                GameProgressState::SecretStarType::SHADOW_STAR,
+                GameProgressState::SecretStarType::IMMERSIVE_STAR
             };
             
             std::vector<glm::vec3> secretStarColors = {
@@ -174,7 +174,7 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
             
             glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
             
-            std::set<GameState::SecretStarType> clearedTypes;
+            std::set<GameProgressState::SecretStarType> clearedTypes;
             if (secretStarCleared.count(currentStage) > 0) {
                 clearedTypes = secretStarCleared.at(currentStage);
             }
@@ -585,8 +585,8 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height, const GameSta
         glDisable(GL_BLEND);
     }
     
-    if (gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::LOGO_ANIMATION ||
-        gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::SHOW_TEXT) {
+    if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::LOGO_ANIMATION ||
+        gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT) {
         
         auto logoConfig = uiConfig.getTitleLogoConfig();
         glm::vec2 targetLogoPos = uiConfig.calculatePosition(logoConfig.position, width, height);
@@ -595,7 +595,7 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height, const GameSta
         float logoScale = 1.0f;
         glm::vec2 logoPos = targetLogoPos;
         
-        if (gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::LOGO_ANIMATION) {
+        if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::LOGO_ANIMATION) {
             const float LOGO_ANIMATION_DURATION = 1.0f;
             float progress = std::min(1.0f, gameState.ui.titleScreenTimer / LOGO_ANIMATION_DURATION);
             
@@ -641,7 +641,7 @@ void GameStateUIRenderer::renderTitleScreen(int width, int height, const GameSta
         }
     }
     
-    if (gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::SHOW_TEXT) {
+    if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT) {
         auto startButtonConfig = uiConfig.getTitleStartButtonConfig();
         glm::vec2 startButtonPos = uiConfig.calculatePosition(startButtonConfig.position, width, height);
         
@@ -1164,7 +1164,7 @@ void GameStateUIRenderer::renderEasyModeSelectionUI(int width, int height, bool 
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameState::SecretStarType secretStarType) {
+void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, bool isTimeAttackMode, bool isGameCleared, GameProgressState::SecretStarType secretStarType) {
     font.initialize();
     
     glMatrixMode(GL_PROJECTION);
@@ -1202,7 +1202,7 @@ void GameStateUIRenderer::renderTimeAttackSelectionUI(int width, int height, boo
     glm::vec2 timeAttackPos = uiConfig.calculatePosition(timeAttackConfig.position, width, height);
     
     if (isGameCleared) {
-        bool isSecretStarSelected = (secretStarType != GameState::SecretStarType::NONE);
+        bool isSecretStarSelected = (secretStarType != GameProgressState::SecretStarType::NONE);
         
         glm::vec3 normalColor = (isTimeAttackMode || isSecretStarSelected) ? normalConfig.unselectedColor : normalConfig.selectedColor;
         renderText("NORMAL", normalPos, normalColor, normalConfig.scale);
@@ -1297,7 +1297,7 @@ void GameStateUIRenderer::renderSecretStarExplanationUI(int width, int height) {
     glDisable(GL_BLEND);
 }
 
-void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, GameState::SecretStarType selectedType) {
+void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, GameProgressState::SecretStarType selectedType) {
     font.initialize();
     
     glMatrixMode(GL_PROJECTION);
@@ -1341,9 +1341,9 @@ void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, Gam
     glm::vec2 star2Pos = uiConfig.calculatePosition(star2PosConfig, width, height);
     glm::vec2 star3Pos = uiConfig.calculatePosition(star3PosConfig, width, height);
     
-    glm::vec3 star1Color = (selectedType == GameState::SecretStarType::MAX_SPEED_STAR) ? maxSpeedColor : unselectedColor;
-    glm::vec3 star2Color = (selectedType == GameState::SecretStarType::SHADOW_STAR) ? shadowColor : unselectedColor;
-    glm::vec3 star3Color = (selectedType == GameState::SecretStarType::IMMERSIVE_STAR) ? immersiveColor : unselectedColor;
+    glm::vec3 star1Color = (selectedType == GameProgressState::SecretStarType::MAX_SPEED_STAR) ? maxSpeedColor : unselectedColor;
+    glm::vec3 star2Color = (selectedType == GameProgressState::SecretStarType::SHADOW_STAR) ? shadowColor : unselectedColor;
+    glm::vec3 star3Color = (selectedType == GameProgressState::SecretStarType::IMMERSIVE_STAR) ? immersiveColor : unselectedColor;
     
     float starScale = 2.0f;
     
@@ -1359,9 +1359,9 @@ void GameStateUIRenderer::renderSecretStarSelectionUI(int width, int height, Gam
     glm::vec2 name2Pos = uiConfig.calculatePosition(name2Config.position, width, height);
     glm::vec2 name3Pos = uiConfig.calculatePosition(name3Config.position, width, height);
     
-    glm::vec3 name1Color = (selectedType == GameState::SecretStarType::MAX_SPEED_STAR) ? name1Config.selectedColor : name1Config.unselectedColor;
-    glm::vec3 name2Color = (selectedType == GameState::SecretStarType::SHADOW_STAR) ? name2Config.selectedColor : name2Config.unselectedColor;
-    glm::vec3 name3Color = (selectedType == GameState::SecretStarType::IMMERSIVE_STAR) ? name3Config.selectedColor : name3Config.unselectedColor;
+    glm::vec3 name1Color = (selectedType == GameProgressState::SecretStarType::MAX_SPEED_STAR) ? name1Config.selectedColor : name1Config.unselectedColor;
+    glm::vec3 name2Color = (selectedType == GameProgressState::SecretStarType::SHADOW_STAR) ? name2Config.selectedColor : name2Config.unselectedColor;
+    glm::vec3 name3Color = (selectedType == GameProgressState::SecretStarType::IMMERSIVE_STAR) ? name3Config.selectedColor : name3Config.unselectedColor;
     
     renderText("MAX SPEED STAR", name1Pos, name1Color, name1Config.scale);
     renderText("SHADOW STAR", name2Pos, name2Color, name2Config.scale);

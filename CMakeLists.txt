@@ -46,6 +46,8 @@ add_executable(SlimesSkyTravel
     src/app/main.cpp
     src/app/game_loop.cpp
     src/app/game_updater.cpp
+    src/app/game_renderer.cpp
+    src/app/input_handler.cpp
     src/app/tutorial_manager.cpp
     src/gfx/opengl_renderer.cpp
     src/gfx/bitmap_font.cpp
@@ -141,3 +143,43 @@ target_compile_definitions(SlimesSkyTravel PRIVATE
     $<$<CONFIG:Debug>:_DEBUG>
     $<$<CONFIG:Release>:NDEBUG>
 )
+
+# cppcheck静的解析ツール
+find_program(CPPCHECK_EXECUTABLE cppcheck)
+if(CPPCHECK_EXECUTABLE)
+    add_custom_target(cppcheck
+        COMMAND ${CPPCHECK_EXECUTABLE}
+            --enable=all
+            --suppress=missingIncludeSystem
+            --suppress=unusedFunction
+            --suppress=unmatchedSuppression
+            --inline-suppr
+            --xml
+            --xml-version=2
+            --output-file=cppcheck_report.xml
+            -I${CMAKE_CURRENT_SOURCE_DIR}/src
+            -I${CMAKE_CURRENT_SOURCE_DIR}/third_party
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running cppcheck static analysis..."
+    )
+    
+    # より読みやすいテキスト形式のレポートも生成
+    add_custom_target(cppcheck-text
+        COMMAND ${CPPCHECK_EXECUTABLE}
+            --enable=all
+            --suppress=missingIncludeSystem
+            --suppress=unusedFunction
+            --suppress=unmatchedSuppression
+            --inline-suppr
+            -I${CMAKE_CURRENT_SOURCE_DIR}/src
+            -I${CMAKE_CURRENT_SOURCE_DIR}/third_party
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running cppcheck static analysis (text output)..."
+    )
+    message(STATUS "cppcheck found: ${CPPCHECK_EXECUTABLE}")
+    message(STATUS "  Run 'make cppcheck-text' to see analysis results")
+else()
+    message(STATUS "cppcheck not found - install it with: brew install cppcheck")
+endif()

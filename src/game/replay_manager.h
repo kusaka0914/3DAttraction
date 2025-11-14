@@ -1,3 +1,8 @@
+/**
+ * @file replay_manager.h
+ * @brief リプレイマネージャー
+ * @details リプレイデータの保存と読み込みを管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX
@@ -22,7 +27,7 @@ public:
      * @param stageNumber ステージ番号
      * @return 保存成功時true
      */
-    static bool saveReplay(const GameState::ReplayData& replayData, int stageNumber);
+    static bool saveReplay(const ReplayData& replayData, int stageNumber);
     
     /**
      * @brief JSONファイルからリプレイデータを読み込む
@@ -32,7 +37,7 @@ public:
      * @param stageNumber ステージ番号
      * @return 読み込み成功時true
      */
-    static bool loadReplay(GameState::ReplayData& replayData, int stageNumber);
+    static bool loadReplay(ReplayData& replayData, int stageNumber);
     
     /**
      * @brief リプレイファイルのパスを取得する

@@ -1,3 +1,8 @@
+/**
+ * @file stage_editor.h
+ * @brief ステージエディタ
+ * @details ステージの編集機能（選択、配置、移動、削除）を提供します。
+ */
 #pragma once
 
 #ifndef NOMINMAX

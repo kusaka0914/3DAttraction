@@ -26,6 +26,7 @@
 #include "../game/replay_manager.h"
 #include "../game/save_manager.h"
 #include "../core/types/platform_types.h"
+#include "input_handler.h"
 #include <set>
 #include <map>
 #include <ctime>
@@ -66,7 +67,7 @@ void GameUpdater::updateGameState(
         const float FADE_DURATION = 0.5f;  // フェード時間（秒）
         gameState.ui.transitionTimer += deltaTime;
         
-        if (gameState.ui.transitionType == GameState::TransitionType::FADE_OUT) {
+        if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
             if (gameState.ui.transitionTimer >= FADE_DURATION) {
                 if (gameState.ui.pendingStageTransition == 6) {
                     gameState.ui.showTitleScreen = false;
@@ -78,14 +79,14 @@ void GameUpdater::updateGameState(
                     gameState.ui.countdownTimer = 0.0f;
                     resetStageStartTime();
                     
-                    gameState.ui.transitionType = GameState::TransitionType::FADE_IN;
+                    gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
                     gameState.ui.transitionTimer = 0.0f;
                 }
             }
-        } else if (gameState.ui.transitionType == GameState::TransitionType::FADE_IN) {
+        } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
             if (gameState.ui.transitionTimer >= FADE_DURATION) {
                 gameState.ui.isTransitioning = false;
-                gameState.ui.transitionType = GameState::TransitionType::NONE;
+                gameState.ui.transitionType = UIState::TransitionType::NONE;
                 gameState.ui.transitionTimer = 0.0f;
                 gameState.ui.pendingStageTransition = -1;
                 gameState.ui.pendingReadyScreen = false;
@@ -218,12 +219,12 @@ void GameUpdater::updateGameState(
             gameState.replay.replayRecordTimer += deltaTime;
             
             if (gameState.replay.replayRecordTimer >= gameState.replay.REPLAY_RECORD_INTERVAL) {
-                GameState::ReplayFrame frame;
+                ReplayFrame frame;
                 frame.timestamp = gameState.progress.currentTimeAttackTime;
                 frame.playerPosition = gameState.player.position;
                 frame.playerVelocity = gameState.player.velocity;
                 frame.itemCollectedStates.clear();
-                for (const auto& item : gameState.items) {
+                for (const auto& item : gameState.items.items) {
                     frame.itemCollectedStates.push_back(item.isCollected);
                 }
                 gameState.replay.replayBuffer.push_back(frame);
@@ -284,7 +285,7 @@ void GameUpdater::updateGameState(
         state.update(glfwGetKey(window, key) == GLFW_PRESS);
     }
     
-    InputHandler::handleInputProcessing(window, gameState, stageManager, platformSystem, keyStates, resetStageStartTime, scaledDeltaTime, audioManager);
+    GameLoop::InputHandler::handleInputProcessing(window, gameState, stageManager, platformSystem, keyStates, resetStageStartTime, scaledDeltaTime, audioManager);
     
     if (!gameState.replay.isReplayMode && !gameState.progress.isGameOver) {
         GameUpdater::updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
@@ -393,7 +394,7 @@ void GameUpdater::updatePhysicsAndCollisions(
                             float clearTime = gameState.progress.currentTimeAttackTime;
                             
                             if (gameState.replay.isRecordingReplay) {
-                                GameState::ReplayFrame lastFrame;
+                                ReplayFrame lastFrame;
                                 lastFrame.timestamp = clearTime;
                                 lastFrame.playerPosition = gameState.player.position;
                                 lastFrame.playerVelocity = gameState.player.velocity;
@@ -417,7 +418,7 @@ void GameUpdater::updatePhysicsAndCollisions(
                             }
                             
                             if (shouldSaveReplay && !gameState.replay.replayBuffer.empty()) {
-                                GameState::ReplayData replayData;
+                                ReplayData replayData;
                                 replayData.stageNumber = currentStage;
                                 replayData.clearTime = clearTime;
                                 replayData.frames = gameState.replay.replayBuffer;
@@ -463,7 +464,7 @@ void GameUpdater::updatePhysicsAndCollisions(
                             }
                         }
                         
-                        if (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE && currentStage > 0) {
+                        if (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE && currentStage > 0) {
                             gameState.progress.secretStarCleared[currentStage].insert(gameState.progress.selectedSecretStarType);
                             SaveManager::saveGameData(gameState);
                         }
@@ -636,7 +637,7 @@ void GameUpdater::updateItems(
     float scaledDeltaTime, 
     io::AudioManager& audioManager
 ) {
-    for (auto& item : gameState.items) {
+    for (auto& item : gameState.items.items) {
         if (!item.isCollected) {
             item.rotationAngle += scaledDeltaTime * 90.0f;
             if (item.rotationAngle >= 360.0f) {

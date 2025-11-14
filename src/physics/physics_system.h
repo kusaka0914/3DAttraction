@@ -1,3 +1,8 @@
+/**
+ * @file physics_system.h
+ * @brief 物理システム
+ * @details 物理演算と衝突判定を統合的に管理します。
+ */
 #pragma once
 
 #include "../game/game_state.h"

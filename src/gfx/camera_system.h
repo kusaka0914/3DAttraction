@@ -1,3 +1,8 @@
+/**
+ * @file camera_system.h
+ * @brief カメラシステム
+ * @details カメラの位置計算、スムージング、設定適用を管理します。
+ */
 #pragma once
 
 #ifndef NOMINMAX
@@ -49,7 +54,7 @@ public:
      */
     static CameraConfig calculateCameraConfig(const GameState& gameState, 
                                             const StageManager& stageManager, 
-                                            GLFWwindow* window, 
+                                            GLFWwindow* /* window */, 
                                             float deltaTime) {
         CameraConfig config;
         config.fov = GameConstants::CAMERA_FOV;

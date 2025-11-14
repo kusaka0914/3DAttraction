@@ -1,7 +1,13 @@
+/**
+ * @file skill_state.h
+ * @brief スキルシステムの状態を管理する構造体
+ * @details ダブルジャンプ、ハートフィール、フリーカメラ、バーストジャンプ、タイムストップなどのスキルの状態を保持します。
+ */
 #pragma once
 
 /**
  * @brief スキルシステムの状態を管理する構造体
+ * @details ダブルジャンプ、ハートフィール、フリーカメラ、バーストジャンプ、タイムストップなどのスキルの状態を保持します。
  */
 struct SkillState {
     bool hasDoubleJumpSkill = true;

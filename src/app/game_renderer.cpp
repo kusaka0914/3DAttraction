@@ -10,7 +10,11 @@
 #include "../core/utils/resource_path.h"
 #include "../gfx/minimap_renderer.h"
 #include "../game/stage_editor.h"
-#include <GL/gl.h>
+#ifdef __APPLE__
+    #include <OpenGL/gl.h>
+#else
+    #include <GL/gl.h>
+#endif
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <set>
@@ -51,9 +55,9 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 const float FADE_DURATION = 0.5f;
                 float alpha = 0.0f;
                 
-                if (gameState.ui.transitionType == GameState::TransitionType::FADE_OUT) {
+                if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
                     alpha = std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
-                } else if (gameState.ui.transitionType == GameState::TransitionType::FADE_IN) {
+                } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
                     alpha = 1.0f - std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
                 }
                 
@@ -167,7 +171,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
             }
         }
         
-        for (const auto& item : gameState.items) {
+        for (const auto& item : gameState.items.items) {
             if (!item.isCollected) {
                 glm::vec3 itemPos = item.position + glm::vec3(0, item.bobHeight, 0);
                 
@@ -256,7 +260,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 } else if (stageManager.getCurrentStage() == 6 && gameState.progress.tutorialStep == 8) {
                     int currentStageStars = gameState.progress.stageStars[stageManager.getCurrentStage()];
                     int currentStage = stageManager.getCurrentStage();
-                    int secretStarType = (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                    int secretStarType = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) ? 
                                          static_cast<int>(gameState.progress.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
                     std::map<int, std::set<int>> secretStarClearedInt;
                     for (const auto& [stage, types] : gameState.progress.secretStarCleared) {
@@ -271,7 +275,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 } else if (stageManager.getCurrentStage() == 6 && gameState.progress.tutorialStep >= 9) {
                     int currentStageStars = gameState.progress.stageStars[stageManager.getCurrentStage()];
                     int currentStage = stageManager.getCurrentStage();
-                    int secretStarType = (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                    int secretStarType = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) ? 
                                          static_cast<int>(gameState.progress.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
                     std::map<int, std::set<int>> secretStarClearedInt;
                     for (const auto& [stage, types] : gameState.progress.secretStarCleared) {
@@ -306,7 +310,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                         } else {
                             if (!gameState.replay.isReplayMode) {
                                 int currentStage = stageManager.getCurrentStage();
-                                int secretStarType = (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                                int secretStarType = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) ? 
                                                      static_cast<int>(gameState.progress.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
                                 std::map<int, std::set<int>> secretStarClearedInt;
                                 for (const auto& [stage, types] : gameState.progress.secretStarCleared) {
@@ -471,10 +475,10 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                     
                     bool hasClearedStage = (gameState.progress.isGameCleared && gameState.progress.stageStars.count(stageNumber) > 0 && gameState.progress.stageStars[stageNumber] > 0);
                     if (hasClearedStage) {
-                        std::vector<GameState::SecretStarType> secretStarTypes = {
-                            GameState::SecretStarType::MAX_SPEED_STAR,
-                            GameState::SecretStarType::SHADOW_STAR,
-                            GameState::SecretStarType::IMMERSIVE_STAR
+                        std::vector<GameProgressState::SecretStarType> secretStarTypes = {
+                            GameProgressState::SecretStarType::MAX_SPEED_STAR,
+                            GameProgressState::SecretStarType::SHADOW_STAR,
+                            GameProgressState::SecretStarType::IMMERSIVE_STAR
                         };
                         
                         std::vector<glm::vec3> secretStarColors = {
@@ -485,7 +489,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                         
                         glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
                         
-                        std::set<GameState::SecretStarType> clearedTypes;
+                        std::set<GameProgressState::SecretStarType> clearedTypes;
                         if (gameState.progress.secretStarCleared.count(stageNumber) > 0) {
                             clearedTypes = gameState.progress.secretStarCleared.at(stageNumber);
                         }
@@ -643,9 +647,9 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
             const float FADE_DURATION = 0.5f;
             float alpha = 0.0f;
             
-            if (gameState.ui.transitionType == GameState::TransitionType::FADE_OUT) {
+            if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
                 alpha = std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
-            } else if (gameState.ui.transitionType == GameState::TransitionType::FADE_IN) {
+            } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
                 alpha = 1.0f - std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
             }
             
@@ -685,7 +689,7 @@ void GameRenderer::prepareFrame(GLFWwindow* window, GameState& gameState, StageM
                      std::unique_ptr<gfx::OpenGLRenderer>& renderer, int& width, int& height, float deltaTime) {
         renderer->beginFrameWithBackground(stageManager.getCurrentStage());
         
-        if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
+        if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
@@ -711,7 +715,7 @@ void GameRenderer::renderPlatforms(PlatformSystem& platformSystem,
         auto platformTypes = platformSystem.getPlatformTypes();
         
         std::vector<bool> shadowVisibility = visibility;
-        if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
+        if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR && stageManager.getCurrentStage() != 0) {
             for (size_t i = 0; i < shadowVisibility.size(); i++) {
                 shadowVisibility[i] = false;
             }
@@ -788,7 +792,7 @@ void GameRenderer::renderPlatforms(PlatformSystem& platformSystem,
         }
         
         for (size_t i = 0; i < positions.size(); i++) {
-            bool shouldRender = (gameState.progress.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR) 
+            bool shouldRender = (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR) 
                                 ? shadowVisibility[i] 
                                 : visibility[i];
             if (!shouldRender || sizes[i].x <= 0 || sizes[i].y <= 0 || sizes[i].z <= 0) continue;

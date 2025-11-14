@@ -1,3 +1,8 @@
+/**
+ * @file renderer_3d.h
+ * @brief 3Dレンダラー
+ * @details 3Dオブジェクトの描画を統合的に管理します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

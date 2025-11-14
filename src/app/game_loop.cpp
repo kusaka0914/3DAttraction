@@ -168,7 +168,7 @@ namespace GameLoop {
                     const float FADE_DURATION = 0.5f;  // フェード時間（秒）
                     gameState.ui.transitionTimer += deltaTime;
                     
-                    if (gameState.ui.transitionType == GameState::TransitionType::FADE_OUT) {
+                    if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
                         if (gameState.ui.transitionTimer >= FADE_DURATION) {
                             if (gameState.ui.pendingStageTransition >= 0) {
                                 gameState.ui.showTitleScreen = false;
@@ -180,14 +180,14 @@ namespace GameLoop {
                                 gameState.ui.countdownTimer = 0.0f;
                                 resetStageStartTime();
                                 
-                                gameState.ui.transitionType = GameState::TransitionType::FADE_IN;
+                                gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
                                 gameState.ui.transitionTimer = 0.0f;
                             }
                         }
-                    } else if (gameState.ui.transitionType == GameState::TransitionType::FADE_IN) {
+                    } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
                         if (gameState.ui.transitionTimer >= FADE_DURATION) {
                             gameState.ui.isTransitioning = false;
-                            gameState.ui.transitionType = GameState::TransitionType::NONE;
+                            gameState.ui.transitionType = UIState::TransitionType::NONE;
                             gameState.ui.transitionTimer = 0.0f;
                             gameState.ui.pendingStageTransition = -1;
                             gameState.ui.pendingReadyScreen = false;
@@ -201,14 +201,14 @@ namespace GameLoop {
                 const float BACKGROUND_FADE_DURATION = 1.5f;  // 背景フェードイン時間
                 const float LOGO_ANIMATION_DURATION = 1.0f;    // ロゴアニメーション時間
                 
-                if (gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::BACKGROUND_FADE_IN) {
+                if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::BACKGROUND_FADE_IN) {
                     if (gameState.ui.titleScreenTimer >= BACKGROUND_FADE_DURATION) {
-                        gameState.ui.titleScreenPhase = GameState::TitleScreenPhase::LOGO_ANIMATION;
+                        gameState.ui.titleScreenPhase = UIState::TitleScreenPhase::LOGO_ANIMATION;
                         gameState.ui.titleScreenTimer = 0.0f;  // タイマーリセット
                     }
-                } else if (gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::LOGO_ANIMATION) {
+                } else if (gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::LOGO_ANIMATION) {
                     if (gameState.ui.titleScreenTimer >= LOGO_ANIMATION_DURATION) {
-                        gameState.ui.titleScreenPhase = GameState::TitleScreenPhase::SHOW_TEXT;
+                        gameState.ui.titleScreenPhase = UIState::TitleScreenPhase::SHOW_TEXT;
                         gameState.ui.titleScreenTimer = 0.0f;  // タイマーリセット
                     }
                 }
@@ -236,7 +236,7 @@ namespace GameLoop {
                 }
                 
                 if (keyStates[GLFW_KEY_ENTER].justPressed() && 
-                    gameState.ui.titleScreenPhase == GameState::TitleScreenPhase::SHOW_TEXT &&
+                    gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT &&
                     !gameState.ui.isTransitioning) {
                     if (gameState.bgmPlaying && gameState.currentBGM == "title.ogg") {
                         audioManager.stopBGM();
@@ -258,10 +258,10 @@ namespace GameLoop {
                         gameState.camera.isFirstPersonView = false;
                         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                         
-                        gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     } else {
                         gameState.ui.isTransitioning = true;
-                        gameState.ui.transitionType = GameState::TransitionType::FADE_OUT;
+                        gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
                         gameState.ui.transitionTimer = 0.0f;
                         gameState.ui.pendingStageTransition = 6;  // チュートリアルステージ
                         gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
@@ -269,7 +269,7 @@ namespace GameLoop {
                     }
                 }
                 
-                GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
+                GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
                 
                 glfwPollEvents();
                 continue;  // タイトル画面中は他の処理をスキップ
@@ -277,7 +277,7 @@ namespace GameLoop {
 
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
 
-            GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
+            GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
             
             std::this_thread::sleep_for(std::chrono::milliseconds(GameConstants::FRAME_DELAY_MS));
             
@@ -301,11 +301,11 @@ namespace GameLoop {
         }
         
         int width, height;
-        GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
+        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
         
-        GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
+        GameLoop::GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
         
-        GameRenderer::renderPlayer(gameState, renderer);
+        GameLoop::GameRenderer::renderPlayer(gameState, renderer);
         
         gameStateUIRenderer->renderReadyScreen(width, height, gameState.ui.readyScreenSpeedLevel, gameState.camera.isFirstPersonMode);
         
@@ -384,11 +384,11 @@ namespace GameLoop {
         }
         
         int width, height;
-        GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
+        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
         
-        GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
+        GameLoop::GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
         
-        GameRenderer::renderPlayer(gameState, renderer);
+        GameLoop::GameRenderer::renderPlayer(gameState, renderer);
         
         int count = (int)gameState.ui.countdownTimer + 1;
         if (count > 0) {
@@ -407,12 +407,12 @@ namespace GameLoop {
             gameState.ui.isCountdownActive = false;
             resetStageStartTime();
             
-            if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+            if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::MAX_SPEED_STAR) {
                 gameState.progress.timeScale = 3.0f;
                 gameState.progress.timeScaleLevel = 2;  // 3倍に設定
             }
             
-            if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::IMMERSIVE_STAR) {
+            if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::IMMERSIVE_STAR) {
                 gameState.camera.isFirstPersonView = true;
                 gameState.camera.yaw = 90.0f;
                 gameState.camera.pitch = -10.0f;
@@ -428,7 +428,7 @@ namespace GameLoop {
                 gameState.replay.replayBuffer.clear();
                 gameState.replay.replayRecordTimer = 0.0f;
                 
-                GameState::ReplayFrame firstFrame;
+                ReplayFrame firstFrame;
                 firstFrame.timestamp = 0.0f;
                 firstFrame.playerPosition = gameState.player.position;
                 firstFrame.playerVelocity = gameState.player.velocity;
@@ -451,7 +451,7 @@ namespace GameLoop {
                              std::map<int, InputUtils::KeyState>& keyStates,
                              float deltaTime) {
         int width, height;
-        GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
+        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
         
         if (gameState.ui.showStaffRoll) {
             gameState.ui.staffRollTimer += deltaTime;
@@ -486,7 +486,7 @@ namespace GameLoop {
                 gameState.camera.isFirstPersonView = false;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                 
-                gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
             } else {
                 gameStateUIRenderer->renderEndingMessage(width, height, gameState.ui.endingMessageTimer);
             }
@@ -510,7 +510,7 @@ namespace GameLoop {
             gameState.camera.isFirstPersonView = false;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             
-            gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+            gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
         }
         
         renderer->endFrame();
@@ -526,17 +526,17 @@ namespace GameLoop {
                         PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime,
                         std::map<int, InputUtils::KeyState>& keyStates,
                         std::function<void()> resetStageStartTime, io::AudioManager& audioManager) {
-        GameUpdater::updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
+        GameLoop::GameUpdater::updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
     }
 
 
     void updatePhysicsAndCollisions(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
                                    PlatformSystem& platformSystem, float deltaTime, float scaledDeltaTime, io::AudioManager& audioManager) {
-        GameUpdater::updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
+        GameLoop::GameUpdater::updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
     }
 
     void updateItems(GameState& gameState, float scaledDeltaTime, io::AudioManager& audioManager) {
-        GameUpdater::updateItems(gameState, scaledDeltaTime, audioManager);
+        GameLoop::GameUpdater::updateItems(gameState, scaledDeltaTime, audioManager);
     }
 
 
@@ -579,23 +579,23 @@ namespace GameLoop {
                     std::unique_ptr<gfx::GameStateUIRenderer>& gameStateUIRenderer,
                     std::map<int, InputUtils::KeyState>& keyStates,
                     float deltaTime) {
-        GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
+        GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
     }
 
     void prepareFrame(GLFWwindow* window, GameState& gameState, StageManager& stageManager,
                      std::unique_ptr<gfx::OpenGLRenderer>& renderer, int& width, int& height, float deltaTime) {
-        GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
+        GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
     }
 
     void renderPlatforms(PlatformSystem& platformSystem, 
                         std::unique_ptr<gfx::OpenGLRenderer>& renderer,
                         GameState& gameState,
                         StageManager& stageManager) {
-        GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
+        GameLoop::GameRenderer::renderPlatforms(platformSystem, renderer, gameState, stageManager);
     }
 
     void renderPlayer(GameState& gameState, std::unique_ptr<gfx::OpenGLRenderer>& renderer) {
-        GameRenderer::renderPlayer(gameState, renderer);
+        GameLoop::GameRenderer::renderPlayer(gameState, renderer);
     }
 
     void _old_renderFrame_removed(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
@@ -632,9 +632,9 @@ namespace GameLoop {
                 const float FADE_DURATION = 0.5f;
                 float alpha = 0.0f;
                 
-                if (gameState.ui.transitionType == GameState::TransitionType::FADE_OUT) {
+                if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
                     alpha = std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
-                } else if (gameState.ui.transitionType == GameState::TransitionType::FADE_IN) {
+                } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
                     alpha = 1.0f - std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
                 }
                 
@@ -837,7 +837,7 @@ namespace GameLoop {
                 } else if (stageManager.getCurrentStage() == 6 && gameState.progress.tutorialStep == 8) {
                     int currentStageStars = gameState.progress.stageStars[stageManager.getCurrentStage()];
                     int currentStage = stageManager.getCurrentStage();
-                    int secretStarType = (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                    int secretStarType = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) ? 
                                          static_cast<int>(gameState.progress.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
                     std::map<int, std::set<int>> secretStarClearedInt;
                     for (const auto& [stage, types] : gameState.progress.secretStarCleared) {
@@ -852,7 +852,7 @@ namespace GameLoop {
                 } else if (stageManager.getCurrentStage() == 6 && gameState.progress.tutorialStep >= 9) {
                     int currentStageStars = gameState.progress.stageStars[stageManager.getCurrentStage()];
                     int currentStage = stageManager.getCurrentStage();
-                    int secretStarType = (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                    int secretStarType = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) ? 
                                          static_cast<int>(gameState.progress.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
                     std::map<int, std::set<int>> secretStarClearedInt;
                     for (const auto& [stage, types] : gameState.progress.secretStarCleared) {
@@ -887,7 +887,7 @@ namespace GameLoop {
                         } else {
                             if (!gameState.replay.isReplayMode) {
                                 int currentStage = stageManager.getCurrentStage();
-                                int secretStarType = (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) ? 
+                                int secretStarType = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) ? 
                                                      static_cast<int>(gameState.progress.selectedSecretStarType) - 1 : -1;  // NONE=-1, MAX_SPEED_STAR=0, SHADOW_STAR=1, IMMERSIVE_STAR=2
                                 std::map<int, std::set<int>> secretStarClearedInt;
                                 for (const auto& [stage, types] : gameState.progress.secretStarCleared) {
@@ -1052,10 +1052,10 @@ namespace GameLoop {
                     
                     bool hasClearedStage = (gameState.progress.isGameCleared && gameState.progress.stageStars.count(stageNumber) > 0 && gameState.progress.stageStars[stageNumber] > 0);
                     if (hasClearedStage) {
-                        std::vector<GameState::SecretStarType> secretStarTypes = {
-                            GameState::SecretStarType::MAX_SPEED_STAR,
-                            GameState::SecretStarType::SHADOW_STAR,
-                            GameState::SecretStarType::IMMERSIVE_STAR
+                        std::vector<GameProgressState::SecretStarType> secretStarTypes = {
+                            GameProgressState::SecretStarType::MAX_SPEED_STAR,
+                            GameProgressState::SecretStarType::SHADOW_STAR,
+                            GameProgressState::SecretStarType::IMMERSIVE_STAR
                         };
                         
                         std::vector<glm::vec3> secretStarColors = {
@@ -1066,7 +1066,7 @@ namespace GameLoop {
                         
                         glm::vec3 inactiveColor = glm::vec3(0.5f, 0.5f, 0.5f); // 灰色（未獲得）
                         
-                        std::set<GameState::SecretStarType> clearedTypes;
+                        std::set<GameProgressState::SecretStarType> clearedTypes;
                         if (gameState.progress.secretStarCleared.count(stageNumber) > 0) {
                             clearedTypes = gameState.progress.secretStarCleared.at(stageNumber);
                         }
@@ -1224,9 +1224,9 @@ namespace GameLoop {
             const float FADE_DURATION = 0.5f;
             float alpha = 0.0f;
             
-            if (gameState.ui.transitionType == GameState::TransitionType::FADE_OUT) {
+            if (gameState.ui.transitionType == UIState::TransitionType::FADE_OUT) {
                 alpha = std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
-            } else if (gameState.ui.transitionType == GameState::TransitionType::FADE_IN) {
+            } else if (gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
                 alpha = 1.0f - std::min(1.0f, gameState.ui.transitionTimer / FADE_DURATION);
             }
             
@@ -1258,13 +1258,6 @@ namespace GameLoop {
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
             glPopMatrix();
-        }
-        
-    void handleInputProcessing(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                              PlatformSystem& platformSystem, 
-                              std::map<int, InputUtils::KeyState>& keyStates,
-                              std::function<void()> resetStageStartTime, float scaledDeltaTime, io::AudioManager& audioManager) {
-        InputHandler::handleInputProcessing(window, gameState, stageManager, platformSystem, keyStates, resetStageStartTime, scaledDeltaTime, audioManager);
+        }   
     }
-
-}
+} // namespace GameLoop

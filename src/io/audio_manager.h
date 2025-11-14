@@ -1,3 +1,8 @@
+/**
+ * @file audio_manager.h
+ * @brief オーディオマネージャー
+ * @details BGMと効果音の読み込み、再生、音量制御を統合的に管理します。
+ */
 #pragma once
 
 #include <string>

@@ -1,3 +1,8 @@
+/**
+ * @file stage_constants.h
+ * @brief ステージ定数
+ * @details ステージエリアやゲーム設定に関する定数を定義します。
+ */
 #pragma once
 
 #include <glm/glm.hpp>

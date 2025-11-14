@@ -38,7 +38,7 @@ static void teleportToStageArea(int stageNumber, GameState& gameState) {
     printf("Teleported to Stage %d area\n", stageNumber);
 }
 
-static void processStageSelectionAction(
+void InputHandler::processStageSelectionAction(
     int stageNumber,
     GameState& gameState,
     StageManager& stageManager,
@@ -61,7 +61,7 @@ static void processStageSelectionAction(
         gameState.camera.isFirstPersonView = false;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         
-        gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
         
         return;
     }
@@ -80,7 +80,7 @@ static void processStageSelectionAction(
         gameState.ui.showTimeAttackSelectionUI = true;
         gameState.ui.modeSelectionTargetStage = stageNumber;
         gameState.ui.blockEnterUntilReleased = true;  // 直前のENTERを無視
-        gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
         gameState.progress.isTimeAttackMode = false;
     } else {
         resetStageStartTime();
@@ -185,7 +185,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     gameState.camera.isFirstPersonView = false;
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                     
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     
                     gameState.ui.showModeSelectionUI = false;
                     gameState.ui.showTimeAttackSelectionUI = false;
@@ -206,7 +206,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         
         int currentStage = stageManager.getCurrentStage();
         bool canUseTKey = tutorialInputEnabled || (gameState.progress.isTutorialStage);
-        if (keyStates[GLFW_KEY_T].justPressed() && currentStage != 0 && canUseTKey && !gameState.ui.showModeSelectionUI && !gameState.ui.showTimeAttackSelectionUI && !gameState.ui.showSecretStarSelectionUI && gameState.progress.selectedSecretStarType != GameState::SecretStarType::MAX_SPEED_STAR) {
+        if (keyStates[GLFW_KEY_T].justPressed() && currentStage != 0 && canUseTKey && !gameState.ui.showModeSelectionUI && !gameState.ui.showTimeAttackSelectionUI && !gameState.ui.showSecretStarSelectionUI && gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::MAX_SPEED_STAR) {
                 gameState.progress.timeScaleLevel = (gameState.progress.timeScaleLevel + 1) % 3;
             switch (gameState.progress.timeScaleLevel) {
                 case 0:
@@ -354,19 +354,19 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         }
         
         if (gameState.ui.showSecretStarSelectionUI) {
-            if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::NONE) {
-                gameState.progress.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+            if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
+                gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::MAX_SPEED_STAR;
             }
             
             if (keyStates[GLFW_KEY_T].justPressed()) {
-                if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::SHADOW_STAR;
-                } else if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::SHADOW_STAR) {
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::IMMERSIVE_STAR;
-                } else if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::IMMERSIVE_STAR) {
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+                if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::MAX_SPEED_STAR) {
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::SHADOW_STAR;
+                } else if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::SHADOW_STAR) {
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::IMMERSIVE_STAR;
+                } else if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::IMMERSIVE_STAR) {
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::MAX_SPEED_STAR;
                 } else {
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::MAX_SPEED_STAR;
                 }
                 printf("SECRET STAR SELECTION: %d (0=NONE, 1=MAX_SPEED, 2=SHADOW, 3=IMMERSIVE)\n", static_cast<int>(gameState.progress.selectedSecretStarType));
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -394,7 +394,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 
                 gameState.progress.isTimeAttackMode = false;  // SECRET STARモード時はタイムアタックモードを無効化
                 
-                if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::MAX_SPEED_STAR) {
+                if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::MAX_SPEED_STAR) {
                     gameState.ui.readyScreenShown = true;  // ready画面をスキップしたことを記録
                     gameState.ui.showReadyScreen = false;  // ready画面を表示しない
                     gameState.ui.isCountdownActive = true;  // カウントダウンを開始
@@ -414,7 +414,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     gameState.progress.timeScaleLevel = 0;
                 }
                 
-                if (gameState.progress.selectedSecretStarType == GameState::SecretStarType::IMMERSIVE_STAR) {
+                if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::IMMERSIVE_STAR) {
                     gameState.camera.isFirstPersonMode = true;
                     gameState.camera.isFirstPersonView = true;
                     gameState.camera.yaw = 90.0f;
@@ -435,23 +435,23 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         if (gameState.ui.showTimeAttackSelectionUI) {
             if (keyStates[GLFW_KEY_T].justPressed()) {
                 if (gameState.progress.isGameCleared) {
-                    if (!gameState.progress.isTimeAttackMode && gameState.progress.selectedSecretStarType == GameState::SecretStarType::NONE) {
+                    if (!gameState.progress.isTimeAttackMode && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
                         gameState.progress.isTimeAttackMode = true;
-                    } else if (gameState.progress.isTimeAttackMode && gameState.progress.selectedSecretStarType == GameState::SecretStarType::NONE) {
+                    } else if (gameState.progress.isTimeAttackMode && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
                         gameState.progress.isTimeAttackMode = false;
-                        gameState.progress.selectedSecretStarType = GameState::SecretStarType::MAX_SPEED_STAR;
+                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::MAX_SPEED_STAR;
                     } else {
-                        gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     }
                 } else {
                     gameState.progress.isTimeAttackMode = !gameState.progress.isTimeAttackMode;
                     if (!gameState.progress.isTimeAttackMode) {
-                        gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                        gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     }
                 }
                 printf("MODE SELECTION: %s\n", 
                     gameState.progress.isTimeAttackMode ? "TIME ATTACK" : 
-                    (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE ? "SECRET STAR" : "NORMAL"));
+                    (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE ? "SECRET STAR" : "NORMAL"));
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             
@@ -463,7 +463,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             }
             
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
-                if (gameState.progress.selectedSecretStarType != GameState::SecretStarType::NONE) {
+                if (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE) {
                     gameState.ui.showTimeAttackSelectionUI = false;
                     gameState.ui.showSecretStarSelectionUI = true;
                     gameState.ui.blockEnterUntilReleased = true;
@@ -472,7 +472,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 }
                 
                 if (!gameState.progress.isTimeAttackMode) {
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                 }
                 
                 int targetStage = gameState.ui.modeSelectionTargetStage;
@@ -511,7 +511,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 gameState.camera.isFirstPersonView = false;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                 
-                gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                 
                 glm::vec3 returnPosition;
                 switch (clearedStage) {
@@ -557,7 +557,8 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                         if (ReplayManager::loadReplay(gameState.replay.currentReplay, currentStage)) {
                             stageManager.goToStage(currentStage, gameState, platformSystem);
                             
-                            savedClearTime = gameState.progress.currentTimeAttackTime;
+                            // savedClearTime is defined in game_loop.cpp
+                            // This should be handled in game_loop.cpp instead
                             
                             gameState.progress.clearTime = gameState.replay.currentReplay.clearTime;
                             
@@ -568,7 +569,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                             gameState.ui.showStageClearUI = false;
                             gameState.progress.isStageCompleted = false;
                             gameState.progress.isGoalReached = false;
-                            printf("REPLAY: Started playback for stage %d (Saved clear time: %.2fs)\n", currentStage, savedClearTime);
+                            printf("REPLAY: Started playback for stage %d (Clear time: %.2fs)\n", currentStage, gameState.replay.currentReplay.clearTime);
                             return;  // リプレイ再生開始時は他の処理をスキップ
                         }
                     }
@@ -588,7 +589,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 gameState.player.position = glm::vec3(8, 2.0f, 0);
                 gameState.player.velocity = glm::vec3(0, 0, 0);
                 
-                gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                 
                 gameState.camera.isFirstPersonMode = false;
                 gameState.camera.isFirstPersonView = false;
@@ -670,7 +671,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     gameState.ui.showTimeAttackSelectionUI = true;
                     gameState.ui.modeSelectionTargetStage = targetStage;
                     gameState.ui.blockEnterUntilReleased = true;
-                    gameState.progress.selectedSecretStarType = GameState::SecretStarType::NONE;
+                    gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     gameState.progress.isTimeAttackMode = false;
                 } else {
                 resetStageStartTime();
