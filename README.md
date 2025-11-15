@@ -33,7 +33,7 @@ https://youtu.be/WSxkKcqc_a4?si=aF-RuE3cZlfm-BBR
 - stb_image
 
 【開発環境】
-- クロスプラットフォーム対応 (Windows / macOS / Linux)
+- クロスプラットフォーム対応 (Windows / macOS)
 
 ━━━━━━━━━━━━━━━━━━━━
 
