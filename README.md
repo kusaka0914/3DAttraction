@@ -1,5 +1,42 @@
 ━━━━━━━━━━━━━━━━━━━━
 
+■作品のプレイ/紹介映像
+
+<img width="256" height="159" alt="スクリーンショット 2025-11-15 15 01 16" src="https://github.com/user-attachments/assets/34b594cf-f2df-4cde-a27e-30f7b12b9c18" />
+
+YouTube上からご覧いただけます。
+
+https://youtu.be/WSxkKcqc_a4?si=aF-RuE3cZlfm-BBR
+
+━━━━━━━━━━━━━━━━━━━━
+
+■使用技術
+
+【プログラミング言語】
+- C++
+
+【ビルドシステム】
+- CMake
+
+【グラフィックスライブラリ】
+- OpenGL
+- GLFW (ウィンドウ管理・入力処理)
+- GLM (数学ライブラリ)
+
+【オーディオライブラリ】
+- SDL2_mixer
+
+【データフォーマット】
+- JSON (nlohmann/json)
+
+【画像処理】
+- stb_image
+
+【開発環境】
+- クロスプラットフォーム対応 (Windows / macOS / Linux)
+
+━━━━━━━━━━━━━━━━━━━━
+
 ■ゲームの概要
 
 【ゲームタイトル】Slime's Sky Travel
@@ -31,9 +68,9 @@
 
 ━━━━━━━━━━━━━━━━━━━━
 
-■基本操作
+■基本操作(詳しくはゲーム内チュートリアルにて)
 
-▼キーボード操作の場合
+▼キーボード操作
 
 [WASDキー] ：移動
 
@@ -48,5 +85,9 @@
 サウンド: 魔王魂
 
 https://maou.audio/
+
+サウンド: 効果音ラボ
+
+https://soundeffect-lab.info/
 
 ━━━━━━━━━━━━━━━━━━━━
