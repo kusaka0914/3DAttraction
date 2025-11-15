@@ -87,3 +87,6 @@ vendor/
 
 original_main.cpp
 .cursorrules
+
+assets/replays/
+assets/save/
