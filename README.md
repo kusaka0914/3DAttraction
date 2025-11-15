@@ -56,9 +56,17 @@ https://youtu.be/WSxkKcqc_a4?si=aF-RuE3cZlfm-BBR
 
 ■ゲームの起動
 
-本ページ右側にあるReleasesから最新版のSlimesSkyTravel_win_v0.2.3.zipをインストールします。
+windows
+
+本ページ右側にあるReleasesから最新版のSlimesSkyTravel_win_v~.zipをインストールします。
 
 そのzipファイルを展開し、「start_game.bat」ファイルをダブルクリックしてください。
+
+mac
+
+本ページ右側にあるReleasesから最新版のSlimesSkyTravel_mac_v~.zipをインストールします。
+
+そのzipファイルを展開し、「start_game.sh」ファイルをダブルクリックしてください。
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -77,6 +85,8 @@ https://youtu.be/WSxkKcqc_a4?si=aF-RuE3cZlfm-BBR
 [Space] ：ジャンプ
 
 [T] ：速度変更(1x,2x,3x)
+
+[ESC] : データ保存/ゲーム終了
 
 ━━━━━━━━━━━━━━━━━━━━
 
