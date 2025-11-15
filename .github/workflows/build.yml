@@ -1,4 +1,4 @@
-name: Build Windows Release
+name: Build Multi-Platform Release
 
 on:
   push:
@@ -78,10 +78,64 @@ jobs:
           name: windows-zip
           path: SlimesSkyTravel_win_${{ github.ref_name }}.zip
 
-      # タグ push のとき Release を自動作成＆zip添付
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install cmake glfw glm nlohmann-json sdl2 sdl2_mixer
+
+      - name: Configure (CMake - Release)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+      - name: Gather files
+        run: |
+          mkdir -p dist/SlimesSkyTravel
+          cp build/SlimesSkyTravel dist/SlimesSkyTravel/
+          if [ -d "assets" ]; then cp -r assets dist/SlimesSkyTravel/assets; fi
+          if [ -d "shaders" ]; then cp -r shaders dist/SlimesSkyTravel/shaders; fi
+          
+          # 起動スクリプトを生成
+          cat > dist/SlimesSkyTravel/start_game.sh << 'EOF'
+          #!/bin/bash
+          cd "$(dirname "$0")"
+          ./SlimesSkyTravel
+          EOF
+          chmod +x dist/SlimesSkyTravel/start_game.sh
+
+          # zipファイルを作成
+          cd dist
+          zip -r ../SlimesSkyTravel_mac_${{ github.ref_name }}.zip SlimesSkyTravel
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-zip
+          path: SlimesSkyTravel_mac_${{ github.ref_name }}.zip
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: SlimesSkyTravel_win_${{ github.ref_name }}.zip
+          files: |
+            artifacts/windows-zip/SlimesSkyTravel_win_${{ github.ref_name }}.zip
+            artifacts/macos-zip/SlimesSkyTravel_mac_${{ github.ref_name }}.zip
           generate_release_notes: true

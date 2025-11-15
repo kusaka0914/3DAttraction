@@ -178,6 +178,13 @@ public:
     void renderStageSelectionAssist(int width, int height, int targetStage, bool isVisible, bool isUnlocked);
     
     /**
+     * @brief ステージ選択画面のESCキー情報を描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     */
+    void renderStageSelectionEscKeyInfo(int width, int height);
+    
+    /**
      * @brief エンディングメッセージを描画する
      * @param width ウィンドウ幅
      * @param height ウィンドウ高さ

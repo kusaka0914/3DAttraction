@@ -622,6 +622,19 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
             bool isStageUnlocked = gameState.progress.unlockedStages[gameState.ui.assistTargetStage];
             gameStateUIRenderer->renderStageSelectionAssist(width, height, gameState.ui.assistTargetStage, shouldShowAssist, isStageUnlocked);
             
+            // ステージ選択画面でESCキー情報を表示
+            if (stageManager.getCurrentStage() == 0 && 
+                !gameState.ui.showUnlockConfirmUI && 
+                !gameState.ui.showStarInsufficientUI &&
+                !gameState.ui.showWarpTutorialUI &&
+                !gameState.ui.showEasyModeExplanationUI &&
+                !gameState.ui.showModeSelectionUI &&
+                !gameState.ui.showTimeAttackSelectionUI &&
+                !gameState.ui.showSecretStarSelectionUI &&
+                !gameState.ui.showStage0Tutorial) {
+                gameStateUIRenderer->renderStageSelectionEscKeyInfo(width, height);
+            }
+            
             glEnable(GL_DEPTH_TEST);
             glMatrixMode(GL_PROJECTION);
             glPopMatrix();

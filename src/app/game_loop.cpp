@@ -83,7 +83,14 @@ namespace GameLoop {
             
             if (!gameState.ui.showTitleScreen) {
             int currentStage = stageManager.getCurrentStage();
-            if (gameState.audioEnabled && !gameState.progress.isGoalReached && !gameState.ui.showTitleScreen) {
+            // フェードアウト中はBGMを再生しない
+            bool shouldPlayStageBGM = gameState.audioEnabled && 
+                                     !gameState.progress.isGoalReached && 
+                                     !gameState.ui.showTitleScreen &&
+                                     !gameState.ui.isTransitioning &&
+                                     gameState.ui.transitionType != UIState::TransitionType::FADE_OUT;
+            
+            if (shouldPlayStageBGM) {
                 std::string targetBGM = "";
                 std::string bgmPath = "";
                 
@@ -140,7 +147,7 @@ namespace GameLoop {
                     gameState.currentBGM = "";
                     std::cout << "BGM stopped" << std::endl;
                 }
-                }
+            }
             }
 
             if (gameState.ui.showReadyScreen) {
@@ -238,7 +245,14 @@ namespace GameLoop {
                     }
                 }
                 
-                if (gameState.audioEnabled && !gameState.ui.isTransitioning) {
+                // フェードアウト中やpendingFadeInがtrue、または遷移予定がある場合はBGMを再生しない
+                bool shouldPlayBGM = gameState.audioEnabled && 
+                                    !gameState.ui.isTransitioning && 
+                                    !gameState.ui.pendingFadeIn &&
+                                    gameState.ui.transitionType != UIState::TransitionType::FADE_OUT &&
+                                    gameState.ui.pendingStageTransition < 0;
+                
+                if (shouldPlayBGM) {
                     std::string titleBGM = "title.ogg";
                     if (gameState.currentBGM != titleBGM) {
                         if (gameState.bgmPlaying) {
@@ -1207,6 +1221,19 @@ namespace GameLoop {
                                    !gameState.ui.showStage0Tutorial; // チュートリアル表示中は非表示
             bool isStageUnlocked = gameState.progress.unlockedStages[gameState.ui.assistTargetStage];
             gameStateUIRenderer->renderStageSelectionAssist(width, height, gameState.ui.assistTargetStage, shouldShowAssist, isStageUnlocked);
+            
+            // ステージ選択画面でESCキー情報を表示
+            if (stageManager.getCurrentStage() == 0 && 
+                !gameState.ui.showUnlockConfirmUI && 
+                !gameState.ui.showStarInsufficientUI &&
+                !gameState.ui.showWarpTutorialUI &&
+                !gameState.ui.showEasyModeExplanationUI &&
+                !gameState.ui.showModeSelectionUI &&
+                !gameState.ui.showTimeAttackSelectionUI &&
+                !gameState.ui.showSecretStarSelectionUI &&
+                !gameState.ui.showStage0Tutorial) {
+                gameStateUIRenderer->renderStageSelectionEscKeyInfo(width, height);
+            }
             
             glEnable(GL_DEPTH_TEST);
             glMatrixMode(GL_PROJECTION);
