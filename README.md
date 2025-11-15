@@ -2,7 +2,7 @@
 
 ■作品のプレイ/紹介映像
 
-<img width="512" height="318" alt="スクリーンショット 2025-11-15 15 01 16" src="https://github.com/user-attachments/assets/eeeee3f9-37e8-4d88-bc46-7430a2ea4175" />
+<img width="256" height="159" alt="スクリーンショット 2025-11-15 15 01 16" src="https://github.com/user-attachments/assets/34b594cf-f2df-4cde-a27e-30f7b12b9c18" />
 
 YouTube上からご覧いただけます。
 
