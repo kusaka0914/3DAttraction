@@ -325,7 +325,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                             }
                         }
                         
-                        if (!gameState.replay.isReplayMode) {
+                        if (!gameState.replay.isReplayMode && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
                         uiRenderer->renderFreeCameraUI(gameState.skills.hasFreeCameraSkill, gameState.skills.isFreeCameraActive, gameState.skills.freeCameraTimer, 
                                                     gameState.skills.freeCameraRemainingUses, gameState.skills.freeCameraMaxUses);
                         

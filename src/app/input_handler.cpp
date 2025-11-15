@@ -253,18 +253,20 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             }
         }
         
-        if (keyStates[GLFW_KEY_Q].justPressed() && gameState.skills.hasTimeStopSkill && !gameState.skills.isTimeStopped && gameState.skills.timeStopRemainingUses > 0) {
+        bool isSecretStarMode = (gameState.progress.selectedSecretStarType != GameProgressState::SecretStarType::NONE);
+        
+        if (keyStates[GLFW_KEY_Q].justPressed() && !isSecretStarMode && gameState.skills.hasTimeStopSkill && !gameState.skills.isTimeStopped && gameState.skills.timeStopRemainingUses > 0) {
             gameState.skills.isTimeStopped = true;
             gameState.skills.timeStopTimer = gameState.skills.timeStopDuration;
             gameState.skills.timeStopRemainingUses--;
         }
         
-        if (keyStates[GLFW_KEY_H].justPressed() && gameState.skills.hasHeartFeelSkill && gameState.skills.heartFeelRemainingUses > 0 && gameState.progress.lives < 6) {
+        if (keyStates[GLFW_KEY_H].justPressed() && !isSecretStarMode && gameState.skills.hasHeartFeelSkill && gameState.skills.heartFeelRemainingUses > 0 && gameState.progress.lives < 6) {
             gameState.progress.lives++;
             gameState.skills.heartFeelRemainingUses--;
         }
         
-        if (keyStates[GLFW_KEY_C].justPressed() && gameState.skills.hasFreeCameraSkill && !gameState.skills.isFreeCameraActive && 
+        if (keyStates[GLFW_KEY_C].justPressed() && !isSecretStarMode && gameState.skills.hasFreeCameraSkill && !gameState.skills.isFreeCameraActive && 
             gameState.skills.freeCameraRemainingUses > 0 && !gameState.camera.isFirstPersonView) {
             gameState.skills.isFreeCameraActive = true;
             gameState.skills.freeCameraTimer = gameState.skills.freeCameraDuration;
@@ -276,7 +278,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
         
-        if (keyStates[GLFW_KEY_B].justPressed() && gameState.skills.hasBurstJumpSkill && !gameState.skills.isBurstJumpActive && 
+        if (keyStates[GLFW_KEY_B].justPressed() && !isSecretStarMode && gameState.skills.hasBurstJumpSkill && !gameState.skills.isBurstJumpActive && 
             gameState.skills.burstJumpRemainingUses > 0 && !gameState.skills.isInBurstJumpAir) {
             gameState.skills.isBurstJumpActive = true;
             gameState.skills.hasUsedBurstJump = false;

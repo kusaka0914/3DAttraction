@@ -179,7 +179,7 @@ namespace GameLoop {
                             }
                         }
                     }
-                    // フェードイン処理はタイトル画面外で行う（showTitleScreen = falseになった後）
+                    // フェードアウトのみで遷移を完了する（フェードインは行わない）
                 }
                 
                 // pendingFadeInがtrueの場合、showTitleScreen = falseにしてステージを読み込む
@@ -210,7 +210,15 @@ namespace GameLoop {
                         
                         gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     }
-                    // このフレームではまだpendingFadeInをtrueのままにして、次のフレームでフェードインを開始
+                    // フェードアウトのみで遷移を完了（フェードインは行わない）
+                    gameState.ui.pendingFadeIn = false;
+                    gameState.ui.isTransitioning = false;
+                    gameState.ui.transitionType = UIState::TransitionType::NONE;
+                    gameState.ui.transitionTimer = 0.0f;
+                    gameState.ui.pendingStageTransition = -1;
+                    gameState.ui.pendingReadyScreen = false;
+                    gameState.ui.pendingSkipCountdown = false;
+                    gameState.ui.stageLoadedForFadeIn = false;
                 }
                 
                 gameState.ui.titleScreenTimer += deltaTime;
@@ -289,28 +297,6 @@ namespace GameLoop {
                 // showTitleScreen = falseになった場合は、次のフレームで新しいステージを描画するためcontinueしない
                 if (gameState.ui.showTitleScreen) {
                     continue;  // タイトル画面中は他の処理をスキップ
-                }
-            }
-
-            // タイトル画面から遷移した後も、フェードイン処理を続ける
-            if (gameState.ui.isTransitioning && gameState.ui.pendingFadeIn && !gameState.ui.showTitleScreen) {
-                // showTitleScreen = falseになった後のフレーム：フェードインを開始
-                gameState.ui.pendingFadeIn = false;
-                gameState.ui.transitionType = UIState::TransitionType::FADE_IN;
-                gameState.ui.transitionTimer = 0.0f;
-            }
-            
-            if (gameState.ui.isTransitioning && gameState.ui.transitionType == UIState::TransitionType::FADE_IN) {
-                const float FADE_DURATION = 0.5f;
-                gameState.ui.transitionTimer += deltaTime;
-                if (gameState.ui.transitionTimer >= FADE_DURATION) {
-                    gameState.ui.isTransitioning = false;
-                    gameState.ui.transitionType = UIState::TransitionType::NONE;
-                    gameState.ui.transitionTimer = 0.0f;
-                    gameState.ui.pendingStageTransition = -1;
-                    gameState.ui.pendingReadyScreen = false;
-                    gameState.ui.pendingSkipCountdown = false;
-                    gameState.ui.pendingFadeIn = false;
                 }
             }
 
@@ -925,7 +911,7 @@ namespace GameLoop {
                             }
                         }
                         
-                        if (!gameState.replay.isReplayMode) {
+                        if (!gameState.replay.isReplayMode && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
                         uiRenderer->renderFreeCameraUI(gameState.skills.hasFreeCameraSkill, gameState.skills.isFreeCameraActive, gameState.skills.freeCameraTimer, 
                                                     gameState.skills.freeCameraRemainingUses, gameState.skills.freeCameraMaxUses);
                         
