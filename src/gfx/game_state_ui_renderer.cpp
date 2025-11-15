@@ -868,6 +868,22 @@ void GameStateUIRenderer::renderStageSelectionAssist(int width, int height, int 
     glDisable(GL_BLEND);
 }
 
+void GameStateUIRenderer::renderStageSelectionEscKeyInfo(int width, int height) {
+    font.initialize();
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto escKeyInfoConfig = uiConfig.getStageSelectionEscKeyInfoConfig();
+    glm::vec2 escKeyInfoPos = uiConfig.calculatePosition(escKeyInfoConfig.position, width, height);
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    std::string escKeyInfoText = "SAVE DATA/QUIT: ESC";
+    renderText(escKeyInfoText, escKeyInfoPos, escKeyInfoConfig.color, escKeyInfoConfig.scale);
+    
+    glDisable(GL_BLEND);
+}
+
 void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

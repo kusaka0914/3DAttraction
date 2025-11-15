@@ -270,6 +270,7 @@ namespace UIConfig {
         
         // Stage Selection Assist UI
         UITextConfig getStageSelectionAssistTextConfig() const { return stageSelectionAssistTextConfig; }
+        UITextConfig getStageSelectionEscKeyInfoConfig() const { return stageSelectionEscKeyInfoConfig; }
         
         // Staff Roll UI
         UITextConfig getStaffRollSkipConfig() const { return staffRollSkipConfig; }
@@ -510,6 +511,7 @@ namespace UIConfig {
         
         // Stage Selection Assist UI設定
         UITextConfig stageSelectionAssistTextConfig;
+        UITextConfig stageSelectionEscKeyInfoConfig;
         
         // Staff Roll UI設定
         UITextConfig staffRollSkipConfig;

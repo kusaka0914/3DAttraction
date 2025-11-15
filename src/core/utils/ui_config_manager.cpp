@@ -761,6 +761,12 @@ namespace UIConfig {
         stageSelectionAssistTextConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         stageSelectionAssistTextConfig.scale = 1.3f;
         
+        stageSelectionEscKeyInfoConfig.position.useRelative = false;
+        stageSelectionEscKeyInfoConfig.position.absoluteX = 10.0f;
+        stageSelectionEscKeyInfoConfig.position.absoluteY = 1050.0f;
+        stageSelectionEscKeyInfoConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
+        stageSelectionEscKeyInfoConfig.scale = 1.0f;
+        
         staffRollSkipConfig.position.useRelative = true;
         staffRollSkipConfig.position.offsetX = -70.0f;
         staffRollSkipConfig.position.offsetY = -650.0f;
@@ -1279,6 +1285,21 @@ namespace UIConfig {
                         controlsTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) controlsTextConfig.scale = cfg["scale"];
+                }
+                
+                if (sel.contains("escKeyInfo")) {
+                    auto& cfg = sel["escKeyInfo"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("absoluteX")) stageSelectionEscKeyInfoConfig.position.absoluteX = pos["absoluteX"];
+                        if (pos.contains("absoluteY")) stageSelectionEscKeyInfoConfig.position.absoluteY = pos["absoluteY"];
+                        if (pos.contains("offsetY")) stageSelectionEscKeyInfoConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) stageSelectionEscKeyInfoConfig.position.useRelative = pos["useRelative"];
+                    }
+                    if (cfg.contains("color")) {
+                        stageSelectionEscKeyInfoConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) stageSelectionEscKeyInfoConfig.scale = cfg["scale"];
                 }
             }
             

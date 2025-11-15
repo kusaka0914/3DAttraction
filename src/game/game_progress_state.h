@@ -27,7 +27,7 @@ struct GameProgressState {
     bool isStageCompleted = false;
     
     std::map<int, int> stageStars;
-    int totalStars = 100;
+    int totalStars = 0;
     std::map<int, bool> unlockedStages;
     
     bool isGameCleared = false;
