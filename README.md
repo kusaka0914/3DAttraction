@@ -1,5 +1,15 @@
 ━━━━━━━━━━━━━━━━━━━━
 
+■作品のプレイ/紹介映像
+
+<img width="1139" height="709" alt="スクリーンショット 2025-11-15 14 49 57" src="https://github.com/user-attachments/assets/b79c58b0-1cdb-407e-bd91-fefccb917e0b" />
+
+YouTube上からご覧いただけます。
+
+https://youtu.be/WSxkKcqc_a4?si=aF-RuE3cZlfm-BBR
+
+━━━━━━━━━━━━━━━━━━━━
+
 ■ゲームの概要
 
 【ゲームタイトル】Slime's Sky Travel
