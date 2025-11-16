@@ -190,8 +190,10 @@ namespace GameLoop {
                 }
                 
                 // pendingFadeInがtrueの場合、showTitleScreen = falseにしてステージを読み込む
+                bool justTransitioned = false;
                 if (gameState.ui.pendingFadeIn && gameState.ui.isTransitioning) {
                     gameState.ui.showTitleScreen = false;
+                    justTransitioned = true;
                     
                     int targetStage = gameState.ui.pendingStageTransition;
                     if (targetStage == 6) {
@@ -246,9 +248,11 @@ namespace GameLoop {
                 }
                 
                 // フェードアウト中やpendingFadeInがtrue、または遷移予定がある場合はBGMを再生しない
+                // また、このフレームで遷移が完了した場合（justTransitioned）もBGMを再生しない
                 bool shouldPlayBGM = gameState.audioEnabled && 
                                     !gameState.ui.isTransitioning && 
                                     !gameState.ui.pendingFadeIn &&
+                                    !justTransitioned &&
                                     gameState.ui.transitionType != UIState::TransitionType::FADE_OUT &&
                                     gameState.ui.pendingStageTransition < 0;
                 
@@ -267,6 +271,13 @@ namespace GameLoop {
                             gameState.bgmPlaying = true;
                             std::cout << "Title BGM started: " << titleBGM << std::endl;
                         }
+                    }
+                } else {
+                    // フェードアウト中など、BGMを再生すべきでない場合は停止する
+                    if (gameState.bgmPlaying && gameState.currentBGM == "title.ogg") {
+                        audioManager.stopBGM();
+                        gameState.bgmPlaying = false;
+                        gameState.currentBGM = "";
                     }
                 }
                 
@@ -515,7 +526,10 @@ namespace GameLoop {
                 gameState.ui.endingMessageTimer = 0.0f;
                 
                 gameState.progress.isGameCleared = true;
-                gameState.ui.showSecretStarExplanationUI = true;
+                if (!gameState.progress.hasShownSecretStarExplanationUI) {
+                    gameState.ui.showSecretStarExplanationUI = true;
+                    gameState.progress.hasShownSecretStarExplanationUI = true;
+                }
                 
                 GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
             } else {
@@ -531,7 +545,10 @@ namespace GameLoop {
             gameState.ui.endingMessageTimer = 0.0f;
             
             gameState.progress.isGameCleared = true;
-            gameState.ui.showSecretStarExplanationUI = true;
+            if (!gameState.progress.hasShownSecretStarExplanationUI) {
+                gameState.ui.showSecretStarExplanationUI = true;
+                gameState.progress.hasShownSecretStarExplanationUI = true;
+            }
             
             GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
         }

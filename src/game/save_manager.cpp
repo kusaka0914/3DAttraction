@@ -83,6 +83,8 @@ bool SaveManager::saveGameData(const GameState& gameState) {
         
         saveData["isGameCleared"] = gameState.progress.isGameCleared;
         
+        saveData["hasShownSecretStarExplanationUI"] = gameState.progress.hasShownSecretStarExplanationUI;
+        
         nlohmann::json secretStarClearedJson;
         for (const auto& [stageNumber, clearedTypes] : gameState.progress.secretStarCleared) {
             nlohmann::json typesArray = nlohmann::json::array();
@@ -173,6 +175,10 @@ bool SaveManager::loadGameData(GameState& gameState) {
         
         if (saveData.contains("isGameCleared") && saveData["isGameCleared"].is_boolean()) {
             gameState.progress.isGameCleared = saveData["isGameCleared"];
+        }
+        
+        if (saveData.contains("hasShownSecretStarExplanationUI") && saveData["hasShownSecretStarExplanationUI"].is_boolean()) {
+            gameState.progress.hasShownSecretStarExplanationUI = saveData["hasShownSecretStarExplanationUI"];
         }
         
         if (saveData.contains("secretStarCleared") && saveData["secretStarCleared"].is_object()) {

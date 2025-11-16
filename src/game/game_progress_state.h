@@ -31,6 +31,7 @@ struct GameProgressState {
     std::map<int, bool> unlockedStages;
     
     bool isGameCleared = false;
+    bool hasShownSecretStarExplanationUI = false;  /**< @brief シークレットスター説明UIを表示済みか */
     bool isGameOver = false;
     float gameOverTimer = 0.0f;
     int lives = 6;
