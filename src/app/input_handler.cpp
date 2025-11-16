@@ -279,7 +279,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         }
         
         if (keyStates[GLFW_KEY_B].justPressed() && !isSecretStarMode && gameState.skills.hasBurstJumpSkill && !gameState.skills.isBurstJumpActive && 
-            gameState.skills.burstJumpRemainingUses > 0 && !gameState.skills.isInBurstJumpAir) {
+            gameState.skills.burstJumpRemainingUses > 0 && !gameState.skills.isInBurstJumpAir && stageManager.getCurrentStage() != 0) {
             gameState.skills.isBurstJumpActive = true;
             gameState.skills.hasUsedBurstJump = false;
             gameState.skills.burstJumpRemainingUses--;
