@@ -1,7 +1,7 @@
 {
   "stageInfo": {
     "stageNumber": 2,
-    "stageName": "重力反転エリア",
+    "stageName": "置いてかないで、動く床",
     "playerStartPosition": [0, 6.0, -25.0],
     "goalPosition": [0, 20.0, 30.0],
     "timeLimit": 40.0,
@@ -32,7 +32,7 @@
       "description": "スタート足場"
     },
     {
-      "position": [8, 10, 15],
+      "position": [0, 12, 25],
       "size": [4, 1, 4],
       "color": [1.0, 1.0, 0.0],
       "description": "ゴール足場"

@@ -1,7 +1,7 @@
 {
   "stageInfo": {
     "stageNumber": 5,
-    "stageName": "最終ステージ",
+    "stageName": "最後の砦",
     "playerStartPosition": [0, 6.0, -25.0],
     "goalPosition": [-12, 16, 170],
     "timeLimit": 120.0,

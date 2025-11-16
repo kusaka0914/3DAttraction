@@ -279,7 +279,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         }
         
         if (keyStates[GLFW_KEY_B].justPressed() && !isSecretStarMode && gameState.skills.hasBurstJumpSkill && !gameState.skills.isBurstJumpActive && 
-            gameState.skills.burstJumpRemainingUses > 0 && !gameState.skills.isInBurstJumpAir) {
+            gameState.skills.burstJumpRemainingUses > 0 && !gameState.skills.isInBurstJumpAir && stageManager.getCurrentStage() != 0) {
             gameState.skills.isBurstJumpActive = true;
             gameState.skills.hasUsedBurstJump = false;
             gameState.skills.burstJumpRemainingUses--;
@@ -588,6 +588,16 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 gameState.ui.readyScreenShown = false;
                 gameState.ui.showReadyScreen = true;
                 gameState.ui.readyScreenSpeedLevel = 0;
+                
+                // Immersiveモードの場合はisFirstPersonModeとisFirstPersonViewを再設定（loadStageでリセットされるため）
+                if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::IMMERSIVE_STAR) {
+                    gameState.camera.isFirstPersonMode = true;
+                    gameState.camera.isFirstPersonView = true;
+                    gameState.camera.yaw = 90.0f;
+                    gameState.camera.pitch = -10.0f;
+                    gameState.camera.firstMouse = true;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                }
             }
         }
 
