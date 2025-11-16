@@ -166,6 +166,11 @@ void GameUpdater::updateGameState(
                 // リプレイ終了時に、右上に表示されていた値（replayPlaybackTime）をclearTimeに設定
                 gameState.progress.clearTime = gameState.replay.replayPlaybackTime;
                 
+                // タイムアタックモードの場合、currentTimeAttackTimeも正しい値に設定
+                if (gameState.progress.isTimeAttackMode) {
+                    gameState.progress.currentTimeAttackTime = gameState.replay.replayPlaybackTime;
+                }
+                
                 gameState.replay.isReplayMode = false;
                 gameState.replay.isReplayPaused = false;
                 gameState.ui.showStageClearUI = true;
