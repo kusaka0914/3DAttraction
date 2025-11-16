@@ -1,7 +1,7 @@
 {
   "stageInfo": {
     "stageNumber": 4,
-    "stageName": "複雑な移動プラットフォーム",
+    "stageName": "足場はどこ？足元に注意！",
     "playerStartPosition": [0, 6.0, -25.0],
     "goalPosition": [0, 18.0, 35.0],
     "timeLimit": 90.0,

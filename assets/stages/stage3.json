@@ -1,7 +1,7 @@
 {
   "stageInfo": {
     "stageNumber": 3,
-    "stageName": "スイッチと大砲",
+    "stageName": "消えて！現れて！",
     "playerStartPosition": [0, 6.0, -25.0],
     "goalPosition": [0, 18.0, 35.0],
     "timeLimit": 70.0,
