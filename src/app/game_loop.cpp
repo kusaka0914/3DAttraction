@@ -350,6 +350,18 @@ namespace GameLoop {
             UIConfig::UIConfigManager::getInstance().checkAndReloadConfig();
         }
         
+        // Immersiveモードの場合は、Ready画面でもFPS視点を維持
+        if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::IMMERSIVE_STAR) {
+            if (!gameState.camera.isFirstPersonView || !gameState.camera.isFirstPersonMode) {
+                gameState.camera.isFirstPersonMode = true;
+                gameState.camera.isFirstPersonView = true;
+                gameState.camera.yaw = 90.0f;
+                gameState.camera.pitch = -10.0f;
+                gameState.camera.firstMouse = true;
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
+        }
+        
         int width, height;
         GameLoop::GameRenderer::prepareFrame(window, gameState, stageManager, renderer, width, height, deltaTime);
         
