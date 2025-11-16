@@ -581,6 +581,12 @@ void GameUpdater::updatePhysicsAndCollisions(
     if (isOnPlatform && !wasOnPlatform && gameState.audioEnabled) {
         audioManager.playSFX("on_ground");
     }
+    
+    // 地面に着地した時、バーストジャンプの空中効果をリセット
+    if (isOnPlatform && gameState.skills.isInBurstJumpAir) {
+        gameState.skills.isInBurstJumpAir = false;
+    }
+    
     wasOnPlatform = isOnPlatform;
     
     if (gameState.player.position.y < 0 && !gameState.progress.isGameOver) {
