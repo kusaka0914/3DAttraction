@@ -24,6 +24,12 @@ void OnlineLeaderboardManager::setBaseUrl(const std::string& url) {
 
 void OnlineLeaderboardManager::setPlayerName(const std::string& name) {
     playerName = name;
+    printf("ONLINE: setPlayerName called with: [%s] (length: %zu), playerName is now: [%s]\n", 
+           name.c_str(), name.length(), playerName.c_str());
+}
+
+std::string OnlineLeaderboardManager::getPlayerName() {
+    return playerName;
 }
 
 bool OnlineLeaderboardManager::isOnlineEnabled() {
@@ -231,6 +237,8 @@ void OnlineLeaderboardManager::submitTime(int stageNumber, float time,
         
         // プレイヤー名を処理（空または非ASCII文字のみの場合は"UNKNOWN"に変換、大文字に変換）
         std::string processedPlayerName = playerName;
+        printf("ONLINE: Submitting time - original playerName: [%s] (length: %zu)\n", 
+               playerName.c_str(), playerName.length());
         if (processedPlayerName.empty()) {
             processedPlayerName = "UNKNOWN";
         } else {
@@ -260,7 +268,11 @@ void OnlineLeaderboardManager::submitTime(int stageNumber, float time,
         jsonData["time"] = time;
         jsonData["playerName"] = processedPlayerName;
         
+        printf("ONLINE: Submitting time - processed playerName: [%s] (length: %zu)\n", 
+               processedPlayerName.c_str(), processedPlayerName.length());
+        
         std::string jsonStr = jsonData.dump();
+        printf("ONLINE: JSON payload: %s\n", jsonStr.c_str());
         std::string response;
         
         bool success = httpPost(url, jsonStr, response);

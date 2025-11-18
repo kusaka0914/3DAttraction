@@ -170,7 +170,7 @@ namespace GameLoop {
      */
     void handleStageSelectionArea(GLFWwindow* window, GameState& gameState, StageManager& stageManager,
                                  PlatformSystem& platformSystem, std::function<void()> resetStageStartTime,
-                                 std::map<int, InputUtils::KeyState>& keyStates);
+                                 std::map<int, InputUtils::KeyState>& keyStates, float deltaTime);
     
     /**
      * @brief 描画処理

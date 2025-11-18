@@ -1,4 +1,5 @@
 #include "save_manager.h"
+#include "online_leaderboard_manager.h"
 #include "../core/utils/resource_path.h"
 #include <fstream>
 #include <iostream>
@@ -84,6 +85,9 @@ bool SaveManager::saveGameData(const GameState& gameState) {
         saveData["isGameCleared"] = gameState.progress.isGameCleared;
         
         saveData["hasShownSecretStarExplanationUI"] = gameState.progress.hasShownSecretStarExplanationUI;
+        
+        // プレイヤー名を保存
+        saveData["playerName"] = OnlineLeaderboardManager::getPlayerName();
         
         nlohmann::json secretStarClearedJson;
         for (const auto& [stageNumber, clearedTypes] : gameState.progress.secretStarCleared) {
@@ -179,6 +183,15 @@ bool SaveManager::loadGameData(GameState& gameState) {
         
         if (saveData.contains("hasShownSecretStarExplanationUI") && saveData["hasShownSecretStarExplanationUI"].is_boolean()) {
             gameState.progress.hasShownSecretStarExplanationUI = saveData["hasShownSecretStarExplanationUI"];
+        }
+        
+        // プレイヤー名を読み込み
+        if (saveData.contains("playerName") && saveData["playerName"].is_string()) {
+            std::string savedPlayerName = saveData["playerName"].get<std::string>();
+            if (!savedPlayerName.empty() && savedPlayerName != "Player") {
+                OnlineLeaderboardManager::setPlayerName(savedPlayerName);
+                printf("SAVE: Loaded player name from save file: [%s]\n", savedPlayerName.c_str());
+            }
         }
         
         if (saveData.contains("secretStarCleared") && saveData["secretStarCleared"].is_object()) {

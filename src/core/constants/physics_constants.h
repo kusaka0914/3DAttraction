@@ -33,7 +33,7 @@ namespace GameConstants {
     namespace PhysicsCalculationConstants {
         // 重力計算設定
         constexpr float GRAVITY_MULTIPLIER_STAGE_0 = 2.0f;
-        constexpr float GRAVITY_MULTIPLIER_TIME_SCALE = 1.2f;
+        constexpr float GRAVITY_MULTIPLIER_TIME_SCALE = 1.0f;
         constexpr float GRAVITY_MULTIPLIER_INVERTED = 0.7f;
         constexpr float GRAVITY_MULTIPLIER_BURST_JUMP = 0.5f;
         constexpr float GRAVITY_ACCELERATION = 9.8f;

@@ -48,6 +48,12 @@ public:
     static void setPlayerName(const std::string& playerName);
     
     /**
+     * @brief プレイヤー名を取得する
+     * @return 現在のプレイヤー名
+     */
+    static std::string getPlayerName();
+    
+    /**
      * @brief ステージ別ランキングを取得する
      * @details 非同期でAPIからランキングデータを取得します。
      * 

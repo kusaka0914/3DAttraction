@@ -308,7 +308,7 @@ void GameUpdater::updateGameState(
     if (!gameState.replay.isReplayMode || !gameState.replay.isReplayPaused) {
         GameUpdater::updateItems(gameState, scaledDeltaTime, audioManager);
     }
-    handleStageSelectionArea(window, gameState, stageManager, platformSystem, resetStageStartTime, keyStates);
+    handleStageSelectionArea(window, gameState, stageManager, platformSystem, resetStageStartTime, keyStates, deltaTime);
 }
 
 void GameUpdater::updatePhysicsAndCollisions(

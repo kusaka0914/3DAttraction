@@ -39,6 +39,8 @@ struct UIState {
     int leaderboardTargetStage = 0;  /**< @brief ランキング表示対象ステージ */
     std::vector<LeaderboardEntry> leaderboardEntries;  /**< @brief ランキングエントリ */
     bool isLoadingLeaderboard = false;  /**< @brief ランキング読み込み中フラグ */
+    float leaderboardRetryTimer = 0.0f;  /**< @brief ランキングリトライタイマー（秒） */
+    int leaderboardRetryCount = 0;  /**< @brief ランキングリトライ回数 */
     glm::vec3 leaderboardPosition = glm::vec3(0.0f, 1.0f, 0.0f);  /**< @brief ランキングボードの位置（JSONから読み込む） */
     
     bool showStage0Tutorial = true;
