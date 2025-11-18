@@ -4,6 +4,7 @@
 #include <thread>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 // 静的メンバ変数の定義
 std::string OnlineLeaderboardManager::baseUrl = "http://localhost:3000";
@@ -27,6 +28,51 @@ void OnlineLeaderboardManager::setPlayerName(const std::string& name) {
 
 bool OnlineLeaderboardManager::isOnlineEnabled() {
     return onlineEnabled;
+}
+
+bool OnlineLeaderboardManager::loadConfigFromFile() {
+    // まずassets/config/leaderboard_config.jsonを試す（buildフォルダから実行される場合）
+    std::string configPath = "../assets/config/leaderboard_config.json";
+    std::ifstream file(configPath);
+    
+    // 見つからない場合はassets/config/leaderboard_config.jsonを直接試す
+    if (!file.is_open()) {
+        configPath = "assets/config/leaderboard_config.json";
+        file.open(configPath);
+    }
+    
+    // それでも見つからない場合はbuild/assets/config/leaderboard_config.jsonを試す
+    if (!file.is_open()) {
+        configPath = "build/assets/config/leaderboard_config.json";
+        file.open(configPath);
+    }
+    
+    if (!file.is_open()) {
+        printf("Leaderboard Config: File not found, using default values (localhost:3000)\n");
+        return false;
+    }
+    
+    try {
+        nlohmann::json jsonData;
+        file >> jsonData;
+        file.close();
+        
+        if (jsonData.contains("baseUrl") && jsonData["baseUrl"].is_string()) {
+            baseUrl = jsonData["baseUrl"].get<std::string>();
+            printf("Leaderboard Config: Loaded baseUrl from %s: %s\n", configPath.c_str(), baseUrl.c_str());
+        }
+        
+        if (jsonData.contains("enabled") && jsonData["enabled"].is_boolean()) {
+            onlineEnabled = jsonData["enabled"].get<bool>();
+            printf("Leaderboard Config: Online enabled: %s\n", onlineEnabled ? "true" : "false");
+        }
+        
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Leaderboard Config: Failed to parse JSON: " << e.what() << std::endl;
+        file.close();
+        return false;
+    }
 }
 
 bool OnlineLeaderboardManager::httpGet(const std::string& url, std::string& response) {

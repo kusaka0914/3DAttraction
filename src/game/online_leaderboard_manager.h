@@ -84,6 +84,15 @@ public:
      * @return オンライン機能が有効な場合true
      */
     static bool isOnlineEnabled();
+    
+    /**
+     * @brief 設定ファイルから設定を読み込む
+     * @details assets/config/leaderboard_config.jsonからbaseUrlとenabledを読み込みます。
+     * ファイルが見つからない場合はデフォルト値（localhost:3000）を使用します。
+     * 
+     * @return 設定ファイルの読み込みに成功した場合true
+     */
+    static bool loadConfigFromFile();
 
 private:
     static std::string baseUrl;  /**< @brief APIベースURL */
