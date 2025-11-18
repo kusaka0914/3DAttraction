@@ -168,8 +168,9 @@ namespace GameLoop {
      * @param platformSystem プラットフォームシステム
      * @param resetStageStartTime ステージ開始時間をリセットする関数
      */
-    void handleStageSelectionArea(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                                 PlatformSystem& platformSystem, std::function<void()> resetStageStartTime);
+    void handleStageSelectionArea(GLFWwindow* window, GameState& gameState, StageManager& stageManager,
+                                 PlatformSystem& platformSystem, std::function<void()> resetStageStartTime,
+                                 std::map<int, InputUtils::KeyState>& keyStates, float deltaTime);
     
     /**
      * @brief 描画処理

@@ -272,6 +272,7 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
                 gameState.skills.isInBurstJumpAir = false; // バーストジャンプ空中フラグをリセット
             }
         } else if ((gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) && 
+                   !gameState.progress.isTimeAttackMode &&
                    ((gameState.progress.isEasyMode && gameState.player.canDoubleJump) || 
                    (!gameState.progress.isEasyMode && gameState.skills.hasDoubleJumpSkill && gameState.skills.doubleJumpRemainingUses > 0 && gameState.player.canDoubleJump))) {
             if (gameState.progress.currentStage != 0) {
@@ -291,6 +292,7 @@ void InputSystem::processJumpAndFloat(GLFWwindow* window, GameState& gameState, 
                 }
             }
         } else if ((gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) && 
+                   !gameState.progress.isTimeAttackMode &&
                    gameState.skills.isBurstJumpActive && !gameState.skills.hasUsedBurstJump && !gameState.skills.isInBurstJumpAir) {
             if (gameState.audioEnabled) {
                 audioManager.playSFX("jump");

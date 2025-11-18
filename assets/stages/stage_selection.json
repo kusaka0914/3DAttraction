@@ -77,6 +77,11 @@
       "description": "ステージ5選択エリア"
     }
   ],
+  "leaderboardArea": {
+    "position": [10, 1, 4],
+    "size": [1, 1, 1],
+    "description": "ランキングボード"
+  },
   "patrolPlatforms": [
     {
       "patrolPoints": [

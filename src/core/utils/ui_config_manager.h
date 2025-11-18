@@ -270,6 +270,27 @@ namespace UIConfig {
         
         // Stage Selection Assist UI
         UITextConfig getStageSelectionAssistTextConfig() const { return stageSelectionAssistTextConfig; }
+        
+        // Leaderboard UI
+        UITextConfig getLeaderboardTitleConfig() const { return leaderboardTitleConfig; }
+        UITextConfig getLeaderboardLoadingTextConfig() const { return leaderboardLoadingTextConfig; }
+        UITextConfig getLeaderboardNoRecordsTextConfig() const { return leaderboardNoRecordsTextConfig; }
+        UITextConfig getLeaderboardRankConfig() const { return leaderboardRankConfig; }
+        UITextConfig getLeaderboardPlayerNameConfig() const { return leaderboardPlayerNameConfig; }
+        UITextConfig getLeaderboardTimeConfig() const { return leaderboardTimeConfig; }
+        UITextConfig getLeaderboardInstructionsConfig() const { return leaderboardInstructionsConfig; }
+        UITextConfig getLeaderboardCloseTextConfig() const { return leaderboardCloseTextConfig; }
+        float getLeaderboardRankStartY() const { return leaderboardRankStartY; }
+        float getLeaderboardLineHeight() const { return leaderboardLineHeight; }
+        
+        // プレイヤー名入力画面UI要素の設定を取得
+        UITextConfig getPlayerNameInputTitleConfig() const { return playerNameInputTitleConfig; }
+        UITextConfig getPlayerNameInputTextConfig() const { return playerNameInputTextConfig; }
+        UITextConfig getPlayerNameInputHintConfig() const { return playerNameInputHintConfig; }
+        UITextConfig getPlayerNameInputConfirmConfig() const { return playerNameInputConfirmConfig; }
+        UIPosition getPlayerNameInputBoxPosition() const { return playerNameInputBoxPosition; }
+        float getPlayerNameInputBoxWidth() const { return playerNameInputBoxWidth; }
+        float getPlayerNameInputBoxHeight() const { return playerNameInputBoxHeight; }
         UITextConfig getStageSelectionEscKeyInfoConfig() const { return stageSelectionEscKeyInfoConfig; }
         
         // Staff Roll UI
@@ -511,6 +532,27 @@ namespace UIConfig {
         
         // Stage Selection Assist UI設定
         UITextConfig stageSelectionAssistTextConfig;
+        
+        // Leaderboard UI設定
+        UITextConfig leaderboardTitleConfig;
+        UITextConfig leaderboardLoadingTextConfig;
+        UITextConfig leaderboardNoRecordsTextConfig;
+        UITextConfig leaderboardRankConfig;
+        UITextConfig leaderboardPlayerNameConfig;
+        UITextConfig leaderboardTimeConfig;
+        UITextConfig leaderboardInstructionsConfig;
+        UITextConfig leaderboardCloseTextConfig;
+        float leaderboardRankStartY = 0.3f;
+        float leaderboardLineHeight = 30.0f;
+        
+        // プレイヤー名入力画面UI設定
+        UITextConfig playerNameInputTitleConfig;
+        UITextConfig playerNameInputTextConfig;
+        UITextConfig playerNameInputHintConfig;
+        UITextConfig playerNameInputConfirmConfig;
+        UIPosition playerNameInputBoxPosition;
+        float playerNameInputBoxWidth = 300.0f;
+        float playerNameInputBoxHeight = 40.0f;
         UITextConfig stageSelectionEscKeyInfoConfig;
         
         // Staff Roll UI設定

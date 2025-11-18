@@ -36,6 +36,14 @@ void initializeGameState(GameState& gameState) {
     gameState.ui.showStageSelectionAssist = false;
     gameState.ui.assistTargetStage = 0;
     
+    gameState.ui.showLeaderboardAssist = false;
+    gameState.ui.showLeaderboardUI = false;
+    gameState.ui.leaderboardTargetStage = 0;
+    gameState.ui.leaderboardEntries.clear();
+    gameState.ui.isLoadingLeaderboard = false;
+    gameState.ui.leaderboardRetryTimer = 0.0f;
+    gameState.ui.leaderboardRetryCount = 0;
+    
     gameState.ui.showStage0Tutorial = true;
     
     gameState.player.isMovingBackward = false;

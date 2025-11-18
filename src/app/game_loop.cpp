@@ -27,6 +27,7 @@
 #include "../gfx/minimap_renderer.h"
 #include "../game/replay_manager.h"
 #include "../game/save_manager.h"
+#include "../game/online_leaderboard_manager.h"
 #include "../game/stage_editor.h"
 #include "tutorial_manager.h"
 #include <set>
@@ -285,7 +286,50 @@ namespace GameLoop {
                     state.update(glfwGetKey(window, key) == GLFW_PRESS);
                 }
                 
-                if (keyStates[GLFW_KEY_ENTER].justPressed() && 
+                // 名前入力画面の処理
+                if (gameState.ui.showPlayerNameInput) {
+                    // Backspaceキーで文字削除
+                    if (keyStates[GLFW_KEY_BACKSPACE].justPressed()) {
+                        if (!gameState.ui.playerNameInput.empty() && gameState.ui.playerNameInputCursorPos > 0) {
+                            gameState.ui.playerNameInput.erase(gameState.ui.playerNameInputCursorPos - 1, 1);
+                            gameState.ui.playerNameInputCursorPos--;
+                        }
+                    }
+                    
+                    // ローマ字（A-Z, a-z）の入力（常に大文字で保存・表示）
+                    for (int key = GLFW_KEY_A; key <= GLFW_KEY_Z; key++) {
+                        if (keyStates[key].justPressed()) {
+                            if (gameState.ui.playerNameInput.length() < 12) {
+                                // 常に大文字で保存
+                                char c = 'A' + (key - GLFW_KEY_A);
+                                gameState.ui.playerNameInput.insert(gameState.ui.playerNameInputCursorPos, 1, c);
+                                gameState.ui.playerNameInputCursorPos++;
+                            }
+                        }
+                    }
+                    
+                    // Enterキーで確定
+                    if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                        // 名前が空の場合は"Player"を設定
+                        std::string finalName = gameState.ui.playerNameInput.empty() ? "Player" : gameState.ui.playerNameInput;
+                        printf("ONLINE: Setting player name to: [%s] (length: %zu)\n", finalName.c_str(), finalName.length());
+                        OnlineLeaderboardManager::setPlayerName(finalName);
+                        
+                        // プレイヤー名をセーブデータに保存
+                        SaveManager::saveGameData(gameState);
+                        printf("SAVE: Saved player name to save file: [%s]\n", finalName.c_str());
+                        
+                        gameState.ui.showPlayerNameInput = false;
+                        
+                        // チュートリアルに遷移
+                        gameState.ui.isTransitioning = true;
+                        gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
+                        gameState.ui.transitionTimer = 0.0f;
+                        gameState.ui.pendingStageTransition = 6;  // チュートリアルステージ
+                        gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
+                        gameState.ui.pendingSkipCountdown = true;  // カウントダウンをスキップ
+                    }
+                } else if (keyStates[GLFW_KEY_ENTER].justPressed() && 
                     gameState.ui.titleScreenPhase == UIState::TitleScreenPhase::SHOW_TEXT &&
                     !gameState.ui.isTransitioning) {
                     if (gameState.bgmPlaying && gameState.currentBGM == "title.ogg") {
@@ -294,23 +338,31 @@ namespace GameLoop {
                         gameState.currentBGM = "";
                     }
                     
-                    // チュートリアルクリア判定: stageStars[6]があるか、ステージ1がアンロックされているか、チュートリアル説明が非表示
+                    // 名前入力画面を表示（初回のみ、または名前が未設定の場合）
                     bool hasClearedTutorial = (gameState.progress.stageStars.count(6) > 0 && gameState.progress.stageStars[6] > 0) ||
                                              (gameState.progress.unlockedStages.count(1) > 0 && gameState.progress.unlockedStages[1]) ||
                                              !gameState.ui.showStage0Tutorial;
                     
-                    if (hasClearedTutorial) {
+                    std::string currentPlayerName = OnlineLeaderboardManager::getPlayerName();
+                    bool isPlayerNameSet = !currentPlayerName.empty() && currentPlayerName != "Player";
+                    
+                    // 初回（チュートリアル未クリア）または名前が未設定の場合のみ名前入力画面を表示
+                    if (!hasClearedTutorial || !isPlayerNameSet) {
+                        gameState.ui.showPlayerNameInput = true;
+                        // 既に名前が設定されている場合はそれを表示
+                        if (isPlayerNameSet) {
+                            gameState.ui.playerNameInput = currentPlayerName;
+                            gameState.ui.playerNameInputCursorPos = currentPlayerName.length();
+                        } else {
+                            gameState.ui.playerNameInput = "";
+                            gameState.ui.playerNameInputCursorPos = 0;
+                        }
+                    } else {
+                        // 既にクリア済みで名前も設定済みの場合は直接ステージ選択画面へ
                         gameState.ui.isTransitioning = true;
                         gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
                         gameState.ui.transitionTimer = 0.0f;
                         gameState.ui.pendingStageTransition = 0;  // ステージ選択画面
-                        gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
-                        gameState.ui.pendingSkipCountdown = true;  // カウントダウンをスキップ
-                    } else {
-                        gameState.ui.isTransitioning = true;
-                        gameState.ui.transitionType = UIState::TransitionType::FADE_OUT;
-                        gameState.ui.transitionTimer = 0.0f;
-                        gameState.ui.pendingStageTransition = 6;  // チュートリアルステージ
                         gameState.ui.pendingReadyScreen = false;  // Ready画面をスキップ
                         gameState.ui.pendingSkipCountdown = true;  // カウントダウンをスキップ
                     }
@@ -593,7 +645,8 @@ namespace GameLoop {
 
 
     void handleStageSelectionArea(GLFWwindow* window, GameState& gameState, StageManager& stageManager, 
-                                 PlatformSystem& platformSystem, std::function<void()> resetStageStartTime) {
+                                 PlatformSystem& platformSystem, std::function<void()> resetStageStartTime,
+                                 std::map<int, InputUtils::KeyState>& keyStates, float deltaTime) {
         if (stageManager.getCurrentStage() == 0) {
             int selectedStage = -1;
             for (int stage = 0; stage < 5; stage++) {
@@ -619,6 +672,168 @@ namespace GameLoop {
             if (!gameState.ui.showWarpTutorialUI && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
                 if (selectedStage > 0) {
                     InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                }
+            }
+            
+            // ランキングボードの検出（JSONから読み込んだ位置を使用）
+            const glm::vec3& leaderboardPos = gameState.ui.leaderboardPosition;
+            bool isNearLeaderboard = 
+                gameState.player.position.x > leaderboardPos.x - GameConstants::LEADERBOARD_SELECTION_RANGE &&
+                gameState.player.position.x < leaderboardPos.x + GameConstants::LEADERBOARD_SELECTION_RANGE &&
+                gameState.player.position.z > leaderboardPos.z - GameConstants::LEADERBOARD_SELECTION_RANGE &&
+                gameState.player.position.z < leaderboardPos.z + GameConstants::LEADERBOARD_SELECTION_RANGE;
+            
+            if (isNearLeaderboard) {
+                gameState.ui.showLeaderboardAssist = true;
+            } else {
+                gameState.ui.showLeaderboardAssist = false;
+            }
+            
+            // リーダーボードUI表示中の処理
+            if (gameState.ui.showLeaderboardUI) {
+                // ローディング中でエラーが発生した場合の自動リトライ
+                if (gameState.ui.isLoadingLeaderboard && gameState.ui.leaderboardEntries.empty()) {
+                    const float RETRY_INTERVAL = 2.0f;  // 2秒ごとにリトライ
+                    const float TIMEOUT_SECONDS = 10.0f;  // 10秒でタイムアウト
+                    
+                    gameState.ui.leaderboardRetryTimer += deltaTime;
+                    
+                    // 10秒経過したらタイムアウト
+                    if (gameState.ui.leaderboardRetryTimer >= TIMEOUT_SECONDS) {
+                        printf("ONLINE: Timeout after %.1f seconds, showing NO RECORDS\n", TIMEOUT_SECONDS);
+                        gameState.ui.isLoadingLeaderboard = false;
+                        gameState.ui.leaderboardRetryTimer = 0.0f;
+                        gameState.ui.leaderboardRetryCount = 0;
+                    } else if (gameState.ui.leaderboardRetryTimer >= RETRY_INTERVAL) {
+                        // 2秒ごとにリトライ（最大5回まで）
+                        const int MAX_RETRY_COUNT = 5;
+                        if (gameState.ui.leaderboardRetryCount < MAX_RETRY_COUNT) {
+                            gameState.ui.leaderboardRetryTimer = 0.0f;
+                            gameState.ui.leaderboardRetryCount++;
+                            
+                            printf("ONLINE: Retrying to fetch leaderboard for stage %d (attempt %d/%d)\n", 
+                                   gameState.ui.leaderboardTargetStage, 
+                                   gameState.ui.leaderboardRetryCount, 
+                                   MAX_RETRY_COUNT);
+                            
+                            // リトライ
+                            OnlineLeaderboardManager::fetchLeaderboard(
+                                gameState.ui.leaderboardTargetStage, 
+                                [&gameState](const std::vector<LeaderboardEntry>& entries) {
+                                    if (!entries.empty()) {
+                                        printf("ONLINE: Loaded leaderboard (%zu entries)\n", entries.size());
+                                        gameState.ui.leaderboardEntries = entries;
+                                        gameState.ui.isLoadingLeaderboard = false;
+                                        gameState.ui.leaderboardRetryCount = 0;
+                                        gameState.ui.leaderboardRetryTimer = 0.0f;
+                                    } else {
+                                        // まだ失敗している場合は、isLoadingLeaderboardをtrueのままにしてリトライを続ける
+                                        printf("ONLINE: Failed to load leaderboard, will retry...\n");
+                                    }
+                                }
+                            );
+                        }
+                    }
+                }
+                
+                // A/Dキーでステージ切り替え
+                if (keyStates[GLFW_KEY_A].justPressed() || keyStates[GLFW_KEY_LEFT].justPressed()) {
+                    int currentStage = gameState.ui.leaderboardTargetStage;
+                    int newStage = currentStage - 1;
+                    if (newStage < 1) {
+                        newStage = 5;  // 1-5の範囲でループ
+                    }
+                    gameState.ui.leaderboardTargetStage = newStage;
+                    gameState.ui.isLoadingLeaderboard = true;
+                    gameState.ui.leaderboardEntries.clear();
+                    gameState.ui.leaderboardRetryCount = 0;
+                    gameState.ui.leaderboardRetryTimer = 0.0f;
+                    
+                    // 新しいステージのランキングを取得
+                    OnlineLeaderboardManager::fetchLeaderboard(newStage, [&gameState, newStage](const std::vector<LeaderboardEntry>& entries) {
+                        if (!entries.empty()) {
+                            printf("ONLINE: Loaded leaderboard for stage %d (%zu entries)\n", newStage, entries.size());
+                            gameState.ui.leaderboardEntries = entries;
+                            gameState.ui.isLoadingLeaderboard = false;
+                            gameState.ui.leaderboardRetryCount = 0;
+                            gameState.ui.leaderboardRetryTimer = 0.0f;
+                        } else {
+                            // エラー時はLOADINGを続ける（リトライロジックが処理する）
+                            printf("ONLINE: Failed to load leaderboard for stage %d, will retry...\n", newStage);
+                        }
+                    });
+                }
+                
+                if (keyStates[GLFW_KEY_D].justPressed() || keyStates[GLFW_KEY_RIGHT].justPressed()) {
+                    int currentStage = gameState.ui.leaderboardTargetStage;
+                    int newStage = currentStage + 1;
+                    if (newStage > 5) {
+                        newStage = 1;  // 1-5の範囲でループ
+                    }
+                    gameState.ui.leaderboardTargetStage = newStage;
+                    gameState.ui.isLoadingLeaderboard = true;
+                    gameState.ui.leaderboardEntries.clear();
+                    gameState.ui.leaderboardRetryCount = 0;
+                    gameState.ui.leaderboardRetryTimer = 0.0f;
+                    
+                    // 新しいステージのランキングを取得
+                    OnlineLeaderboardManager::fetchLeaderboard(newStage, [&gameState, newStage](const std::vector<LeaderboardEntry>& entries) {
+                        if (!entries.empty()) {
+                            printf("ONLINE: Loaded leaderboard for stage %d (%zu entries)\n", newStage, entries.size());
+                            gameState.ui.leaderboardEntries = entries;
+                            gameState.ui.isLoadingLeaderboard = false;
+                            gameState.ui.leaderboardRetryCount = 0;
+                            gameState.ui.leaderboardRetryTimer = 0.0f;
+                        } else {
+                            // エラー時はLOADINGを続ける（リトライロジックが処理する）
+                            printf("ONLINE: Failed to load leaderboard for stage %d, will retry...\n", newStage);
+                        }
+                    });
+                }
+                
+                // Enterキーで閉じる
+                if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                    gameState.ui.showLeaderboardUI = false;
+                    gameState.ui.leaderboardEntries.clear();
+                    gameState.ui.leaderboardTargetStage = 0;
+                    gameState.ui.isLoadingLeaderboard = false;
+                    gameState.ui.leaderboardRetryCount = 0;
+                    gameState.ui.leaderboardRetryTimer = 0.0f;
+                }
+            } else if (!gameState.ui.showWarpTutorialUI && 
+                !gameState.ui.showUnlockConfirmUI &&
+                !gameState.ui.showStarInsufficientUI &&
+                !gameState.ui.showStageSelectionAssist &&
+                keyStates[GLFW_KEY_ENTER].justPressed()) {
+                // ランキングボードでEnterキーを押したときの処理
+                if (isNearLeaderboard && !gameState.ui.showLeaderboardUI && !gameState.ui.isLoadingLeaderboard) {
+                    // ステージ選択UIを表示して、どのステージのランキングを見るか選択させる
+                    // まずは現在選択中のステージ（または最後にクリアしたステージ）のランキングを表示
+                    int targetStage = gameState.ui.assistTargetStage > 0 ? gameState.ui.assistTargetStage : 1;
+                    gameState.ui.leaderboardTargetStage = targetStage;
+                    gameState.ui.isLoadingLeaderboard = true;
+                    gameState.ui.showLeaderboardUI = true;
+                    gameState.ui.leaderboardEntries.clear();
+                    gameState.ui.leaderboardRetryCount = 0;
+                    gameState.ui.leaderboardRetryTimer = 0.0f;
+                    
+                    // ランキングを取得
+                    OnlineLeaderboardManager::fetchLeaderboard(targetStage, [&gameState, targetStage](const std::vector<LeaderboardEntry>& entries) {
+                        if (!entries.empty()) {
+                            printf("ONLINE: Loaded leaderboard for stage %d (%zu entries)\n", targetStage, entries.size());
+                            for (size_t i = 0; i < entries.size(); i++) {
+                                printf("ONLINE: Entry %zu - playerName: [%s] (length: %zu), time: %.2f\n", 
+                                       i + 1, entries[i].playerName.c_str(), entries[i].playerName.length(), entries[i].time);
+                            }
+                            gameState.ui.leaderboardEntries = entries;
+                            gameState.ui.isLoadingLeaderboard = false;
+                            gameState.ui.leaderboardRetryCount = 0;
+                            gameState.ui.leaderboardRetryTimer = 0.0f;
+                        } else {
+                            // エラー時はLOADINGを続ける（リトライロジックが処理する）
+                            printf("ONLINE: Failed to load leaderboard for stage %d, will retry...\n", targetStage);
+                        }
+                    });
                 }
             }
         }
@@ -954,7 +1169,7 @@ namespace GameLoop {
                             }
                         }
                         
-                        if (!gameState.replay.isReplayMode && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
+                        if (!gameState.replay.isReplayMode && gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE && !gameState.progress.isTimeAttackMode) {
                         uiRenderer->renderFreeCameraUI(gameState.skills.hasFreeCameraSkill, gameState.skills.isFreeCameraActive, gameState.skills.freeCameraTimer, 
                                                     gameState.skills.freeCameraRemainingUses, gameState.skills.freeCameraMaxUses);
                         
