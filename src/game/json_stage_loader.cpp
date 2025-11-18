@@ -152,6 +152,13 @@ bool JsonStageLoader::loadStageFromJSON(const std::string& filename, GameState& 
             }
         }
         
+        if (root.contains("leaderboardArea")) {
+            if (!parseLeaderboardArea(root, gameState, platformSystem)) {
+                ErrorHandler::logError("Failed to parse leaderboard area");
+                return false;
+            }
+        }
+        
         if (root.contains("conditionalCyclingDisappearingPlatforms")) {
             if (!parseConditionalCyclingDisappearingPlatforms(root, gameState, platformSystem)) {
                 ErrorHandler::logError("Failed to parse conditional cycling disappearing platforms");
@@ -547,6 +554,40 @@ bool JsonStageLoader::parseStageSelectionAreas(const nlohmann::json& root, GameS
         
     } catch (const std::exception& e) {
         ErrorHandler::logErrorFormat("Failed to parse stage selection areas: %s", e.what());
+        return false;
+    }
+}
+
+bool JsonStageLoader::parseLeaderboardArea(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem) {
+    try {
+        if (!root.contains("leaderboardArea")) {
+            return true; // オプショナル
+        }
+        
+        const auto& area = root["leaderboardArea"];
+        glm::vec3 position = glm::vec3(
+            area["position"][0].get<float>(),
+            area["position"][1].get<float>(),
+            area["position"][2].get<float>()
+        );
+        glm::vec3 size = glm::vec3(
+            area["size"][0].get<float>(),
+            area["size"][1].get<float>(),
+            area["size"][2].get<float>()
+        );
+        
+        gameState.ui.leaderboardPosition = position;
+        
+        // ランキングボードをプラットフォームとして描画（青色で表示）
+        glm::vec3 color = glm::vec3(0.2f, 0.4f, 1.0f); // 青色
+        platformSystem.addPlatform(StaticPlatform(position, size, color));
+        printf("Created leaderboard area at (%.1f, %.1f, %.1f) with color (%.1f, %.1f, %.1f)\n",
+               position.x, position.y, position.z, color.r, color.g, color.b);
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        ErrorHandler::logErrorFormat("Failed to parse leaderboard area: %s", e.what());
         return false;
     }
 }

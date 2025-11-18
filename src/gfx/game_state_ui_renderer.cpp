@@ -7,6 +7,7 @@
 #include "texture_manager.h"
 #include "../core/utils/resource_path.h"
 #include "../game/game_state.h"
+#include "../game/online_leaderboard_manager.h"
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -866,6 +867,266 @@ void GameStateUIRenderer::renderStageSelectionAssist(int width, int height, int 
     renderText(assistText, assistPos, assistConfig.color, assistConfig.scale);
     
     glDisable(GL_BLEND);
+}
+
+void GameStateUIRenderer::renderLeaderboardAssist(int width, int height, bool isVisible) {
+    if (!isVisible) {
+        return;
+    }
+    
+    font.initialize();
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    auto assistConfig = uiConfig.getStageSelectionAssistTextConfig();
+    glm::vec2 assistPos = uiConfig.calculatePosition(assistConfig.position, width, height);
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    std::string assistText = "VIEW WORLD RECORD : ENTER";
+    renderText(assistText, assistPos, assistConfig.color, assistConfig.scale);
+    
+    glDisable(GL_BLEND);
+}
+
+void GameStateUIRenderer::renderLeaderboardUI(int width, int height, int targetStage,
+                                             const std::vector<LeaderboardEntry>& entries,
+                                             bool isLoading) {
+    printf("DEBUG: renderLeaderboardUI called - targetStage: %d, entries: %zu, isLoading: %d\n", 
+           targetStage, entries.size(), isLoading ? 1 : 0);
+    
+    font.initialize();
+    
+    // 背景描画用に2Dモードを設定
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 背景（半透明黒）
+    glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // マトリックスを復元（renderTextが独自に設定するため）
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // renderTextは1280x720の座標系を使うため、位置をスケーリング
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル（JSONから設定を取得）
+    std::string title = "STAGE " + std::to_string(targetStage) + " WORLD RECORD";
+    auto titleConfig = uiConfig.getLeaderboardTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText(title, glm::vec2(titlePos.x * scaleX, titlePos.y * scaleY), titleConfig.color, titleConfig.scale);
+    
+    if (isLoading) {
+        std::string loadingText = "LOADING...";
+        auto loadingConfig = uiConfig.getLeaderboardLoadingTextConfig();
+        glm::vec2 loadingPos = uiConfig.calculatePosition(loadingConfig.position, width, height);
+        renderText(loadingText, glm::vec2(loadingPos.x * scaleX, loadingPos.y * scaleY), loadingConfig.color, loadingConfig.scale);
+    } else if (entries.empty()) {
+        std::string noDataText = "NO RECORDS YET";
+        auto noDataConfig = uiConfig.getLeaderboardNoRecordsTextConfig();
+        glm::vec2 noDataPos = uiConfig.calculatePosition(noDataConfig.position, width, height);
+        renderText(noDataText, glm::vec2(noDataPos.x * scaleX, noDataPos.y * scaleY), noDataConfig.color, noDataConfig.scale);
+    } else {
+        // ランキング表示（最大10件）
+        float startY = height * uiConfig.getLeaderboardRankStartY();
+        float lineHeight = uiConfig.getLeaderboardLineHeight();
+        int displayCount = std::min(10, static_cast<int>(entries.size()));
+        
+        auto rankConfig = uiConfig.getLeaderboardRankConfig();
+        auto nameConfig = uiConfig.getLeaderboardPlayerNameConfig();
+        auto timeConfig = uiConfig.getLeaderboardTimeConfig();
+        
+        for (int i = 0; i < displayCount; i++) {
+            const auto& entry = entries[i];
+            float y = startY + i * lineHeight; // 1位が上、下に行くほど順位が下がる
+            
+            // 順位（JSONから設定を取得）
+            std::string rankText = std::to_string(i + 1) + ".";
+            glm::vec2 rankBasePos = uiConfig.calculatePosition(rankConfig.position, width, height);
+            glm::vec2 rankPos = glm::vec2(rankBasePos.x, rankBasePos.y + i * lineHeight);
+            renderText(rankText, glm::vec2(rankPos.x * scaleX, rankPos.y * scaleY), rankConfig.color, rankConfig.scale);
+            
+            // プレイヤー名（実際のプレイヤー名を表示、空の場合は"UNKNOWN"）
+            std::string nameText = entry.playerName;
+            if (nameText.empty()) {
+                nameText = "UNKNOWN";
+            } else {
+                // ASCII文字のみを抽出し、大文字に変換
+                std::string asciiName;
+                for (char c : nameText) {
+                    if (c >= 32 && c <= 126) { // ASCII文字範囲
+                        // 小文字を大文字に変換
+                        if (c >= 'a' && c <= 'z') {
+                            asciiName += (c - 'a' + 'A');
+                        } else {
+                            asciiName += c;
+                        }
+                    }
+                }
+                if (asciiName.empty()) {
+                    nameText = "UNKNOWN";
+                } else {
+                    nameText = asciiName;
+                }
+            }
+            
+            // 最大12文字まで
+            if (nameText.length() > 12) {
+                nameText = nameText.substr(0, 12);
+            }
+            
+            // プレイヤー名（JSONから設定を取得）
+            glm::vec2 nameBasePos = uiConfig.calculatePosition(nameConfig.position, width, height);
+            glm::vec2 namePos = glm::vec2(nameBasePos.x, nameBasePos.y + i * lineHeight);
+            renderText(nameText, glm::vec2(namePos.x * scaleX, namePos.y * scaleY), nameConfig.color, nameConfig.scale);
+            
+            // タイム（JSONから設定を取得）
+            char timeStr[32];
+            snprintf(timeStr, sizeof(timeStr), "%.2fs", entry.time);
+            std::string timeText = timeStr;
+            glm::vec2 timeBasePos = uiConfig.calculatePosition(timeConfig.position, width, height);
+            glm::vec2 timePos = glm::vec2(timeBasePos.x, timeBasePos.y + i * lineHeight);
+            renderText(timeText, glm::vec2(timePos.x * scaleX, timePos.y * scaleY), timeConfig.color, timeConfig.scale);
+        }
+    }
+    
+    // 説明UI（A/Dで切り替え、Enterで閉じる）
+    std::string instructionsText = "A/D : PREV/NEXT STAGE | CLOSE : ENTER";
+    auto instructionsConfig = uiConfig.getLeaderboardInstructionsConfig();
+    glm::vec2 instructionsPos = uiConfig.calculatePosition(instructionsConfig.position, width, height);
+    renderText(instructionsText, glm::vec2(instructionsPos.x * scaleX, instructionsPos.y * scaleY), instructionsConfig.color, instructionsConfig.scale);
+}
+
+void GameStateUIRenderer::renderPlayerNameInput(int width, int height, const std::string& playerName, int cursorPos, float timer) {
+    font.initialize();
+    
+    // 背景描画用に2Dモードを設定
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 背景（半透明黒）
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // 入力欄の背景（白）- 背景の上に描画（JSONから設定を取得）
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    float inputBoxWidth = uiConfig.getPlayerNameInputBoxWidth();
+    float inputBoxHeight = uiConfig.getPlayerNameInputBoxHeight();
+    glm::vec2 inputBoxBasePos = uiConfig.calculatePosition(uiConfig.getPlayerNameInputBoxPosition(), width, height);
+    float inputBoxX = inputBoxBasePos.x - inputBoxWidth / 2.0f;
+    float inputBoxY = inputBoxBasePos.y - inputBoxHeight / 2.0f;
+    
+    glDisable(GL_BLEND);  // ブレンドを無効にして不透明に
+    glColor3f(1.0f, 1.0f, 1.0f);  // 白（不透明）
+    glBegin(GL_QUADS);
+    glVertex2f(inputBoxX, inputBoxY);
+    glVertex2f(inputBoxX + inputBoxWidth, inputBoxY);
+    glVertex2f(inputBoxX + inputBoxWidth, inputBoxY + inputBoxHeight);
+    glVertex2f(inputBoxX, inputBoxY + inputBoxHeight);
+    glEnd();
+    glEnable(GL_BLEND);
+    
+    // マトリックスを復元（renderTextが独自に設定するため）
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    
+    // renderTextは1280x720の座標系を使うため、位置をスケーリング
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル（JSONから設定を取得）
+    std::string titleText = "ENTER YOUR NAME";
+    auto titleConfig = uiConfig.getPlayerNameInputTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText(titleText, glm::vec2(titlePos.x * scaleX, titlePos.y * scaleY), titleConfig.color, titleConfig.scale);
+    
+    // カーソル点滅（1秒周期）
+    float blinkSpeed = 2.0f;
+    float blink = 0.5f + 0.5f * sinf(timer * blinkSpeed * 3.14159f);
+    bool showCursor = blink > 0.5f;
+    
+    // 入力テキスト（JSONから設定を取得）
+    std::string inputText = playerName;
+    auto inputTextConfig = uiConfig.getPlayerNameInputTextConfig();
+    glm::vec2 inputTextBasePos = uiConfig.calculatePosition(inputTextConfig.position, width, height);
+    
+    // テキストを左揃えで表示（JSONの位置を基準に）
+    float textStartX = inputTextBasePos.x;
+    float textY = inputTextBasePos.y;
+    
+    // 入力テキストを描画
+    if (!inputText.empty()) {
+        renderText(inputText, glm::vec2(textStartX * scaleX, textY * scaleY), inputTextConfig.color, inputTextConfig.scale);
+    }
+    
+    // カーソルを描画（点滅）
+    if (showCursor) {
+        float cursorX = textStartX;
+        if (!inputText.empty() && cursorPos >= 0 && cursorPos <= static_cast<int>(inputText.length())) {
+            // カーソル位置に応じてX座標を計算
+            cursorX = textStartX + inputText.substr(0, cursorPos).length() * 8.0f * inputTextConfig.scale;
+        }
+        renderText("_", glm::vec2(cursorX * scaleX, textY * scaleY), inputTextConfig.color, inputTextConfig.scale);
+    }
+    
+    // 説明テキスト（大文字、JSONから設定を取得）
+    std::string hintText = "A-Z ONLY (MAX 12 CHARACTERS)";
+    auto hintConfig = uiConfig.getPlayerNameInputHintConfig();
+    glm::vec2 hintPos = uiConfig.calculatePosition(hintConfig.position, width, height);
+    renderText(hintText, glm::vec2(hintPos.x * scaleX, hintPos.y * scaleY), hintConfig.color, hintConfig.scale);
+    
+    // Enterキーで確定（大文字、JSONから設定を取得）
+    std::string enterText = "CONFIRM : ENTER";
+    auto confirmConfig = uiConfig.getPlayerNameInputConfirmConfig();
+    glm::vec2 enterPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
+    renderText(enterText, glm::vec2(enterPos.x * scaleX, enterPos.y * scaleY), confirmConfig.color, confirmConfig.scale);
 }
 
 void GameStateUIRenderer::renderStageSelectionEscKeyInfo(int width, int height) {

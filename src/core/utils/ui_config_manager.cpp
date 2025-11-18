@@ -761,6 +761,89 @@ namespace UIConfig {
         stageSelectionAssistTextConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
         stageSelectionAssistTextConfig.scale = 1.3f;
         
+        // Leaderboard UI設定
+        leaderboardTitleConfig.position.useRelative = true;
+        leaderboardTitleConfig.position.offsetX = 0.0f;
+        leaderboardTitleConfig.position.offsetY = -300.0f;
+        leaderboardTitleConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        leaderboardTitleConfig.scale = 1.5f;
+        
+        leaderboardLoadingTextConfig.position.useRelative = true;
+        leaderboardLoadingTextConfig.position.offsetX = 0.0f;
+        leaderboardLoadingTextConfig.position.offsetY = 0.0f;
+        leaderboardLoadingTextConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        leaderboardLoadingTextConfig.scale = 1.0f;
+        
+        leaderboardNoRecordsTextConfig.position.useRelative = true;
+        leaderboardNoRecordsTextConfig.position.offsetX = 0.0f;
+        leaderboardNoRecordsTextConfig.position.offsetY = 0.0f;
+        leaderboardNoRecordsTextConfig.color = glm::vec3(0.8f, 0.8f, 0.8f);
+        leaderboardNoRecordsTextConfig.scale = 1.0f;
+        
+        leaderboardRankConfig.position.useRelative = true;
+        leaderboardRankConfig.position.offsetX = -550.0f;
+        leaderboardRankConfig.position.offsetY = 0.0f;
+        leaderboardRankConfig.color = glm::vec3(1.0f, 1.0f, 1.0f);
+        leaderboardRankConfig.scale = 1.0f;
+        
+        leaderboardPlayerNameConfig.position.useRelative = true;
+        leaderboardPlayerNameConfig.position.offsetX = -490.0f;
+        leaderboardPlayerNameConfig.position.offsetY = 0.0f;
+        leaderboardPlayerNameConfig.color = glm::vec3(0.9f, 0.9f, 1.0f);
+        leaderboardPlayerNameConfig.scale = 1.0f;
+        
+        leaderboardTimeConfig.position.useRelative = true;
+        leaderboardTimeConfig.position.offsetX = 200.0f;
+        leaderboardTimeConfig.position.offsetY = 0.0f;
+        leaderboardTimeConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        leaderboardTimeConfig.scale = 1.0f;
+        
+        leaderboardInstructionsConfig.position.useRelative = true;
+        leaderboardInstructionsConfig.position.offsetX = -500.0f;
+        leaderboardInstructionsConfig.position.offsetY = 300.0f;
+        leaderboardInstructionsConfig.color = glm::vec3(0.7f, 0.7f, 0.7f);
+        leaderboardInstructionsConfig.scale = 0.8f;
+        
+        leaderboardCloseTextConfig.position.useRelative = true;
+        leaderboardCloseTextConfig.position.offsetX = 0.0f;
+        leaderboardCloseTextConfig.position.offsetY = 300.0f;
+        leaderboardCloseTextConfig.color = glm::vec3(0.7f, 0.7f, 0.7f);
+        leaderboardCloseTextConfig.scale = 0.8f;
+        
+        leaderboardRankStartY = 0.3f;
+        leaderboardLineHeight = 30.0f;
+        
+        // プレイヤー名入力画面UI設定
+        playerNameInputTitleConfig.position.useRelative = true;
+        playerNameInputTitleConfig.position.offsetX = -570.0f;
+        playerNameInputTitleConfig.position.offsetY = -280.0f;
+        playerNameInputTitleConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
+        playerNameInputTitleConfig.scale = 1.5f;
+        
+        playerNameInputTextConfig.position.useRelative = true;
+        playerNameInputTextConfig.position.offsetX = 0.0f;
+        playerNameInputTextConfig.position.offsetY = 0.0f;
+        playerNameInputTextConfig.color = glm::vec3(0.0f, 0.0f, 0.0f);
+        playerNameInputTextConfig.scale = 1.0f;
+        
+        playerNameInputHintConfig.position.useRelative = true;
+        playerNameInputHintConfig.position.offsetX = -570.0f;
+        playerNameInputHintConfig.position.offsetY = 60.0f;
+        playerNameInputHintConfig.color = glm::vec3(0.7f, 0.7f, 0.7f);
+        playerNameInputHintConfig.scale = 0.8f;
+        
+        playerNameInputConfirmConfig.position.useRelative = true;
+        playerNameInputConfirmConfig.position.offsetX = -550.0f;
+        playerNameInputConfirmConfig.position.offsetY = 150.0f;
+        playerNameInputConfirmConfig.color = glm::vec3(0.7f, 0.7f, 0.7f);
+        playerNameInputConfirmConfig.scale = 0.8f;
+        
+        playerNameInputBoxPosition.useRelative = true;
+        playerNameInputBoxPosition.offsetX = -150.0f;
+        playerNameInputBoxPosition.offsetY = -20.0f;
+        playerNameInputBoxWidth = 300.0f;
+        playerNameInputBoxHeight = 40.0f;
+        
         stageSelectionEscKeyInfoConfig.position.useRelative = false;
         stageSelectionEscKeyInfoConfig.position.absoluteX = 10.0f;
         stageSelectionEscKeyInfoConfig.position.absoluteY = 1050.0f;
@@ -926,19 +1009,29 @@ namespace UIConfig {
     }
     
     bool UIConfigManager::loadConfig(const std::string& filepath) {
-        configFilePath = filepath;
         setDefaultValues();  // デフォルト値を設定
         
-        std::ifstream file(filepath);
+        // assets/config/ui_config.jsonを優先（buildフォルダから実行されるため）
+        std::string preferredPath = "../assets/config/ui_config.json";
+        std::ifstream file(preferredPath);
+        
         if (!file.is_open()) {
-            std::string altPath = "../" + filepath;
-            file.open(altPath);
+            // 優先パスが見つからない場合は、指定されたパスを試す
+            file.open(filepath);
             if (!file.is_open()) {
-                printf("UI Config: File not found, using default values: %s\n", filepath.c_str());
-                configLoaded = false;
-                return false;
+                std::string altPath = "../" + filepath;
+                file.open(altPath);
+                if (!file.is_open()) {
+                    printf("UI Config: File not found, using default values: %s\n", filepath.c_str());
+                    configLoaded = false;
+                    return false;
+                }
+                configFilePath = altPath;
+            } else {
+                configFilePath = filepath;
             }
-            configFilePath = altPath;
+        } else {
+            configFilePath = preferredPath;
         }
         
         try {
@@ -2734,6 +2827,78 @@ namespace UIConfig {
                 }
             }
             
+            if (jsonData.contains("playerNameInput")) {
+                auto& input = jsonData["playerNameInput"];
+                
+                if (input.contains("title")) {
+                    auto& cfg = input["title"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) playerNameInputTitleConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) playerNameInputTitleConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) playerNameInputTitleConfig.position.useRelative = pos["useRelative"];
+                    }
+                    if (cfg.contains("color")) {
+                        playerNameInputTitleConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) playerNameInputTitleConfig.scale = cfg["scale"];
+                }
+                
+                if (input.contains("inputBox")) {
+                    auto& cfg = input["inputBox"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) playerNameInputBoxPosition.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) playerNameInputBoxPosition.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) playerNameInputBoxPosition.useRelative = pos["useRelative"];
+                    }
+                    if (cfg.contains("width")) playerNameInputBoxWidth = cfg["width"];
+                    if (cfg.contains("height")) playerNameInputBoxHeight = cfg["height"];
+                }
+                
+                if (input.contains("inputText")) {
+                    auto& cfg = input["inputText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) playerNameInputTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) playerNameInputTextConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) playerNameInputTextConfig.position.useRelative = pos["useRelative"];
+                    }
+                    if (cfg.contains("color")) {
+                        playerNameInputTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) playerNameInputTextConfig.scale = cfg["scale"];
+                }
+                
+                if (input.contains("hint")) {
+                    auto& cfg = input["hint"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) playerNameInputHintConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) playerNameInputHintConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) playerNameInputHintConfig.position.useRelative = pos["useRelative"];
+                    }
+                    if (cfg.contains("color")) {
+                        playerNameInputHintConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) playerNameInputHintConfig.scale = cfg["scale"];
+                }
+                
+                if (input.contains("confirm")) {
+                    auto& cfg = input["confirm"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) playerNameInputConfirmConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) playerNameInputConfirmConfig.position.offsetY = pos["offsetY"];
+                        if (pos.contains("useRelative")) playerNameInputConfirmConfig.position.useRelative = pos["useRelative"];
+                    }
+                    if (cfg.contains("color")) {
+                        playerNameInputConfirmConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) playerNameInputConfirmConfig.scale = cfg["scale"];
+                }
+            }
+            
             if (jsonData.contains("staffRoll")) {
                 auto& staff = jsonData["staffRoll"];
                 
@@ -2791,6 +2956,122 @@ namespace UIConfig {
                 
                 if (staff.contains("spacing")) {
                     staffRollSpacing = staff["spacing"];
+                }
+            }
+            
+            if (jsonData.contains("leaderboard")) {
+                auto& leaderboard = jsonData["leaderboard"];
+                
+                if (leaderboard.contains("title")) {
+                    auto& cfg = leaderboard["title"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardTitleConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardTitleConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardTitleConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardTitleConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("loadingText")) {
+                    auto& cfg = leaderboard["loadingText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardLoadingTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardLoadingTextConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardLoadingTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardLoadingTextConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("noRecordsText")) {
+                    auto& cfg = leaderboard["noRecordsText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardNoRecordsTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardNoRecordsTextConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardNoRecordsTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardNoRecordsTextConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("rank")) {
+                    auto& cfg = leaderboard["rank"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardRankConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardRankConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardRankConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardRankConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("playerName")) {
+                    auto& cfg = leaderboard["playerName"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardPlayerNameConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardPlayerNameConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardPlayerNameConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardPlayerNameConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("time")) {
+                    auto& cfg = leaderboard["time"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardTimeConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardTimeConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("instructions")) {
+                    auto& cfg = leaderboard["instructions"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardInstructionsConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardInstructionsConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardInstructionsConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardInstructionsConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("closeText")) {
+                    auto& cfg = leaderboard["closeText"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardCloseTextConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardCloseTextConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardCloseTextConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardCloseTextConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("rankStartY")) {
+                    leaderboardRankStartY = leaderboard["rankStartY"];
+                }
+                
+                if (leaderboard.contains("lineHeight")) {
+                    leaderboardLineHeight = leaderboard["lineHeight"];
                 }
             }
             
@@ -3089,6 +3370,13 @@ namespace UIConfig {
             lastFileModificationTime = getFileModificationTime(configFilePath);
             
             printf("UI Config: Loaded successfully from %s\n", configFilePath.c_str());
+            if (jsonData.contains("playerNameInput") && jsonData["playerNameInput"].contains("title")) {
+                auto& title = jsonData["playerNameInput"]["title"];
+                if (title.contains("position") && title["position"].contains("offsetX")) {
+                    printf("UI Config: playerNameInput.title.position.offsetX = %.1f\n", 
+                           static_cast<float>(title["position"]["offsetX"]));
+                }
+            }
             return true;
             
         } catch (const std::exception& e) {
@@ -3138,35 +3426,50 @@ namespace UIConfig {
     }
     
     bool UIConfigManager::checkAndReloadConfig() {
-        if (configFilePath.empty()) {
-            return false;
+        // assets/config/ui_config.jsonを優先（buildフォルダから実行されるため）
+        std::string preferredPath = "../assets/config/ui_config.json";
+        time_t currentModTime = getFileModificationTime(preferredPath);
+        std::string actualPath = preferredPath;
+        
+        // 優先パスが見つからない場合は、現在のconfigFilePathをチェック
+        if (currentModTime == 0 && !configFilePath.empty()) {
+            currentModTime = getFileModificationTime(configFilePath);
+            if (currentModTime > 0) {
+                actualPath = configFilePath;
+            }
         }
         
-        time_t currentModTime = getFileModificationTime(configFilePath);
-        
-        if (currentModTime == 0) {
+        // さらに代替パスをチェック
+        if (currentModTime == 0 && !configFilePath.empty()) {
             std::string altPath = configFilePath;
             if (altPath.find("../") == 0) {
                 altPath = altPath.substr(3);
             } else if (altPath.find("assets/") == 0) {
                 altPath = "../" + altPath;
             }
-            currentModTime = getFileModificationTime(altPath);
-            if (currentModTime > 0) {
-                configFilePath = altPath;
+            time_t altModTime = getFileModificationTime(altPath);
+            if (altModTime > 0) {
+                currentModTime = altModTime;
+                actualPath = altPath;
             }
         }
         
+        // ファイル変更を検知
         if (currentModTime > 0 && currentModTime != lastFileModificationTime && lastFileModificationTime > 0) {
-            printf("UI Config: File changed! Reloading from %s...\n", configFilePath.c_str());
+            printf("UI Config: File changed! Reloading from %s...\n", actualPath.c_str());
+            configFilePath = actualPath;
             lastFileModificationTime = currentModTime;
             reloadConfig();
+            printf("UI Config: Reload completed. playerNameInput.title.offsetX = %.1f\n", 
+                   playerNameInputTitleConfig.position.offsetX);
             return true;
         }
         
         if (lastFileModificationTime == 0 && currentModTime > 0) {
             lastFileModificationTime = currentModTime;
-            printf("UI Config: Initial file modification time recorded: %ld\n", lastFileModificationTime);
+            configFilePath = actualPath;
+            printf("UI Config: Initial file modification time recorded: %ld (path: %s)\n", 
+                   lastFileModificationTime, actualPath.c_str());
         }
         
         return false;

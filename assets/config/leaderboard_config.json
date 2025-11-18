@@ -1,0 +1,6 @@
+{
+  "baseUrl": "https://slimes-sky-travel-api.onrender.com",
+  "enabled": true,
+  "timeoutSeconds": 5
+}
+

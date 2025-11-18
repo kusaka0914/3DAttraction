@@ -25,6 +25,12 @@ namespace GameConstants {
     // ステージ選択エリアの判定範囲
     constexpr float STAGE_SELECTION_RANGE = 0.5f;  // 選択範囲の半径
     
+    // ランキングボードの位置
+    constexpr float LEADERBOARD_POSITION_X = 9.0f;
+    constexpr float LEADERBOARD_POSITION_Y = 0.0f;
+    constexpr float LEADERBOARD_POSITION_Z = 4.0f;
+    constexpr float LEADERBOARD_SELECTION_RANGE = 0.5f;  // ランキングボード選択範囲の半径
+    
     // ステージ解放に必要な星数
     constexpr int STAGE_1_COST = 1;
     constexpr int STAGE_2_COST = 2;

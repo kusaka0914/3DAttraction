@@ -25,6 +25,15 @@ find_package(OpenGL REQUIRED)
 # JSON library (nlohmann/json)
 find_package(nlohmann_json REQUIRED)
 
+# libcurl for HTTP requests
+if(WIN32)
+    find_package(CURL REQUIRED)
+else()
+    # macOS/Linux: pkg-configを使用
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(CURL REQUIRED libcurl)
+endif()
+
 # STB Image library for texture loading (optional)
 # find_package(stb REQUIRED)
 
@@ -67,6 +76,7 @@ add_executable(SlimesSkyTravel
     src/game/gravity_system.cpp
     src/game/replay_manager.cpp
     src/game/save_manager.cpp
+    src/game/online_leaderboard_manager.cpp
     src/physics/physics_system.cpp
     src/io/input_system.cpp
     src/io/audio_manager.cpp
@@ -110,6 +120,14 @@ target_link_libraries(SlimesSkyTravel
     glm::glm
     nlohmann_json::nlohmann_json
 )
+
+# libcurlのリンク
+if(WIN32)
+    target_link_libraries(SlimesSkyTravel CURL::libcurl)
+else()
+    target_link_libraries(SlimesSkyTravel ${CURL_LIBRARIES})
+    target_include_directories(SlimesSkyTravel PRIVATE ${CURL_INCLUDE_DIRS})
+endif()
 
 # プラットフォーム固有のライブラリリンク
 if(WIN32)

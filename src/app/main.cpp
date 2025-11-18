@@ -27,6 +27,7 @@
 #include "../gfx/camera_system.h"
 #include "../core/utils/input_utils.h"
 #include "../core/utils/ui_config_manager.h"
+#include "../game/online_leaderboard_manager.h"
 #include "game_loop.h"
 #include "tutorial_manager.h"
 #include "../core/constants/debug_config.h"
@@ -145,6 +146,9 @@ int main(int argc, char* const argv[]) {
     }
     
     UIConfig::UIConfigManager::getInstance().loadConfig("assets/config/ui_config.json");
+    
+    // ランキング設定ファイルを読み込む
+    OnlineLeaderboardManager::loadConfigFromFile();
     
     if (debugEnding) {
         gameState.ui.isEndingSequence = true;

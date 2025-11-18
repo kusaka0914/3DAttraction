@@ -185,6 +185,36 @@ public:
     void renderStageSelectionEscKeyInfo(int width, int height);
     
     /**
+     * @brief ランキングボードアシストを描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     * @param isVisible 表示フラグ
+     */
+    void renderLeaderboardAssist(int width, int height, bool isVisible);
+    
+    /**
+     * @brief ランキングUIを描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     * @param targetStage 対象ステージ番号
+     * @param entries ランキングエントリ
+     * @param isLoading 読み込み中フラグ
+     */
+    void renderLeaderboardUI(int width, int height, int targetStage, 
+                            const std::vector<LeaderboardEntry>& entries, 
+                            bool isLoading);
+    
+    /**
+     * @brief プレイヤー名入力画面を描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     * @param playerName 入力中のプレイヤー名
+     * @param cursorPos カーソル位置
+     * @param timer タイマー（カーソル点滅用）
+     */
+    void renderPlayerNameInput(int width, int height, const std::string& playerName, int cursorPos, float timer = 0.0f);
+    
+    /**
      * @brief エンディングメッセージを描画する
      * @param width ウィンドウ幅
      * @param height ウィンドウ高さ
