@@ -99,6 +99,11 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                               PlatformSystem& platformSystem, 
                               std::map<int, InputUtils::KeyState>& keyStates,
                               std::function<void()> resetStageStartTime, float scaledDeltaTime, io::AudioManager& audioManager) {
+        // リーダーボードUI表示中はプレイヤー移動を無効化
+        if (gameState.ui.showLeaderboardUI) {
+            return;
+        }
+        
         if (gameState.replay.isReplayMode) {
             if (keyStates[GLFW_KEY_SPACE].justPressed()) {
                 gameState.replay.isReplayPaused = !gameState.replay.isReplayPaused;
@@ -191,6 +196,11 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     gameState.ui.showTimeAttackSelectionUI = false;
                     gameState.ui.showSecretStarSelectionUI = false;
                     gameState.ui.showSecretStarExplanationUI = false;
+                    continue;
+                }
+                if (gameState.ui.showLeaderboardUI) {
+                    gameState.ui.showLeaderboardUI = false;
+                    gameState.ui.leaderboardEntries.clear();
                     continue;
                 }
                 

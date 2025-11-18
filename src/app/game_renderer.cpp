@@ -49,7 +49,11 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // 黒でクリア
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            gameStateUIRenderer->renderTitleScreen(width, height, gameState);
+            if (gameState.ui.showPlayerNameInput) {
+                gameStateUIRenderer->renderPlayerNameInput(width, height, gameState.ui.playerNameInput, gameState.ui.playerNameInputCursorPos, gameState.ui.titleScreenTimer);
+            } else {
+                gameStateUIRenderer->renderTitleScreen(width, height, gameState);
+            }
             
             if (gameState.ui.isTransitioning) {
                 const float FADE_DURATION = 0.5f;
@@ -618,9 +622,31 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                                    !gameState.ui.showEasyModeExplanationUI &&
                                    !gameState.ui.showModeSelectionUI &&
                                    !gameState.ui.showTimeAttackSelectionUI &&  // タイムアタック選択UI表示中は非表示
-                                   !gameState.ui.showStage0Tutorial; // チュートリアル表示中は非表示
+                                   !gameState.ui.showStage0Tutorial &&  // チュートリアル表示中は非表示
+                                   !gameState.ui.showLeaderboardUI;  // ランキングUI表示中は非表示
             bool isStageUnlocked = gameState.progress.unlockedStages[gameState.ui.assistTargetStage];
             gameStateUIRenderer->renderStageSelectionAssist(width, height, gameState.ui.assistTargetStage, shouldShowAssist, isStageUnlocked);
+            
+            // ランキングボードアシスト表示
+            bool shouldShowLeaderboardAssist = gameState.ui.showLeaderboardAssist &&
+                                               !gameState.ui.showUnlockConfirmUI &&
+                                               !gameState.ui.showStarInsufficientUI &&
+                                               !gameState.ui.showWarpTutorialUI &&
+                                               !gameState.ui.showEasyModeExplanationUI &&
+                                               !gameState.ui.showModeSelectionUI &&
+                                               !gameState.ui.showTimeAttackSelectionUI &&
+                                               !gameState.ui.showStageSelectionAssist &&
+                                               !gameState.ui.showStage0Tutorial &&
+                                               !gameState.ui.showLeaderboardUI;
+            gameStateUIRenderer->renderLeaderboardAssist(width, height, shouldShowLeaderboardAssist);
+            
+            // ランキングUI表示
+            if (gameState.ui.showLeaderboardUI) {
+                gameStateUIRenderer->renderLeaderboardUI(width, height, 
+                                                       gameState.ui.leaderboardTargetStage,
+                                                       gameState.ui.leaderboardEntries,
+                                                       gameState.ui.isLoadingLeaderboard);
+            }
             
             // ステージ選択画面でESCキー情報を表示
             if (stageManager.getCurrentStage() == 0 && 

@@ -1161,6 +1161,66 @@
       "scale": 1.3
     }
   },
+  "leaderboard": {
+    "title": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": -400
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 3.0
+    },
+    "loadingText": {
+      "position": {
+        "offsetX": -250,
+        "offsetY": -200
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.5
+    },
+    "noRecordsText": {
+      "position": {
+        "offsetX": -250,
+        "offsetY": -200
+      },
+      "color": [0.8, 0.8, 0.8],
+      "scale": 2.5
+    },
+    "rankStartY": 0.3,
+    "lineHeight": 70.0,
+    "rank": {
+      "position": {
+        "offsetX": -370,
+        "offsetY": -250
+      },
+      "color": [1.0, 1.0, 1.0],
+      "scale": 2.0
+    },
+    "playerName": {
+      "position": {
+        "offsetX": -290,
+        "offsetY": -250
+      },
+      "color": [0.9, 0.9, 1.0],
+      "scale": 2.0
+    },
+    "time": {
+      "position": {
+        "offsetX": 200,
+        "offsetY": -250
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "instructions": {
+      "position": {
+        "offsetX": -400,
+        "offsetY": 500
+      },
+      "color": [0.7, 0.7, 0.7],
+      "scale": 1.5
+    }
+  },
   "staffRoll": {
     "skip": {
       "position": {
@@ -1276,6 +1336,48 @@
       },
       "color": [0.2, 0.8, 0.2],
       "scale": 1.5
+    }
+  },
+  "playerNameInput": {
+    "title": {
+      "position": {
+        "offsetX": -200,
+        "offsetY": -180
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 2.0
+    },
+    "inputBox": {
+      "position": {
+        "offsetX": 20,
+        "offsetY": -30
+      },
+      "width": 500,
+      "height": 60
+    },
+    "inputText": {
+      "position": {
+        "offsetX": -210,
+        "offsetY": -45
+      },
+      "color": [0.0, 0.0, 0.0],
+      "scale": 1.5
+    },
+    "hint": {
+      "position": {
+        "offsetX": -220,
+        "offsetY": 50
+      },
+      "color": [0.7, 0.7, 0.7],
+      "scale": 1.3
+    },
+    "confirm": {
+      "position": {
+        "offsetX": -130,
+        "offsetY": 120
+      },
+      "color": [1.0, 1.0, 0.0],
+      "scale": 1.3
     }
   },
   "secretStarSelection": {

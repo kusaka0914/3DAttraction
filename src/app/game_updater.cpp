@@ -25,6 +25,7 @@
 #include "../gfx/minimap_renderer.h"
 #include "../game/replay_manager.h"
 #include "../game/save_manager.h"
+#include "../game/online_leaderboard_manager.h"
 #include "../core/types/platform_types.h"
 #include "input_handler.h"
 #include <set>
@@ -307,7 +308,7 @@ void GameUpdater::updateGameState(
     if (!gameState.replay.isReplayMode || !gameState.replay.isReplayPaused) {
         GameUpdater::updateItems(gameState, scaledDeltaTime, audioManager);
     }
-    handleStageSelectionArea(window, gameState, stageManager, platformSystem, resetStageStartTime);
+    handleStageSelectionArea(window, gameState, stageManager, platformSystem, resetStageStartTime, keyStates);
 }
 
 void GameUpdater::updatePhysicsAndCollisions(
@@ -423,6 +424,15 @@ void GameUpdater::updatePhysicsAndCollisions(
                                 gameState.progress.isNewRecord = true;
                                 shouldSaveReplay = true;
                                 printf("TIME ATTACK: New record for stage %d: %.2fs\n", currentStage, clearTime);
+                                
+                                // オンラインランキングに記録を送信
+                                OnlineLeaderboardManager::submitTime(currentStage, clearTime, [currentStage, clearTime](bool success) {
+                                    if (success) {
+                                        printf("ONLINE: Record submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);
+                                    } else {
+                                        printf("ONLINE: Failed to submit record for stage %d\n", currentStage);
+                                    }
+                                });
                             } else {
                                 printf("TIME ATTACK: Stage %d cleared in %.2fs (Best: %.2fs)\n", 
                                        currentStage, clearTime, gameState.progress.timeAttackRecords[currentStage]);

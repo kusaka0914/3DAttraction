@@ -75,6 +75,7 @@ private:
     static bool parseTeleportPlatforms(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
     static bool parseJumpPads(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
     static bool parseStageSelectionAreas(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
+    static bool parseLeaderboardArea(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
     static bool parseConditionalCyclingDisappearingPlatforms(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
     static bool parseConditionalPatrolPlatforms(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
     static bool parseConditionalFlyingPlatforms(const nlohmann::json& root, GameState& gameState, PlatformSystem& platformSystem);
