@@ -1172,7 +1172,7 @@
     },
     "loadingText": {
       "position": {
-        "offsetX": -250,
+        "offsetX": -180,
         "offsetY": -200
       },
       "color": [1.0, 1.0, 1.0],
@@ -1180,11 +1180,11 @@
     },
     "noRecordsText": {
       "position": {
-        "offsetX": -250,
+        "offsetX": -750,
         "offsetY": -200
       },
       "color": [0.8, 0.8, 0.8],
-      "scale": 2.5
+      "scale": 2.0
     },
     "rankStartY": 0.3,
     "lineHeight": 70.0,
@@ -1214,7 +1214,7 @@
     },
     "instructions": {
       "position": {
-        "offsetX": -400,
+        "offsetX": -800,
         "offsetY": 500
       },
       "color": [0.7, 0.7, 0.7],

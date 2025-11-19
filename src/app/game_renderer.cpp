@@ -645,7 +645,8 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 gameStateUIRenderer->renderLeaderboardUI(width, height, 
                                                        gameState.ui.leaderboardTargetStage,
                                                        gameState.ui.leaderboardEntries,
-                                                       gameState.ui.isLoadingLeaderboard);
+                                                       gameState.ui.isLoadingLeaderboard,
+                                                       gameState.ui.leaderboardSelectedIndex);
             }
             
             // ステージ選択画面でESCキー情報を表示

@@ -39,5 +39,8 @@ struct ReplayState {
     float replayPlaybackTime = 0.0f;
     bool isReplayPaused = false;
     float replayPlaybackSpeed = 1.0f;
+    
+    bool pendingReplayLoad = false;  /**< @brief リプレイ読み込み待ちフラグ */
+    int pendingReplayStage = 0;  /**< @brief 読み込み待ちのリプレイステージ番号 */
 };
 

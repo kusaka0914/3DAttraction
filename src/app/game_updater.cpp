@@ -98,6 +98,31 @@ void GameUpdater::updateGameState(
         return;
     }
     
+    // リプレイ読み込み待ちの処理
+    if (gameState.replay.pendingReplayLoad && gameState.replay.pendingReplayStage > 0) {
+        int replayStage = gameState.replay.pendingReplayStage;
+        gameState.replay.pendingReplayLoad = false;
+        gameState.replay.pendingReplayStage = 0;
+        
+        // リプレイ用にステージを読み込む
+        resetStageStartTime();
+        stageManager.goToStage(replayStage, gameState, platformSystem);
+        
+        // リプレイ開始時はclearTimeを0に初期化（リプレイ終了時にreplayPlaybackTimeが設定される）
+        gameState.progress.clearTime = 0.0f;
+        
+        gameState.replay.isReplayMode = true;
+        gameState.replay.isReplayPaused = false;
+        gameState.replay.replayPlaybackTime = 0.0f;
+        gameState.replay.replayPlaybackSpeed = 1.0f;
+        gameState.ui.showStageClearUI = false;
+        gameState.progress.isStageCompleted = false;
+        gameState.progress.isGoalReached = false;
+        
+        printf("ONLINE: Started replay playback for stage %d (Clear time: %.2fs)\n", 
+               replayStage, gameState.replay.currentReplay.clearTime);
+    }
+    
     if (!editorState.isActive) {
         static float fileCheckTimer = 0.0f;
         fileCheckTimer += deltaTime;
@@ -425,14 +450,6 @@ void GameUpdater::updatePhysicsAndCollisions(
                                 shouldSaveReplay = true;
                                 printf("TIME ATTACK: New record for stage %d: %.2fs\n", currentStage, clearTime);
                                 
-                                // オンラインランキングに記録を送信
-                                OnlineLeaderboardManager::submitTime(currentStage, clearTime, [currentStage, clearTime](bool success) {
-                                    if (success) {
-                                        printf("ONLINE: Record submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);
-                                    } else {
-                                        printf("ONLINE: Failed to submit record for stage %d\n", currentStage);
-                                    }
-                                });
                             } else {
                                 printf("TIME ATTACK: Stage %d cleared in %.2fs (Best: %.2fs)\n", 
                                        currentStage, clearTime, gameState.progress.timeAttackRecords[currentStage]);
@@ -451,6 +468,25 @@ void GameUpdater::updatePhysicsAndCollisions(
                                 replayData.recordedDate = ss.str();
                                 
                                 ReplayManager::saveReplay(replayData, currentStage);
+                                
+                                // オンラインランキングにリプレイも送信
+                                OnlineLeaderboardManager::submitTime(currentStage, clearTime, 
+                                    [currentStage, clearTime](bool success) {
+                                        if (success) {
+                                            printf("ONLINE: Record with replay submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);
+                                        } else {
+                                            printf("ONLINE: Failed to submit record with replay for stage %d\n", currentStage);
+                                        }
+                                    }, &replayData);
+                            } else {
+                                // リプレイがない場合も通常の送信
+                                OnlineLeaderboardManager::submitTime(currentStage, clearTime, [currentStage, clearTime](bool success) {
+                                    if (success) {
+                                        printf("ONLINE: Record submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);
+                                    } else {
+                                        printf("ONLINE: Failed to submit record for stage %d\n", currentStage);
+                                    }
+                                });
                             }
                             
                             gameState.progress.earnedStars = gameState.progress.isNewRecord ? 3 : 0;

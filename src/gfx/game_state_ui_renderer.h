@@ -201,8 +201,8 @@ public:
      * @param isLoading 読み込み中フラグ
      */
     void renderLeaderboardUI(int width, int height, int targetStage, 
-                            const std::vector<LeaderboardEntry>& entries, 
-                            bool isLoading);
+                               const std::vector<LeaderboardEntry>& entries, 
+                               bool isLoading, int selectedIndex = 0);
     
     /**
      * @brief プレイヤー名入力画面を描画する

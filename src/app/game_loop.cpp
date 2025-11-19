@@ -791,11 +791,69 @@ namespace GameLoop {
                     });
                 }
                 
+                // W/Sキーでエントリ選択
+                if (keyStates[GLFW_KEY_W].justPressed() || keyStates[GLFW_KEY_UP].justPressed()) {
+                    if (!gameState.ui.leaderboardEntries.empty()) {
+                        gameState.ui.leaderboardSelectedIndex--;
+                        if (gameState.ui.leaderboardSelectedIndex < 0) {
+                            gameState.ui.leaderboardSelectedIndex = static_cast<int>(gameState.ui.leaderboardEntries.size()) - 1;
+                        }
+                    }
+                }
+                
+                if (keyStates[GLFW_KEY_S].justPressed() || keyStates[GLFW_KEY_DOWN].justPressed()) {
+                    if (!gameState.ui.leaderboardEntries.empty()) {
+                        gameState.ui.leaderboardSelectedIndex++;
+                        if (gameState.ui.leaderboardSelectedIndex >= static_cast<int>(gameState.ui.leaderboardEntries.size())) {
+                            gameState.ui.leaderboardSelectedIndex = 0;
+                        }
+                    }
+                }
+                
+                // Spaceキーでリプレイを視聴
+                if (keyStates[GLFW_KEY_SPACE].justPressed() && !gameState.ui.leaderboardEntries.empty()) {
+                    int selectedIndex = gameState.ui.leaderboardSelectedIndex;
+                    if (selectedIndex >= 0 && selectedIndex < static_cast<int>(gameState.ui.leaderboardEntries.size())) {
+                        const auto& selectedEntry = gameState.ui.leaderboardEntries[selectedIndex];
+                        if (selectedEntry.hasReplay && selectedEntry.id > 0) {
+                            printf("ONLINE: Loading replay for entry ID %d\n", selectedEntry.id);
+                            gameState.ui.isLoadingReplay = true;
+                            
+                            // リプレイを取得（コールバック内でステージを読み込む）
+                            OnlineLeaderboardManager::fetchReplay(selectedEntry.id, [&gameState](const ReplayData* replayData) {
+                                if (replayData != nullptr) {
+                                    printf("ONLINE: Replay loaded successfully (%zu frames)\n", replayData->frames.size());
+                                    
+                                    // リプレイデータをコピーして保存
+                                    gameState.replay.currentReplay = *replayData;
+                                    gameState.replay.pendingReplayStage = replayData->stageNumber;
+                                    gameState.replay.pendingReplayLoad = true;
+                                    
+                                    // ランキングUIを閉じる
+                                    gameState.ui.showLeaderboardUI = false;
+                                    gameState.ui.leaderboardEntries.clear();
+                                    gameState.ui.leaderboardTargetStage = 0;
+                                    gameState.ui.leaderboardSelectedIndex = 0;
+                                    
+                                    printf("ONLINE: Replay data prepared for stage %d (Clear time: %.2fs)\n", 
+                                           replayData->stageNumber, replayData->clearTime);
+                                } else {
+                                    printf("ONLINE: Failed to load replay\n");
+                                }
+                                gameState.ui.isLoadingReplay = false;
+                            });
+                        } else {
+                            printf("ONLINE: No replay available for selected entry\n");
+                        }
+                    }
+                }
+                
                 // Enterキーで閉じる
                 if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                     gameState.ui.showLeaderboardUI = false;
                     gameState.ui.leaderboardEntries.clear();
                     gameState.ui.leaderboardTargetStage = 0;
+                    gameState.ui.leaderboardSelectedIndex = 0;
                     gameState.ui.isLoadingLeaderboard = false;
                     gameState.ui.leaderboardRetryCount = 0;
                     gameState.ui.leaderboardRetryTimer = 0.0f;
@@ -814,6 +872,7 @@ namespace GameLoop {
                     gameState.ui.isLoadingLeaderboard = true;
                     gameState.ui.showLeaderboardUI = true;
                     gameState.ui.leaderboardEntries.clear();
+                    gameState.ui.leaderboardSelectedIndex = 0;
                     gameState.ui.leaderboardRetryCount = 0;
                     gameState.ui.leaderboardRetryTimer = 0.0f;
                     
