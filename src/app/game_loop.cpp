@@ -442,12 +442,12 @@ namespace GameLoop {
                     }
                     
                     auto elapsed = std::chrono::steady_clock::now() - connectionStartTime;
-                    if (elapsed > std::chrono::seconds(4)) {
-                        // 4秒以上経過しても接続できていない場合は失敗とみなす
+                    if (elapsed > std::chrono::seconds(150)) {
+                        // 150秒以上経過しても接続できていない場合は失敗とみなす
                         gameState.ui.isWaitingForConnection = false;
                         gameState.multiplayer.isMultiplayerMode = false;
                         connectionStarted = false;
-                        printf("Multiplayer: Connection timeout\n");
+                        printf("Multiplayer: Connection timeout (150 seconds)\n");
                     }
                 } else if (gameState.multiplayer.isConnected) {
                     // 接続済みの場合は接続開始時刻をリセット

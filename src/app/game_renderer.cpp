@@ -616,7 +616,7 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
             }
             
             if (gameState.ui.showMultiplayerMenu) {
-                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.ui.isHosting, 
+                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.multiplayer.isHost, 
                                                           gameState.multiplayer.isConnected, 
                                                           gameState.ui.isWaitingForConnection,
                                                           gameState.ui.connectionIP, 

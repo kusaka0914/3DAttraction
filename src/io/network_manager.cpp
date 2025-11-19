@@ -227,7 +227,7 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
     
     std::thread([this]() {
         // 接続が完了するまで待機（タイムアウト付き）
-        const int TIMEOUT_MS = 3000; // 3秒
+        const int TIMEOUT_MS = 150000; // 150秒
         auto startTime = std::chrono::steady_clock::now();
         
         while (!shouldStop_ && std::chrono::steady_clock::now() - startTime < std::chrono::milliseconds(TIMEOUT_MS)) {
