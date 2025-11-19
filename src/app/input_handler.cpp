@@ -92,6 +92,14 @@ void InputHandler::processStageSelectionAction(
         gameState.progress.timeScale = 1.0f;
         gameState.progress.timeScaleLevel = 0;
         gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+        
+        // マルチプレイモードの場合、ステージ選択通知を設定
+        if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected && gameState.multiplayer.isHost) {
+            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+            gameState.multiplayer.isRaceStarted = true;
+            gameState.multiplayer.pendingStageSelection = stageNumber;
+        }
     }
 }
 
@@ -483,14 +491,15 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 // マルチプレイモードの場合、ホストのみがステージを選択可能
                 if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
                     if (gameState.multiplayer.isHost) {
-                resetStageStartTime();
-                gameState.progress.lives = 6;
-                stageManager.goToStage(targetStage, gameState, platformSystem);
+                        resetStageStartTime();
+                        gameState.progress.lives = 6;
+                        stageManager.goToStage(targetStage, gameState, platformSystem);
                         // リモートプレイヤーも同じステージで開始（状態を同期）
                         gameState.multiplayer.remotePlayer.position = gameState.player.position;
                         gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
                         gameState.multiplayer.isRaceStarted = true;
-                        // クライアント側へのステージ選択通知はgame_loop.cppで処理される
+                        // クライアント側へのステージ選択通知を設定
+                        gameState.multiplayer.pendingStageSelection = targetStage;
                     }
                 } else {
                     resetStageStartTime();
@@ -589,19 +598,20 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 // マルチプレイモードの場合、ホストのみがステージを選択可能
                 if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
                     if (gameState.multiplayer.isHost) {
-                resetStageStartTime();
-                gameState.progress.lives = 6;
-                stageManager.goToStage(targetStage, gameState, platformSystem);
-                gameState.ui.readyScreenShown = false;
-                gameState.ui.showReadyScreen = true;
-                gameState.ui.readyScreenSpeedLevel = 0;
-                gameState.progress.timeScale = 1.0f;
-                gameState.progress.timeScaleLevel = 0;
+                        resetStageStartTime();
+                        gameState.progress.lives = 6;
+                        stageManager.goToStage(targetStage, gameState, platformSystem);
+                        gameState.ui.readyScreenShown = false;
+                        gameState.ui.showReadyScreen = true;
+                        gameState.ui.readyScreenSpeedLevel = 0;
+                        gameState.progress.timeScale = 1.0f;
+                        gameState.progress.timeScaleLevel = 0;
                         // リモートプレイヤーも同じステージで開始（状態を同期）
                         gameState.multiplayer.remotePlayer.position = gameState.player.position;
                         gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
                         gameState.multiplayer.isRaceStarted = true;
-                        // クライアント側へのステージ選択通知はgame_loop.cppで処理される
+                        // クライアント側へのステージ選択通知を設定
+                        gameState.multiplayer.pendingStageSelection = targetStage;
                     }
                 } else {
                     resetStageStartTime();
@@ -829,20 +839,21 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     // マルチプレイモードの場合、ホストのみがステージを選択可能
                     if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
                         if (gameState.multiplayer.isHost) {
-                resetStageStartTime();
-                gameState.progress.lives = 6;
-                    stageManager.goToStage(targetStage, gameState, platformSystem);
-                gameState.ui.readyScreenShown = false;
-                gameState.ui.showReadyScreen = true;
-                gameState.ui.readyScreenSpeedLevel = 0;
-                    gameState.progress.timeScale = 1.0f;
-                    gameState.progress.timeScaleLevel = 0;
-                    gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+                            resetStageStartTime();
+                            gameState.progress.lives = 6;
+                            stageManager.goToStage(targetStage, gameState, platformSystem);
+                            gameState.ui.readyScreenShown = false;
+                            gameState.ui.showReadyScreen = true;
+                            gameState.ui.readyScreenSpeedLevel = 0;
+                            gameState.progress.timeScale = 1.0f;
+                            gameState.progress.timeScaleLevel = 0;
+                            gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
                             // リモートプレイヤーも同じステージで開始（状態を同期）
                             gameState.multiplayer.remotePlayer.position = gameState.player.position;
                             gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
                             gameState.multiplayer.isRaceStarted = true;
-                            // クライアント側へのステージ選択通知はgame_loop.cppで処理される
+                            // クライアント側へのステージ選択通知を設定
+                            gameState.multiplayer.pendingStageSelection = targetStage;
                         }
                     } else {
                         resetStageStartTime();

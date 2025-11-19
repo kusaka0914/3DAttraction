@@ -33,5 +33,8 @@ struct MultiplayerState {
     glm::vec3 remotePlayerTargetVelocity;  /**< @brief リモートプレイヤーの目標速度（補間用） */
     float remotePlayerInterpolationTimer = 0.0f;  /**< @brief リモートプレイヤーの補間タイマー（秒） */
     const float REMOTE_PLAYER_INTERPOLATION_TIME = 0.1f;  /**< @brief リモートプレイヤーの補間時間（秒） */
+    
+    // ステージ選択通知用
+    int pendingStageSelection = -1;  /**< @brief 送信待ちのステージ番号（-1=なし、1-5=ステージ番号） */
 };
 

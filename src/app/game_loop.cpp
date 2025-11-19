@@ -596,13 +596,11 @@ namespace GameLoop {
                     multiplayerManager.checkStageSelection(gameState, stageManager, platformSystem, resetStageStartTime, window);
                 }
                 
-                // ホスト側でステージが変更された場合、クライアントに通知
-                static int lastStage = stageManager.getCurrentStage();
-                int currentStage = stageManager.getCurrentStage();
-                if (gameState.multiplayer.isHost && currentStage != lastStage && currentStage >= 1 && currentStage <= 5) {
-                    multiplayerManager.sendStageSelection(currentStage);
+                // ホスト側でステージ選択通知を送信
+                if (gameState.multiplayer.isHost && gameState.multiplayer.pendingStageSelection >= 1 && gameState.multiplayer.pendingStageSelection <= 5) {
+                    multiplayerManager.sendStageSelection(gameState.multiplayer.pendingStageSelection);
+                    gameState.multiplayer.pendingStageSelection = -1;  // 送信済みフラグをクリア
                 }
-                lastStage = currentStage;
                 
                 // ゴール到達をチェックして送信
                 if (gameState.progress.isGoalReached && !gameState.multiplayer.isRaceFinished) {
@@ -906,12 +904,8 @@ namespace GameLoop {
                     // マルチプレイモードの場合、ホストのみがステージを選択可能
                     if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
                         if (gameState.multiplayer.isHost) {
-                    InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
-                            // リモートプレイヤーも同じステージで開始（状態を同期）
-                            gameState.multiplayer.remotePlayer.position = gameState.player.position;
-                            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
-                            gameState.multiplayer.isRaceStarted = true;
-                            // クライアント側へのステージ選択通知はgame_loop.cppで処理される
+                            InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                            // processStageSelectionAction内でpendingStageSelectionが設定される
                         }
                     } else {
                         InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
