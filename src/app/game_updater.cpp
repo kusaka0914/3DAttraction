@@ -426,15 +426,38 @@ void GameUpdater::updateGameState(
     
     // リプレイモード中は、replayPlaybackTimeの変化量をdeltaTimeとして使用
     float effectiveDeltaTime = scaledDeltaTime;
+    float effectiveDeltaTimeForOtherSystems = scaledDeltaTime;  // SwitchSystem、CannonSystem用（timeScaleを考慮）
     if (gameState.replay.isReplayMode) {
         if (gameState.replay.isReplayPaused) {
             // 一時停止中はギミックも止める
             effectiveDeltaTime = 0.0f;
+            effectiveDeltaTimeForOtherSystems = 0.0f;
         } else {
             float replayDeltaTime = gameState.replay.replayPlaybackTime - gameState.replay.previousReplayPlaybackTime;
             // 早戻し/早送り時は負の値や大きな値になる可能性があるため、クランプ
             replayDeltaTime = std::clamp(replayDeltaTime, -1.0f, 1.0f);
             effectiveDeltaTime = replayDeltaTime;
+            // 他のシステム用には、timeScaleを考慮したdeltaTimeを計算
+            // 現在のフレームのtimeScaleを取得（簡易版、後で正確な値を計算）
+            float currentTimeScaleForDelta = 1.0f;
+            if (!gameState.replay.currentReplay.frames.empty()) {
+                // 簡易的に最後のフレームのtimeScaleを使用（正確には後で計算される）
+                for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
+                    const auto& frame1 = gameState.replay.currentReplay.frames[i];
+                    const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
+                    if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
+                        gameState.replay.replayPlaybackTime <= frame2.timestamp) {
+                        float t = (frame2.timestamp > frame1.timestamp) ? 
+                                 (gameState.replay.replayPlaybackTime - frame1.timestamp) / (frame2.timestamp - frame1.timestamp) : 0.0f;
+                        currentTimeScaleForDelta = (t < 0.5f) ? frame1.timeScale : frame2.timeScale;
+                        break;
+                    }
+                }
+                if (gameState.replay.replayPlaybackTime > gameState.replay.currentReplay.frames.back().timestamp) {
+                    currentTimeScaleForDelta = gameState.replay.currentReplay.frames.back().timeScale;
+                }
+            }
+            effectiveDeltaTimeForOtherSystems = replayDeltaTime * currentTimeScaleForDelta;
             gameState.replay.previousReplayPlaybackTime = gameState.replay.replayPlaybackTime;
         }
     }
@@ -443,38 +466,64 @@ void GameUpdater::updateGameState(
     if (gameState.replay.isReplayMode && !gameState.replay.isReplayPaused) {
         // 現在のフレームのtimeScaleを取得（プレイヤーの補間処理と同じロジックを使用）
         float currentTimeScale = 1.0f;
+        // ギミックの更新に使う実際のゲーム時間を計算（各フレーム区間のtimeScaleを考慮して累積）
+        float actualGameTime = 0.0f;
+        
         if (!gameState.replay.currentReplay.frames.empty()) {
             // 最初のフレームより前の場合は最初のフレームのtimeScaleを使用
             if (gameState.replay.replayPlaybackTime < gameState.replay.currentReplay.frames[0].timestamp) {
                 currentTimeScale = gameState.replay.currentReplay.frames[0].timeScale;
+                actualGameTime = gameState.replay.replayPlaybackTime * currentTimeScale;
             }
             // 最後のフレームより後ろの場合は最後のフレームのtimeScaleを使用
             else if (gameState.replay.replayPlaybackTime > gameState.replay.currentReplay.frames.back().timestamp) {
                 currentTimeScale = gameState.replay.currentReplay.frames.back().timeScale;
+                // 最後のフレームまでの累積時間を計算
+                actualGameTime = 0.0f;
+                for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
+                    const auto& frame1 = gameState.replay.currentReplay.frames[i];
+                    const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
+                    float segmentTime = frame2.timestamp - frame1.timestamp;
+                    actualGameTime += segmentTime * frame1.timeScale;
+                }
+                // 最後のフレームから現在までの時間を追加
+                float lastSegmentTime = gameState.replay.replayPlaybackTime - gameState.replay.currentReplay.frames.back().timestamp;
+                actualGameTime += lastSegmentTime * currentTimeScale;
             }
             // フレーム間を補間
             else {
+                // 現在のフレーム区間を探す
                 for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
                     const auto& frame1 = gameState.replay.currentReplay.frames[i];
                     const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
                     
                     if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
                         gameState.replay.replayPlaybackTime <= frame2.timestamp) {
-                        // フレーム間でtimeScaleを線形補間
+                        // 現在のフレーム区間のtimeScaleを取得
                         float t = 0.0f;
                         if (frame2.timestamp > frame1.timestamp) {
                             t = (gameState.replay.replayPlaybackTime - frame1.timestamp) / 
                                  (frame2.timestamp - frame1.timestamp);
                         }
                         t = std::clamp(t, 0.0f, 1.0f);
-                        // timeScaleを線形補間（ただし、通常は同じ値なので、より近いフレームの値を使用）
-                        // フレーム間でtimeScaleが変わった場合でも滑らかに切り替わるように
                         if (frame1.timeScale == frame2.timeScale) {
                             currentTimeScale = frame1.timeScale;
                         } else {
-                            // timeScaleが変わった場合は、より近いフレームの値を使用
                             currentTimeScale = (t < 0.5f) ? frame1.timeScale : frame2.timeScale;
                         }
+                        
+                        // 現在のフレーム区間までの累積時間を計算
+                        actualGameTime = 0.0f;
+                        for (size_t j = 0; j < i; j++) {
+                            const auto& f1 = gameState.replay.currentReplay.frames[j];
+                            const auto& f2 = gameState.replay.currentReplay.frames[j + 1];
+                            float segmentTime = f2.timestamp - f1.timestamp;
+                            actualGameTime += segmentTime * f1.timeScale;
+                        }
+                        // 現在のフレーム区間内の時間を追加
+                        float currentSegmentTime = gameState.replay.replayPlaybackTime - frame1.timestamp;
+                        actualGameTime += currentSegmentTime * currentTimeScale;
+                        
                         break;
                     }
                 }
@@ -488,17 +537,19 @@ void GameUpdater::updateGameState(
         static int debugTimeScaleCount = 0;
         if (debugTimeScaleCount < 10) {
             debugTimeScaleCount++;
-            printf("REPLAY: playbackTime: %.2f, currentTimeScale: %.1f\n", 
-                   gameState.replay.replayPlaybackTime, currentTimeScale);
+            printf("REPLAY: playbackTime: %.2f, currentTimeScale: %.1f, actualGameTime: %.2f\n", 
+                   gameState.replay.replayPlaybackTime, currentTimeScale, actualGameTime);
         }
         
-        platformSystem.update(0.0f, gameState.player.position, gameState.replay.replayPlaybackTime, currentTimeScale);
+        platformSystem.update(0.0f, gameState.player.position, actualGameTime, 1.0f);
+        // リプレイモードでは、effectiveDeltaTimeForOtherSystemsを再計算（正確なcurrentTimeScaleを使用）
+        effectiveDeltaTimeForOtherSystems = effectiveDeltaTime * currentTimeScale;
     } else {
         platformSystem.update(effectiveDeltaTime, gameState.player.position, -1.0f, -1.0f);
     }
     GravitySystem::updateGravityZones(gameState, effectiveDeltaTime);
-    SwitchSystem::updateSwitches(gameState, effectiveDeltaTime);
-    CannonSystem::updateCannons(gameState, effectiveDeltaTime);
+    SwitchSystem::updateSwitches(gameState, effectiveDeltaTimeForOtherSystems);
+    CannonSystem::updateCannons(gameState, effectiveDeltaTimeForOtherSystems);
     
     for (auto& [key, state] : keyStates) {
         state.update(glfwGetKey(window, key) == GLFW_PRESS);
