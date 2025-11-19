@@ -13,15 +13,18 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include "replay_state.h"
 
 /**
  * @brief ランキングエントリ
  * @details ランキングに表示される1つの記録を表します。
  */
 struct LeaderboardEntry {
+    int id = 0;  /**< @brief ランキングエントリID（リプレイ取得用） */
     std::string playerName;  /**< @brief プレイヤー名 */
     float time;  /**< @brief クリアタイム（秒） */
     std::string timestamp;  /**< @brief 記録日時 */
+    bool hasReplay = false;  /**< @brief リプレイが利用可能かどうか */
 };
 
 /**
@@ -70,9 +73,21 @@ public:
      * @param stageNumber ステージ番号（1-5）
      * @param time クリアタイム（秒）
      * @param callback 送信完了時のコールバック関数（成功時: true, 失敗時: false）
+     * @param replayData リプレイデータ（オプション、nullptrの場合は送信しない）
      */
     static void submitTime(int stageNumber, float time, 
-                          std::function<void(bool)> callback = nullptr);
+                          std::function<void(bool)> callback = nullptr,
+                          const ReplayData* replayData = nullptr);
+    
+    /**
+     * @brief リプレイデータを取得する
+     * @details 非同期でAPIからリプレイデータを取得します。
+     * 
+     * @param leaderboardId ランキングエントリID
+     * @param callback 取得完了時のコールバック関数（成功時: replayData, 失敗時: nullptr）
+     */
+    static void fetchReplay(int leaderboardId,
+                           std::function<void(const ReplayData*)> callback);
     
     /**
      * @brief 全ステージのトップ記録を取得する

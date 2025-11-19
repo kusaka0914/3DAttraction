@@ -278,10 +278,14 @@ namespace UIConfig {
         UITextConfig getLeaderboardRankConfig() const { return leaderboardRankConfig; }
         UITextConfig getLeaderboardPlayerNameConfig() const { return leaderboardPlayerNameConfig; }
         UITextConfig getLeaderboardTimeConfig() const { return leaderboardTimeConfig; }
+        UITextConfig getLeaderboardReplayMarkConfig() const { return leaderboardReplayMarkConfig; }
+        UITextConfig getLeaderboardReplayMarkSelectedConfig() const { return leaderboardReplayMarkSelectedConfig; }
+        UITextConfig getLeaderboardNoReplayMarkConfig() const { return leaderboardNoReplayMarkConfig; }
         UITextConfig getLeaderboardInstructionsConfig() const { return leaderboardInstructionsConfig; }
         UITextConfig getLeaderboardCloseTextConfig() const { return leaderboardCloseTextConfig; }
         float getLeaderboardRankStartY() const { return leaderboardRankStartY; }
         float getLeaderboardLineHeight() const { return leaderboardLineHeight; }
+        float getLeaderboardReplayMarkOffsetX() const { return leaderboardReplayMarkOffsetX; }
         
         // プレイヤー名入力画面UI要素の設定を取得
         UITextConfig getPlayerNameInputTitleConfig() const { return playerNameInputTitleConfig; }
@@ -540,10 +544,14 @@ namespace UIConfig {
         UITextConfig leaderboardRankConfig;
         UITextConfig leaderboardPlayerNameConfig;
         UITextConfig leaderboardTimeConfig;
+        UITextConfig leaderboardReplayMarkConfig;
+        UITextConfig leaderboardReplayMarkSelectedConfig;
+        UITextConfig leaderboardNoReplayMarkConfig;
         UITextConfig leaderboardInstructionsConfig;
         UITextConfig leaderboardCloseTextConfig;
         float leaderboardRankStartY = 0.3f;
         float leaderboardLineHeight = 30.0f;
+        float leaderboardReplayMarkOffsetX = 150.0f;
         
         // プレイヤー名入力画面UI設定
         UITextConfig playerNameInputTitleConfig;

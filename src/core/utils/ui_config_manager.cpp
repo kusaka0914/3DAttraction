@@ -798,6 +798,26 @@ namespace UIConfig {
         leaderboardTimeConfig.color = glm::vec3(1.0f, 1.0f, 0.0f);
         leaderboardTimeConfig.scale = 1.0f;
         
+        leaderboardReplayMarkConfig.position.useRelative = true;
+        leaderboardReplayMarkConfig.position.offsetX = 150.0f;
+        leaderboardReplayMarkConfig.position.offsetY = 0.0f;
+        leaderboardReplayMarkConfig.color = glm::vec3(0.5f, 0.8f, 1.0f);
+        leaderboardReplayMarkConfig.scale = 0.8f;
+        
+        leaderboardReplayMarkSelectedConfig.position.useRelative = true;
+        leaderboardReplayMarkSelectedConfig.position.offsetX = 150.0f;
+        leaderboardReplayMarkSelectedConfig.position.offsetY = 0.0f;
+        leaderboardReplayMarkSelectedConfig.color = glm::vec3(0.0f, 1.0f, 1.0f);
+        leaderboardReplayMarkSelectedConfig.scale = 0.8f;
+        
+        leaderboardNoReplayMarkConfig.position.useRelative = true;
+        leaderboardNoReplayMarkConfig.position.offsetX = 150.0f;
+        leaderboardNoReplayMarkConfig.position.offsetY = 0.0f;
+        leaderboardNoReplayMarkConfig.color = glm::vec3(0.7f, 0.7f, 0.7f);
+        leaderboardNoReplayMarkConfig.scale = 0.7f;
+        
+        leaderboardReplayMarkOffsetX = 150.0f;
+        
         leaderboardInstructionsConfig.position.useRelative = true;
         leaderboardInstructionsConfig.position.offsetX = -500.0f;
         leaderboardInstructionsConfig.position.offsetY = 300.0f;
@@ -3038,6 +3058,49 @@ namespace UIConfig {
                         leaderboardTimeConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
                     }
                     if (cfg.contains("scale")) leaderboardTimeConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("replayMark")) {
+                    auto& cfg = leaderboard["replayMark"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardReplayMarkConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardReplayMarkConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardReplayMarkConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardReplayMarkConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("replayMarkSelected")) {
+                    auto& cfg = leaderboard["replayMarkSelected"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardReplayMarkSelectedConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardReplayMarkSelectedConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardReplayMarkSelectedConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardReplayMarkSelectedConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("noReplayMark")) {
+                    auto& cfg = leaderboard["noReplayMark"];
+                    if (cfg.contains("position")) {
+                        auto& pos = cfg["position"];
+                        if (pos.contains("offsetX")) leaderboardNoReplayMarkConfig.position.offsetX = pos["offsetX"];
+                        if (pos.contains("offsetY")) leaderboardNoReplayMarkConfig.position.offsetY = pos["offsetY"];
+                    }
+                    if (cfg.contains("color")) {
+                        leaderboardNoReplayMarkConfig.color = glm::vec3(cfg["color"][0], cfg["color"][1], cfg["color"][2]);
+                    }
+                    if (cfg.contains("scale")) leaderboardNoReplayMarkConfig.scale = cfg["scale"];
+                }
+                
+                if (leaderboard.contains("replayMarkOffsetX")) {
+                    leaderboardReplayMarkOffsetX = leaderboard["replayMarkOffsetX"];
                 }
                 
                 if (leaderboard.contains("instructions")) {

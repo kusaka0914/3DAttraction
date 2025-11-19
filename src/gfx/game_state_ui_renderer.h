@@ -45,10 +45,12 @@ public:
      * @param currentStage 現在のステージ番号
      * @param selectedSecretStarType 選択されたSECRET STARタイプ
      * @param secretStarCleared クリア済みSECRET STARのマップ
+     * @param isOnlineReplay オンラインリプレイかどうか
      */
     void renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode = false,
                                      int currentStage = -1, GameProgressState::SecretStarType selectedSecretStarType = GameProgressState::SecretStarType::NONE,
-                                     const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared = {});
+                                     const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared = {},
+                                     bool isOnlineReplay = false);
     
     /**
      * @brief タイムアタッククリア背景を描画する
@@ -57,8 +59,9 @@ public:
      * @param clearTime クリア時間
      * @param bestTime ベストタイム
      * @param isNewRecord 新記録フラグ
+     * @param isOnlineReplay オンラインリプレイかどうか
      */
-    void renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord);
+    void renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord, bool isOnlineReplay = false);
     
     /**
      * @brief ステージ解放確認背景を描画する
@@ -201,8 +204,8 @@ public:
      * @param isLoading 読み込み中フラグ
      */
     void renderLeaderboardUI(int width, int height, int targetStage, 
-                            const std::vector<LeaderboardEntry>& entries, 
-                            bool isLoading);
+                               const std::vector<LeaderboardEntry>& entries, 
+                               bool isLoading, int selectedIndex = 0);
     
     /**
      * @brief プレイヤー名入力画面を描画する

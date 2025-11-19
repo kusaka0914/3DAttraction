@@ -38,7 +38,9 @@ struct UIState {
     bool showLeaderboardUI = false;  /**< @brief ランキングUI表示フラグ */
     int leaderboardTargetStage = 0;  /**< @brief ランキング表示対象ステージ */
     std::vector<LeaderboardEntry> leaderboardEntries;  /**< @brief ランキングエントリ */
+    int leaderboardSelectedIndex = 0;  /**< @brief 選択中のランキングエントリインデックス */
     bool isLoadingLeaderboard = false;  /**< @brief ランキング読み込み中フラグ */
+    bool isLoadingReplay = false;  /**< @brief リプレイ読み込み中フラグ */
     float leaderboardRetryTimer = 0.0f;  /**< @brief ランキングリトライタイマー（秒） */
     int leaderboardRetryCount = 0;  /**< @brief ランキングリトライ回数 */
     glm::vec3 leaderboardPosition = glm::vec3(0.0f, 1.0f, 0.0f);  /**< @brief ランキングボードの位置（JSONから読み込む） */

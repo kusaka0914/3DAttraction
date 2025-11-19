@@ -111,7 +111,8 @@ void GameStateUIRenderer::renderTutorialStageUI(int width, int height, const std
 
 void GameStateUIRenderer::renderStageClearBackground(int width, int height, float clearTime, int earnedStars, bool isTimeAttackMode,
                                                       int currentStage, GameProgressState::SecretStarType selectedSecretStarType,
-                                                      const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared) {
+                                                      const std::map<int, std::set<GameProgressState::SecretStarType>>& secretStarCleared,
+                                                      bool isOnlineReplay) {
     font.initialize();
     
     glMatrixMode(GL_PROJECTION);
@@ -199,9 +200,12 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     glm::vec2 returnFieldPos = uiConfig.calculatePosition(returnFieldConfig.position, width, height);
     renderText("RETURN FIELD: ENTER", returnFieldPos, returnFieldConfig.color, returnFieldConfig.scale);
     
-    auto retryConfig = uiConfig.getStageClearRetryConfig();
-    glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
-    renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
+    // オンラインリプレイの場合はリトライボタンを非表示
+    if (!isOnlineReplay) {
+        auto retryConfig = uiConfig.getStageClearRetryConfig();
+        glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
+        renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
+    }
     
     glEnable(GL_DEPTH_TEST);
     
@@ -212,7 +216,7 @@ void GameStateUIRenderer::renderStageClearBackground(int width, int height, floa
     glPopMatrix();
 }
 
-void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord) {
+void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height, float clearTime, float bestTime, bool isNewRecord, bool isOnlineReplay) {
     font.initialize();
     
     glMatrixMode(GL_PROJECTION);
@@ -274,10 +278,14 @@ void GameStateUIRenderer::renderTimeAttackClearBackground(int width, int height,
     glm::vec2 returnFieldPos = uiConfig.calculatePosition(returnFieldConfig.position, width, height);
     renderText("RETURN FIELD: ENTER", returnFieldPos, returnFieldConfig.color, returnFieldConfig.scale);
     
-    auto retryConfig = uiConfig.getTimeAttackClearRetryConfig();
-    glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
-    renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
+    // オンラインリプレイの場合はリトライボタンを非表示
+    if (!isOnlineReplay) {
+        auto retryConfig = uiConfig.getTimeAttackClearRetryConfig();
+        glm::vec2 retryPos = uiConfig.calculatePosition(retryConfig.position, width, height);
+        renderText("RETRY: R", retryPos, retryConfig.color, retryConfig.scale);
+    }
     
+    // リプレイボタンは常に表示
     auto replayConfig = uiConfig.getTimeAttackClearReplayConfig();
     glm::vec2 replayPos = uiConfig.calculatePosition(replayConfig.position, width, height);
     renderText("REPLAY: SPACE", replayPos, replayConfig.color, replayConfig.scale);
@@ -891,7 +899,7 @@ void GameStateUIRenderer::renderLeaderboardAssist(int width, int height, bool is
 
 void GameStateUIRenderer::renderLeaderboardUI(int width, int height, int targetStage,
                                              const std::vector<LeaderboardEntry>& entries,
-                                             bool isLoading) {
+                                             bool isLoading, int selectedIndex) {
     printf("DEBUG: renderLeaderboardUI called - targetStage: %d, entries: %zu, isLoading: %d\n", 
            targetStage, entries.size(), isLoading ? 1 : 0);
     
@@ -948,7 +956,7 @@ void GameStateUIRenderer::renderLeaderboardUI(int width, int height, int targetS
         glm::vec2 loadingPos = uiConfig.calculatePosition(loadingConfig.position, width, height);
         renderText(loadingText, glm::vec2(loadingPos.x * scaleX, loadingPos.y * scaleY), loadingConfig.color, loadingConfig.scale);
     } else if (entries.empty()) {
-        std::string noDataText = "NO RECORDS YET";
+        std::string noDataText = "STARTING UP. PLEASE WAIT A FEW MINUTES AND TRY AGAIN.";
         auto noDataConfig = uiConfig.getLeaderboardNoRecordsTextConfig();
         glm::vec2 noDataPos = uiConfig.calculatePosition(noDataConfig.position, width, height);
         renderText(noDataText, glm::vec2(noDataPos.x * scaleX, noDataPos.y * scaleY), noDataConfig.color, noDataConfig.scale);
@@ -966,11 +974,22 @@ void GameStateUIRenderer::renderLeaderboardUI(int width, int height, int targetS
             const auto& entry = entries[i];
             float y = startY + i * lineHeight; // 1位が上、下に行くほど順位が下がる
             
+            // 選択中のエントリはハイライト表示
+            glm::vec3 rankColor = rankConfig.color;
+            glm::vec3 nameColor = nameConfig.color;
+            glm::vec3 timeColor = timeConfig.color;
+            
+            if (i == selectedIndex) {
+                rankColor = glm::vec3(1.0f, 1.0f, 0.0f);  // 黄色でハイライト
+                nameColor = glm::vec3(1.0f, 1.0f, 0.0f);
+                timeColor = glm::vec3(1.0f, 1.0f, 0.0f);
+            }
+            
             // 順位（JSONから設定を取得）
             std::string rankText = std::to_string(i + 1) + ".";
             glm::vec2 rankBasePos = uiConfig.calculatePosition(rankConfig.position, width, height);
             glm::vec2 rankPos = glm::vec2(rankBasePos.x, rankBasePos.y + i * lineHeight);
-            renderText(rankText, glm::vec2(rankPos.x * scaleX, rankPos.y * scaleY), rankConfig.color, rankConfig.scale);
+            renderText(rankText, glm::vec2(rankPos.x * scaleX, rankPos.y * scaleY), rankColor, rankConfig.scale);
             
             // プレイヤー名（実際のプレイヤー名を表示、空の場合は"UNKNOWN"）
             std::string nameText = entry.playerName;
@@ -1004,7 +1023,7 @@ void GameStateUIRenderer::renderLeaderboardUI(int width, int height, int targetS
             // プレイヤー名（JSONから設定を取得）
             glm::vec2 nameBasePos = uiConfig.calculatePosition(nameConfig.position, width, height);
             glm::vec2 namePos = glm::vec2(nameBasePos.x, nameBasePos.y + i * lineHeight);
-            renderText(nameText, glm::vec2(namePos.x * scaleX, namePos.y * scaleY), nameConfig.color, nameConfig.scale);
+            renderText(nameText, glm::vec2(namePos.x * scaleX, namePos.y * scaleY), nameColor, nameConfig.scale);
             
             // タイム（JSONから設定を取得）
             char timeStr[32];
@@ -1012,12 +1031,36 @@ void GameStateUIRenderer::renderLeaderboardUI(int width, int height, int targetS
             std::string timeText = timeStr;
             glm::vec2 timeBasePos = uiConfig.calculatePosition(timeConfig.position, width, height);
             glm::vec2 timePos = glm::vec2(timeBasePos.x, timeBasePos.y + i * lineHeight);
-            renderText(timeText, glm::vec2(timePos.x * scaleX, timePos.y * scaleY), timeConfig.color, timeConfig.scale);
+            renderText(timeText, glm::vec2(timePos.x * scaleX, timePos.y * scaleY), timeColor, timeConfig.scale);
+            
+            // 選択中のエントリにリプレイがある場合のみマークを表示
+            if (i == selectedIndex) {
+                if (entry.hasReplay) {
+                    std::string replayMark = "[REPLAY]";
+                    auto replayMarkConfig = uiConfig.getLeaderboardReplayMarkSelectedConfig();
+                    // タイムの位置からの相対オフセットとして計算
+                    glm::vec2 replayMarkPos = glm::vec2(
+                        (timePos.x + replayMarkConfig.position.offsetX) * scaleX, 
+                        (timePos.y + replayMarkConfig.position.offsetY) * scaleY
+                    );
+                    renderText(replayMark, replayMarkPos, replayMarkConfig.color, replayMarkConfig.scale);
+                } else {
+                    // 選択中のエントリにリプレイがない場合、メッセージを表示
+                    std::string noReplayMark = "[NO REPLAY]";
+                    auto noReplayMarkConfig = uiConfig.getLeaderboardNoReplayMarkConfig();
+                    // タイムの位置からの相対オフセットとして計算
+                    glm::vec2 noReplayMarkPos = glm::vec2(
+                        (timePos.x + noReplayMarkConfig.position.offsetX) * scaleX, 
+                        (timePos.y + noReplayMarkConfig.position.offsetY) * scaleY
+                    );
+                    renderText(noReplayMark, noReplayMarkPos, noReplayMarkConfig.color, noReplayMarkConfig.scale);
+                }
+            }
         }
     }
     
-    // 説明UI（A/Dで切り替え、Enterで閉じる）
-    std::string instructionsText = "A/D : PREV/NEXT STAGE | CLOSE : ENTER";
+    // 説明UI（A/Dで切り替え、W/Sで選択、Spaceでリプレイ、Enterで閉じる）
+    std::string instructionsText = "A/D : PREV/NEXT STAGE  |  W/S : SELECT  |  SPACE : WATCH REPLAY  |  ENTER : CLOSE";
     auto instructionsConfig = uiConfig.getLeaderboardInstructionsConfig();
     glm::vec2 instructionsPos = uiConfig.calculatePosition(instructionsConfig.position, width, height);
     renderText(instructionsText, glm::vec2(instructionsPos.x * scaleX, instructionsPos.y * scaleY), instructionsConfig.color, instructionsConfig.scale);
