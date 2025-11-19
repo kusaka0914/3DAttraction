@@ -1637,15 +1637,6 @@ namespace GameLoop {
                 gameStateUIRenderer->renderSecretStarSelectionUI(width, height, gameState.progress.selectedSecretStarType);
             }
             
-            if (gameState.ui.showMultiplayerMenu) {
-                printf("DEBUG: showMultiplayerMenu is true, calling renderMultiplayerMenu\n");
-                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.multiplayer.isHost, 
-                                                          gameState.multiplayer.isConnected, 
-                                                          gameState.ui.isWaitingForConnection,
-                                                          gameState.ui.connectionIP, 
-                                                          gameState.ui.connectionPort);
-            }
-            
             if (gameState.ui.showRaceResultUI) {
                 gameStateUIRenderer->renderRaceResultUI(width, height, gameState.ui.raceWinnerPlayerId, 
                                                         gameState.ui.raceWinnerTime, gameState.ui.raceLoserTime);

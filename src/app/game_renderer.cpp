@@ -616,7 +616,6 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
             }
             
             if (gameState.ui.showMultiplayerMenu) {
-                printf("DEBUG: showMultiplayerMenu is true, calling renderMultiplayerMenu\n");
                 gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.ui.isHosting, 
                                                           gameState.multiplayer.isConnected, 
                                                           gameState.ui.isWaitingForConnection,

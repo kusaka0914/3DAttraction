@@ -1254,8 +1254,7 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
 
 void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHosting, bool isConnected, bool isWaitingForConnection, 
                                                  const std::string& connectionIP, int connectionPort) {
-    printf("DEBUG: renderMultiplayerMenu called - width=%d, height=%d, isHosting=%d, isConnected=%d, isWaitingForConnection=%d\n",
-           width, height, isHosting ? 1 : 0, isConnected ? 1 : 0, isWaitingForConnection ? 1 : 0);
+    
     font.initialize();
     
     glMatrixMode(GL_PROJECTION);
