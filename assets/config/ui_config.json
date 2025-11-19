@@ -1212,6 +1212,30 @@
       "color": [1.0, 1.0, 0.0],
       "scale": 2.0
     },
+    "replayMark": {
+      "position": {
+        "offsetX": 250,
+        "offsetY": 0
+      },
+      "color": [0.5, 0.8, 1.0],
+      "scale": 2.5
+    },
+    "replayMarkSelected": {
+      "position": {
+        "offsetX": 250,
+        "offsetY": 0
+      },
+      "color": [0.5, 0.8, 1.0],
+      "scale": 2.5
+    },
+    "noReplayMark": {
+      "position": {
+        "offsetX": 250,
+        "offsetY": 0
+      },
+      "color": [0.7, 0.7, 0.7],
+      "scale": 2.5
+    },
     "instructions": {
       "position": {
         "offsetX": -800,

@@ -42,5 +42,6 @@ struct ReplayState {
     
     bool pendingReplayLoad = false;  /**< @brief リプレイ読み込み待ちフラグ */
     int pendingReplayStage = 0;  /**< @brief 読み込み待ちのリプレイステージ番号 */
+    bool isOnlineReplay = false;  /**< @brief オンラインから取得したリプレイかどうか */
 };
 

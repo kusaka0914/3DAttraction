@@ -100,16 +100,21 @@ void GameUpdater::updateGameState(
     
     // リプレイ読み込み待ちの処理
     if (gameState.replay.pendingReplayLoad && gameState.replay.pendingReplayStage > 0) {
+        printf("ONLINE: Processing pending replay load - stage: %d\n", gameState.replay.pendingReplayStage);
         int replayStage = gameState.replay.pendingReplayStage;
         gameState.replay.pendingReplayLoad = false;
         gameState.replay.pendingReplayStage = 0;
         
         // リプレイ用にステージを読み込む
         resetStageStartTime();
-        stageManager.goToStage(replayStage, gameState, platformSystem);
         
         // リプレイ開始時はclearTimeを0に初期化（リプレイ終了時にreplayPlaybackTimeが設定される）
         gameState.progress.clearTime = 0.0f;
+        
+        // オンラインリプレイはタイムアタックモードの記録なので、isTimeAttackModeをtrueに設定
+        gameState.progress.isTimeAttackMode = true;
+        gameState.progress.currentTimeAttackTime = 0.0f;
+        gameState.progress.timeAttackStartTime = 0.0f;
         
         gameState.replay.isReplayMode = true;
         gameState.replay.isReplayPaused = false;
@@ -119,8 +124,31 @@ void GameUpdater::updateGameState(
         gameState.progress.isStageCompleted = false;
         gameState.progress.isGoalReached = false;
         
-        printf("ONLINE: Started replay playback for stage %d (Clear time: %.2fs)\n", 
-               replayStage, gameState.replay.currentReplay.clearTime);
+        printf("ONLINE: Replay data before stage load - frames: %zu, first frame timestamp: %.2f\n",
+               gameState.replay.currentReplay.frames.size(),
+               gameState.replay.currentReplay.frames.empty() ? 0.0f : gameState.replay.currentReplay.frames[0].timestamp);
+        
+        bool stageLoaded = stageManager.goToStage(replayStage, gameState, platformSystem);
+        printf("ONLINE: Stage %d loaded: %s\n", replayStage, stageLoaded ? "success" : "failed");
+        printf("ONLINE: Player position after goToStage: (%.2f, %.2f, %.2f)\n",
+               gameState.player.position.x, gameState.player.position.y, gameState.player.position.z);
+        
+        // リプレイ開始時に最初のフレームの位置を設定（goToStageの後に設定）
+        if (!gameState.replay.currentReplay.frames.empty()) {
+            const auto& firstFrame = gameState.replay.currentReplay.frames[0];
+            gameState.player.position = firstFrame.playerPosition;
+            gameState.player.velocity = firstFrame.playerVelocity;
+            printf("ONLINE: Set initial player position from first frame: (%.2f, %.2f, %.2f), velocity: (%.2f, %.2f, %.2f)\n",
+                   firstFrame.playerPosition.x, firstFrame.playerPosition.y, firstFrame.playerPosition.z,
+                   firstFrame.playerVelocity.x, firstFrame.playerVelocity.y, firstFrame.playerVelocity.z);
+        } else {
+            printf("ONLINE: ERROR - Replay frames are empty!\n");
+        }
+        
+        printf("ONLINE: Started replay playback for stage %d (Clear time: %.2fs, frames: %zu)\n", 
+               replayStage, gameState.replay.currentReplay.clearTime, gameState.replay.currentReplay.frames.size());
+        printf("ONLINE: isReplayMode: %s, replayPlaybackTime: %.2f\n",
+               gameState.replay.isReplayMode ? "true" : "false", gameState.replay.replayPlaybackTime);
     }
     
     if (!editorState.isActive) {
@@ -161,6 +189,17 @@ void GameUpdater::updateGameState(
     }
     
     if (gameState.replay.isReplayMode) {
+        // デバッグ: リプレイモード中であることを確認
+        static float debugLogTimer = 0.0f;
+        debugLogTimer += deltaTime;
+        if (debugLogTimer >= 2.0f) {  // 2秒ごとにログ出力
+            debugLogTimer = 0.0f;
+            printf("REPLAY: Mode active - playbackTime: %.2f, frames: %zu, paused: %s\n",
+                   gameState.replay.replayPlaybackTime,
+                   gameState.replay.currentReplay.frames.size(),
+                   gameState.replay.isReplayPaused ? "true" : "false");
+        }
+        
         float rewindSpeed = 0.0f;
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             if (gameState.replay.isReplayPaused) {
@@ -204,6 +243,7 @@ void GameUpdater::updateGameState(
                 gameState.progress.isStageCompleted = true;
                 gameState.progress.isGoalReached = true;
                 gameState.replay.replayPlaybackTime = 0.0f;
+                // オンラインリプレイフラグはリセットしない（ステージクリア画面でリトライを無効化するため）
                 
                 const auto& lastFrame = gameState.replay.currentReplay.frames.back();
                 gameState.player.position = lastFrame.playerPosition;
@@ -211,38 +251,88 @@ void GameUpdater::updateGameState(
                 
                 printf("REPLAY: Finished, returning to stage clear screen\n");
             } else {
-                for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
-                    const auto& frame1 = gameState.replay.currentReplay.frames[i];
-                    const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
-                    
-                    if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
-                        gameState.replay.replayPlaybackTime <= frame2.timestamp) {
-                        float t = (gameState.replay.replayPlaybackTime - frame1.timestamp) / 
-                                 (frame2.timestamp - frame1.timestamp);
-                        t = std::clamp(t, 0.0f, 1.0f);
+                // 最初のフレームより前の場合は最初のフレームの位置を使用
+                if (gameState.replay.currentReplay.frames.size() > 0 && 
+                    gameState.replay.replayPlaybackTime < gameState.replay.currentReplay.frames[0].timestamp) {
+                    const auto& firstFrame = gameState.replay.currentReplay.frames[0];
+                    gameState.player.position = firstFrame.playerPosition;
+                    gameState.player.velocity = firstFrame.playerVelocity;
+                } else if (gameState.replay.currentReplay.frames.size() > 0 && 
+                          gameState.replay.replayPlaybackTime == gameState.replay.currentReplay.frames[0].timestamp) {
+                    // 最初のフレームのタイムスタンプと一致する場合
+                    const auto& firstFrame = gameState.replay.currentReplay.frames[0];
+                    gameState.player.position = firstFrame.playerPosition;
+                    gameState.player.velocity = firstFrame.playerVelocity;
+                } else {
+                    // フレーム間を補間
+                    bool frameFound = false;
+                    for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
+                        const auto& frame1 = gameState.replay.currentReplay.frames[i];
+                        const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
                         
-                        gameState.player.position = glm::mix(frame1.playerPosition, frame2.playerPosition, t);
-                        gameState.player.velocity = glm::mix(frame1.playerVelocity, frame2.playerVelocity, t);
-                        
-                        if (!frame1.itemCollectedStates.empty() && frame1.itemCollectedStates.size() == gameState.items.items.size() &&
-                            !frame2.itemCollectedStates.empty() && frame2.itemCollectedStates.size() == gameState.items.items.size()) {
-                            bool useFrame1 = (t < 0.5f);
+                        // フレーム間の補間（境界を含む）
+                        if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
+                            gameState.replay.replayPlaybackTime <= frame2.timestamp) {
+                            float t = 0.0f;
+                            if (frame2.timestamp > frame1.timestamp) {
+                                t = (gameState.replay.replayPlaybackTime - frame1.timestamp) / 
+                                     (frame2.timestamp - frame1.timestamp);
+                            }
+                            t = std::clamp(t, 0.0f, 1.0f);
                             
-                            for (size_t j = 0; j < gameState.items.items.size() && j < frame1.itemCollectedStates.size(); j++) {
-                                bool shouldBeCollected = useFrame1 ? frame1.itemCollectedStates[j] : frame2.itemCollectedStates[j];
+                            gameState.player.position = glm::mix(frame1.playerPosition, frame2.playerPosition, t);
+                            gameState.player.velocity = glm::mix(frame1.playerVelocity, frame2.playerVelocity, t);
+                            
+                            // デバッグ: 位置更新を確認（最初の数フレームのみ）
+                            static int debugFrameCount = 0;
+                            if (debugFrameCount < 10) {
+                                debugFrameCount++;
+                                printf("REPLAY: Frame %d - playbackTime: %.2f, frame1: %.2f, frame2: %.2f, t: %.2f, pos: (%.2f, %.2f, %.2f)\n",
+                                       debugFrameCount, gameState.replay.replayPlaybackTime, frame1.timestamp, frame2.timestamp, t,
+                                       gameState.player.position.x, gameState.player.position.y, gameState.player.position.z);
+                            }
+                            
+                            if (!frame1.itemCollectedStates.empty() && frame1.itemCollectedStates.size() == gameState.items.items.size() &&
+                                !frame2.itemCollectedStates.empty() && frame2.itemCollectedStates.size() == gameState.items.items.size()) {
+                                bool useFrame1 = (t < 0.5f);
                                 
-                                if (gameState.items.items[j].isCollected != shouldBeCollected) {
-                                    if (shouldBeCollected) {
-                                        gameState.items.items[j].isCollected = true;
-                                        gameState.items.collectedItems++;
-                                    } else {
-                                        gameState.items.items[j].isCollected = false;
-                                        gameState.items.collectedItems--;
+                                for (size_t j = 0; j < gameState.items.items.size() && j < frame1.itemCollectedStates.size(); j++) {
+                                    bool shouldBeCollected = useFrame1 ? frame1.itemCollectedStates[j] : frame2.itemCollectedStates[j];
+                                    
+                                    if (gameState.items.items[j].isCollected != shouldBeCollected) {
+                                        if (shouldBeCollected) {
+                                            gameState.items.items[j].isCollected = true;
+                                            gameState.items.collectedItems++;
+                                        } else {
+                                            gameState.items.items[j].isCollected = false;
+                                            gameState.items.collectedItems--;
+                                        }
                                     }
                                 }
                             }
+                            
+                            frameFound = true;
+                            break;  // フレームが見つかったらループを抜ける
                         }
-                        break;
+                    }
+                    
+                    // フレームが見つからなかった場合（最後のフレームより後）、最後のフレームの位置を使用
+                    if (!frameFound && !gameState.replay.currentReplay.frames.empty()) {
+                        const auto& lastFrame = gameState.replay.currentReplay.frames.back();
+                        gameState.player.position = lastFrame.playerPosition;
+                        gameState.player.velocity = lastFrame.playerVelocity;
+                    } else if (!frameFound) {
+                        // デバッグ: フレームが見つからなかった場合
+                        static float debugTimer = 0.0f;
+                        debugTimer += deltaTime;
+                        if (debugTimer >= 1.0f) {  // 1秒ごとにログ出力
+                            debugTimer = 0.0f;
+                            printf("REPLAY: WARNING - No frame found for playback time %.2f (first: %.2f, last: %.2f, frames: %zu)\n",
+                                   gameState.replay.replayPlaybackTime,
+                                   gameState.replay.currentReplay.frames.empty() ? 0.0f : gameState.replay.currentReplay.frames[0].timestamp,
+                                   gameState.replay.currentReplay.frames.empty() ? 0.0f : gameState.replay.currentReplay.frames.back().timestamp,
+                                   gameState.replay.currentReplay.frames.size());
+                        }
                     }
                 }
             }
@@ -264,7 +354,28 @@ void GameUpdater::updateGameState(
                 }
                 gameState.replay.replayBuffer.push_back(frame);
                 
+                // デバッグ: 最初の数フレームのみログ出力
+                static int debugFrameCount = 0;
+                if (debugFrameCount < 5) {
+                    debugFrameCount++;
+                    printf("REPLAY: Recorded frame %d - timestamp: %.2f, pos: (%.2f, %.2f, %.2f), buffer size: %zu\n",
+                           debugFrameCount, frame.timestamp, frame.playerPosition.x, frame.playerPosition.y, frame.playerPosition.z,
+                           gameState.replay.replayBuffer.size());
+                }
+                
                 gameState.replay.replayRecordTimer = 0.0f;
+            }
+        } else {
+            // デバッグ: 記録が停止している理由を確認
+            static float debugTimer = 0.0f;
+            debugTimer += deltaTime;
+            if (debugTimer >= 5.0f) {  // 5秒ごとにログ出力
+                debugTimer = 0.0f;
+                printf("REPLAY: Recording paused - isRecordingReplay: %s, isTimeAttackMode: %s, isCountdownActive: %s, timeAttackStartTime: %.2f\n",
+                       gameState.replay.isRecordingReplay ? "true" : "false",
+                       gameState.progress.isTimeAttackMode ? "true" : "false",
+                       gameState.ui.isCountdownActive ? "true" : "false",
+                       gameState.progress.timeAttackStartTime);
             }
         }
     }
@@ -455,6 +566,7 @@ void GameUpdater::updatePhysicsAndCollisions(
                                        currentStage, clearTime, gameState.progress.timeAttackRecords[currentStage]);
                             }
                             
+                            // 新記録の場合はローカルにリプレイを保存
                             if (shouldSaveReplay && !gameState.replay.replayBuffer.empty()) {
                                 ReplayData replayData;
                                 replayData.stageNumber = currentStage;
@@ -468,18 +580,47 @@ void GameUpdater::updatePhysicsAndCollisions(
                                 replayData.recordedDate = ss.str();
                                 
                                 ReplayManager::saveReplay(replayData, currentStage);
+                            }
+                            
+                            // オンラインランキングには常にリプレイを送信（リプレイバッファがある場合）
+                            if (!gameState.replay.replayBuffer.empty()) {
+                                // 別スレッドで使用するため、動的に確保
+                                ReplayData* replayData = new ReplayData();
+                                replayData->stageNumber = currentStage;
+                                replayData->clearTime = clearTime;
+                                replayData->frames = gameState.replay.replayBuffer;  // コピーを作成
+                                replayData->frameRate = gameState.replay.REPLAY_RECORD_INTERVAL;
+                                
+                                auto now = std::time(nullptr);
+                                std::stringstream ss;
+                                ss << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S");
+                                replayData->recordedDate = ss.str();
                                 
                                 // オンラインランキングにリプレイも送信
-                                OnlineLeaderboardManager::submitTime(currentStage, clearTime, 
-                                    [currentStage, clearTime](bool success) {
-                                        if (success) {
-                                            printf("ONLINE: Record with replay submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);
-                                        } else {
-                                            printf("ONLINE: Failed to submit record with replay for stage %d\n", currentStage);
-                                        }
-                                    }, &replayData);
+                                printf("ONLINE: Preparing to submit record with replay - stage: %d, time: %.2fs, frames: %zu\n",
+                                       currentStage, clearTime, replayData->frames.size());
+                                if (replayData->frames.empty()) {
+                                    printf("ONLINE: ERROR - Replay data frames are empty! replayBuffer size: %zu\n", 
+                                           gameState.replay.replayBuffer.size());
+                                    delete replayData;  // エラー時は削除
+                                } else {
+                                    printf("ONLINE: First frame timestamp: %.2f, last frame timestamp: %.2f\n",
+                                           replayData->frames[0].timestamp,
+                                           replayData->frames.back().timestamp);
+                                    OnlineLeaderboardManager::submitTime(currentStage, clearTime, 
+                                        [currentStage, clearTime, replayData](bool success) {
+                                            if (success) {
+                                                printf("ONLINE: Record with replay submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);
+                                            } else {
+                                                printf("ONLINE: Failed to submit record with replay for stage %d\n", currentStage);
+                                            }
+                                            delete replayData;  // コールバック後に削除
+                                        }, replayData);
+                                }
                             } else {
-                                // リプレイがない場合も通常の送信
+                                // リプレイがない場合のみ通常の送信
+                                printf("ONLINE: No replay buffer - replayBuffer.empty(): %s\n",
+                                       gameState.replay.replayBuffer.empty() ? "true" : "false");
                                 OnlineLeaderboardManager::submitTime(currentStage, clearTime, [currentStage, clearTime](bool success) {
                                     if (success) {
                                         printf("ONLINE: Record submitted successfully for stage %d: %.2fs\n", currentStage, clearTime);

@@ -105,6 +105,16 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         }
         
         if (gameState.replay.isReplayMode) {
+            // デバッグ: リプレイモード中の入力処理が呼ばれていることを確認
+            static int debugInputCount = 0;
+            debugInputCount++;
+            if (debugInputCount % 60 == 0) {  // 60フレームごとにログ出力（約1秒）
+                printf("REPLAY INPUT: Mode active - paused: %s, speed: %.1fx, playbackTime: %.2f\n",
+                       gameState.replay.isReplayPaused ? "true" : "false",
+                       gameState.replay.replayPlaybackSpeed,
+                       gameState.replay.replayPlaybackTime);
+            }
+            
             if (keyStates[GLFW_KEY_SPACE].justPressed()) {
                 gameState.replay.isReplayPaused = !gameState.replay.isReplayPaused;
                 printf("REPLAY: %s\n", gameState.replay.isReplayPaused ? "Paused" : "Resumed");
@@ -518,9 +528,12 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 InputHandler::returnToField(window, gameState, stageManager, platformSystem, clearedStage);
                 
                 gameState.ui.showStageClearUI = false;
+                // フィールドに戻る際にオンラインリプレイフラグをリセット
+                gameState.replay.isOnlineReplay = false;
             }
             
-            if (keyStates[GLFW_KEY_R].justPressed()) {
+            // オンラインリプレイの場合はリトライ機能を無効化
+            if (keyStates[GLFW_KEY_R].justPressed() && !gameState.replay.isOnlineReplay) {
                 resetStageStartTime();
                 stageManager.loadStage(stageManager.getCurrentStage(), gameState, platformSystem);
                 gameState.ui.showStageClearUI = false;
@@ -542,7 +555,43 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             if (keyStates[GLFW_KEY_SPACE].justPressed()) {
                 if (gameState.progress.isTimeAttackMode) {
                     int currentStage = stageManager.getCurrentStage();
-                    if (ReplayManager::replayExists(currentStage)) {
+                    
+                    // オンラインリプレイの場合は、currentReplayをそのまま使用
+                    if (gameState.replay.isOnlineReplay && !gameState.replay.currentReplay.frames.empty()) {
+                        printf("REPLAY: Restarting online replay for stage %d (Clear time: %.2fs, frames: %zu)\n", 
+                               currentStage, gameState.replay.currentReplay.clearTime, gameState.replay.currentReplay.frames.size());
+                        
+                        resetStageStartTime();  // ゲームタイムをリセット
+                        stageManager.goToStage(currentStage, gameState, platformSystem);
+                        
+                        // リプレイ開始時はclearTimeを0に初期化（リプレイ終了時にreplayPlaybackTimeが設定される）
+                        gameState.progress.clearTime = 0.0f;
+                        gameState.progress.isTimeAttackMode = true;
+                        gameState.progress.currentTimeAttackTime = 0.0f;
+                        gameState.progress.timeAttackStartTime = 0.0f;
+                        
+                        gameState.replay.isReplayMode = true;
+                        gameState.replay.isReplayPaused = false;
+                        gameState.replay.replayPlaybackTime = 0.0f;
+                        gameState.replay.replayPlaybackSpeed = 1.0f;  // 初期速度は1.0x
+                        // isOnlineReplayフラグは維持
+                        
+                        // リプレイ開始時に最初のフレームの位置を設定
+                        if (!gameState.replay.currentReplay.frames.empty()) {
+                            const auto& firstFrame = gameState.replay.currentReplay.frames[0];
+                            gameState.player.position = firstFrame.playerPosition;
+                            gameState.player.velocity = firstFrame.playerVelocity;
+                        }
+                        
+                        gameState.ui.showStageClearUI = false;
+                        gameState.progress.isStageCompleted = false;
+                        gameState.progress.isGoalReached = false;
+                        printf("REPLAY: Started online replay playback for stage %d (Clear time: %.2fs)\n", 
+                               currentStage, gameState.replay.currentReplay.clearTime);
+                        return;  // リプレイ再生開始時は他の処理をスキップ
+                    }
+                    // ローカルリプレイの場合は従来通り
+                    else if (ReplayManager::replayExists(currentStage)) {
                         if (ReplayManager::loadReplay(gameState.replay.currentReplay, currentStage)) {
                             resetStageStartTime();  // ゲームタイムをリセット
                             stageManager.goToStage(currentStage, gameState, platformSystem);
@@ -554,10 +603,11 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                             gameState.replay.isReplayPaused = false;
                             gameState.replay.replayPlaybackTime = 0.0f;
                             gameState.replay.replayPlaybackSpeed = 1.0f;  // 初期速度は1.0x
+                            gameState.replay.isOnlineReplay = false;  // ローカルリプレイの場合はフラグをリセット
                             gameState.ui.showStageClearUI = false;
                             gameState.progress.isStageCompleted = false;
                             gameState.progress.isGoalReached = false;
-                            printf("REPLAY: Started playback for stage %d (Clear time: %.2fs)\n", currentStage, gameState.replay.currentReplay.clearTime);
+                            printf("REPLAY: Started local replay playback for stage %d (Clear time: %.2fs)\n", currentStage, gameState.replay.currentReplay.clearTime);
                             return;  // リプレイ再生開始時は他の処理をスキップ
                         }
                     }

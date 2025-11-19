@@ -275,6 +275,8 @@ void OnlineLeaderboardManager::submitTime(int stageNumber, float time,
         
         // リプレイデータがあれば追加
         if (replayData != nullptr) {
+            printf("ONLINE: Processing replay data - stage: %d, clearTime: %.2f, frames: %zu\n",
+                   replayData->stageNumber, replayData->clearTime, replayData->frames.size());
             nlohmann::json replayJson;
             replayJson["stageNumber"] = replayData->stageNumber;
             replayJson["clearTime"] = replayData->clearTime;
@@ -295,7 +297,10 @@ void OnlineLeaderboardManager::submitTime(int stageNumber, float time,
             replayJson["frames"] = framesArray;
             jsonData["replayData"] = replayJson;
             
-            printf("ONLINE: Submitting time with replay data (%zu frames)\n", replayData->frames.size());
+            printf("ONLINE: Submitting time with replay data (%zu frames, JSON size will be large)\n", replayData->frames.size());
+            printf("ONLINE: Replay JSON frames array size: %zu\n", framesArray.size());
+        } else {
+            printf("ONLINE: No replay data provided (replayData is nullptr)\n");
         }
         
         printf("ONLINE: Submitting time - processed playerName: [%s] (length: %zu)\n", 
@@ -339,17 +344,35 @@ void OnlineLeaderboardManager::fetchReplay(int leaderboardId,
         ReplayData* replayData = nullptr;
         if (httpGet(url, response)) {
             try {
+                printf("ONLINE: Received response for replay ID %d, length: %zu\n", leaderboardId, response.length());
                 auto json = nlohmann::json::parse(response);
+                printf("ONLINE: Parsed JSON - success: %s, has replayData: %s\n",
+                       json.value("success", false) ? "true" : "false",
+                       json.contains("replayData") ? "true" : "false");
+                
                 if (json.value("success", false) && json.contains("replayData")) {
                     replayData = new ReplayData();
                     const auto& replayJson = json["replayData"];
+                    
+                    printf("ONLINE: Replay JSON keys: ");
+                    for (auto it = replayJson.begin(); it != replayJson.end(); ++it) {
+                        printf("%s ", it.key().c_str());
+                    }
+                    printf("\n");
                     
                     replayData->stageNumber = replayJson.value("stageNumber", 0);
                     replayData->clearTime = replayJson.value("clearTime", 0.0f);
                     replayData->recordedDate = replayJson.value("recordedDate", "");
                     replayData->frameRate = replayJson.value("frameRate", 0.1f);
                     
+                    printf("ONLINE: Replay metadata - stage: %d, clearTime: %.2f, frameRate: %.2f\n",
+                           replayData->stageNumber, replayData->clearTime, replayData->frameRate);
+                    printf("ONLINE: Checking for frames - has frames key: %s, is array: %s\n",
+                           replayJson.contains("frames") ? "true" : "false",
+                           (replayJson.contains("frames") && replayJson["frames"].is_array()) ? "true" : "false");
+                    
                     if (replayJson.contains("frames") && replayJson["frames"].is_array()) {
+                        printf("ONLINE: Frames array size: %zu\n", replayJson["frames"].size());
                         for (const auto& frameJson : replayJson["frames"]) {
                             ReplayFrame frame;
                             frame.timestamp = frameJson.value("timestamp", 0.0f);
@@ -374,10 +397,23 @@ void OnlineLeaderboardManager::fetchReplay(int leaderboardId,
                             
                             replayData->frames.push_back(frame);
                         }
+                        printf("ONLINE: Processed %zu frames from JSON\n", replayData->frames.size());
+                    } else {
+                        printf("ONLINE: WARNING - No frames array found in replay JSON\n");
                     }
                     
                     printf("ONLINE: Loaded replay data for leaderboard ID %d (%zu frames)\n", 
                            leaderboardId, replayData->frames.size());
+                    if (!replayData->frames.empty()) {
+                        printf("ONLINE: First frame - timestamp: %.2f, position: (%.2f, %.2f, %.2f), velocity: (%.2f, %.2f, %.2f)\n",
+                               replayData->frames[0].timestamp,
+                               replayData->frames[0].playerPosition.x,
+                               replayData->frames[0].playerPosition.y,
+                               replayData->frames[0].playerPosition.z,
+                               replayData->frames[0].playerVelocity.x,
+                               replayData->frames[0].playerVelocity.y,
+                               replayData->frames[0].playerVelocity.z);
+                    }
                 }
             } catch (const std::exception& e) {
                 std::cerr << "Failed to parse replay JSON: " << e.what() << std::endl;

@@ -811,39 +811,63 @@ namespace GameLoop {
                 }
                 
                 // Spaceキーでリプレイを視聴
-                if (keyStates[GLFW_KEY_SPACE].justPressed() && !gameState.ui.leaderboardEntries.empty()) {
-                    int selectedIndex = gameState.ui.leaderboardSelectedIndex;
-                    if (selectedIndex >= 0 && selectedIndex < static_cast<int>(gameState.ui.leaderboardEntries.size())) {
-                        const auto& selectedEntry = gameState.ui.leaderboardEntries[selectedIndex];
-                        if (selectedEntry.hasReplay && selectedEntry.id > 0) {
-                            printf("ONLINE: Loading replay for entry ID %d\n", selectedEntry.id);
-                            gameState.ui.isLoadingReplay = true;
-                            
-                            // リプレイを取得（コールバック内でステージを読み込む）
-                            OnlineLeaderboardManager::fetchReplay(selectedEntry.id, [&gameState](const ReplayData* replayData) {
-                                if (replayData != nullptr) {
-                                    printf("ONLINE: Replay loaded successfully (%zu frames)\n", replayData->frames.size());
-                                    
-                                    // リプレイデータをコピーして保存
-                                    gameState.replay.currentReplay = *replayData;
-                                    gameState.replay.pendingReplayStage = replayData->stageNumber;
-                                    gameState.replay.pendingReplayLoad = true;
-                                    
-                                    // ランキングUIを閉じる
-                                    gameState.ui.showLeaderboardUI = false;
-                                    gameState.ui.leaderboardEntries.clear();
-                                    gameState.ui.leaderboardTargetStage = 0;
-                                    gameState.ui.leaderboardSelectedIndex = 0;
-                                    
-                                    printf("ONLINE: Replay data prepared for stage %d (Clear time: %.2fs)\n", 
-                                           replayData->stageNumber, replayData->clearTime);
+                if (keyStates[GLFW_KEY_SPACE].justPressed()) {
+                    printf("ONLINE: Space key pressed in leaderboard UI\n");
+                    if (gameState.ui.leaderboardEntries.empty()) {
+                        printf("ONLINE: No entries available\n");
+                    } else {
+                        int selectedIndex = gameState.ui.leaderboardSelectedIndex;
+                        printf("ONLINE: Selected index: %d, Total entries: %zu\n", 
+                               selectedIndex, gameState.ui.leaderboardEntries.size());
+                        if (selectedIndex >= 0 && selectedIndex < static_cast<int>(gameState.ui.leaderboardEntries.size())) {
+                            const auto& selectedEntry = gameState.ui.leaderboardEntries[selectedIndex];
+                            printf("ONLINE: Selected entry - ID: %d, hasReplay: %s, playerName: %s\n", 
+                                   selectedEntry.id, selectedEntry.hasReplay ? "true" : "false", selectedEntry.playerName.c_str());
+                            if (selectedEntry.hasReplay && selectedEntry.id > 0) {
+                                printf("ONLINE: Loading replay for entry ID %d\n", selectedEntry.id);
+                                gameState.ui.isLoadingReplay = true;
+                                
+                                // リプレイを取得（コールバック内でステージを読み込む）
+                                OnlineLeaderboardManager::fetchReplay(selectedEntry.id, [&gameState](const ReplayData* replayData) {
+                                    if (replayData != nullptr) {
+                                        printf("ONLINE: Replay loaded successfully (%zu frames, stage %d)\n", 
+                                               replayData->frames.size(), replayData->stageNumber);
+                                        
+                                        // リプレイデータをコピーして保存
+                                        gameState.replay.currentReplay = *replayData;
+                                        gameState.replay.pendingReplayStage = replayData->stageNumber;
+                                        gameState.replay.pendingReplayLoad = true;
+                                        gameState.replay.isOnlineReplay = true;  // オンラインリプレイフラグを設定
+                                        
+                                        printf("ONLINE: Replay data prepared - pendingReplayLoad: %s, pendingReplayStage: %d\n",
+                                               gameState.replay.pendingReplayLoad ? "true" : "false",
+                                               gameState.replay.pendingReplayStage);
+                                        
+                                        // ランキングUIを閉じる
+                                        gameState.ui.showLeaderboardUI = false;
+                                        gameState.ui.leaderboardEntries.clear();
+                                        gameState.ui.leaderboardTargetStage = 0;
+                                        gameState.ui.leaderboardSelectedIndex = 0;
+                                        
+                                        printf("ONLINE: Replay data prepared for stage %d (Clear time: %.2fs)\n", 
+                                               replayData->stageNumber, replayData->clearTime);
+                                    } else {
+                                        printf("ONLINE: Failed to load replay - replayData is nullptr\n");
+                                    }
+                                    gameState.ui.isLoadingReplay = false;
+                                });
+                            } else {
+                                // リプレイがない場合のメッセージ
+                                if (!selectedEntry.hasReplay) {
+                                    printf("ONLINE: No replay available for selected entry (rank %d, player: %s, id: %d)\n",
+                                           selectedIndex + 1, selectedEntry.playerName.c_str(), selectedEntry.id);
+                                    printf("ONLINE: This record was submitted before replay feature was implemented, or replay data was not saved.\n");
                                 } else {
-                                    printf("ONLINE: Failed to load replay\n");
+                                    printf("ONLINE: Replay data exists but ID is invalid (id: %d)\n", selectedEntry.id);
                                 }
-                                gameState.ui.isLoadingReplay = false;
-                            });
+                            }
                         } else {
-                            printf("ONLINE: No replay available for selected entry\n");
+                            printf("ONLINE: Invalid selected index: %d\n", selectedIndex);
                         }
                     }
                 }
@@ -1261,15 +1285,25 @@ namespace GameLoop {
                 if (gameState.progress.timeAttackRecords.find(stageManager.getCurrentStage()) != gameState.progress.timeAttackRecords.end()) {
                     bestTime = gameState.progress.timeAttackRecords[stageManager.getCurrentStage()];
                 }
-                gameStateUIRenderer->renderTimeAttackClearBackground(width, height, clearTime, bestTime, gameState.progress.isNewRecord);
+                gameStateUIRenderer->renderTimeAttackClearBackground(width, height, clearTime, bestTime, gameState.progress.isNewRecord, gameState.replay.isOnlineReplay);
             } else {
                 int currentStage = stageManager.getCurrentStage();
                 gameStateUIRenderer->renderStageClearBackground(width, height, gameState.progress.clearTime, gameState.progress.stageStars[currentStage], false,
-                                                                 currentStage, gameState.progress.selectedSecretStarType, gameState.progress.secretStarCleared);
+                                                                 currentStage, gameState.progress.selectedSecretStarType, gameState.progress.secretStarCleared, gameState.replay.isOnlineReplay);
             }
         }
         
         if (gameState.replay.isReplayMode) {
+            // デバッグ: リプレイモード中のUI描画が呼ばれていることを確認
+            static int debugRenderCount = 0;
+            debugRenderCount++;
+            if (debugRenderCount % 60 == 0) {  // 60フレームごとにログ出力（約1秒）
+                printf("REPLAY UI: Rendering replay UI - paused: %s, speed: %.1fx, playbackTime: %.2f\n",
+                       gameState.replay.isReplayPaused ? "true" : "false",
+                       gameState.replay.replayPlaybackSpeed,
+                       gameState.replay.replayPlaybackTime);
+            }
+            
             uiRenderer->begin2DMode();
             
             auto& uiConfig = UIConfig::UIConfigManager::getInstance();
