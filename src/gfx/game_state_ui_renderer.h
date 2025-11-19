@@ -218,6 +218,16 @@ public:
     void renderPlayerNameInput(int width, int height, const std::string& playerName, int cursorPos, float timer = 0.0f);
     
     /**
+     * @brief IPアドレス入力画面を描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     * @param ipAddress IPアドレス入力中の文字列
+     * @param cursorPos カーソル位置
+     * @param timer タイマー（カーソル点滅用）
+     */
+    void renderIPAddressInput(int width, int height, const std::string& ipAddress, int cursorPos, float timer = 0.0f);
+    
+    /**
      * @brief エンディングメッセージを描画する
      * @param width ウィンドウ幅
      * @param height ウィンドウ高さ

@@ -168,7 +168,7 @@ int main(int argc, char* const argv[]) {
     for (int key : {GLFW_KEY_0, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5, GLFW_KEY_6, 
                     GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_ENTER, GLFW_KEY_R, GLFW_KEY_T,
                     GLFW_KEY_F, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE,
-                    GLFW_KEY_M, GLFW_KEY_H, GLFW_KEY_C}) {
+                    GLFW_KEY_M, GLFW_KEY_H, GLFW_KEY_C, GLFW_KEY_I, GLFW_KEY_PERIOD, GLFW_KEY_KP_DECIMAL}) {
         keyStates[key] = InputUtils::KeyState();
     }
 

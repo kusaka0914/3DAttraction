@@ -615,7 +615,11 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 gameStateUIRenderer->renderSecretStarSelectionUI(width, height, gameState.progress.selectedSecretStarType);
             }
             
-            if (gameState.ui.showMultiplayerMenu) {
+            if (gameState.ui.showIPAddressInput) {
+                gameStateUIRenderer->renderIPAddressInput(width, height, gameState.ui.ipAddressInput, 
+                                                          gameState.ui.ipAddressInputCursorPos, 
+                                                          gameState.ui.titleScreenTimer);
+            } else if (gameState.ui.showMultiplayerMenu) {
                 gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.multiplayer.isHost, 
                                                           gameState.multiplayer.isConnected, 
                                                           gameState.ui.isWaitingForConnection,

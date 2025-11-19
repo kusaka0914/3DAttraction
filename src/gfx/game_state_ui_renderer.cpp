@@ -1173,6 +1173,108 @@ void GameStateUIRenderer::renderPlayerNameInput(int width, int height, const std
     renderText(enterText, glm::vec2(enterPos.x * scaleX, enterPos.y * scaleY), confirmConfig.color, confirmConfig.scale);
 }
 
+void GameStateUIRenderer::renderIPAddressInput(int width, int height, const std::string& ipAddress, int cursorPos, float timer) {
+    font.initialize();
+    
+    // 背景描画用に2Dモードを設定
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 背景（半透明黒）
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // 入力欄の背景（白）
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    float inputBoxWidth = uiConfig.getPlayerNameInputBoxWidth();
+    float inputBoxHeight = uiConfig.getPlayerNameInputBoxHeight();
+    glm::vec2 inputBoxBasePos = uiConfig.calculatePosition(uiConfig.getPlayerNameInputBoxPosition(), width, height);
+    float inputBoxX = inputBoxBasePos.x - inputBoxWidth / 2.0f;
+    float inputBoxY = inputBoxBasePos.y - inputBoxHeight / 2.0f;
+    
+    glDisable(GL_BLEND);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(inputBoxX, inputBoxY);
+    glVertex2f(inputBoxX + inputBoxWidth, inputBoxY);
+    glVertex2f(inputBoxX + inputBoxWidth, inputBoxY + inputBoxHeight);
+    glVertex2f(inputBoxX, inputBoxY + inputBoxHeight);
+    glEnd();
+    glEnable(GL_BLEND);
+    
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    
+    // renderTextは1280x720の座標系を使うため、位置をスケーリング
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    std::string titleText = "ENTER HOST IP ADDRESS";
+    auto titleConfig = uiConfig.getPlayerNameInputTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText(titleText, glm::vec2(titlePos.x * scaleX, titlePos.y * scaleY), titleConfig.color, titleConfig.scale);
+    
+    // カーソル点滅
+    float blinkSpeed = 2.0f;
+    float blink = 0.5f + 0.5f * sinf(timer * blinkSpeed * 3.14159f);
+    bool showCursor = blink > 0.5f;
+    
+    // 入力テキスト
+    std::string inputText = ipAddress;
+    auto inputTextConfig = uiConfig.getPlayerNameInputTextConfig();
+    glm::vec2 inputTextBasePos = uiConfig.calculatePosition(inputTextConfig.position, width, height);
+    
+    float textStartX = inputTextBasePos.x;
+    float textY = inputTextBasePos.y;
+    
+    if (!inputText.empty()) {
+        renderText(inputText, glm::vec2(textStartX * scaleX, textY * scaleY), inputTextConfig.color, inputTextConfig.scale);
+    }
+    
+    // カーソルを描画
+    if (showCursor) {
+        float cursorX = textStartX;
+        if (!inputText.empty() && cursorPos >= 0 && cursorPos <= static_cast<int>(inputText.length())) {
+            cursorX = textStartX + inputText.substr(0, cursorPos).length() * 8.0f * inputTextConfig.scale;
+        }
+        renderText("_", glm::vec2(cursorX * scaleX, textY * scaleY), inputTextConfig.color, inputTextConfig.scale);
+    }
+    
+    // 説明テキスト
+    std::string hintText = "ENTER NUMBERS AND PERIODS (E.G. 192.168.1.14)";
+    auto hintConfig = uiConfig.getPlayerNameInputHintConfig();
+    glm::vec2 hintPos = uiConfig.calculatePosition(hintConfig.position, width, height);
+    renderText(hintText, glm::vec2(hintPos.x * scaleX, hintPos.y * scaleY), hintConfig.color, hintConfig.scale);
+    
+    // Enterキーで確定
+    std::string enterText = "CONFIRM : ENTER";
+    auto confirmConfig = uiConfig.getPlayerNameInputConfirmConfig();
+    glm::vec2 enterPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
+    renderText(enterText, glm::vec2(enterPos.x * scaleX, enterPos.y * scaleY), confirmConfig.color, confirmConfig.scale);
+}
+
 void GameStateUIRenderer::renderStageSelectionEscKeyInfo(int width, int height) {
     font.initialize();
     
@@ -1372,6 +1474,10 @@ void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHo
             connectText = "C: CONNECT TO " + connectionIP + ":" + std::to_string(connectionPort);
         }
         renderText(connectText, easyPos, easyConfig.unselectedColor, easyConfig.scale);
+        
+        // IPアドレス入力の説明
+        glm::vec2 ipInputPos = glm::vec2(easyPos.x, easyPos.y + 50);
+        renderText("I: ENTER HOST IP ADDRESS", ipInputPos, glm::vec3(0.7f, 0.7f, 0.7f), easyConfig.scale * 0.8f);
     }
     
     // ESCキーで閉じる

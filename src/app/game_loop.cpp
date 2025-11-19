@@ -427,8 +427,60 @@ namespace GameLoop {
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
                 
+                // IキーでIPアドレス入力画面を開く（クライアント側のみ）
+                if (keyStates[GLFW_KEY_I].justPressed() && !gameState.multiplayer.isHost) {
+                    gameState.ui.showIPAddressInput = true;
+                    gameState.ui.ipAddressInput = gameState.ui.connectionIP;
+                    gameState.ui.ipAddressInputCursorPos = gameState.ui.connectionIP.length();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // IPアドレス入力画面の処理
+                if (gameState.ui.showIPAddressInput) {
+                    // Backspaceキーで文字削除
+                    if (keyStates[GLFW_KEY_BACKSPACE].justPressed()) {
+                        if (!gameState.ui.ipAddressInput.empty() && gameState.ui.ipAddressInputCursorPos > 0) {
+                            gameState.ui.ipAddressInput.erase(gameState.ui.ipAddressInputCursorPos - 1, 1);
+                            gameState.ui.ipAddressInputCursorPos--;
+                        }
+                    }
+                    
+                    // 数字（0-9）の入力
+                    for (int key = GLFW_KEY_0; key <= GLFW_KEY_9; key++) {
+                        if (keyStates[key].justPressed()) {
+                            if (gameState.ui.ipAddressInput.length() < 15) { // IPアドレスの最大長
+                                char c = '0' + (key - GLFW_KEY_0);
+                                gameState.ui.ipAddressInput.insert(gameState.ui.ipAddressInputCursorPos, 1, c);
+                                gameState.ui.ipAddressInputCursorPos++;
+                            }
+                        }
+                    }
+                    
+                    // ピリオド（.）の入力
+                    if (keyStates[GLFW_KEY_PERIOD].justPressed() || keyStates[GLFW_KEY_KP_DECIMAL].justPressed()) {
+                        if (gameState.ui.ipAddressInput.length() < 15) {
+                            gameState.ui.ipAddressInput.insert(gameState.ui.ipAddressInputCursorPos, 1, '.');
+                            gameState.ui.ipAddressInputCursorPos++;
+                        }
+                    }
+                    
+                    // Enterキーで確定
+                    if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                        gameState.ui.connectionIP = gameState.ui.ipAddressInput;
+                        gameState.ui.showIPAddressInput = false;
+                        printf("IP Address set to: %s\n", gameState.ui.connectionIP.c_str());
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    }
+                    
+                    // ESCキーでキャンセル
+                    if (keyStates[GLFW_KEY_ESCAPE].justPressed()) {
+                        gameState.ui.showIPAddressInput = false;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    }
+                }
+                
                 // Cキーでクライアントとして接続
-                if (keyStates[GLFW_KEY_C].justPressed()) {
+                if (keyStates[GLFW_KEY_C].justPressed() && !gameState.ui.showIPAddressInput) {
                     // クライアント側のIPアドレスを取得して表示
                     std::string localIP = NetworkManager::getLocalIPAddress();
                     if (!localIP.empty()) {
@@ -453,7 +505,7 @@ namespace GameLoop {
                                 }
                                 targetIP = networkPrefix + std::to_string(tryNumber);
                                 printf("Trying IP address: %s (same network as %s, excluding self)\n", targetIP.c_str(), localIP.c_str());
-                                printf("NOTE: If connection fails, please set gameState.ui.connectionIP to the host's actual IP address.\n");
+                                printf("NOTE: If connection fails, press I to enter host IP address manually.\n");
                             } else {
                                 targetIP = "192.168.1.100"; // フォールバック
                                 printf("Trying default IP: %s\n", targetIP.c_str());
@@ -479,15 +531,19 @@ namespace GameLoop {
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
                 
-                // ESCキーでマルチプレイメニューを閉じる
+                // ESCキーでマルチプレイメニューを閉じる（IPアドレス入力画面が開いている場合はそちらを閉じる）
                 if (keyStates[GLFW_KEY_ESCAPE].justPressed()) {
-                    gameState.ui.showMultiplayerMenu = false;
-                    if (multiplayerManager.isConnected()) {
-                        multiplayerManager.disconnect();
-                        gameState.multiplayer.isMultiplayerMode = false;
-                        gameState.multiplayer.isHost = false;
-                        gameState.ui.isHosting = false;
-                        gameState.ui.isWaitingForConnection = false;
+                    if (gameState.ui.showIPAddressInput) {
+                        gameState.ui.showIPAddressInput = false;
+                    } else {
+                        gameState.ui.showMultiplayerMenu = false;
+                        if (multiplayerManager.isConnected()) {
+                            multiplayerManager.disconnect();
+                            gameState.multiplayer.isMultiplayerMode = false;
+                            gameState.multiplayer.isHost = false;
+                            gameState.ui.isHosting = false;
+                            gameState.ui.isWaitingForConnection = false;
+                        }
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

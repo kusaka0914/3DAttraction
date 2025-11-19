@@ -109,5 +109,10 @@ struct UIState {
     int raceWinnerPlayerId = -1;  /**< @brief レース勝者プレイヤーID（-1=未決定、0=ローカル、1=リモート） */
     float raceWinnerTime = 0.0f;  /**< @brief レース勝者のタイム */
     float raceLoserTime = 0.0f;  /**< @brief レース敗者のタイム */
+    
+    // IPアドレス入力関連
+    bool showIPAddressInput = false;  /**< @brief IPアドレス入力画面表示フラグ */
+    std::string ipAddressInput = "";  /**< @brief IPアドレス入力中の文字列 */
+    int ipAddressInputCursorPos = 0;  /**< @brief IPアドレス入力カーソル位置 */
 };
 
