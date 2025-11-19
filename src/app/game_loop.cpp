@@ -903,7 +903,19 @@ namespace GameLoop {
             
             if (!gameState.ui.showWarpTutorialUI && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
                 if (selectedStage > 0) {
-                    InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    // マルチプレイモードの場合、ホストのみがステージを選択可能
+                    if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                        if (gameState.multiplayer.isHost) {
+                            InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                            // リモートプレイヤーも同じステージで開始（状態を同期）
+                            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+                            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+                            gameState.multiplayer.isRaceStarted = true;
+                            // クライアント側へのステージ選択通知はgame_loop.cppで処理される
+                        }
+                    } else {
+                        InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    }
                 }
             }
             
