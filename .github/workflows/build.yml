@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
-          vcpkg install glfw3:x64-windows glm:x64-windows nlohmann-json:x64-windows sdl2-mixer:x64-windows --triplet x64-windows
+          vcpkg install glfw3:x64-windows glm:x64-windows nlohmann-json:x64-windows sdl2-mixer:x64-windows curl:x64-windows --triplet x64-windows
 
       - name: Configure (CMake - Release x64)
         shell: pwsh
