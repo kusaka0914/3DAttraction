@@ -5,6 +5,19 @@
 #include "game_state.h"
 
 void initializeGameState(GameState& gameState) {    
+    // マルチプレイ状態の初期化
+    gameState.multiplayer.isMultiplayerMode = false;
+    gameState.multiplayer.isHost = false;
+    gameState.multiplayer.isConnected = false;
+    gameState.multiplayer.isRaceStarted = false;
+    gameState.multiplayer.isRaceFinished = false;
+    gameState.multiplayer.winnerPlayerId = -1;
+    gameState.multiplayer.winnerTime = 0.0f;
+    gameState.multiplayer.loserTime = 0.0f;
+    gameState.multiplayer.pendingStageSelection = -1;
+    gameState.multiplayer.localPlayer = PlayerState();
+    gameState.multiplayer.remotePlayer = PlayerState();
+    gameState.multiplayer.remotePlayer.color = glm::vec3(0.2f, 0.8f, 1.0f); // リモートプレイヤーは青系の色    
     gameState.platforms.clear();
     gameState.gravityZones.clear();
     gameState.switches.clear();

@@ -28,6 +28,7 @@
 #include "../core/utils/input_utils.h"
 #include "../core/utils/ui_config_manager.h"
 #include "../game/online_leaderboard_manager.h"
+#include "../game/multiplayer_manager.h"
 #include "game_loop.h"
 #include "tutorial_manager.h"
 #include "../core/constants/debug_config.h"
@@ -140,6 +141,8 @@ int main(int argc, char* const argv[]) {
     PlatformSystem platformSystem;
     StageManager stageManager;
     
+    MultiplayerManager multiplayerManager;
+    
     io::AudioManager audioManager;
     if (!audioManager.initialize()) {
         std::cerr << "Failed to initialize audio system" << std::endl;
@@ -164,7 +167,8 @@ int main(int argc, char* const argv[]) {
     std::map<int, InputUtils::KeyState> keyStates;
     for (int key : {GLFW_KEY_0, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5, GLFW_KEY_6, 
                     GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_ENTER, GLFW_KEY_R, GLFW_KEY_T,
-                    GLFW_KEY_F, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE}) {
+                    GLFW_KEY_F, GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_SPACE,
+                    GLFW_KEY_M, GLFW_KEY_H, GLFW_KEY_C, GLFW_KEY_I, GLFW_KEY_PERIOD, GLFW_KEY_KP_DECIMAL}) {
         keyStates[key] = InputUtils::KeyState();
     }
 
@@ -176,7 +180,7 @@ int main(int argc, char* const argv[]) {
         DEBUG_PRINTF("DEBUG: timeLimitApplied reset to false\n");
     };
     
-    GameLoop::run(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, resetStageStartTime, startTime, audioManager);
+    GameLoop::run(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, resetStageStartTime, startTime, audioManager, multiplayerManager);
     
     renderer->cleanup();
     glfwDestroyWindow(window);

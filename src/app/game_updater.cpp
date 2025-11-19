@@ -616,6 +616,20 @@ void GameUpdater::updatePhysicsAndCollisions(
 
     gameState.player.velocity += gravityForce;
     
+    // マルチプレイモードの場合、リモートプレイヤーも物理演算を適用（ホストのみ）
+    if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isHost && gameState.multiplayer.isConnected) {
+        glm::vec3 remoteGravityDirection = glm::vec3(0, -1, 0);
+        // 簡易的な重力適用（完全な実装には重力ゾーン判定が必要）
+        float remoteGravityStrength = PhysicsUtils::calculateGravityStrength(GameConstants::BASE_GRAVITY, deltaTime, gameState.progress.timeScale, remoteGravityDirection, gameState);
+        glm::vec3 remoteGravityForce = remoteGravityDirection * remoteGravityStrength;
+        gameState.multiplayer.remotePlayer.velocity += remoteGravityForce;
+        
+        float remoteAirResistance = (gameState.progress.timeScale > 1.0f) ? GameConstants::AIR_RESISTANCE_FAST : GameConstants::AIR_RESISTANCE_NORMAL;
+        gameState.multiplayer.remotePlayer.velocity *= remoteAirResistance;
+        
+        gameState.multiplayer.remotePlayer.position.y += gameState.multiplayer.remotePlayer.velocity.y * scaledDeltaTime;
+    }
+    
     float airResistance = (gameState.progress.timeScale > 1.0f) ? GameConstants::AIR_RESISTANCE_FAST : GameConstants::AIR_RESISTANCE_NORMAL;
     gameState.player.velocity *= airResistance;
     
@@ -666,6 +680,32 @@ void GameUpdater::updatePhysicsAndCollisions(
                 }
                 if (platform.color.r > 0.9f && platform.color.g > 0.9f && platform.color.b < 0.1f) {
                     if (!gameState.progress.gameWon && gameState.items.collectedItems >= gameState.items.requiredItems) {
+                        // マルチプレイモードの場合
+                        if (gameState.multiplayer.isMultiplayerMode && !gameState.multiplayer.isRaceFinished) {
+                            // ローカルプレイヤーがゴール到達
+                            float clearTime = gameState.progress.gameTime;
+                            gameState.progress.clearTime = clearTime;
+                            gameState.multiplayer.winnerPlayerId = 0; // ローカルプレイヤー
+                            gameState.multiplayer.winnerTime = clearTime;
+                            gameState.multiplayer.isRaceFinished = true;
+                            gameState.progress.isGoalReached = true;
+                            
+                            // ゴール到達を送信（MultiplayerManager経由で送信）
+                            // 注意: この時点ではMultiplayerManagerへの参照がないため、
+                            // game_loop.cppでMultiplayerManagerを経由して送信する必要がある
+                            
+                            if (gameState.audioEnabled) {
+                                audioManager.stopBGM();
+                                gameState.bgmPlaying = false;
+                                gameState.currentBGM = "";
+                                audioManager.playSFX("clear");
+                            }
+                            
+                            gameState.ui.showRaceResultUI = true;
+                            gameState.ui.raceWinnerPlayerId = 0;
+                            gameState.ui.raceWinnerTime = clearTime;
+                        } else if (!gameState.multiplayer.isMultiplayerMode) {
+                            // 通常モード
                         if (gameState.audioEnabled) {
                             audioManager.stopBGM();
                             gameState.bgmPlaying = false;
@@ -682,6 +722,7 @@ void GameUpdater::updatePhysicsAndCollisions(
                         if (!gameState.replay.isReplayMode && 
                             (gameState.replay.currentReplay.frames.empty() || gameState.replay.currentReplay.clearTime <= 0.0f)) {
                             gameState.progress.clearTime = gameState.progress.gameTime;
+                            }
                         }
                         
                         int currentStage = stageManager.getCurrentStage();

@@ -21,6 +21,8 @@
 #include "../core/utils/input_utils.h"
 #include "../io/audio_manager.h"
 
+class MultiplayerManager;
+
 namespace GameLoop {
     /**
      * @brief ゲームループの実行
@@ -46,7 +48,8 @@ namespace GameLoop {
              std::map<int, InputUtils::KeyState>& keyStates,
              std::function<void()> resetStageStartTime,
              std::chrono::high_resolution_clock::time_point& startTime,
-             io::AudioManager& audioManager);
+             io::AudioManager& audioManager,
+             MultiplayerManager& multiplayerManager);
     
     /**
      * @brief Ready画面の処理

@@ -80,6 +80,8 @@ add_executable(SlimesSkyTravel
     src/physics/physics_system.cpp
     src/io/input_system.cpp
     src/io/audio_manager.cpp
+    src/io/network_manager.cpp
+    src/game/multiplayer_manager.cpp
     src/core/utils/physics_utils.cpp
     src/core/utils/stage_utils.cpp
     src/core/utils/ui_config_manager.cpp
