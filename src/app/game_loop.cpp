@@ -584,7 +584,7 @@ namespace GameLoop {
                     // connectionStartedは上でstatic変数として定義されているため、ここではリセット不要
                 }
             }
-            
+
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
             
             // マルチプレイモードの更新（物理演算の後）
@@ -906,7 +906,7 @@ namespace GameLoop {
                     // マルチプレイモードの場合、ホストのみがステージを選択可能
                     if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
                         if (gameState.multiplayer.isHost) {
-                            InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
                             // リモートプレイヤーも同じステージで開始（状態を同期）
                             gameState.multiplayer.remotePlayer.position = gameState.player.position;
                             gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);

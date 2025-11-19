@@ -4,7 +4,7 @@
 
 #include "game_state.h"
 
-void initializeGameState(GameState& gameState) {
+void initializeGameState(GameState& gameState) {    
     // マルチプレイ状態の初期化
     gameState.multiplayer.isMultiplayerMode = false;
     gameState.multiplayer.isHost = false;

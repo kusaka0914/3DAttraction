@@ -706,22 +706,22 @@ void GameUpdater::updatePhysicsAndCollisions(
                             gameState.ui.raceWinnerTime = clearTime;
                         } else if (!gameState.multiplayer.isMultiplayerMode) {
                             // 通常モード
-                            if (gameState.audioEnabled) {
-                                audioManager.stopBGM();
-                                gameState.bgmPlaying = false;
-                                gameState.currentBGM = "";
-                                
-                                audioManager.playSFX("clear");
-                            }
+                        if (gameState.audioEnabled) {
+                            audioManager.stopBGM();
+                            gameState.bgmPlaying = false;
+                            gameState.currentBGM = "";
                             
-                            gameState.progress.gameWon = true;
-                            gameState.progress.isStageCompleted = true;
-                            gameState.progress.isGoalReached = true;
-                            
-                            // リプレイモードでない場合、かつリプレイのクリアタイムが設定されていない場合のみclearTimeを更新
-                            if (!gameState.replay.isReplayMode && 
-                                (gameState.replay.currentReplay.frames.empty() || gameState.replay.currentReplay.clearTime <= 0.0f)) {
-                                gameState.progress.clearTime = gameState.progress.gameTime;
+                            audioManager.playSFX("clear");
+                        }
+                        
+                        gameState.progress.gameWon = true;
+                        gameState.progress.isStageCompleted = true;
+                        gameState.progress.isGoalReached = true;
+                        
+                        // リプレイモードでない場合、かつリプレイのクリアタイムが設定されていない場合のみclearTimeを更新
+                        if (!gameState.replay.isReplayMode && 
+                            (gameState.replay.currentReplay.frames.empty() || gameState.replay.currentReplay.clearTime <= 0.0f)) {
+                            gameState.progress.clearTime = gameState.progress.gameTime;
                             }
                         }
                         
