@@ -1,4 +1,5 @@
 #include "multiplayer_manager.h"
+#include "stage_manager.h"
 #include "../io/input_system.h"
 #include "../core/constants/game_constants.h"
 #include "../core/utils/input_utils.h"
@@ -245,6 +246,60 @@ void MultiplayerManager::checkGoalReached(GameState& gameState) {
         gameState.ui.raceWinnerPlayerId = gameState.multiplayer.winnerPlayerId;
         gameState.ui.raceWinnerTime = gameState.multiplayer.winnerTime;
     }
+}
+
+void MultiplayerManager::sendStageSelection(int stageNumber) {
+    if (!networkManager_.isConnected() || !networkManager_.isHost()) {
+        return;
+    }
+    networkManager_.sendStageSelection(stageNumber);
+}
+
+bool MultiplayerManager::checkStageSelection(GameState& gameState, StageManager& stageManager, PlatformSystem& platformSystem, std::function<void()> resetStageStartTime, GLFWwindow* window) {
+    if (!networkManager_.isConnected() || networkManager_.isHost()) {
+        return false;
+    }
+    
+    int stageNumber;
+    if (networkManager_.getStageSelection(stageNumber)) {
+        // ステージ選択通知を受信
+        // クライアント側でも同じステージに遷移
+        if (stageNumber >= 1 && stageNumber <= 5) {
+            // ステージをロード
+            resetStageStartTime();
+            gameState.progress.lives = 6;
+            stageManager.goToStage(stageNumber, gameState, platformSystem);
+            gameState.ui.readyScreenShown = false;
+            gameState.ui.showReadyScreen = true;
+            gameState.ui.readyScreenSpeedLevel = 0;
+            gameState.progress.timeScale = 1.0f;
+            gameState.progress.timeScaleLevel = 0;
+            gameState.progress.isTimeAttackMode = false;
+            
+            // リモートプレイヤーの位置をリセット
+            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+            gameState.multiplayer.isRaceStarted = true;
+            
+        } else if (stageNumber == 0) {
+            // ステージ選択画面に戻る
+            resetStageStartTime();
+            stageManager.goToStage(0, gameState, platformSystem);
+            gameState.ui.showReadyScreen = false;
+            gameState.ui.readyScreenShown = false;
+            gameState.progress.timeScale = 1.0f;
+            gameState.progress.timeScaleLevel = 0;
+            
+            gameState.camera.isFirstPersonMode = false;
+            gameState.camera.isFirstPersonView = false;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            
+            gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
+            gameState.multiplayer.isRaceStarted = false;
+        }
+        return true;
+    }
+    return false;
 }
 
 PlayerStateData MultiplayerManager::convertToPlayerStateData(const PlayerState& playerState) {

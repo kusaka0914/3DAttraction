@@ -591,6 +591,19 @@ namespace GameLoop {
             if (gameState.multiplayer.isMultiplayerMode && multiplayerManager.isConnected()) {
                 multiplayerManager.update(window, gameState, platformSystem, deltaTime, audioManager);
                 
+                // クライアント側でステージ選択通知をチェック
+                if (!gameState.multiplayer.isHost) {
+                    multiplayerManager.checkStageSelection(gameState, stageManager, platformSystem, resetStageStartTime, window);
+                }
+                
+                // ホスト側でステージが変更された場合、クライアントに通知
+                static int lastStage = stageManager.getCurrentStage();
+                int currentStage = stageManager.getCurrentStage();
+                if (gameState.multiplayer.isHost && currentStage != lastStage && currentStage >= 1 && currentStage <= 5) {
+                    multiplayerManager.sendStageSelection(currentStage);
+                }
+                lastStage = currentStage;
+                
                 // ゴール到達をチェックして送信
                 if (gameState.progress.isGoalReached && !gameState.multiplayer.isRaceFinished) {
                     multiplayerManager.sendGoalReached(0, gameState.progress.clearTime); // 0 = ローカルプレイヤー

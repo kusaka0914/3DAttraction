@@ -39,6 +39,7 @@ enum class NetworkMessageType {
     GAME_STATE_UPDATE,    /**< @brief ゲーム状態更新 */
     PLATFORM_STATE_UPDATE, /**< @brief プラットフォーム状態更新 */
     GOAL_REACHED,         /**< @brief ゴール到達 */
+    STAGE_SELECTION,      /**< @brief ステージ選択 */
     DISCONNECT            /**< @brief 切断 */
 };
 
@@ -187,6 +188,20 @@ public:
     bool getGoalReached(int& playerId, float& clearTime);
     
     /**
+     * @brief ステージ選択を送信する（ホストのみ）
+     * @param stageNumber ステージ番号
+     * @return 成功時true
+     */
+    bool sendStageSelection(int stageNumber);
+    
+    /**
+     * @brief ステージ選択通知を受信したかどうかを取得する
+     * @param stageNumber ステージ番号を受け取る変数
+     * @return ステージ選択通知がある場合true
+     */
+    bool getStageSelection(int& stageNumber);
+    
+    /**
      * @brief プラットフォーム状態を送信する（ホストのみ）
      * @param platformStates プラットフォーム状態のベクター
      * @return 成功時true
@@ -275,6 +290,9 @@ private:
     int goalReachedPlayerId_;
     float goalReachedClearTime_;
     bool hasGoalReached_;
+    
+    int stageSelectionNumber_;
+    bool hasStageSelection_;
     
     std::vector<PlatformStateData> receivedPlatformStates_;
     bool hasNewPlatformStates_;

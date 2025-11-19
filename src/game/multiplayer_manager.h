@@ -14,6 +14,8 @@ namespace io {
     class AudioManager;
 }
 
+class StageManager;
+
 /**
  * @brief マルチプレイマネージャー
  * @details ネットワーク通信とゲーム状態の同期を統合的に管理します。
@@ -117,6 +119,23 @@ public:
      * @param gameState ゲーム状態
      */
     void checkGoalReached(GameState& gameState);
+    
+    /**
+     * @brief ステージ選択を送信する（ホストのみ）
+     * @param stageNumber ステージ番号
+     */
+    void sendStageSelection(int stageNumber);
+    
+    /**
+     * @brief ステージ選択通知をチェックする（クライアントのみ）
+     * @param gameState ゲーム状態
+     * @param stageManager ステージマネージャー
+     * @param platformSystem プラットフォームシステム
+     * @param resetStageStartTime ステージ開始時間をリセットする関数
+     * @param window GLFWウィンドウ
+     * @return ステージ選択通知があった場合true
+     */
+    bool checkStageSelection(GameState& gameState, StageManager& stageManager, PlatformSystem& platformSystem, std::function<void()> resetStageStartTime, GLFWwindow* window);
     
     /**
      * @brief プラットフォーム状態を送信する（ホストのみ）

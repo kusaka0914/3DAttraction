@@ -241,6 +241,12 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     continue;
                 }
                 
+                // マルチプレイモードでクライアント側の場合、ステージ選択は無効化（ホストのみが選択可能）
+                if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected && !gameState.multiplayer.isHost) {
+                    // クライアント側ではステージ選択を無視
+                    continue;
+                }
+                
                 if (stageManager.getCurrentStage() == 0 && stageNumber >= 1 && stageNumber <= 5) {
                     if (gameState.progress.unlockedStages[stageNumber]) {
                         teleportToStageArea(stageNumber, gameState);
@@ -255,6 +261,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                             gameState.multiplayer.remotePlayer.position = gameState.player.position;
                             gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
                             gameState.multiplayer.isRaceStarted = true;
+                            // クライアント側へのステージ選択通知はgame_loop.cppで処理される
                         }
                     } else {
                         processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);

@@ -31,6 +31,8 @@ NetworkManager::NetworkManager()
     , hasGoalReached_(false)
     , goalReachedPlayerId_(-1)
     , goalReachedClearTime_(0.0f)
+    , stageSelectionNumber_(-1)
+    , hasStageSelection_(false)
     , hasNewPlatformStates_(false)
 #ifdef _WIN32
     , wsaInitialized_(false)
@@ -535,6 +537,24 @@ bool NetworkManager::getGoalReached(int& playerId, float& clearTime) {
     return false;
 }
 
+bool NetworkManager::sendStageSelection(int stageNumber) {
+    if (!isConnected_ || !isHost_) {
+        return false;
+    }
+    
+    return sendMessage(NetworkMessageType::STAGE_SELECTION, &stageNumber, sizeof(stageNumber));
+}
+
+bool NetworkManager::getStageSelection(int& stageNumber) {
+    std::lock_guard<std::mutex> lock(receiveMutex_);
+    if (hasStageSelection_) {
+        stageNumber = stageSelectionNumber_;
+        hasStageSelection_ = false;
+        return true;
+    }
+    return false;
+}
+
 bool NetworkManager::sendPlatformStates(const std::vector<PlatformStateData>& platformStates) {
     if (!isConnected_) {
         return false;
@@ -657,6 +677,13 @@ void NetworkManager::receiveThread() {
                         goalReachedPlayerId_ = data->playerId;
                         goalReachedClearTime_ = data->clearTime;
                         hasGoalReached_ = true;
+                    }
+                    break;
+                }
+                case NetworkMessageType::STAGE_SELECTION: {
+                    if (actualSize >= sizeof(int)) {
+                        stageSelectionNumber_ = *reinterpret_cast<int*>(buffer);
+                        hasStageSelection_ = true;
                     }
                     break;
                 }

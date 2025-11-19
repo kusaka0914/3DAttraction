@@ -1480,6 +1480,13 @@ void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHo
         renderText("I: ENTER HOST IP ADDRESS", ipInputPos, glm::vec3(0.7f, 0.7f, 0.7f), easyConfig.scale * 0.8f);
     }
     
+    // 接続後の説明（ホスト側のみ）
+    if (isConnected && isHosting) {
+        auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+        glm::vec2 instructionPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+        renderText("PRESS 1-5 TO SELECT STAGE", glm::vec2(instructionPos.x, instructionPos.y + 50), glm::vec3(0.8f, 0.8f, 1.0f), easyConfig.scale * 0.9f);
+    }
+    
     // ESCキーで閉じる
     auto confirmConfig = uiConfig.getModeSelectionConfirmConfig();
     glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
