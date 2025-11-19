@@ -1296,15 +1296,33 @@ void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHo
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("MULTIPLAYER", titlePos, titleConfig.color, titleConfig.scale);
     
-    // ローカルIPアドレスの表示（ホスト側のみ）
-    if (isHosting && !isConnected) {
+    // ローカルIPアドレスの表示（ホスト側とクライアント側の両方）
+    if (!isConnected) {
         std::string localIP = NetworkManager::getLocalIPAddress();
         if (!localIP.empty()) {
             auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
             glm::vec2 ipPos = uiConfig.calculatePosition(normalConfig.position, width, height);
             std::string ipText = "YOUR IP: " + localIP;
             renderText(ipText, glm::vec2(ipPos.x, ipPos.y - 150), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale);
-            renderText("SHARE THIS IP WITH CLIENT", glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(0.7f, 0.7f, 0.7f), normalConfig.scale * 0.8f);
+            
+            if (isHosting) {
+                renderText("SHARE THIS IP WITH CLIENT", glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(0.7f, 0.7f, 0.7f), normalConfig.scale * 0.8f);
+            } else {
+                std::string targetIP = connectionIP;
+                if (targetIP.empty()) {
+                    // 同じネットワーク内のIPアドレスを計算（ローカルIPのネットワーク部分を使用）
+                    size_t lastDot = localIP.find_last_of('.');
+                    if (lastDot != std::string::npos) {
+                        std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                        targetIP = networkPrefix + "100"; // 同じネットワークの .100 を試す
+                    } else {
+                        targetIP = "192.168.1.100";
+                    }
+                    renderText("CONNECTING TO: " + targetIP + ":" + std::to_string(connectionPort) + " (AUTO)", glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale * 0.8f);
+                } else {
+                    renderText("CONNECTING TO: " + targetIP + ":" + std::to_string(connectionPort), glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(0.7f, 0.7f, 0.7f), normalConfig.scale * 0.8f);
+                }
+            }
         }
     }
     
@@ -1337,7 +1355,22 @@ void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHo
         // クライアントとして接続
         auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
         glm::vec2 easyPos = uiConfig.calculatePosition(easyConfig.position, width, height);
-        std::string connectText = "C: CONNECT TO " + connectionIP + ":" + std::to_string(connectionPort);
+        std::string connectText;
+        if (connectionIP.empty()) {
+            // 同じネットワーク内のIPアドレスを表示（ローカルIPのネットワーク部分を使用）
+            std::string localIP = NetworkManager::getLocalIPAddress();
+            std::string defaultIP = "192.168.1.100";
+            if (!localIP.empty()) {
+                size_t lastDot = localIP.find_last_of('.');
+                if (lastDot != std::string::npos) {
+                    std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                    defaultIP = networkPrefix + "100"; // 同じネットワークの .100 を試す
+                }
+            }
+            connectText = "C: CONNECT TO " + defaultIP + ":" + std::to_string(connectionPort) + " (AUTO)";
+        } else {
+            connectText = "C: CONNECT TO " + connectionIP + ":" + std::to_string(connectionPort);
+        }
         renderText(connectText, easyPos, easyConfig.unselectedColor, easyConfig.scale);
     }
     

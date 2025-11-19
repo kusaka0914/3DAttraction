@@ -386,8 +386,26 @@ namespace GameLoop {
                 if (!ipAddressFetched) {
                     std::string localIP = NetworkManager::getLocalIPAddress();
                     if (!localIP.empty()) {
-                        // ホスト側のIPアドレスを表示用に保存（実際の接続先IPは別途設定）
                         printf("Local IP Address: %s\n", localIP.c_str());
+                        // クライアント側の場合、接続先IPアドレスが空の場合は、同じネットワーク内の他のIPアドレスを試す
+                        // ただし、自分のIPアドレス（localIP）は除外する
+                        if (gameState.ui.connectionIP.empty() && !gameState.multiplayer.isHost) {
+                            // 同じネットワーク内の一般的なIPアドレスを試す（.1, .100, .101など）
+                            size_t lastDot = localIP.find_last_of('.');
+                            if (lastDot != std::string::npos) {
+                                std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                                // 自分のIPアドレスの最後の数字を取得
+                                int myLastNumber = std::stoi(localIP.substr(lastDot + 1));
+                                // 自分のIPアドレス以外のIPアドレスを試す
+                                // まず .100 を試し、それが自分のIPの場合は .101 を試す
+                                int tryNumber = 100;
+                                if (tryNumber == myLastNumber) {
+                                    tryNumber = 101;
+                                }
+                                gameState.ui.connectionIP = networkPrefix + std::to_string(tryNumber);
+                                printf("Auto-detected host IP: %s (trying common IPs on same network)\n", gameState.ui.connectionIP.c_str());
+                            }
+                        }
                     }
                     ipAddressFetched = true;
                 }
@@ -411,13 +429,51 @@ namespace GameLoop {
                 
                 // Cキーでクライアントとして接続
                 if (keyStates[GLFW_KEY_C].justPressed()) {
-                    if (multiplayerManager.connectToHost(gameState.ui.connectionIP, gameState.ui.connectionPort)) {
+                    // クライアント側のIPアドレスを取得して表示
+                    std::string localIP = NetworkManager::getLocalIPAddress();
+                    if (!localIP.empty()) {
+                        printf("Client IP Address: %s\n", localIP.c_str());
+                    }
+                    
+                    // 接続先IPアドレスを使用（既に自動検出されている可能性がある）
+                    std::string targetIP = gameState.ui.connectionIP;
+                    if (targetIP.empty()) {
+                        printf("INFO: Connection IP address is not set. Trying to find host on local network...\n");
+                        // ローカルIPアドレスのネットワーク部分を使用して、同じネットワーク内のIPアドレスを試す
+                        if (!localIP.empty()) {
+                            size_t lastDot = localIP.find_last_of('.');
+                            if (lastDot != std::string::npos) {
+                                std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                                // 自分のIPアドレスの最後の数字を取得
+                                int myLastNumber = std::stoi(localIP.substr(lastDot + 1));
+                                // 自分のIPアドレス以外のIPアドレスを試す（.1, .100, .101など）
+                                int tryNumber = 100;
+                                if (tryNumber == myLastNumber) {
+                                    tryNumber = 101;
+                                }
+                                targetIP = networkPrefix + std::to_string(tryNumber);
+                                printf("Trying IP address: %s (same network as %s, excluding self)\n", targetIP.c_str(), localIP.c_str());
+                                printf("NOTE: If connection fails, please set gameState.ui.connectionIP to the host's actual IP address.\n");
+                            } else {
+                                targetIP = "192.168.1.100"; // フォールバック
+                                printf("Trying default IP: %s\n", targetIP.c_str());
+                            }
+                        } else {
+                            targetIP = "192.168.1.100"; // フォールバック
+                            printf("Trying default IP: %s\n", targetIP.c_str());
+                        }
+                    } else {
+                        printf("Using IP address: %s\n", targetIP.c_str());
+                    }
+                    
+                    printf("Multiplayer: Connecting to %s:%d...\n", targetIP.c_str(), gameState.ui.connectionPort);
+                    
+                    if (multiplayerManager.connectToHost(targetIP, gameState.ui.connectionPort)) {
                         gameState.multiplayer.isMultiplayerMode = true;
                         gameState.multiplayer.isHost = false;
                         gameState.ui.isWaitingForConnection = true; // 接続待ち中
-                        printf("Multiplayer: Connecting to %s:%d...\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
                     } else {
-                        printf("Multiplayer: Failed to start connection to %s:%d\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
+                        printf("Multiplayer: Failed to start connection to %s:%d\n", targetIP.c_str(), gameState.ui.connectionPort);
                         gameState.ui.isWaitingForConnection = false;
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));

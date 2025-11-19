@@ -102,7 +102,7 @@ struct UIState {
     bool showMultiplayerMenu = false;  /**< @brief マルチプレイメニュー表示フラグ */
     bool showMultiplayerConnectionUI = false;  /**< @brief マルチプレイ接続UI表示フラグ */
     bool isHosting = false;  /**< @brief ホストとして待機中かどうか */
-    std::string connectionIP = "192.168.1.100";  /**< @brief 接続先IPアドレス */
+    std::string connectionIP = "";  /**< @brief 接続先IPアドレス（ホスト側のIPアドレス。空の場合は自動検出を試みる） */
     int connectionPort = 12345;  /**< @brief 接続ポート番号 */
     bool isWaitingForConnection = false;  /**< @brief 接続待ち中かどうか */
     bool showRaceResultUI = false;  /**< @brief レース結果UI表示フラグ */
