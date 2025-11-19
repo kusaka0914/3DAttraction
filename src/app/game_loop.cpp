@@ -546,6 +546,7 @@ namespace GameLoop {
                 firstFrame.timestamp = 0.0f;
                 firstFrame.playerPosition = gameState.player.position;
                 firstFrame.playerVelocity = gameState.player.velocity;
+                firstFrame.timeScale = gameState.progress.timeScale;
                 firstFrame.itemCollectedStates.clear();
                 for (const auto& item : gameState.items.items) {
                     firstFrame.itemCollectedStates.push_back(item.isCollected);

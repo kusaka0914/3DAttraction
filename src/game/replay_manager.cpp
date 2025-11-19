@@ -77,6 +77,7 @@ bool ReplayManager::saveReplay(const ReplayData& replayData, int stageNumber) {
             frameJson["timestamp"] = frame.timestamp;
             frameJson["playerPosition"] = {frame.playerPosition.x, frame.playerPosition.y, frame.playerPosition.z};
             frameJson["playerVelocity"] = {frame.playerVelocity.x, frame.playerVelocity.y, frame.playerVelocity.z};
+            frameJson["timeScale"] = frame.timeScale;
             
             if (!frame.itemCollectedStates.empty()) {
                 frameJson["itemCollectedStates"] = frame.itemCollectedStates;
@@ -152,6 +153,9 @@ bool ReplayManager::loadReplay(ReplayData& replayData, int stageNumber) {
                     vel[1].get<float>(),
                     vel[2].get<float>()
                 );
+                
+                // timeScaleは後方互換性のため、存在しない場合は1.0fをデフォルト値とする
+                frame.timeScale = frameJson.contains("timeScale") ? frameJson["timeScale"].get<float>() : 1.0f;
                 
                 if (frameJson.contains("itemCollectedStates") && frameJson["itemCollectedStates"].is_array()) {
                     frame.itemCollectedStates.clear();

@@ -41,8 +41,10 @@ public:
      * 
      * @param deltaTime デルタタイム
      * @param playerPos プレイヤー位置（オプション）
+     * @param absoluteTime 絶対時間（リプレイモード用、-1の場合は通常更新）
+     * @param timeScale タイムスケール（リプレイモード用、-1の場合は通常更新）
      */
-    void update(float deltaTime, const glm::vec3& playerPos = glm::vec3(0));
+    void update(float deltaTime, const glm::vec3& playerPos = glm::vec3(0), float absoluteTime = -1.0f, float timeScale = -1.0f);
     
     /**
      * @brief 衝突判定（インデックス付き）
@@ -155,10 +157,13 @@ private:
     void updateStaticPlatform(StaticPlatform& platform, float deltaTime);
     void updateMovingPlatform(MovingPlatform& platform, float deltaTime);
     void updateRotatingPlatform(RotatingPlatform& platform, float deltaTime);
+    void updateRotatingPlatformFromTime(RotatingPlatform& platform, float absoluteTime);
     void updatePatrollingPlatform(PatrollingPlatform& platform, float deltaTime);
+    void updatePatrollingPlatformFromTime(PatrollingPlatform& platform, float absoluteTime);
     void updateTeleportPlatform(TeleportPlatform& platform, float deltaTime);
     void updateJumpPad(JumpPad& platform, float deltaTime);
     void updateCycleDisappearingPlatform(CycleDisappearingPlatform& platform, float deltaTime);
+    void updateCycleDisappearingPlatformFromTime(CycleDisappearingPlatform& platform, float absoluteTime);
     void updateDisappearingPlatform(DisappearingPlatform& platform, float deltaTime);
     void updateFlyingPlatform(FlyingPlatform& platform, float deltaTime, const glm::vec3& playerPos);
     

@@ -6,20 +6,48 @@
 #include <variant>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 
-void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos) {
+void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos, float absoluteTime, float timeScale) {
+    // timeScaleが指定されている場合、absoluteTimeにtimeScaleを掛けて実際のゲーム時間に変換
+    // absoluteTimeは実際の経過時間（timestamp = currentTimeAttackTime）なので、
+    // ギミックの更新には actualTime = absoluteTime * timeScale を使う
+    // （通常モードでは scaledDeltaTime = deltaTime * timeScale で更新しているのと同じ）
+    float actualTime = absoluteTime;
+    if (absoluteTime >= 0.0f && timeScale > 0.0f) {
+        actualTime = absoluteTime * timeScale;
+    }
+    
     for (auto& platform : platforms) {
         std::visit(overloaded{
-            [this, deltaTime](StaticPlatform& p) { updateStaticPlatform(p, deltaTime); },
-            [this, deltaTime](MovingPlatform& p) { updateMovingPlatform(p, deltaTime); },
-            [this, deltaTime](RotatingPlatform& p) { updateRotatingPlatform(p, deltaTime); },
-            [this, deltaTime](PatrollingPlatform& p) { updatePatrollingPlatform(p, deltaTime); },
-            [this, deltaTime](TeleportPlatform& p) { updateTeleportPlatform(p, deltaTime); },
-            [this, deltaTime](JumpPad& p) { updateJumpPad(p, deltaTime); },
-            [this, deltaTime](CycleDisappearingPlatform& p) { updateCycleDisappearingPlatform(p, deltaTime); },
-            [this, deltaTime](DisappearingPlatform& p) { updateDisappearingPlatform(p, deltaTime); },
-            [this, deltaTime, &playerPos](FlyingPlatform& p) { updateFlyingPlatform(p, deltaTime, playerPos); }
+            [this, deltaTime, actualTime, absoluteTime](StaticPlatform& p) { updateStaticPlatform(p, deltaTime); },
+            [this, deltaTime, actualTime, absoluteTime](MovingPlatform& p) { updateMovingPlatform(p, deltaTime); },
+            [this, deltaTime, actualTime, absoluteTime](RotatingPlatform& p) { 
+                if (absoluteTime >= 0.0f) {
+                    updateRotatingPlatformFromTime(p, actualTime);
+                } else {
+                    updateRotatingPlatform(p, deltaTime);
+                }
+            },
+            [this, deltaTime, actualTime, absoluteTime](PatrollingPlatform& p) { 
+                if (absoluteTime >= 0.0f) {
+                    updatePatrollingPlatformFromTime(p, actualTime);
+                } else {
+                    updatePatrollingPlatform(p, deltaTime);
+                }
+            },
+            [this, deltaTime, actualTime, absoluteTime](TeleportPlatform& p) { updateTeleportPlatform(p, deltaTime); },
+            [this, deltaTime, actualTime, absoluteTime](JumpPad& p) { updateJumpPad(p, deltaTime); },
+            [this, deltaTime, actualTime, absoluteTime](CycleDisappearingPlatform& p) { 
+                if (absoluteTime >= 0.0f) {
+                    updateCycleDisappearingPlatformFromTime(p, actualTime);
+                } else {
+                    updateCycleDisappearingPlatform(p, deltaTime);
+                }
+            },
+            [this, deltaTime, actualTime, absoluteTime](DisappearingPlatform& p) { updateDisappearingPlatform(p, deltaTime); },
+            [this, deltaTime, actualTime, absoluteTime, &playerPos](FlyingPlatform& p) { updateFlyingPlatform(p, deltaTime, playerPos); }
         }, platform);
     }
 }
@@ -251,6 +279,11 @@ void PlatformSystem::updateRotatingPlatform(RotatingPlatform& platform, float de
     }
 }
 
+void PlatformSystem::updateRotatingPlatformFromTime(RotatingPlatform& platform, float absoluteTime) {
+    // 絶対時間から回転角度を直接計算
+    platform.rotationAngle = std::fmod(platform.rotationSpeed * absoluteTime, 360.0f);
+}
+
 void PlatformSystem::updatePatrollingPlatform(PatrollingPlatform& platform, float deltaTime) {
     if (platform.patrolPoints.empty()) return;
     
@@ -275,6 +308,49 @@ void PlatformSystem::updatePatrollingPlatform(PatrollingPlatform& platform, floa
     } else {
         platform.position = glm::mix(currentPoint, nextPoint, t);
     }
+}
+
+void PlatformSystem::updatePatrollingPlatformFromTime(PatrollingPlatform& platform, float absoluteTime) {
+    if (platform.patrolPoints.empty()) return;
+    
+    platform.previousPosition = platform.position;
+    
+    // 絶対時間から巡回位置を直接計算
+    // 全ポイント間の移動時間の合計を計算
+    float totalCycleTime = 0.0f;
+    for (size_t i = 0; i < platform.patrolPoints.size(); i++) {
+        size_t nextI = (i + 1) % platform.patrolPoints.size();
+        float distance = glm::length(platform.patrolPoints[nextI] - platform.patrolPoints[i]);
+        totalCycleTime += distance / platform.patrolSpeed;
+    }
+    
+    // サイクル内の時間を計算
+    float cycleTime = std::fmod(absoluteTime, totalCycleTime);
+    
+    // 現在のセグメントを特定
+    float accumulatedTime = 0.0f;
+    for (size_t i = 0; i < platform.patrolPoints.size(); i++) {
+        size_t nextI = (i + 1) % platform.patrolPoints.size();
+        float distance = glm::length(platform.patrolPoints[nextI] - platform.patrolPoints[i]);
+        float timeToNext = distance / platform.patrolSpeed;
+        
+        if (cycleTime <= accumulatedTime + timeToNext) {
+            // このセグメント内
+            platform.currentPatrolIndex = static_cast<int>(i);
+            float t = (cycleTime - accumulatedTime) / timeToNext;
+            t = std::clamp(t, 0.0f, 1.0f);
+            platform.position = glm::mix(platform.patrolPoints[i], platform.patrolPoints[nextI], t);
+            platform.patrolTimer = cycleTime - accumulatedTime;
+            return;
+        }
+        
+        accumulatedTime += timeToNext;
+    }
+    
+    // 最後のポイントに到達
+    platform.currentPatrolIndex = static_cast<int>(platform.patrolPoints.size() - 1);
+    platform.position = platform.patrolPoints.back();
+    platform.patrolTimer = 0.0f;
 }
 
 void PlatformSystem::updateTeleportPlatform(TeleportPlatform& platform, float deltaTime) {
@@ -306,6 +382,50 @@ void PlatformSystem::updateCycleDisappearingPlatform(CycleDisappearingPlatform& 
         platform.isCurrentlyVisible = true;
         platform.isBlinking = true;
         platform.blinkTimer += deltaTime;
+        
+        float blinkCycle = 0.2f;
+        float blinkProgress = std::fmod(platform.blinkTimer, blinkCycle);
+        if (blinkProgress < blinkCycle * 0.5f) {
+            platform.blinkAlpha = 1.0f;
+        } else {
+            platform.blinkAlpha = 0.3f;
+        }
+        
+        platform.size = platform.originalSize;
+    } else {
+        platform.isCurrentlyVisible = false;
+        platform.isBlinking = false;
+        platform.blinkAlpha = 0.0f;
+        platform.size = glm::vec3(0, 0, 0);
+    }
+}
+
+void PlatformSystem::updateCycleDisappearingPlatformFromTime(CycleDisappearingPlatform& platform, float absoluteTime) {
+    // 絶対時間からサイクルタイマーを直接計算
+    // コンストラクタでcycleTimer = cycleTime - initialと設定されている
+    // absoluteTime = 0の時、cycleTimer = cycleTime - initialになるようにする
+    // つまり、cycleTimer = fmod(cycleTime - initial + absoluteTime, cycleTime)
+    // 初期値から逆算: initial = cycleTime - (初期cycleTimer)
+    float initialValue = platform.cycleTime - platform.cycleTimer;
+    // ただし、リプレイ開始時点でのcycleTimerの値を使う必要がある
+    // より正確には、absoluteTime = 0の時にcycleTimer = cycleTime - initialになるように
+    // 現在の実装では、platform.cycleTimerが既に初期化されているので、それを基準にする
+    float currentInitialTimer = platform.cycleTimer;  // これは cycleTime - initial の値
+    platform.cycleTimer = std::fmod(currentInitialTimer + absoluteTime, platform.cycleTime);
+    
+    float blinkStartTime = platform.visibleTime - platform.blinkTime;
+    
+    if (platform.cycleTimer < blinkStartTime) {
+        platform.isCurrentlyVisible = true;
+        platform.isBlinking = false;
+        platform.blinkAlpha = 1.0f;
+        platform.size = platform.originalSize;
+    } else if (platform.cycleTimer < platform.visibleTime) {
+        platform.isCurrentlyVisible = true;
+        platform.isBlinking = true;
+        // 点滅タイマーも絶対時間から計算
+        float blinkElapsed = platform.cycleTimer - blinkStartTime;
+        platform.blinkTimer = blinkElapsed;
         
         float blinkCycle = 0.2f;
         float blinkProgress = std::fmod(platform.blinkTimer, blinkCycle);

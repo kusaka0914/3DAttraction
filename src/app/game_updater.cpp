@@ -119,6 +119,7 @@ void GameUpdater::updateGameState(
         gameState.replay.isReplayMode = true;
         gameState.replay.isReplayPaused = false;
         gameState.replay.replayPlaybackTime = 0.0f;
+        gameState.replay.previousReplayPlaybackTime = 0.0f;  // 前フレームの時間を初期化
         gameState.replay.replayPlaybackSpeed = 1.0f;
         gameState.ui.showStageClearUI = false;
         gameState.progress.isStageCompleted = false;
@@ -348,6 +349,7 @@ void GameUpdater::updateGameState(
                 frame.timestamp = gameState.progress.currentTimeAttackTime;
                 frame.playerPosition = gameState.player.position;
                 frame.playerVelocity = gameState.player.velocity;
+                frame.timeScale = gameState.progress.timeScale;
                 frame.itemCollectedStates.clear();
                 for (const auto& item : gameState.items.items) {
                     frame.itemCollectedStates.push_back(item.isCollected);
@@ -358,8 +360,8 @@ void GameUpdater::updateGameState(
                 static int debugFrameCount = 0;
                 if (debugFrameCount < 5) {
                     debugFrameCount++;
-                    printf("REPLAY: Recorded frame %d - timestamp: %.2f, pos: (%.2f, %.2f, %.2f), buffer size: %zu\n",
-                           debugFrameCount, frame.timestamp, frame.playerPosition.x, frame.playerPosition.y, frame.playerPosition.z,
+                    printf("REPLAY: Recorded frame %d - timestamp: %.2f, timeScale: %.1f, pos: (%.2f, %.2f, %.2f), buffer size: %zu\n",
+                           debugFrameCount, frame.timestamp, frame.timeScale, frame.playerPosition.x, frame.playerPosition.y, frame.playerPosition.z,
                            gameState.replay.replayBuffer.size());
                 }
                 
@@ -422,10 +424,81 @@ void GameUpdater::updateGameState(
         }, platforms[i]);
     }
     
-    platformSystem.update(scaledDeltaTime, gameState.player.position);
-    GravitySystem::updateGravityZones(gameState, scaledDeltaTime);
-    SwitchSystem::updateSwitches(gameState, scaledDeltaTime);
-    CannonSystem::updateCannons(gameState, scaledDeltaTime);
+    // リプレイモード中は、replayPlaybackTimeの変化量をdeltaTimeとして使用
+    float effectiveDeltaTime = scaledDeltaTime;
+    if (gameState.replay.isReplayMode) {
+        if (gameState.replay.isReplayPaused) {
+            // 一時停止中はギミックも止める
+            effectiveDeltaTime = 0.0f;
+        } else {
+            float replayDeltaTime = gameState.replay.replayPlaybackTime - gameState.replay.previousReplayPlaybackTime;
+            // 早戻し/早送り時は負の値や大きな値になる可能性があるため、クランプ
+            replayDeltaTime = std::clamp(replayDeltaTime, -1.0f, 1.0f);
+            effectiveDeltaTime = replayDeltaTime;
+            gameState.replay.previousReplayPlaybackTime = gameState.replay.replayPlaybackTime;
+        }
+    }
+    
+    // リプレイモード中は絶対時間から直接計算、そうでない場合は通常の更新
+    if (gameState.replay.isReplayMode && !gameState.replay.isReplayPaused) {
+        // 現在のフレームのtimeScaleを取得（プレイヤーの補間処理と同じロジックを使用）
+        float currentTimeScale = 1.0f;
+        if (!gameState.replay.currentReplay.frames.empty()) {
+            // 最初のフレームより前の場合は最初のフレームのtimeScaleを使用
+            if (gameState.replay.replayPlaybackTime < gameState.replay.currentReplay.frames[0].timestamp) {
+                currentTimeScale = gameState.replay.currentReplay.frames[0].timeScale;
+            }
+            // 最後のフレームより後ろの場合は最後のフレームのtimeScaleを使用
+            else if (gameState.replay.replayPlaybackTime > gameState.replay.currentReplay.frames.back().timestamp) {
+                currentTimeScale = gameState.replay.currentReplay.frames.back().timeScale;
+            }
+            // フレーム間を補間
+            else {
+                for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
+                    const auto& frame1 = gameState.replay.currentReplay.frames[i];
+                    const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
+                    
+                    if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
+                        gameState.replay.replayPlaybackTime <= frame2.timestamp) {
+                        // フレーム間でtimeScaleを線形補間
+                        float t = 0.0f;
+                        if (frame2.timestamp > frame1.timestamp) {
+                            t = (gameState.replay.replayPlaybackTime - frame1.timestamp) / 
+                                 (frame2.timestamp - frame1.timestamp);
+                        }
+                        t = std::clamp(t, 0.0f, 1.0f);
+                        // timeScaleを線形補間（ただし、通常は同じ値なので、より近いフレームの値を使用）
+                        // フレーム間でtimeScaleが変わった場合でも滑らかに切り替わるように
+                        if (frame1.timeScale == frame2.timeScale) {
+                            currentTimeScale = frame1.timeScale;
+                        } else {
+                            // timeScaleが変わった場合は、より近いフレームの値を使用
+                            currentTimeScale = (t < 0.5f) ? frame1.timeScale : frame2.timeScale;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // gameState.progress.timeScaleを更新してUIに反映
+        gameState.progress.timeScale = currentTimeScale;
+        
+        // デバッグ: timeScaleの取得を確認（最初の数フレームのみ）
+        static int debugTimeScaleCount = 0;
+        if (debugTimeScaleCount < 10) {
+            debugTimeScaleCount++;
+            printf("REPLAY: playbackTime: %.2f, currentTimeScale: %.1f\n", 
+                   gameState.replay.replayPlaybackTime, currentTimeScale);
+        }
+        
+        platformSystem.update(0.0f, gameState.player.position, gameState.replay.replayPlaybackTime, currentTimeScale);
+    } else {
+        platformSystem.update(effectiveDeltaTime, gameState.player.position, -1.0f, -1.0f);
+    }
+    GravitySystem::updateGravityZones(gameState, effectiveDeltaTime);
+    SwitchSystem::updateSwitches(gameState, effectiveDeltaTime);
+    CannonSystem::updateCannons(gameState, effectiveDeltaTime);
     
     for (auto& [key, state] : keyStates) {
         state.update(glfwGetKey(window, key) == GLFW_PRESS);
@@ -437,7 +510,9 @@ void GameUpdater::updateGameState(
         GameUpdater::updatePhysicsAndCollisions(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, audioManager);
     } else {
         if (!gameState.progress.isGameOver) {
-            platformSystem.update(scaledDeltaTime, gameState.player.position);
+            // リプレイモード中は、replayPlaybackTimeの変化量をdeltaTimeとして使用（上で既に計算済み）
+            // effectiveDeltaTimeは上で計算されているので、ここではplatformSystem.updateは不要
+            // （既に上でplatformSystem.updateが呼ばれているため）
         }
     }
     
@@ -546,6 +621,7 @@ void GameUpdater::updatePhysicsAndCollisions(
                                 lastFrame.timestamp = clearTime;
                                 lastFrame.playerPosition = gameState.player.position;
                                 lastFrame.playerVelocity = gameState.player.velocity;
+                                lastFrame.timeScale = gameState.progress.timeScale;
                                 gameState.replay.replayBuffer.push_back(lastFrame);
                                 
                                 gameState.replay.isRecordingReplay = false;

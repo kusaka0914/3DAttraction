@@ -18,6 +18,7 @@ struct ReplayFrame {
     glm::vec3 playerPosition;
     glm::vec3 playerVelocity;
     std::vector<bool> itemCollectedStates;
+    float timeScale;  /**< @brief このフレーム時点でのtimeScale（重力倍率） */
 };
 
 struct ReplayData {
@@ -37,6 +38,7 @@ struct ReplayState {
     bool isReplayMode = false;
     ReplayData currentReplay;
     float replayPlaybackTime = 0.0f;
+    float previousReplayPlaybackTime = 0.0f;  /**< @brief 前フレームのリプレイ再生時間（ギミック同期用） */
     bool isReplayPaused = false;
     float replayPlaybackSpeed = 1.0f;
     

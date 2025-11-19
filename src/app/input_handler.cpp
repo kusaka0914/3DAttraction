@@ -573,6 +573,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                         gameState.replay.isReplayMode = true;
                         gameState.replay.isReplayPaused = false;
                         gameState.replay.replayPlaybackTime = 0.0f;
+                        gameState.replay.previousReplayPlaybackTime = 0.0f;  // 前フレームの時間を初期化
                         gameState.replay.replayPlaybackSpeed = 1.0f;  // 初期速度は1.0x
                         // isOnlineReplayフラグは維持
                         
@@ -602,6 +603,7 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                             gameState.replay.isReplayMode = true;
                             gameState.replay.isReplayPaused = false;
                             gameState.replay.replayPlaybackTime = 0.0f;
+                            gameState.replay.previousReplayPlaybackTime = 0.0f;  // 前フレームの時間を初期化
                             gameState.replay.replayPlaybackSpeed = 1.0f;  // 初期速度は1.0x
                             gameState.replay.isOnlineReplay = false;  // ローカルリプレイの場合はフラグをリセット
                             gameState.ui.showStageClearUI = false;
