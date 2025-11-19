@@ -424,7 +424,9 @@ namespace GameLoop {
                 if (multiplayerManager.isConnected() && !gameState.multiplayer.isConnected) {
                     gameState.multiplayer.isConnected = true;
                     gameState.ui.isWaitingForConnection = false;
-                    printf("Multiplayer: Connection established\n");
+                    printf("Multiplayer: Connection established (Host: %s, Connected: %s)\n", 
+                           gameState.multiplayer.isHost ? "true" : "false",
+                           gameState.multiplayer.isConnected ? "true" : "false");
                 } else if (!multiplayerManager.isConnected() && gameState.multiplayer.isConnected) {
                     gameState.multiplayer.isConnected = false;
                     gameState.multiplayer.isMultiplayerMode = false;

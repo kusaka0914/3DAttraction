@@ -7,7 +7,8 @@
 MultiplayerManager::MultiplayerManager() {
     networkManager_.setConnectionCallback([this](bool connected) {
         // 接続状態変更時のコールバック
-        std::cout << "Multiplayer: Connection " << (connected ? "established" : "lost") << std::endl;
+        std::cout << "Multiplayer: Connection " << (connected ? "established" : "lost") 
+                  << " (isHost: " << (networkManager_.isHost() ? "true" : "false") << ")" << std::endl;
     });
 }
 

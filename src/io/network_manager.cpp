@@ -129,6 +129,7 @@ bool NetworkManager::startHost(int port) {
     
     // 接続待ちスレッドを開始
     std::thread([this]() {
+        int acceptAttempts = 0;
         while (!shouldStop_ && !isConnected_) {
             sockaddr_in clientAddr;
             socklen_t clientAddrLen = sizeof(clientAddr);
@@ -149,6 +150,25 @@ bool NetworkManager::startHost(int port) {
                     connectionCallback_(true);
                 }
                 break;
+            } else {
+                // 非ブロッキングモードなので、接続がない場合はエラーになる
+#ifdef _WIN32
+                int error = WSAGetLastError();
+                if (error != WSAEWOULDBLOCK && error != WSAEINPROGRESS) {
+                    // 予期しないエラーの場合のみログ出力
+                    std::cerr << "Host: accept error: " << error << std::endl;
+                }
+#else
+                if (errno != EWOULDBLOCK && errno != EAGAIN) {
+                    // 予期しないエラーの場合のみログ出力
+                    std::cerr << "Host: accept error: " << errno << " (" << strerror(errno) << ")" << std::endl;
+                }
+#endif
+            }
+            
+            acceptAttempts++;
+            if (acceptAttempts % 50 == 0) { // 5秒ごと（100ms * 50）
+                std::cout << "Host: Still waiting for client connection... (attempts: " << acceptAttempts << ")" << std::endl;
             }
             
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -225,10 +245,11 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
     // 接続処理を別スレッドで実行（メインスレッドをブロックしない）
     isHost_ = false;
     
-    std::thread([this]() {
+    std::thread([this, ipAddress, port]() {
         // 接続が完了するまで待機（タイムアウト付き）
         const int TIMEOUT_MS = 150000; // 150秒
         auto startTime = std::chrono::steady_clock::now();
+        int selectAttempts = 0;
         
         while (!shouldStop_ && std::chrono::steady_clock::now() - startTime < std::chrono::milliseconds(TIMEOUT_MS)) {
             fd_set writeSet;
@@ -241,7 +262,11 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
             int selectResult = select(0, nullptr, &writeSet, nullptr, &timeout);
             if (selectResult > 0 && FD_ISSET(clientSocket_, &writeSet)) {
                 // 接続完了
+                std::cout << "Client: select indicates connection ready" << std::endl;
                 break;
+            } else if (selectResult < 0) {
+                int error = WSAGetLastError();
+                std::cerr << "Client: select error: " << error << std::endl;
             }
 #else
             FD_SET(clientSocket_, &writeSet);
@@ -254,10 +279,22 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
                 int so_error;
                 socklen_t len = sizeof(so_error);
                 if (getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, &so_error, &len) == 0 && so_error == 0) {
+                    std::cout << "Client: select indicates connection ready" << std::endl;
                     break;
+                } else {
+                    std::cerr << "Client: connection error: " << so_error << std::endl;
                 }
+            } else if (selectResult < 0) {
+                std::cerr << "Client: select error: " << errno << " (" << strerror(errno) << ")" << std::endl;
             }
 #endif
+            selectAttempts++;
+            if (selectAttempts % 100 == 0) { // 1秒ごと（10ms * 100）
+                auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::steady_clock::now() - startTime).count();
+                std::cout << "Client: Still connecting to " << ipAddress << ":" << port 
+                          << " (elapsed: " << elapsed << "s, attempts: " << selectAttempts << ")" << std::endl;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         
