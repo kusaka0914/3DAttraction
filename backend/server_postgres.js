@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,8 +36,8 @@ async function initializeDatabase() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS leaderboard (
                 id SERIAL PRIMARY KEY,
-                "stageNumber" INTEGER NOT NULL,
-                "playerName" TEXT NOT NULL,
+                stageNumber INTEGER NOT NULL,
+                playerName TEXT NOT NULL,
                 time REAL NOT NULL,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -46,7 +47,7 @@ async function initializeDatabase() {
         // インデックス作成
         await pool.query(`
             CREATE INDEX IF NOT EXISTS idx_stage_time 
-            ON leaderboard("stageNumber", time)
+            ON leaderboard(stageNumber, time)
         `);
         console.log('Index created/verified');
 
@@ -54,10 +55,10 @@ async function initializeDatabase() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS replays (
                 id SERIAL PRIMARY KEY,
-                "leaderboardId" INTEGER NOT NULL,
-                "stageNumber" INTEGER NOT NULL,
-                "replayData" TEXT NOT NULL,
-                FOREIGN KEY ("leaderboardId") REFERENCES leaderboard(id) ON DELETE CASCADE
+                leaderboardId INTEGER NOT NULL,
+                stageNumber INTEGER NOT NULL,
+                replayData TEXT NOT NULL,
+                FOREIGN KEY (leaderboardId) REFERENCES leaderboard(id) ON DELETE CASCADE
             )
         `);
         console.log('Replays table created/verified');
@@ -65,7 +66,7 @@ async function initializeDatabase() {
         // replaysテーブルのインデックス
         await pool.query(`
             CREATE INDEX IF NOT EXISTS idx_replay_leaderboard 
-            ON replays("leaderboardId")
+            ON replays(leaderboardId)
         `);
         console.log('Replay index created/verified');
     } catch (err) {
@@ -92,7 +93,7 @@ app.get('/api/leaderboard/:stageNumber', async (req, res) => {
     
     try {
         const result = await pool.query(
-            `SELECT l.id, l."playerName", l.time, l.timestamp, 
+            `SELECT l.id, l.playerName, l.time, l.timestamp, 
                     CASE WHEN r.id IS NOT NULL THEN true ELSE false END as "hasReplay"
              FROM leaderboard l
              LEFT JOIN replays r ON l.id = r."leaderboardId"

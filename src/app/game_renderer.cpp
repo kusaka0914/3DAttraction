@@ -362,11 +362,11 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 if (gameState.progress.timeAttackRecords.find(stageManager.getCurrentStage()) != gameState.progress.timeAttackRecords.end()) {
                     bestTime = gameState.progress.timeAttackRecords[stageManager.getCurrentStage()];
                 }
-                gameStateUIRenderer->renderTimeAttackClearBackground(width, height, clearTime, bestTime, gameState.progress.isNewRecord);
+                gameStateUIRenderer->renderTimeAttackClearBackground(width, height, clearTime, bestTime, gameState.progress.isNewRecord, gameState.replay.isOnlineReplay);
             } else {
                 int currentStage = stageManager.getCurrentStage();
                 gameStateUIRenderer->renderStageClearBackground(width, height, gameState.progress.clearTime, gameState.progress.stageStars[currentStage], false,
-                                                                 currentStage, gameState.progress.selectedSecretStarType, gameState.progress.secretStarCleared);
+                                                                 currentStage, gameState.progress.selectedSecretStarType, gameState.progress.secretStarCleared, gameState.replay.isOnlineReplay);
             }
         }
         
@@ -645,7 +645,8 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 gameStateUIRenderer->renderLeaderboardUI(width, height, 
                                                        gameState.ui.leaderboardTargetStage,
                                                        gameState.ui.leaderboardEntries,
-                                                       gameState.ui.isLoadingLeaderboard);
+                                                       gameState.ui.isLoadingLeaderboard,
+                                                       gameState.ui.leaderboardSelectedIndex);
             }
             
             // ステージ選択画面でESCキー情報を表示
