@@ -3,6 +3,7 @@
 #endif
 
 #include "platform_system.h"
+#include "../core/constants/physics_constants.h"
 #include <variant>
 #include <algorithm>
 #include <iostream>
@@ -18,7 +19,13 @@ void PlatformSystem::update(float deltaTime, const glm::vec3& playerPos, float a
     for (auto& platform : platforms) {
         std::visit(overloaded{
             [this, deltaTime, actualTime, absoluteTime](StaticPlatform& p) { updateStaticPlatform(p, deltaTime); },
-            [this, deltaTime, actualTime, absoluteTime](MovingPlatform& p) { updateMovingPlatform(p, deltaTime); },
+            [this, deltaTime, actualTime, absoluteTime, &playerPos](MovingPlatform& p) { 
+                if (absoluteTime >= 0.0f) {
+                    updateMovingPlatformFromTime(p, actualTime, playerPos, GameConstants::PLAYER_SIZE);
+                } else {
+                    updateMovingPlatform(p, deltaTime);
+                }
+            },
             [this, deltaTime, actualTime, absoluteTime](RotatingPlatform& p) { 
                 if (absoluteTime >= 0.0f) {
                     updateRotatingPlatformFromTime(p, actualTime);
@@ -268,6 +275,73 @@ void PlatformSystem::updateMovingPlatform(MovingPlatform& platform, float deltaT
     }
 }
 
+void PlatformSystem::updateMovingPlatformFromTime(MovingPlatform& platform, float absoluteTime, const glm::vec3& playerPos, const glm::vec3& playerSize) {
+    platform.previousPosition = platform.position;
+    
+    // プレイヤーがプラットフォーム上にいるかどうかを判定
+    glm::vec3 platformMin = platform.position - platform.size * 0.5f;
+    glm::vec3 platformMax = platform.position + platform.size * 0.5f;
+    glm::vec3 playerMin = playerPos - playerSize * 0.5f;
+    glm::vec3 playerMax = playerPos + playerSize * 0.5f;
+    
+    bool playerOnBoard = (playerMax.x >= platformMin.x && playerMin.x <= platformMax.x &&
+                          playerMax.y >= platformMin.y && playerMin.y <= platformMax.y &&
+                          playerMax.z >= platformMin.z && playerMin.z <= platformMax.z);
+    
+    // MovingPlatformはプレイヤーが乗った時に動き始める
+    // リプレイモードでは、プレイヤーが乗っている間は動き続ける
+    // 通常モードと同じロジックを再現するため、absoluteTimeから直接計算するのではなく、
+    // プレイヤーが乗った時点からの経過時間を計算する必要がある
+    // しかし、リプレイデータにはMovingPlatformの状態が記録されていないため、
+    // プレイヤーの位置から推測する必要がある
+    
+    // 簡易的な実装：プレイヤーが乗っている場合は、absoluteTimeから直接計算
+    // 通常モードでは、プレイヤーが乗った時にmoveTimerが0から始まるため、
+    // リプレイモードでも同様に、プレイヤーが乗った時点を0として計算
+    if (playerOnBoard || platform.hasPlayerOnBoard) {
+        // 移動サイクルを計算
+        float distanceToTarget = glm::length(platform.moveTargetPosition - platform.originalPosition);
+        float timeToTarget = distanceToTarget / platform.moveSpeed;
+        
+        // プレイヤーが乗った時点からの経過時間を計算
+        // absoluteTimeから、プレイヤーが最初に乗った時点を引く必要があるが、
+        // リプレイデータには記録されていないため、簡易的にabsoluteTimeを使用
+        // ただし、これは通常モードの動作と完全に一致しない可能性がある
+        float moveTime = std::fmod(absoluteTime, timeToTarget * 2.0f);
+        
+        if (moveTime < timeToTarget) {
+            // 目標位置へ移動中
+            float t = moveTime / timeToTarget;
+            t = std::clamp(t, 0.0f, 1.0f);
+            platform.position = glm::mix(platform.originalPosition, platform.moveTargetPosition, t);
+            platform.returnToOriginal = false;
+            platform.moveTimer = moveTime;
+        } else {
+            // 元の位置へ戻る中
+            float returnTime = moveTime - timeToTarget;
+            float t = returnTime / timeToTarget;
+            t = std::clamp(t, 0.0f, 1.0f);
+            platform.position = glm::mix(platform.moveTargetPosition, platform.originalPosition, t);
+            platform.returnToOriginal = true;
+            platform.moveTimer = returnTime;
+        }
+        
+        platform.hasPlayerOnBoard = true;
+    } else {
+        // プレイヤーが乗っていない場合は、元の位置に戻る
+        if (platform.returnToOriginal) {
+            float distanceToOriginal = glm::length(platform.originalPosition - platform.position);
+            if (distanceToOriginal > 0.01f) {
+                // まだ元の位置に戻っていない場合は、元の位置に戻す
+                platform.position = platform.originalPosition;
+            }
+            platform.returnToOriginal = false;
+            platform.moveTimer = 0.0f;
+        }
+        platform.hasPlayerOnBoard = false;
+    }
+}
+
 void PlatformSystem::updateRotatingPlatform(RotatingPlatform& platform, float deltaTime) {
     platform.rotationAngle += platform.rotationSpeed * deltaTime;
     if (platform.rotationAngle >= 360.0f) {
@@ -399,29 +473,60 @@ void PlatformSystem::updateCycleDisappearingPlatform(CycleDisappearingPlatform& 
 void PlatformSystem::updateCycleDisappearingPlatformFromTime(CycleDisappearingPlatform& platform, float absoluteTime) {
     // 絶対時間からサイクルタイマーを直接計算
     // コンストラクタでcycleTimer = cycleTime - initialと設定されている
-    // absoluteTime = 0の時、cycleTimer = cycleTime - initialになるようにする
-    // つまり、cycleTimer = fmod(cycleTime - initial + absoluteTime, cycleTime)
-    // 初期値から逆算: initial = cycleTime - (初期cycleTimer)
-    float initialValue = platform.cycleTime - platform.cycleTimer;
-    // ただし、リプレイ開始時点でのcycleTimerの値を使う必要がある
-    // より正確には、absoluteTime = 0の時にcycleTimer = cycleTime - initialになるように
-    // 現在の実装では、platform.cycleTimerが既に初期化されているので、それを基準にする
-    float currentInitialTimer = platform.cycleTimer;  // これは cycleTime - initial の値
-    platform.cycleTimer = std::fmod(currentInitialTimer + absoluteTime, platform.cycleTime);
+    // 通常モードでは、cycleTimer += deltaTimeで累積更新される
+    // リプレイモードでは、absoluteTime（各フレーム区間のtimeScaleを考慮した累積ゲーム時間）から直接計算
+    // 
+    // 通常モードでの動作：
+    // - 初期値: cycleTimer = cycleTime - initial
+    // - 更新: cycleTimer += deltaTime * timeScale
+    // - リセット: cycleTimer >= cycleTime の時、cycleTimer -= cycleTime
+    //
+    // リプレイモードでの動作：
+    // - absoluteTime = 0の時、cycleTimer = cycleTime - initialになるように計算
+    // - つまり、cycleTimer = fmod(cycleTime - initial + absoluteTime, cycleTime)
+    // 
+    // リプレイ開始時点では、プラットフォームは初期化されたばかりなので、
+    // platform.cycleTimer = cycleTime - initial になっている
+    // この値から initial を逆算: initial = cycleTime - platform.cycleTimer
+    float initial = platform.cycleTime - platform.cycleTimer;  // 初期オフセット（initial）
+    // absoluteTime = 0の時、cycleTimer = cycleTime - initialになるように計算
+    platform.cycleTimer = std::fmod(platform.cycleTime - initial + absoluteTime, platform.cycleTime);
     
     float blinkStartTime = platform.visibleTime - platform.blinkTime;
     
+    // 通常モードでは、blinkTimerは点滅期間中に累積更新される
+    // 点滅期間外では更新されないが、値は保持される
+    // 次の点滅期間に入った時、前回の値から継続される
+    //
+    // リプレイモードでは、absoluteTimeから直接累積点滅時間を計算する必要がある
+    // 累積点滅時間 = 経過した全サイクルでの点滅時間の合計 + 現在のサイクル内の点滅経過時間
+    
+    // 経過したサイクル数を計算
+    float totalCycles = (absoluteTime + initial) / platform.cycleTime;
+    int completedCycles = static_cast<int>(totalCycles);
+    
     if (platform.cycleTimer < blinkStartTime) {
+        // 点滅期間前：前回の点滅期間の終了時点での累積点滅時間を保持
         platform.isCurrentlyVisible = true;
         platform.isBlinking = false;
         platform.blinkAlpha = 1.0f;
         platform.size = platform.originalSize;
+        
+        // 前回の点滅期間の終了時点での累積点滅時間
+        if (completedCycles > 0) {
+            platform.blinkTimer = completedCycles * platform.blinkTime;
+        } else {
+            platform.blinkTimer = 0.0f;
+        }
     } else if (platform.cycleTimer < platform.visibleTime) {
+        // 点滅期間中：累積点滅時間を計算
         platform.isCurrentlyVisible = true;
         platform.isBlinking = true;
-        // 点滅タイマーも絶対時間から計算
-        float blinkElapsed = platform.cycleTimer - blinkStartTime;
-        platform.blinkTimer = blinkElapsed;
+        
+        // 現在のサイクル内での点滅経過時間
+        float currentBlinkElapsed = platform.cycleTimer - blinkStartTime;
+        // 累積点滅時間 = 完了したサイクル数 × 点滅時間 + 現在のサイクル内の点滅経過時間
+        platform.blinkTimer = completedCycles * platform.blinkTime + currentBlinkElapsed;
         
         float blinkCycle = 0.2f;
         float blinkProgress = std::fmod(platform.blinkTimer, blinkCycle);
@@ -433,10 +538,14 @@ void PlatformSystem::updateCycleDisappearingPlatformFromTime(CycleDisappearingPl
         
         platform.size = platform.originalSize;
     } else {
+        // 点滅期間後（消えている）：現在のサイクル内で点滅期間が終了している
         platform.isCurrentlyVisible = false;
         platform.isBlinking = false;
         platform.blinkAlpha = 0.0f;
         platform.size = glm::vec3(0, 0, 0);
+        
+        // 現在のサイクル内で点滅期間が終了しているので、完了したサイクル数 + 1
+        platform.blinkTimer = (completedCycles + 1) * platform.blinkTime;
     }
 }
 

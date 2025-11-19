@@ -267,22 +267,22 @@ void GameUpdater::updateGameState(
                 } else {
                     // フレーム間を補間
                     bool frameFound = false;
-                    for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
-                        const auto& frame1 = gameState.replay.currentReplay.frames[i];
-                        const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
-                        
+                for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
+                    const auto& frame1 = gameState.replay.currentReplay.frames[i];
+                    const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
+                    
                         // フレーム間の補間（境界を含む）
-                        if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
-                            gameState.replay.replayPlaybackTime <= frame2.timestamp) {
+                    if (gameState.replay.replayPlaybackTime >= frame1.timestamp && 
+                        gameState.replay.replayPlaybackTime <= frame2.timestamp) {
                             float t = 0.0f;
                             if (frame2.timestamp > frame1.timestamp) {
                                 t = (gameState.replay.replayPlaybackTime - frame1.timestamp) / 
-                                     (frame2.timestamp - frame1.timestamp);
+                                 (frame2.timestamp - frame1.timestamp);
                             }
-                            t = std::clamp(t, 0.0f, 1.0f);
-                            
-                            gameState.player.position = glm::mix(frame1.playerPosition, frame2.playerPosition, t);
-                            gameState.player.velocity = glm::mix(frame1.playerVelocity, frame2.playerVelocity, t);
+                        t = std::clamp(t, 0.0f, 1.0f);
+                        
+                        gameState.player.position = glm::mix(frame1.playerPosition, frame2.playerPosition, t);
+                        gameState.player.velocity = glm::mix(frame1.playerVelocity, frame2.playerVelocity, t);
                             
                             // デバッグ: 位置更新を確認（最初の数フレームのみ）
                             static int debugFrameCount = 0;
@@ -292,25 +292,25 @@ void GameUpdater::updateGameState(
                                        debugFrameCount, gameState.replay.replayPlaybackTime, frame1.timestamp, frame2.timestamp, t,
                                        gameState.player.position.x, gameState.player.position.y, gameState.player.position.z);
                             }
+                        
+                        if (!frame1.itemCollectedStates.empty() && frame1.itemCollectedStates.size() == gameState.items.items.size() &&
+                            !frame2.itemCollectedStates.empty() && frame2.itemCollectedStates.size() == gameState.items.items.size()) {
+                            bool useFrame1 = (t < 0.5f);
                             
-                            if (!frame1.itemCollectedStates.empty() && frame1.itemCollectedStates.size() == gameState.items.items.size() &&
-                                !frame2.itemCollectedStates.empty() && frame2.itemCollectedStates.size() == gameState.items.items.size()) {
-                                bool useFrame1 = (t < 0.5f);
+                            for (size_t j = 0; j < gameState.items.items.size() && j < frame1.itemCollectedStates.size(); j++) {
+                                bool shouldBeCollected = useFrame1 ? frame1.itemCollectedStates[j] : frame2.itemCollectedStates[j];
                                 
-                                for (size_t j = 0; j < gameState.items.items.size() && j < frame1.itemCollectedStates.size(); j++) {
-                                    bool shouldBeCollected = useFrame1 ? frame1.itemCollectedStates[j] : frame2.itemCollectedStates[j];
-                                    
-                                    if (gameState.items.items[j].isCollected != shouldBeCollected) {
-                                        if (shouldBeCollected) {
-                                            gameState.items.items[j].isCollected = true;
-                                            gameState.items.collectedItems++;
-                                        } else {
-                                            gameState.items.items[j].isCollected = false;
-                                            gameState.items.collectedItems--;
-                                        }
+                                if (gameState.items.items[j].isCollected != shouldBeCollected) {
+                                    if (shouldBeCollected) {
+                                        gameState.items.items[j].isCollected = true;
+                                        gameState.items.collectedItems++;
+                                    } else {
+                                        gameState.items.items[j].isCollected = false;
+                                        gameState.items.collectedItems--;
                                     }
                                 }
                             }
+                        }
                             
                             frameFound = true;
                             break;  // フレームが見つかったらループを抜ける
@@ -473,6 +473,8 @@ void GameUpdater::updateGameState(
             // 最初のフレームより前の場合は最初のフレームのtimeScaleを使用
             if (gameState.replay.replayPlaybackTime < gameState.replay.currentReplay.frames[0].timestamp) {
                 currentTimeScale = gameState.replay.currentReplay.frames[0].timeScale;
+                // 最初のフレームのtimestampが0.0でない場合でも、actualGameTimeは0.0から始まるべき
+                // 通常プレイでは、currentTimeAttackTime = 0.0から始まるため
                 actualGameTime = gameState.replay.replayPlaybackTime * currentTimeScale;
             }
             // 最後のフレームより後ろの場合は最後のフレームのtimeScaleを使用
@@ -480,7 +482,13 @@ void GameUpdater::updateGameState(
                 currentTimeScale = gameState.replay.currentReplay.frames.back().timeScale;
                 // 最後のフレームまでの累積時間を計算
                 actualGameTime = 0.0f;
-                for (size_t i = 0; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
+                // 最初のフレーム区間（0.0から最初のフレームのtimestampまで）を考慮
+                const auto& firstFrame = gameState.replay.currentReplay.frames[0];
+                if (firstFrame.timestamp > 0.0f) {
+                    actualGameTime += firstFrame.timestamp * firstFrame.timeScale;
+                }
+                // 2番目以降のフレーム区間
+                for (size_t i = 1; i < gameState.replay.currentReplay.frames.size() - 1; i++) {
                     const auto& frame1 = gameState.replay.currentReplay.frames[i];
                     const auto& frame2 = gameState.replay.currentReplay.frames[i + 1];
                     float segmentTime = frame2.timestamp - frame1.timestamp;
@@ -514,15 +522,29 @@ void GameUpdater::updateGameState(
                         
                         // 現在のフレーム区間までの累積時間を計算
                         actualGameTime = 0.0f;
-                        for (size_t j = 0; j < i; j++) {
-                            const auto& f1 = gameState.replay.currentReplay.frames[j];
-                            const auto& f2 = gameState.replay.currentReplay.frames[j + 1];
-                            float segmentTime = f2.timestamp - f1.timestamp;
-                            actualGameTime += segmentTime * f1.timeScale;
+                        // 最初のフレーム区間（0.0から最初のフレームのtimestampまで）を考慮
+                        const auto& firstFrame = gameState.replay.currentReplay.frames[0];
+                        if (firstFrame.timestamp > 0.0f && i == 0) {
+                            // 最初のフレーム区間内の場合
+                            actualGameTime = gameState.replay.replayPlaybackTime * currentTimeScale;
+                        } else {
+                            // 最初のフレーム区間（0.0から最初のフレームのtimestampまで）を考慮
+                            if (firstFrame.timestamp > 0.0f) {
+                                actualGameTime += firstFrame.timestamp * firstFrame.timeScale;
+                            }
+                            // 2番目以降のフレーム区間（i > 0の場合のみ）
+                            if (i > 0) {
+                                for (size_t j = 1; j < i; j++) {
+                                    const auto& f1 = gameState.replay.currentReplay.frames[j];
+                                    const auto& f2 = gameState.replay.currentReplay.frames[j + 1];
+                                    float segmentTime = f2.timestamp - f1.timestamp;
+                                    actualGameTime += segmentTime * f1.timeScale;
+                                }
+                            }
+                            // 現在のフレーム区間内の時間を追加
+                            float currentSegmentTime = gameState.replay.replayPlaybackTime - frame1.timestamp;
+                            actualGameTime += currentSegmentTime * currentTimeScale;
                         }
-                        // 現在のフレーム区間内の時間を追加
-                        float currentSegmentTime = gameState.replay.replayPlaybackTime - frame1.timestamp;
-                        actualGameTime += currentSegmentTime * currentTimeScale;
                         
                         break;
                     }

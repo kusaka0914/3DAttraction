@@ -156,6 +156,7 @@ public:
 private:
     void updateStaticPlatform(StaticPlatform& platform, float deltaTime);
     void updateMovingPlatform(MovingPlatform& platform, float deltaTime);
+    void updateMovingPlatformFromTime(MovingPlatform& platform, float absoluteTime, const glm::vec3& playerPos, const glm::vec3& playerSize);
     void updateRotatingPlatform(RotatingPlatform& platform, float deltaTime);
     void updateRotatingPlatformFromTime(RotatingPlatform& platform, float absoluteTime);
     void updatePatrollingPlatform(PatrollingPlatform& platform, float deltaTime);
