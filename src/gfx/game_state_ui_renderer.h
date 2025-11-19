@@ -234,6 +234,29 @@ public:
     void renderStaffRoll(int width, int height, float timer);
     
     /**
+     * @brief マルチプレイメニューを描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     * @param isHosting ホストとして待機中か
+     * @param isConnected 接続中か
+     * @param isWaitingForConnection 接続待ち中か
+     * @param connectionIP 接続先IPアドレス
+     * @param connectionPort 接続ポート番号
+     */
+    void renderMultiplayerMenu(int width, int height, bool isHosting, bool isConnected, bool isWaitingForConnection, 
+                               const std::string& connectionIP, int connectionPort);
+    
+    /**
+     * @brief レース結果UIを描画する
+     * @param width ウィンドウ幅
+     * @param height ウィンドウ高さ
+     * @param winnerPlayerId 勝者プレイヤーID（0=ローカル、1=リモート）
+     * @param winnerTime 勝者のタイム
+     * @param loserTime 敗者のタイム
+     */
+    void renderRaceResultUI(int width, int height, int winnerPlayerId, float winnerTime, float loserTime);
+    
+    /**
      * @brief 2D描画モードを開始する
      * @details 2D描画用の設定を行います。
      */

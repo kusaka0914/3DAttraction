@@ -28,6 +28,7 @@
 #include "../game/replay_manager.h"
 #include "../game/save_manager.h"
 #include "../game/online_leaderboard_manager.h"
+#include "../game/multiplayer_manager.h"
 #include "../game/stage_editor.h"
 #include "tutorial_manager.h"
 #include <set>
@@ -51,7 +52,8 @@ namespace GameLoop {
             std::map<int, InputUtils::KeyState>& keyStates,
             std::function<void()> resetStageStartTime,
             std::chrono::high_resolution_clock::time_point& startTime,
-            io::AudioManager& audioManager) {
+            io::AudioManager& audioManager,
+            MultiplayerManager& multiplayerManager) {
         
         if (gameState.audioEnabled) {
             audioManager.loadSFX("jump", ResourcePath::getResourcePath("assets/audio/se/jump.ogg"));
@@ -377,7 +379,69 @@ namespace GameLoop {
                 }
             }
 
+            // マルチプレイメニューの処理
+            if (gameState.ui.showMultiplayerMenu && stageManager.getCurrentStage() == 0) {
+                // Hキーでホストとして開始
+                if (keyStates[GLFW_KEY_H].justPressed()) {
+                    if (multiplayerManager.startHost(gameState.ui.connectionPort)) {
+                        gameState.multiplayer.isMultiplayerMode = true;
+                        gameState.multiplayer.isHost = true;
+                        gameState.ui.isHosting = true;
+                        gameState.ui.isWaitingForConnection = true;
+                        printf("Multiplayer: Started as host on port %d\n", gameState.ui.connectionPort);
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // Cキーでクライアントとして接続
+                if (keyStates[GLFW_KEY_C].justPressed()) {
+                    if (multiplayerManager.connectToHost(gameState.ui.connectionIP, gameState.ui.connectionPort)) {
+                        gameState.multiplayer.isMultiplayerMode = true;
+                        gameState.multiplayer.isHost = false;
+                        gameState.ui.isWaitingForConnection = false;
+                        printf("Multiplayer: Connected to %s:%d\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
+                    } else {
+                        printf("Multiplayer: Failed to connect to %s:%d\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // ESCキーでマルチプレイメニューを閉じる
+                if (keyStates[GLFW_KEY_ESCAPE].justPressed()) {
+                    gameState.ui.showMultiplayerMenu = false;
+                    if (multiplayerManager.isConnected()) {
+                        multiplayerManager.disconnect();
+                        gameState.multiplayer.isMultiplayerMode = false;
+                        gameState.multiplayer.isHost = false;
+                        gameState.ui.isHosting = false;
+                        gameState.ui.isWaitingForConnection = false;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // 接続状態の更新
+                if (multiplayerManager.isConnected() && !gameState.multiplayer.isConnected) {
+                    gameState.multiplayer.isConnected = true;
+                    gameState.ui.isWaitingForConnection = false;
+                    printf("Multiplayer: Connection established\n");
+                } else if (!multiplayerManager.isConnected() && gameState.multiplayer.isConnected) {
+                    gameState.multiplayer.isConnected = false;
+                    gameState.multiplayer.isMultiplayerMode = false;
+                    printf("Multiplayer: Connection lost\n");
+                }
+            }
+            
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
+            
+            // マルチプレイモードの更新（物理演算の後）
+            if (gameState.multiplayer.isMultiplayerMode && multiplayerManager.isConnected()) {
+                multiplayerManager.update(window, gameState, platformSystem, deltaTime, audioManager);
+                
+                // ゴール到達をチェックして送信
+                if (gameState.progress.isGoalReached && !gameState.multiplayer.isRaceFinished) {
+                    multiplayerManager.sendGoalReached(0, gameState.progress.clearTime); // 0 = ローカルプレイヤー
+                }
+            }
 
             GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
             
@@ -1547,6 +1611,20 @@ namespace GameLoop {
             
             if (gameState.ui.showSecretStarSelectionUI) {
                 gameStateUIRenderer->renderSecretStarSelectionUI(width, height, gameState.progress.selectedSecretStarType);
+            }
+            
+            if (gameState.ui.showMultiplayerMenu) {
+                printf("DEBUG: showMultiplayerMenu is true, calling renderMultiplayerMenu\n");
+                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.ui.isHosting, 
+                                                          gameState.multiplayer.isConnected, 
+                                                          gameState.ui.isWaitingForConnection,
+                                                          gameState.ui.connectionIP, 
+                                                          gameState.ui.connectionPort);
+            }
+            
+            if (gameState.ui.showRaceResultUI) {
+                gameStateUIRenderer->renderRaceResultUI(width, height, gameState.ui.raceWinnerPlayerId, 
+                                                        gameState.ui.raceWinnerTime, gameState.ui.raceLoserTime);
             }
             
             bool shouldShowAssist = gameState.ui.showStageSelectionAssist && 

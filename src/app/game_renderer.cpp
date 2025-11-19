@@ -615,6 +615,20 @@ void GameRenderer::renderFrame(GLFWwindow* window, GameState& gameState, StageMa
                 gameStateUIRenderer->renderSecretStarSelectionUI(width, height, gameState.progress.selectedSecretStarType);
             }
             
+            if (gameState.ui.showMultiplayerMenu) {
+                printf("DEBUG: showMultiplayerMenu is true, calling renderMultiplayerMenu\n");
+                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.ui.isHosting, 
+                                                          gameState.multiplayer.isConnected, 
+                                                          gameState.ui.isWaitingForConnection,
+                                                          gameState.ui.connectionIP, 
+                                                          gameState.ui.connectionPort);
+            }
+            
+            if (gameState.ui.showRaceResultUI) {
+                gameStateUIRenderer->renderRaceResultUI(width, height, gameState.ui.raceWinnerPlayerId, 
+                                                        gameState.ui.raceWinnerTime, gameState.ui.raceLoserTime);
+            }
+            
             bool shouldShowAssist = gameState.ui.showStageSelectionAssist && 
                                    !gameState.ui.showUnlockConfirmUI && 
                                    !gameState.ui.showStarInsufficientUI &&
@@ -891,13 +905,27 @@ void GameRenderer::renderPlayer(GameState& gameState,
     if (playerTexture != 0 && playerFrontTexture != 0) {
         glm::vec3 playerSize = glm::vec3(GameConstants::PLAYER_SCALE);
         
+        // ローカルプレイヤーを描画
         if (gameState.player.isShowingFrontTexture) {
             renderer->renderer3D.renderTexturedBox(gameState.player.position, playerSize, playerFrontTexture, playerTexture);
         } else {
             renderer->renderer3D.renderTexturedBox(gameState.player.position, playerSize, playerTexture);
         }
+        
+        // マルチプレイモードの場合、リモートプレイヤーも描画（少し透明度を下げて区別）
+        if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+            float remotePlayerAlpha = 0.8f; // 少し透明度を下げてリモートプレイヤーを区別
+            // 前面テクスチャと通常テクスチャの両方に対応するため、通常テクスチャを使用
+            renderer->renderer3D.renderTexturedBoxWithAlpha(gameState.multiplayer.remotePlayer.position, playerSize, playerTexture, remotePlayerAlpha);
+        }
     } else {
         renderer->renderer3D.renderCube(gameState.player.position, gameState.player.color, GameConstants::PLAYER_SCALE);
+        
+        // マルチプレイモードの場合、リモートプレイヤーも描画
+        if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+            glm::vec3 remotePlayerColor = glm::vec3(0.2f, 0.8f, 1.0f);
+            renderer->renderer3D.renderCube(gameState.multiplayer.remotePlayer.position, remotePlayerColor, GameConstants::PLAYER_SCALE);
+        }
     }
 }
 } // namespace GameLoop

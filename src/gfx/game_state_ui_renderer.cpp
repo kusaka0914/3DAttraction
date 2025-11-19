@@ -1252,6 +1252,151 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     glPopMatrix();
 }
 
+void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHosting, bool isConnected, bool isWaitingForConnection, 
+                                                 const std::string& connectionIP, int connectionPort) {
+    printf("DEBUG: renderMultiplayerMenu called - width=%d, height=%d, isHosting=%d, isConnected=%d, isWaitingForConnection=%d\n",
+           width, height, isHosting ? 1 : 0, isConnected ? 1 : 0, isWaitingForConnection ? 1 : 0);
+    font.initialize();
+    
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // マトリックスを復元（renderTextが独自に設定するため）
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // タイトル（他のUIと同じスタイル）
+    auto titleConfig = uiConfig.getModeSelectionTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText("MULTIPLAYER", titlePos, titleConfig.color, titleConfig.scale);
+    
+    // 接続状態の表示
+    if (isConnected) {
+        auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+        glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+        renderText("CONNECTED", glm::vec2(normalPos.x, normalPos.y - 100), glm::vec3(0.0f, 1.0f, 0.0f), normalConfig.scale);
+    } else if (isWaitingForConnection) {
+        auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+        glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+        renderText("WAITING FOR CONNECTION...", glm::vec2(normalPos.x, normalPos.y - 100), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale);
+    } else {
+        // ホストとして開始
+        auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+        glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+        renderText("H: START AS HOST", normalPos, normalConfig.selectedColor, normalConfig.scale);
+        
+        // クライアントとして接続
+        auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+        glm::vec2 easyPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+        std::string connectText = "C: CONNECT TO " + connectionIP + ":" + std::to_string(connectionPort);
+        renderText(connectText, easyPos, easyConfig.unselectedColor, easyConfig.scale);
+    }
+    
+    // ESCキーで閉じる
+    auto confirmConfig = uiConfig.getModeSelectionConfirmConfig();
+    glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
+    renderText("ESC: CLOSE MENU", confirmPos, confirmConfig.color, confirmConfig.scale);
+}
+
+void GameStateUIRenderer::renderRaceResultUI(int width, int height, int winnerPlayerId, float winnerTime, float loserTime) {
+    font.initialize();
+    
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    float centerX = width / 2.0f;
+    float centerY = height / 2.0f;
+    
+    // タイトル
+    renderText("RACE RESULT", glm::vec2(centerX - 200, centerY - 200), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    // 勝者の表示
+    std::string winnerText;
+    glm::vec3 winnerColor;
+    if (winnerPlayerId == 0) {
+        winnerText = "YOU WIN!";
+        winnerColor = glm::vec3(0.0f, 1.0f, 0.0f);
+    } else if (winnerPlayerId == 1) {
+        winnerText = "OPPONENT WINS!";
+        winnerColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    } else {
+        winnerText = "DRAW";
+        winnerColor = glm::vec3(1.0f, 1.0f, 0.0f);
+    }
+    renderText(winnerText, glm::vec2(centerX - 200, centerY - 100), winnerColor, 1.3f);
+    
+    // タイムの表示
+    int winnerMinutes = static_cast<int>(winnerTime) / 60;
+    int winnerSeconds = static_cast<int>(winnerTime) % 60;
+    std::string winnerTimeText = "WINNER TIME: " + std::to_string(winnerMinutes) + ":" + 
+                                 (winnerSeconds < 10 ? "0" : "") + std::to_string(winnerSeconds);
+    renderText(winnerTimeText, glm::vec2(centerX - 250, centerY), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+    
+    if (loserTime > 0.0f) {
+        int loserMinutes = static_cast<int>(loserTime) / 60;
+        int loserSeconds = static_cast<int>(loserTime) % 60;
+        std::string loserTimeText = "LOSER TIME: " + std::to_string(loserMinutes) + ":" + 
+                                    (loserSeconds < 10 ? "0" : "") + std::to_string(loserSeconds);
+        renderText(loserTimeText, glm::vec2(centerX - 250, centerY + 50), glm::vec3(0.7f, 0.7f, 0.7f), 1.0f);
+    }
+    
+    // 続行の指示
+    renderText("PRESS ENTER TO CONTINUE", glm::vec2(centerX - 200, centerY + 200), glm::vec3(0.7f, 0.7f, 0.7f), 0.9f);
+    
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 void GameStateUIRenderer::begin2DMode() {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

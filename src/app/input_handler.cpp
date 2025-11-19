@@ -99,6 +99,33 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                               PlatformSystem& platformSystem, 
                               std::map<int, InputUtils::KeyState>& keyStates,
                               std::function<void()> resetStageStartTime, float scaledDeltaTime, io::AudioManager& audioManager) {
+        // デバッグ: handleInputProcessingが呼ばれていることを確認（ステージ0の時のみ、初回のみ）
+        static bool debugLogged = false;
+        if (!debugLogged && stageManager.getCurrentStage() == 0) {
+            printf("DEBUG: handleInputProcessing called for stage 0, keyStates size: %zu\n", keyStates.size());
+            debugLogged = true;
+        }
+        
+        // マルチプレイモードの開始（ステージ選択画面でMキー）- リーダーボードUI表示中でも動作
+        if (keyStates.find(GLFW_KEY_M) != keyStates.end()) {
+            if (keyStates[GLFW_KEY_M].justPressed() && stageManager.getCurrentStage() == 0 && !gameState.ui.showModeSelectionUI && !gameState.ui.showTimeAttackSelectionUI) {
+                gameState.ui.showMultiplayerMenu = !gameState.ui.showMultiplayerMenu;
+                printf("Multiplayer menu toggled: %s\n", gameState.ui.showMultiplayerMenu ? "ON" : "OFF");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            } else if (keyStates[GLFW_KEY_M].justPressed()) {
+                // 条件が満たされていない場合のデバッグ
+                printf("DEBUG: M key pressed but conditions not met: stage=%d, showModeSelectionUI=%d, showTimeAttackSelectionUI=%d\n",
+                       stageManager.getCurrentStage(), gameState.ui.showModeSelectionUI, gameState.ui.showTimeAttackSelectionUI);
+            }
+        } else {
+            // MキーがkeyStatesに登録されていない場合のデバッグ（初回のみ）
+            static bool warnedOnce = false;
+            if (!warnedOnce && stageManager.getCurrentStage() == 0) {
+                printf("DEBUG: GLFW_KEY_M not found in keyStates map!\n");
+                warnedOnce = true;
+            }
+        }
+        
         // リーダーボードUI表示中はプレイヤー移動を無効化
         if (gameState.ui.showLeaderboardUI) {
             return;
@@ -219,7 +246,19 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                         teleportToStageArea(stageNumber, gameState);
                     }
                 } else if (!gameState.progress.isTutorialStage) {
-                    processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    // マルチプレイモードの場合、両方のプレイヤーが同じステージで開始
+                    if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                        // マルチプレイモードでは、ホストがステージを選択すると両方のプレイヤーが開始
+                        if (gameState.multiplayer.isHost) {
+                            processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                            // リモートプレイヤーも同じステージで開始（状態を同期）
+                            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+                            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+                            gameState.multiplayer.isRaceStarted = true;
+                        }
+                    } else {
+                        processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    }
                 }
             }
         }
@@ -245,6 +284,8 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             gameState.progress.isEasyMode = !gameState.progress.isEasyMode;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        
+        // マルチプレイモードの開始（ステージ選択画面でMキー）- 上で既に処理済み
         
         if (stageManager.getCurrentStage() == 0) {
             struct SkillToggle {
@@ -373,6 +414,24 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
         if (gameState.ui.showSecretStarExplanationUI) {
             if (keyStates[GLFW_KEY_ENTER].justPressed()) {
                 gameState.ui.showSecretStarExplanationUI = false;
+            }
+        }
+        
+        if (gameState.ui.showRaceResultUI) {
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                gameState.ui.showRaceResultUI = false;
+                gameState.multiplayer.isRaceFinished = false;
+                gameState.multiplayer.winnerPlayerId = -1;
+                gameState.multiplayer.winnerTime = 0.0f;
+                gameState.multiplayer.loserTime = 0.0f;
+                gameState.ui.raceWinnerPlayerId = -1;
+                gameState.ui.raceWinnerTime = 0.0f;
+                gameState.ui.raceLoserTime = 0.0f;
+                // フィールドに戻る
+                if (stageManager.getCurrentStage() != 0) {
+                    GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
         
