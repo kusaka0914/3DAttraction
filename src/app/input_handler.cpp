@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 namespace GameLoop {
 
@@ -95,10 +96,16 @@ void InputHandler::processStageSelectionAction(
         
         // マルチプレイモードの場合、ステージ選択通知を設定
         if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected && gameState.multiplayer.isHost) {
+            // リモートプレイヤー（クライアント側のプレイヤー）の位置を初期位置に設定
+            // goToStageの後にplayer.positionが設定されるので、その後に設定する必要がある
             gameState.multiplayer.remotePlayer.position = gameState.player.position;
             gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
             gameState.multiplayer.isRaceStarted = true;
             gameState.multiplayer.pendingStageSelection = stageNumber;
+            std::cout << "HOST: Stage " << stageNumber << " selected. Remote player position set to: (" 
+                      << gameState.multiplayer.remotePlayer.position.x << ", " 
+                      << gameState.multiplayer.remotePlayer.position.y << ", " 
+                      << gameState.multiplayer.remotePlayer.position.z << ")" << std::endl;
         }
     }
 }
@@ -606,12 +613,17 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                         gameState.ui.readyScreenSpeedLevel = 0;
                         gameState.progress.timeScale = 1.0f;
                         gameState.progress.timeScaleLevel = 0;
-                        // リモートプレイヤーも同じステージで開始（状態を同期）
+                        // リモートプレイヤー（クライアント側のプレイヤー）も同じステージで開始（状態を同期）
+                        // goToStageの後にplayer.positionが設定されるので、その後に設定する必要がある
                         gameState.multiplayer.remotePlayer.position = gameState.player.position;
                         gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
                         gameState.multiplayer.isRaceStarted = true;
                         // クライアント側へのステージ選択通知を設定
                         gameState.multiplayer.pendingStageSelection = targetStage;
+                        std::cout << "HOST: Stage " << targetStage << " selected (from mode selection). Remote player position set to: (" 
+                                  << gameState.multiplayer.remotePlayer.position.x << ", " 
+                                  << gameState.multiplayer.remotePlayer.position.y << ", " 
+                                  << gameState.multiplayer.remotePlayer.position.z << ")" << std::endl;
                     }
                 } else {
                     resetStageStartTime();

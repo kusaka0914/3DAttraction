@@ -252,6 +252,7 @@ void MultiplayerManager::sendStageSelection(int stageNumber) {
     if (!networkManager_.isConnected() || !networkManager_.isHost()) {
         return;
     }
+    std::cout << "HOST: Sending stage selection notification: " << stageNumber << std::endl;
     networkManager_.sendStageSelection(stageNumber);
 }
 
@@ -263,9 +264,11 @@ bool MultiplayerManager::checkStageSelection(GameState& gameState, StageManager&
     int stageNumber;
     if (networkManager_.getStageSelection(stageNumber)) {
         // ステージ選択通知を受信
+        std::cout << "CLIENT: Received stage selection notification: " << stageNumber << std::endl;
         // クライアント側でも同じステージに遷移
         if (stageNumber >= 1 && stageNumber <= 5) {
             // ステージをロード
+            std::cout << "CLIENT: Loading stage " << stageNumber << std::endl;
             resetStageStartTime();
             gameState.progress.lives = 6;
             stageManager.goToStage(stageNumber, gameState, platformSystem);
@@ -276,13 +279,18 @@ bool MultiplayerManager::checkStageSelection(GameState& gameState, StageManager&
             gameState.progress.timeScaleLevel = 0;
             gameState.progress.isTimeAttackMode = false;
             
-            // リモートプレイヤーの位置をリセット
+            // リモートプレイヤーの位置をリセット（ホスト側のプレイヤーの位置に合わせる）
+            // ただし、goToStageの後にplayer.positionが設定されるので、その後に設定する必要がある
             gameState.multiplayer.remotePlayer.position = gameState.player.position;
             gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
             gameState.multiplayer.isRaceStarted = true;
             
+            std::cout << "CLIENT: Stage " << stageNumber << " loaded. Player position: (" 
+                      << gameState.player.position.x << ", " << gameState.player.position.y << ", " << gameState.player.position.z << ")" << std::endl;
+            
         } else if (stageNumber == 0) {
             // ステージ選択画面に戻る
+            std::cout << "CLIENT: Returning to stage selection screen" << std::endl;
             resetStageStartTime();
             stageManager.goToStage(0, gameState, platformSystem);
             gameState.ui.showReadyScreen = false;

@@ -598,6 +598,7 @@ namespace GameLoop {
                 
                 // ホスト側でステージ選択通知を送信
                 if (gameState.multiplayer.isHost && gameState.multiplayer.pendingStageSelection >= 1 && gameState.multiplayer.pendingStageSelection <= 5) {
+                    std::cout << "HOST: Sending stage selection notification for stage " << gameState.multiplayer.pendingStageSelection << std::endl;
                     multiplayerManager.sendStageSelection(gameState.multiplayer.pendingStageSelection);
                     gameState.multiplayer.pendingStageSelection = -1;  // 送信済みフラグをクリア
                 }
