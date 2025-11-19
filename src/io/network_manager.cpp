@@ -3,6 +3,13 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/select.h>
+#include <errno.h>
+#endif
 
 NetworkManager::NetworkManager()
     : isConnected_(false)
@@ -185,19 +192,7 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
     
     std::cout << "Client: Connecting to " << ipAddress << ":" << port << std::endl;
     
-    if (connect(clientSocket_, (sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
-        std::cerr << "Failed to connect to server" << std::endl;
-#ifdef _WIN32
-        closesocket(clientSocket_);
-        clientSocket_ = INVALID_SOCKET;
-#else
-        close(clientSocket_);
-        clientSocket_ = -1;
-#endif
-        return false;
-    }
-    
-    // クライアントソケットも非ブロッキングモードに設定
+    // 非ブロッキングモードに設定
 #ifdef _WIN32
     u_long mode = 1;
     ioctlsocket(clientSocket_, FIONBIO, &mode);
@@ -206,19 +201,125 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
     fcntl(clientSocket_, F_SETFL, flags | O_NONBLOCK);
 #endif
     
-    isHost_ = false;
-    isConnected_ = true;
-    shouldStop_ = false;
-    
-    std::cout << "Client: Connected to server" << std::endl;
-    
-    // 受信スレッドを開始
-    receiveThread_ = std::thread(&NetworkManager::receiveThread, this);
-    
-    if (connectionCallback_) {
-        connectionCallback_(true);
+    // 非ブロッキング接続を試行
+    int connectResult = connect(clientSocket_, (sockaddr*)&serverAddr, sizeof(serverAddr));
+#ifdef _WIN32
+    if (connectResult == SOCKET_ERROR) {
+        int error = WSAGetLastError();
+        if (error != WSAEWOULDBLOCK && error != WSAEINPROGRESS) {
+            std::cerr << "Failed to connect to server (error: " << error << ")" << std::endl;
+            closesocket(clientSocket_);
+            clientSocket_ = INVALID_SOCKET;
+            return false;
+        }
     }
+#else
+    if (connectResult < 0 && errno != EINPROGRESS) {
+        std::cerr << "Failed to connect to server (error: " << errno << ")" << std::endl;
+        close(clientSocket_);
+        clientSocket_ = -1;
+        return false;
+    }
+#endif
     
+    // 接続処理を別スレッドで実行（メインスレッドをブロックしない）
+    isHost_ = false;
+    
+    std::thread([this]() {
+        // 接続が完了するまで待機（タイムアウト付き）
+        const int TIMEOUT_MS = 3000; // 3秒
+        auto startTime = std::chrono::steady_clock::now();
+        
+        while (!shouldStop_ && std::chrono::steady_clock::now() - startTime < std::chrono::milliseconds(TIMEOUT_MS)) {
+            fd_set writeSet;
+            FD_ZERO(&writeSet);
+#ifdef _WIN32
+            FD_SET(clientSocket_, &writeSet);
+            timeval timeout;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 100000; // 100ms
+            int selectResult = select(0, nullptr, &writeSet, nullptr, &timeout);
+            if (selectResult > 0 && FD_ISSET(clientSocket_, &writeSet)) {
+                // 接続完了
+                break;
+            }
+#else
+            FD_SET(clientSocket_, &writeSet);
+            timeval timeout;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 100000; // 100ms
+            int selectResult = select(clientSocket_ + 1, nullptr, &writeSet, nullptr, &timeout);
+            if (selectResult > 0 && FD_ISSET(clientSocket_, &writeSet)) {
+                // 接続完了を確認
+                int so_error;
+                socklen_t len = sizeof(so_error);
+                if (getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, &so_error, &len) == 0 && so_error == 0) {
+                    break;
+                }
+            }
+#endif
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        
+        // 接続が完了したか確認
+#ifdef _WIN32
+        int so_error;
+        int len = sizeof(so_error);
+        if (!shouldStop_ && getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, (char*)&so_error, &len) == 0 && so_error == 0) {
+            // クライアントソケットも非ブロッキングモードに設定
+            u_long mode = 1;
+            ioctlsocket(clientSocket_, FIONBIO, &mode);
+            
+            isConnected_ = true;
+            shouldStop_ = false;
+            
+            std::cout << "Client: Connected to server" << std::endl;
+            
+            // 受信スレッドを開始
+            receiveThread_ = std::thread(&NetworkManager::receiveThread, this);
+            
+            if (connectionCallback_) {
+                connectionCallback_(true);
+            }
+        } else {
+            std::cerr << "Failed to connect to server (timeout or error)" << std::endl;
+            closesocket(clientSocket_);
+            clientSocket_ = INVALID_SOCKET;
+            if (connectionCallback_) {
+                connectionCallback_(false);
+            }
+        }
+#else
+        int so_error = 0;
+        socklen_t len = sizeof(so_error);
+        if (!shouldStop_ && getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, &so_error, &len) == 0 && so_error == 0) {
+            // クライアントソケットも非ブロッキングモードに設定
+            int socketFlags = fcntl(clientSocket_, F_GETFL, 0);
+            fcntl(clientSocket_, F_SETFL, socketFlags | O_NONBLOCK);
+            
+            isConnected_ = true;
+            shouldStop_ = false;
+            
+            std::cout << "Client: Connected to server" << std::endl;
+            
+            // 受信スレッドを開始
+            receiveThread_ = std::thread(&NetworkManager::receiveThread, this);
+            
+            if (connectionCallback_) {
+                connectionCallback_(true);
+            }
+        } else {
+            std::cerr << "Failed to connect to server (timeout or error: " << so_error << ")" << std::endl;
+            close(clientSocket_);
+            clientSocket_ = -1;
+            if (connectionCallback_) {
+                connectionCallback_(false);
+            }
+        }
+#endif
+    }).detach();
+    
+    // 即座に返す（接続処理は別スレッドで実行中）
     return true;
 }
 

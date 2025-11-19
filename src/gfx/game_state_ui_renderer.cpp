@@ -1301,6 +1301,17 @@ void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHo
         auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
         glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
         renderText("CONNECTED", glm::vec2(normalPos.x, normalPos.y - 100), glm::vec3(0.0f, 1.0f, 0.0f), normalConfig.scale);
+        
+        // 接続後の指示を表示（ホスト/クライアントで異なる）
+        auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+        glm::vec2 instructionPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+        std::string instructionText;
+        if (isHosting) {
+            instructionText = "SELECT STAGE (1-5) TO START RACE";
+        } else {
+            instructionText = "WAITING FOR HOST TO SELECT STAGE...";
+        }
+        renderText(instructionText, instructionPos, easyConfig.unselectedColor, easyConfig.scale);
     } else if (isWaitingForConnection) {
         auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
         glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);

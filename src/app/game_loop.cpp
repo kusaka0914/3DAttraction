@@ -398,10 +398,11 @@ namespace GameLoop {
                     if (multiplayerManager.connectToHost(gameState.ui.connectionIP, gameState.ui.connectionPort)) {
                         gameState.multiplayer.isMultiplayerMode = true;
                         gameState.multiplayer.isHost = false;
-                        gameState.ui.isWaitingForConnection = false;
-                        printf("Multiplayer: Connected to %s:%d\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
+                        gameState.ui.isWaitingForConnection = true; // 接続待ち中
+                        printf("Multiplayer: Connecting to %s:%d...\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
                     } else {
-                        printf("Multiplayer: Failed to connect to %s:%d\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
+                        printf("Multiplayer: Failed to start connection to %s:%d\n", gameState.ui.connectionIP.c_str(), gameState.ui.connectionPort);
+                        gameState.ui.isWaitingForConnection = false;
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
@@ -427,7 +428,30 @@ namespace GameLoop {
                 } else if (!multiplayerManager.isConnected() && gameState.multiplayer.isConnected) {
                     gameState.multiplayer.isConnected = false;
                     gameState.multiplayer.isMultiplayerMode = false;
+                    gameState.ui.isWaitingForConnection = false;
                     printf("Multiplayer: Connection lost\n");
+                } else if (!multiplayerManager.isConnected() && gameState.ui.isWaitingForConnection) {
+                    // 接続待ち中だが、タイムアウトした可能性がある
+                    // 3秒以上待機している場合は接続失敗とみなす
+                    static auto connectionStartTime = std::chrono::steady_clock::now();
+                    static bool connectionStarted = false;
+                    
+                    if (!connectionStarted) {
+                        connectionStartTime = std::chrono::steady_clock::now();
+                        connectionStarted = true;
+                    }
+                    
+                    auto elapsed = std::chrono::steady_clock::now() - connectionStartTime;
+                    if (elapsed > std::chrono::seconds(4)) {
+                        // 4秒以上経過しても接続できていない場合は失敗とみなす
+                        gameState.ui.isWaitingForConnection = false;
+                        gameState.multiplayer.isMultiplayerMode = false;
+                        connectionStarted = false;
+                        printf("Multiplayer: Connection timeout\n");
+                    }
+                } else if (gameState.multiplayer.isConnected) {
+                    // 接続済みの場合は接続開始時刻をリセット
+                    // connectionStartedは上でstatic変数として定義されているため、ここではリセット不要
                 }
             }
             
@@ -1615,7 +1639,7 @@ namespace GameLoop {
             
             if (gameState.ui.showMultiplayerMenu) {
                 printf("DEBUG: showMultiplayerMenu is true, calling renderMultiplayerMenu\n");
-                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.ui.isHosting, 
+                gameStateUIRenderer->renderMultiplayerMenu(width, height, gameState.multiplayer.isHost, 
                                                           gameState.multiplayer.isConnected, 
                                                           gameState.ui.isWaitingForConnection,
                                                           gameState.ui.connectionIP, 
