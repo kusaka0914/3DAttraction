@@ -205,6 +205,12 @@ public:
      * @param callback コールバック関数（接続時: true、切断時: false）
      */
     void setConnectionCallback(std::function<void(bool)> callback);
+    
+    /**
+     * @brief ローカルIPアドレスを取得する
+     * @return ローカルIPアドレス（取得失敗時は空文字列）
+     */
+    static std::string getLocalIPAddress();
 
 private:
     /**

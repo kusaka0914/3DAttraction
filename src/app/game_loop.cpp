@@ -381,6 +381,17 @@ namespace GameLoop {
 
             // マルチプレイメニューの処理
             if (gameState.ui.showMultiplayerMenu && stageManager.getCurrentStage() == 0) {
+                // マルチプレイメニューを開いたときに、ローカルIPアドレスを取得
+                static bool ipAddressFetched = false;
+                if (!ipAddressFetched) {
+                    std::string localIP = NetworkManager::getLocalIPAddress();
+                    if (!localIP.empty()) {
+                        // ホスト側のIPアドレスを表示用に保存（実際の接続先IPは別途設定）
+                        printf("Local IP Address: %s\n", localIP.c_str());
+                    }
+                    ipAddressFetched = true;
+                }
+                
                 // Hキーでホストとして開始
                 if (keyStates[GLFW_KEY_H].justPressed()) {
                     if (multiplayerManager.startHost(gameState.ui.connectionPort)) {
@@ -389,6 +400,11 @@ namespace GameLoop {
                         gameState.ui.isHosting = true;
                         gameState.ui.isWaitingForConnection = true;
                         printf("Multiplayer: Started as host on port %d\n", gameState.ui.connectionPort);
+                        // ホスト側のIPアドレスを取得して表示
+                        std::string localIP = NetworkManager::getLocalIPAddress();
+                        if (!localIP.empty()) {
+                            printf("Host IP Address: %s:%d\n", localIP.c_str(), gameState.ui.connectionPort);
+                        }
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

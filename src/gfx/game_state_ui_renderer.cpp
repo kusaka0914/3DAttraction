@@ -3,6 +3,7 @@
 #endif
 
 #include "game_state_ui_renderer.h"
+#include "../io/network_manager.h"
 #include "../core/utils/ui_config_manager.h"
 #include "texture_manager.h"
 #include "../core/utils/resource_path.h"
@@ -1294,6 +1295,18 @@ void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHo
     auto titleConfig = uiConfig.getModeSelectionTitleConfig();
     glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
     renderText("MULTIPLAYER", titlePos, titleConfig.color, titleConfig.scale);
+    
+    // ローカルIPアドレスの表示（ホスト側のみ）
+    if (isHosting && !isConnected) {
+        std::string localIP = NetworkManager::getLocalIPAddress();
+        if (!localIP.empty()) {
+            auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+            glm::vec2 ipPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+            std::string ipText = "YOUR IP: " + localIP;
+            renderText(ipText, glm::vec2(ipPos.x, ipPos.y - 150), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale);
+            renderText("SHARE THIS IP WITH CLIENT", glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(0.7f, 0.7f, 0.7f), normalConfig.scale * 0.8f);
+        }
+    }
     
     // 接続状態の表示
     if (isConnected) {

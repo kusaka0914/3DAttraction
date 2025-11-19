@@ -6,9 +6,13 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
+#pragma comment(lib, "iphlpapi.lib")
 #else
 #include <sys/select.h>
 #include <errno.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 #endif
 
 NetworkManager::NetworkManager()
@@ -252,6 +256,37 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
         int selectAttempts = 0;
         
         while (!shouldStop_ && std::chrono::steady_clock::now() - startTime < std::chrono::milliseconds(TIMEOUT_MS)) {
+            // まず接続エラーをチェック
+#ifdef _WIN32
+            int so_error = 0;
+            int len = sizeof(so_error);
+            if (getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, (char*)&so_error, &len) == 0) {
+                if (so_error != 0) {
+                    std::cerr << "Client: Connection error detected: " << so_error << std::endl;
+                    closesocket(clientSocket_);
+                    clientSocket_ = INVALID_SOCKET;
+                    if (connectionCallback_) {
+                        connectionCallback_(false);
+                    }
+                    return;
+                }
+            }
+#else
+            int so_error = 0;
+            socklen_t len = sizeof(so_error);
+            if (getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, &so_error, &len) == 0) {
+                if (so_error != 0) {
+                    std::cerr << "Client: Connection error detected: " << so_error << " (" << strerror(so_error) << ")" << std::endl;
+                    close(clientSocket_);
+                    clientSocket_ = -1;
+                    if (connectionCallback_) {
+                        connectionCallback_(false);
+                    }
+                    return;
+                }
+            }
+#endif
+            
             fd_set writeSet;
             FD_ZERO(&writeSet);
 #ifdef _WIN32
@@ -261,9 +296,21 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
             timeout.tv_usec = 100000; // 100ms
             int selectResult = select(0, nullptr, &writeSet, nullptr, &timeout);
             if (selectResult > 0 && FD_ISSET(clientSocket_, &writeSet)) {
-                // 接続完了
-                std::cout << "Client: select indicates connection ready" << std::endl;
-                break;
+                // 接続完了を再確認
+                so_error = 0;
+                len = sizeof(so_error);
+                if (getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, (char*)&so_error, &len) == 0 && so_error == 0) {
+                    std::cout << "Client: select indicates connection ready" << std::endl;
+                    break;
+                } else {
+                    std::cerr << "Client: Connection failed after select: " << so_error << std::endl;
+                    closesocket(clientSocket_);
+                    clientSocket_ = INVALID_SOCKET;
+                    if (connectionCallback_) {
+                        connectionCallback_(false);
+                    }
+                    return;
+                }
             } else if (selectResult < 0) {
                 int error = WSAGetLastError();
                 std::cerr << "Client: select error: " << error << std::endl;
@@ -276,13 +323,19 @@ bool NetworkManager::connectToHost(const std::string& ipAddress, int port) {
             int selectResult = select(clientSocket_ + 1, nullptr, &writeSet, nullptr, &timeout);
             if (selectResult > 0 && FD_ISSET(clientSocket_, &writeSet)) {
                 // 接続完了を確認
-                int so_error;
-                socklen_t len = sizeof(so_error);
+                so_error = 0;
+                len = sizeof(so_error);
                 if (getsockopt(clientSocket_, SOL_SOCKET, SO_ERROR, &so_error, &len) == 0 && so_error == 0) {
                     std::cout << "Client: select indicates connection ready" << std::endl;
                     break;
                 } else {
-                    std::cerr << "Client: connection error: " << so_error << std::endl;
+                    std::cerr << "Client: Connection failed after select: " << so_error << " (" << strerror(so_error) << ")" << std::endl;
+                    close(clientSocket_);
+                    clientSocket_ = -1;
+                    if (connectionCallback_) {
+                        connectionCallback_(false);
+                    }
+                    return;
                 }
             } else if (selectResult < 0) {
                 std::cerr << "Client: select error: " << errno << " (" << strerror(errno) << ")" << std::endl;
@@ -519,6 +572,51 @@ void NetworkManager::setConnectionCallback(std::function<void(bool)> callback) {
     connectionCallback_ = callback;
 }
 
+std::string NetworkManager::getLocalIPAddress() {
+    std::string ipAddress;
+    
+#ifdef _WIN32
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == 0) {
+        struct hostent* host = gethostbyname(hostname);
+        if (host != nullptr && host->h_addr_list[0] != nullptr) {
+            struct in_addr addr;
+            std::memcpy(&addr, host->h_addr_list[0], sizeof(struct in_addr));
+            char* ipStr = inet_ntoa(addr);
+            if (ipStr != nullptr) {
+                ipAddress = ipStr;
+            }
+        }
+    }
+#else
+    // macOS/Linux用: getifaddrsを使用
+    struct ifaddrs* ifaddrsList = nullptr;
+    if (getifaddrs(&ifaddrsList) == 0) {
+        for (struct ifaddrs* ifa = ifaddrsList; ifa != nullptr; ifa = ifa->ifa_next) {
+            if (ifa->ifa_addr == nullptr) {
+                continue;
+            }
+            
+            // IPv4アドレスのみを取得
+            if (ifa->ifa_addr->sa_family == AF_INET) {
+                struct sockaddr_in* sin = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
+                char ipStr[INET_ADDRSTRLEN];
+                if (inet_ntop(AF_INET, &sin->sin_addr, ipStr, INET_ADDRSTRLEN) != nullptr) {
+                    // ループバックアドレス（127.0.0.1）を除外
+                    if (std::string(ipStr) != "127.0.0.1") {
+                        ipAddress = ipStr;
+                        break; // 最初の非ループバックIPv4アドレスを使用
+                    }
+                }
+            }
+        }
+        freeifaddrs(ifaddrsList);
+    }
+#endif
+    
+    return ipAddress;
+}
+
 void NetworkManager::receiveThread() {
     while (!shouldStop_ && isConnected_) {
         NetworkMessageType type;
@@ -676,25 +774,39 @@ bool NetworkManager::receiveMessage(NetworkMessageType& type, void* data, size_t
     }
 #else
     ssize_t received = recv(socket, reinterpret_cast<char*>(&header), sizeof(header), MSG_DONTWAIT);
+    if (received < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // データがまだない（これは正常）
+            return false;
+        }
+        // その他のエラー
+        isConnected_ = false;
+        return false;
+    }
 #endif
     
-    if (received <= 0) {
-        if (received == 0) {
-            // 接続が閉じられた
-            isConnected_ = false;
-        }
+    if (received == 0) {
+        // 接続が閉じられた
+        isConnected_ = false;
         return false;
     }
     
     if (received != static_cast<int>(sizeof(header))) {
+        // 部分的なヘッダー受信（通常は発生しないが、念のため）
         return false;
     }
     
     type = header.type;
     actualDataSize = header.dataSize;
     
+    // データサイズの検証
+    if (actualDataSize > maxDataSize) {
+        std::cerr << "Received data size (" << actualDataSize << ") exceeds max size (" << maxDataSize << ")" << std::endl;
+        return false;
+    }
+    
     // データを受信
-    if (actualDataSize > 0 && actualDataSize <= maxDataSize) {
+    if (actualDataSize > 0) {
 #ifdef _WIN32
         int received = recv(socket, reinterpret_cast<char*>(data), static_cast<int>(actualDataSize), 0);
         if (received < 0) {
@@ -706,11 +818,20 @@ bool NetworkManager::receiveMessage(NetworkMessageType& type, void* data, size_t
             return false;
         }
         if (received != static_cast<int>(actualDataSize)) {
+            // 部分的なデータ受信
             return false;
         }
 #else
         ssize_t received = recv(socket, reinterpret_cast<char*>(data), actualDataSize, MSG_DONTWAIT);
+        if (received < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                return false;
+            }
+            isConnected_ = false;
+            return false;
+        }
         if (received != static_cast<int>(actualDataSize)) {
+            // 部分的なデータ受信
             return false;
         }
 #endif
