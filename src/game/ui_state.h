@@ -97,5 +97,22 @@ struct UIState {
     float staffRollTimer = 0.0f;
     float endingMessageTimer = 0.0f;
     bool isEndingSequence = false;
+    
+    // マルチプレイ関連
+    bool showMultiplayerMenu = false;  /**< @brief マルチプレイメニュー表示フラグ */
+    bool showMultiplayerConnectionUI = false;  /**< @brief マルチプレイ接続UI表示フラグ */
+    bool isHosting = false;  /**< @brief ホストとして待機中かどうか */
+    std::string connectionIP = "";  /**< @brief 接続先IPアドレス（ホスト側のIPアドレス。空の場合は自動検出を試みる） */
+    int connectionPort = 12345;  /**< @brief 接続ポート番号 */
+    bool isWaitingForConnection = false;  /**< @brief 接続待ち中かどうか */
+    bool showRaceResultUI = false;  /**< @brief レース結果UI表示フラグ */
+    int raceWinnerPlayerId = -1;  /**< @brief レース勝者プレイヤーID（-1=未決定、0=ローカル、1=リモート） */
+    float raceWinnerTime = 0.0f;  /**< @brief レース勝者のタイム */
+    float raceLoserTime = 0.0f;  /**< @brief レース敗者のタイム */
+    
+    // IPアドレス入力関連
+    bool showIPAddressInput = false;  /**< @brief IPアドレス入力画面表示フラグ */
+    std::string ipAddressInput = "";  /**< @brief IPアドレス入力中の文字列 */
+    int ipAddressInputCursorPos = 0;  /**< @brief IPアドレス入力カーソル位置 */
 };
 

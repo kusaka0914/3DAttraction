@@ -22,6 +22,7 @@
 #include "game_progress_state.h"
 #include "replay_state.h"
 #include "ui_state.h"
+#include "multiplayer_state.h"
 
 struct EditorState;
 
@@ -40,6 +41,7 @@ struct GameState {
     GameProgressState progress;
     ReplayState replay;
     UIState ui;
+    MultiplayerState multiplayer;
     
     
     struct Platform {

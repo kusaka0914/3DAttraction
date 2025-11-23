@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 namespace GameLoop {
 
@@ -92,6 +93,20 @@ void InputHandler::processStageSelectionAction(
         gameState.progress.timeScale = 1.0f;
         gameState.progress.timeScaleLevel = 0;
         gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+        
+        // マルチプレイモードの場合、ステージ選択通知を設定
+        if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected && gameState.multiplayer.isHost) {
+            // リモートプレイヤー（クライアント側のプレイヤー）の位置を初期位置に設定
+            // goToStageの後にplayer.positionが設定されるので、その後に設定する必要がある
+            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+            gameState.multiplayer.isRaceStarted = true;
+            gameState.multiplayer.pendingStageSelection = stageNumber;
+            std::cout << "HOST: Stage " << stageNumber << " selected. Remote player position set to: (" 
+                      << gameState.multiplayer.remotePlayer.position.x << ", " 
+                      << gameState.multiplayer.remotePlayer.position.y << ", " 
+                      << gameState.multiplayer.remotePlayer.position.z << ")" << std::endl;
+        }
     }
 }
 
@@ -99,6 +114,33 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                               PlatformSystem& platformSystem, 
                               std::map<int, InputUtils::KeyState>& keyStates,
                               std::function<void()> resetStageStartTime, float scaledDeltaTime, io::AudioManager& audioManager) {
+        // デバッグ: handleInputProcessingが呼ばれていることを確認（ステージ0の時のみ、初回のみ）
+        static bool debugLogged = false;
+        if (!debugLogged && stageManager.getCurrentStage() == 0) {
+            printf("DEBUG: handleInputProcessing called for stage 0, keyStates size: %zu\n", keyStates.size());
+            debugLogged = true;
+        }
+        
+        // マルチプレイモードの開始（ステージ選択画面でMキー）- リーダーボードUI表示中でも動作
+        if (keyStates.find(GLFW_KEY_M) != keyStates.end()) {
+            if (keyStates[GLFW_KEY_M].justPressed() && stageManager.getCurrentStage() == 0 && !gameState.ui.showModeSelectionUI && !gameState.ui.showTimeAttackSelectionUI) {
+                gameState.ui.showMultiplayerMenu = !gameState.ui.showMultiplayerMenu;
+                printf("Multiplayer menu toggled: %s\n", gameState.ui.showMultiplayerMenu ? "ON" : "OFF");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            } else if (keyStates[GLFW_KEY_M].justPressed()) {
+                // 条件が満たされていない場合のデバッグ
+                printf("DEBUG: M key pressed but conditions not met: stage=%d, showModeSelectionUI=%d, showTimeAttackSelectionUI=%d\n",
+                       stageManager.getCurrentStage(), gameState.ui.showModeSelectionUI, gameState.ui.showTimeAttackSelectionUI);
+            }
+        } else {
+            // MキーがkeyStatesに登録されていない場合のデバッグ（初回のみ）
+            static bool warnedOnce = false;
+            if (!warnedOnce && stageManager.getCurrentStage() == 0) {
+                printf("DEBUG: GLFW_KEY_M not found in keyStates map!\n");
+                warnedOnce = true;
+            }
+        }
+        
         // リーダーボードUI表示中はプレイヤー移動を無効化
         if (gameState.ui.showLeaderboardUI) {
             return;
@@ -214,12 +256,34 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     continue;
                 }
                 
+                // マルチプレイメニューが表示されている場合は1-5キーを無効化
+                if (gameState.ui.showMultiplayerMenu) {
+                    continue;
+                }
+                
+                // マルチプレイモードでクライアント側の場合、ステージ選択は無効化（ホストのみが選択可能）
+                if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected && !gameState.multiplayer.isHost) {
+                    // クライアント側ではステージ選択を無視
+                    continue;
+                }
+                
                 if (stageManager.getCurrentStage() == 0 && stageNumber >= 1 && stageNumber <= 5) {
+                    // ステージ選択画面で1-5キーを押した場合：テレポート機能
                     if (gameState.progress.unlockedStages[stageNumber]) {
                         teleportToStageArea(stageNumber, gameState);
                     }
                 } else if (!gameState.progress.isTutorialStage) {
-                    processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    // ステージ0以外で1-5キーを押した場合（通常は発生しないが、念のため）
+                    if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                        if (gameState.multiplayer.isHost) {
+                            processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+                            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+                            gameState.multiplayer.isRaceStarted = true;
+                        }
+                    } else {
+                        processStageSelectionAction(stageNumber, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    }
                 }
             }
         }
@@ -245,6 +309,8 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             gameState.progress.isEasyMode = !gameState.progress.isEasyMode;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        
+        // マルチプレイモードの開始（ステージ選択画面でMキー）- 上で既に処理済み
         
         if (stageManager.getCurrentStage() == 0) {
             struct SkillToggle {
@@ -376,6 +442,24 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
             }
         }
         
+        if (gameState.ui.showRaceResultUI) {
+            if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                gameState.ui.showRaceResultUI = false;
+                gameState.multiplayer.isRaceFinished = false;
+                gameState.multiplayer.winnerPlayerId = -1;
+                gameState.multiplayer.winnerTime = 0.0f;
+                gameState.multiplayer.loserTime = 0.0f;
+                gameState.ui.raceWinnerPlayerId = -1;
+                gameState.ui.raceWinnerTime = 0.0f;
+                gameState.ui.raceLoserTime = 0.0f;
+                // フィールドに戻る
+                if (stageManager.getCurrentStage() != 0) {
+                    GameLoop::InputHandler::returnToField(window, gameState, stageManager, platformSystem, -1);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        }
+        
         if (gameState.ui.showSecretStarSelectionUI) {
             if (gameState.progress.selectedSecretStarType == GameProgressState::SecretStarType::NONE) {
                 gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::MAX_SPEED_STAR;
@@ -411,9 +495,24 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 gameState.ui.modeSelectionTargetStage = 0;
                 gameState.ui.blockEnterUntilReleased = false;  // ブロックを解除
                 
-                resetStageStartTime();
-                gameState.progress.lives = 6;
-                stageManager.goToStage(targetStage, gameState, platformSystem);
+                // マルチプレイモードの場合、ホストのみがステージを選択可能
+                if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                    if (gameState.multiplayer.isHost) {
+                        resetStageStartTime();
+                        gameState.progress.lives = 6;
+                        stageManager.goToStage(targetStage, gameState, platformSystem);
+                        // リモートプレイヤーも同じステージで開始（状態を同期）
+                        gameState.multiplayer.remotePlayer.position = gameState.player.position;
+                        gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+                        gameState.multiplayer.isRaceStarted = true;
+                        // クライアント側へのステージ選択通知を設定
+                        gameState.multiplayer.pendingStageSelection = targetStage;
+                    }
+                } else {
+                    resetStageStartTime();
+                    gameState.progress.lives = 6;
+                    stageManager.goToStage(targetStage, gameState, platformSystem);
+                }
                 
                 gameState.progress.isTimeAttackMode = false;  // SECRET STARモード時はタイムアタックモードを無効化
                 
@@ -503,14 +602,39 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                 gameState.ui.modeSelectionTargetStage = 0;
                 gameState.ui.blockEnterUntilReleased = false;  // ブロックを解除
                 
-                resetStageStartTime();
-                gameState.progress.lives = 6;
-                stageManager.goToStage(targetStage, gameState, platformSystem);
-                gameState.ui.readyScreenShown = false;
-                gameState.ui.showReadyScreen = true;
-                gameState.ui.readyScreenSpeedLevel = 0;
-                gameState.progress.timeScale = 1.0f;
-                gameState.progress.timeScaleLevel = 0;
+                // マルチプレイモードの場合、ホストのみがステージを選択可能
+                if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                    if (gameState.multiplayer.isHost) {
+                        resetStageStartTime();
+                        gameState.progress.lives = 6;
+                        stageManager.goToStage(targetStage, gameState, platformSystem);
+                        gameState.ui.readyScreenShown = false;
+                        gameState.ui.showReadyScreen = true;
+                        gameState.ui.readyScreenSpeedLevel = 0;
+                        gameState.progress.timeScale = 1.0f;
+                        gameState.progress.timeScaleLevel = 0;
+                        // リモートプレイヤー（クライアント側のプレイヤー）も同じステージで開始（状態を同期）
+                        // goToStageの後にplayer.positionが設定されるので、その後に設定する必要がある
+                        gameState.multiplayer.remotePlayer.position = gameState.player.position;
+                        gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+                        gameState.multiplayer.isRaceStarted = true;
+                        // クライアント側へのステージ選択通知を設定
+                        gameState.multiplayer.pendingStageSelection = targetStage;
+                        std::cout << "HOST: Stage " << targetStage << " selected (from mode selection). Remote player position set to: (" 
+                                  << gameState.multiplayer.remotePlayer.position.x << ", " 
+                                  << gameState.multiplayer.remotePlayer.position.y << ", " 
+                                  << gameState.multiplayer.remotePlayer.position.z << ")" << std::endl;
+                    }
+                } else {
+                    resetStageStartTime();
+                    gameState.progress.lives = 6;
+                    stageManager.goToStage(targetStage, gameState, platformSystem);
+                    gameState.ui.readyScreenShown = false;
+                    gameState.ui.showReadyScreen = true;
+                    gameState.ui.readyScreenSpeedLevel = 0;
+                    gameState.progress.timeScale = 1.0f;
+                    gameState.progress.timeScaleLevel = 0;
+                }
                 
                 if (gameState.progress.isTimeAttackMode) {
                     gameState.progress.currentTimeAttackTime = 0.0f;
@@ -724,15 +848,36 @@ void InputHandler::handleInputProcessing(GLFWwindow* window, GameState& gameStat
                     gameState.progress.selectedSecretStarType = GameProgressState::SecretStarType::NONE;
                     gameState.progress.isTimeAttackMode = false;
                 } else {
-                resetStageStartTime();
-                gameState.progress.lives = 6;
-                    stageManager.goToStage(targetStage, gameState, platformSystem);
-                gameState.ui.readyScreenShown = false;
-                gameState.ui.showReadyScreen = true;
-                gameState.ui.readyScreenSpeedLevel = 0;
-                    gameState.progress.timeScale = 1.0f;
-                    gameState.progress.timeScaleLevel = 0;
-                    gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+                    // マルチプレイモードの場合、ホストのみがステージを選択可能
+                    if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                        if (gameState.multiplayer.isHost) {
+                            resetStageStartTime();
+                            gameState.progress.lives = 6;
+                            stageManager.goToStage(targetStage, gameState, platformSystem);
+                            gameState.ui.readyScreenShown = false;
+                            gameState.ui.showReadyScreen = true;
+                            gameState.ui.readyScreenSpeedLevel = 0;
+                            gameState.progress.timeScale = 1.0f;
+                            gameState.progress.timeScaleLevel = 0;
+                            gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+                            // リモートプレイヤーも同じステージで開始（状態を同期）
+                            gameState.multiplayer.remotePlayer.position = gameState.player.position;
+                            gameState.multiplayer.remotePlayer.velocity = glm::vec3(0, 0, 0);
+                            gameState.multiplayer.isRaceStarted = true;
+                            // クライアント側へのステージ選択通知を設定
+                            gameState.multiplayer.pendingStageSelection = targetStage;
+                        }
+                    } else {
+                        resetStageStartTime();
+                        gameState.progress.lives = 6;
+                        stageManager.goToStage(targetStage, gameState, platformSystem);
+                        gameState.ui.readyScreenShown = false;
+                        gameState.ui.showReadyScreen = true;
+                        gameState.ui.readyScreenSpeedLevel = 0;
+                        gameState.progress.timeScale = 1.0f;
+                        gameState.progress.timeScaleLevel = 0;
+                        gameState.progress.isTimeAttackMode = false;  // 初めて入る場合はNORMALモード
+                    }
                 }
             }
         }

@@ -28,6 +28,7 @@
 #include "../game/replay_manager.h"
 #include "../game/save_manager.h"
 #include "../game/online_leaderboard_manager.h"
+#include "../game/multiplayer_manager.h"
 #include "../game/stage_editor.h"
 #include "tutorial_manager.h"
 #include <set>
@@ -51,7 +52,8 @@ namespace GameLoop {
             std::map<int, InputUtils::KeyState>& keyStates,
             std::function<void()> resetStageStartTime,
             std::chrono::high_resolution_clock::time_point& startTime,
-            io::AudioManager& audioManager) {
+            io::AudioManager& audioManager,
+            MultiplayerManager& multiplayerManager) {
         
         if (gameState.audioEnabled) {
             audioManager.loadSFX("jump", ResourcePath::getResourcePath("assets/audio/se/jump.ogg"));
@@ -377,7 +379,235 @@ namespace GameLoop {
                 }
             }
 
+            // マルチプレイメニューの処理
+            if (gameState.ui.showMultiplayerMenu && stageManager.getCurrentStage() == 0) {
+                // マルチプレイメニューを開いたときに、ローカルIPアドレスを取得
+                static bool ipAddressFetched = false;
+                if (!ipAddressFetched) {
+                    std::string localIP = NetworkManager::getLocalIPAddress();
+                    if (!localIP.empty()) {
+                        printf("Local IP Address: %s\n", localIP.c_str());
+                        // クライアント側の場合、接続先IPアドレスが空の場合は、同じネットワーク内の他のIPアドレスを試す
+                        // ただし、自分のIPアドレス（localIP）は除外する
+                        if (gameState.ui.connectionIP.empty() && !gameState.multiplayer.isHost) {
+                            // 同じネットワーク内の一般的なIPアドレスを試す（.1, .100, .101など）
+                            size_t lastDot = localIP.find_last_of('.');
+                            if (lastDot != std::string::npos) {
+                                std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                                // 自分のIPアドレスの最後の数字を取得
+                                int myLastNumber = std::stoi(localIP.substr(lastDot + 1));
+                                // 自分のIPアドレス以外のIPアドレスを試す
+                                // まず .100 を試し、それが自分のIPの場合は .101 を試す
+                                int tryNumber = 100;
+                                if (tryNumber == myLastNumber) {
+                                    tryNumber = 101;
+                                }
+                                gameState.ui.connectionIP = networkPrefix + std::to_string(tryNumber);
+                                printf("Auto-detected host IP: %s (trying common IPs on same network)\n", gameState.ui.connectionIP.c_str());
+                            }
+                        }
+                    }
+                    ipAddressFetched = true;
+                }
+                
+                // Hキーでホストとして開始
+                if (keyStates[GLFW_KEY_H].justPressed()) {
+                    if (multiplayerManager.startHost(gameState.ui.connectionPort)) {
+                        gameState.multiplayer.isMultiplayerMode = true;
+                        gameState.multiplayer.isHost = true;
+                        gameState.ui.isHosting = true;
+                        gameState.ui.isWaitingForConnection = true;
+                        printf("Multiplayer: Started as host on port %d\n", gameState.ui.connectionPort);
+                        // ホスト側のIPアドレスを取得して表示
+                        std::string localIP = NetworkManager::getLocalIPAddress();
+                        if (!localIP.empty()) {
+                            printf("Host IP Address: %s:%d\n", localIP.c_str(), gameState.ui.connectionPort);
+                        }
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // IキーでIPアドレス入力画面を開く（クライアント側のみ）
+                if (keyStates[GLFW_KEY_I].justPressed() && !gameState.multiplayer.isHost) {
+                    gameState.ui.showIPAddressInput = true;
+                    gameState.ui.ipAddressInput = gameState.ui.connectionIP;
+                    gameState.ui.ipAddressInputCursorPos = gameState.ui.connectionIP.length();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // IPアドレス入力画面の処理
+                if (gameState.ui.showIPAddressInput) {
+                    // Backspaceキーで文字削除
+                    if (keyStates[GLFW_KEY_BACKSPACE].justPressed()) {
+                        if (!gameState.ui.ipAddressInput.empty() && gameState.ui.ipAddressInputCursorPos > 0) {
+                            gameState.ui.ipAddressInput.erase(gameState.ui.ipAddressInputCursorPos - 1, 1);
+                            gameState.ui.ipAddressInputCursorPos--;
+                        }
+                    }
+                    
+                    // 数字（0-9）の入力
+                    for (int key = GLFW_KEY_0; key <= GLFW_KEY_9; key++) {
+                        if (keyStates[key].justPressed()) {
+                            if (gameState.ui.ipAddressInput.length() < 15) { // IPアドレスの最大長
+                                char c = '0' + (key - GLFW_KEY_0);
+                                gameState.ui.ipAddressInput.insert(gameState.ui.ipAddressInputCursorPos, 1, c);
+                                gameState.ui.ipAddressInputCursorPos++;
+                            }
+                        }
+                    }
+                    
+                    // ピリオド（.）の入力
+                    if (keyStates[GLFW_KEY_PERIOD].justPressed() || keyStates[GLFW_KEY_KP_DECIMAL].justPressed()) {
+                        if (gameState.ui.ipAddressInput.length() < 15) {
+                            gameState.ui.ipAddressInput.insert(gameState.ui.ipAddressInputCursorPos, 1, '.');
+                            gameState.ui.ipAddressInputCursorPos++;
+                        }
+                    }
+                    
+                    // Enterキーで確定
+                    if (keyStates[GLFW_KEY_ENTER].justPressed()) {
+                        gameState.ui.connectionIP = gameState.ui.ipAddressInput;
+                        gameState.ui.showIPAddressInput = false;
+                        printf("IP Address set to: %s\n", gameState.ui.connectionIP.c_str());
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    }
+                    
+                    // ESCキーでキャンセル
+                    if (keyStates[GLFW_KEY_ESCAPE].justPressed()) {
+                        gameState.ui.showIPAddressInput = false;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    }
+                }
+                
+                // Cキーでクライアントとして接続
+                if (keyStates[GLFW_KEY_C].justPressed() && !gameState.ui.showIPAddressInput) {
+                    // クライアント側のIPアドレスを取得して表示
+                    std::string localIP = NetworkManager::getLocalIPAddress();
+                    if (!localIP.empty()) {
+                        printf("Client IP Address: %s\n", localIP.c_str());
+                    }
+                    
+                    // 接続先IPアドレスを使用（既に自動検出されている可能性がある）
+                    std::string targetIP = gameState.ui.connectionIP;
+                    if (targetIP.empty()) {
+                        printf("INFO: Connection IP address is not set. Trying to find host on local network...\n");
+                        // ローカルIPアドレスのネットワーク部分を使用して、同じネットワーク内のIPアドレスを試す
+                        if (!localIP.empty()) {
+                            size_t lastDot = localIP.find_last_of('.');
+                            if (lastDot != std::string::npos) {
+                                std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                                // 自分のIPアドレスの最後の数字を取得
+                                int myLastNumber = std::stoi(localIP.substr(lastDot + 1));
+                                // 自分のIPアドレス以外のIPアドレスを試す（.1, .100, .101など）
+                                int tryNumber = 100;
+                                if (tryNumber == myLastNumber) {
+                                    tryNumber = 101;
+                                }
+                                targetIP = networkPrefix + std::to_string(tryNumber);
+                                printf("Trying IP address: %s (same network as %s, excluding self)\n", targetIP.c_str(), localIP.c_str());
+                                printf("NOTE: If connection fails, press I to enter host IP address manually.\n");
+                            } else {
+                                targetIP = "192.168.1.100"; // フォールバック
+                                printf("Trying default IP: %s\n", targetIP.c_str());
+                            }
+                        } else {
+                            targetIP = "192.168.1.100"; // フォールバック
+                            printf("Trying default IP: %s\n", targetIP.c_str());
+                        }
+                    } else {
+                        printf("Using IP address: %s\n", targetIP.c_str());
+                    }
+                    
+                    printf("Multiplayer: Connecting to %s:%d...\n", targetIP.c_str(), gameState.ui.connectionPort);
+                    
+                    if (multiplayerManager.connectToHost(targetIP, gameState.ui.connectionPort)) {
+                        gameState.multiplayer.isMultiplayerMode = true;
+                        gameState.multiplayer.isHost = false;
+                        gameState.ui.isWaitingForConnection = true; // 接続待ち中
+                    } else {
+                        printf("Multiplayer: Failed to start connection to %s:%d\n", targetIP.c_str(), gameState.ui.connectionPort);
+                        gameState.ui.isWaitingForConnection = false;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // ESCキーでマルチプレイメニューを閉じる（IPアドレス入力画面が開いている場合はそちらを閉じる）
+                if (keyStates[GLFW_KEY_ESCAPE].justPressed()) {
+                    if (gameState.ui.showIPAddressInput) {
+                        gameState.ui.showIPAddressInput = false;
+                    } else {
+                        gameState.ui.showMultiplayerMenu = false;
+                        if (multiplayerManager.isConnected()) {
+                            multiplayerManager.disconnect();
+                            gameState.multiplayer.isMultiplayerMode = false;
+                            gameState.multiplayer.isHost = false;
+                            gameState.ui.isHosting = false;
+                            gameState.ui.isWaitingForConnection = false;
+                        }
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                // 接続状態の更新
+                if (multiplayerManager.isConnected() && !gameState.multiplayer.isConnected) {
+                    gameState.multiplayer.isConnected = true;
+                    gameState.ui.isWaitingForConnection = false;
+                    printf("Multiplayer: Connection established (Host: %s, Connected: %s)\n", 
+                           gameState.multiplayer.isHost ? "true" : "false",
+                           gameState.multiplayer.isConnected ? "true" : "false");
+                } else if (!multiplayerManager.isConnected() && gameState.multiplayer.isConnected) {
+                    gameState.multiplayer.isConnected = false;
+                    gameState.multiplayer.isMultiplayerMode = false;
+                    gameState.ui.isWaitingForConnection = false;
+                    printf("Multiplayer: Connection lost\n");
+                } else if (!multiplayerManager.isConnected() && gameState.ui.isWaitingForConnection) {
+                    // 接続待ち中だが、タイムアウトした可能性がある
+                    // 3秒以上待機している場合は接続失敗とみなす
+                    static auto connectionStartTime = std::chrono::steady_clock::now();
+                    static bool connectionStarted = false;
+                    
+                    if (!connectionStarted) {
+                        connectionStartTime = std::chrono::steady_clock::now();
+                        connectionStarted = true;
+                    }
+                    
+                    auto elapsed = std::chrono::steady_clock::now() - connectionStartTime;
+                    if (elapsed > std::chrono::seconds(150)) {
+                        // 150秒以上経過しても接続できていない場合は失敗とみなす
+                        gameState.ui.isWaitingForConnection = false;
+                        gameState.multiplayer.isMultiplayerMode = false;
+                        connectionStarted = false;
+                        printf("Multiplayer: Connection timeout (150 seconds)\n");
+                    }
+                } else if (gameState.multiplayer.isConnected) {
+                    // 接続済みの場合は接続開始時刻をリセット
+                    // connectionStartedは上でstatic変数として定義されているため、ここではリセット不要
+                }
+            }
+
             updateGameState(window, gameState, stageManager, platformSystem, deltaTime, scaledDeltaTime, keyStates, resetStageStartTime, audioManager);
+            
+            // マルチプレイモードの更新（物理演算の後）
+            if (gameState.multiplayer.isMultiplayerMode && multiplayerManager.isConnected()) {
+                multiplayerManager.update(window, gameState, platformSystem, deltaTime, audioManager);
+                
+                // クライアント側でステージ選択通知をチェック
+                if (!gameState.multiplayer.isHost) {
+                    multiplayerManager.checkStageSelection(gameState, stageManager, platformSystem, resetStageStartTime, window);
+                }
+                
+                // ホスト側でステージ選択通知を送信
+                if (gameState.multiplayer.isHost && gameState.multiplayer.pendingStageSelection >= 1 && gameState.multiplayer.pendingStageSelection <= 5) {
+                    std::cout << "HOST: Sending stage selection notification for stage " << gameState.multiplayer.pendingStageSelection << std::endl;
+                    multiplayerManager.sendStageSelection(gameState.multiplayer.pendingStageSelection);
+                    gameState.multiplayer.pendingStageSelection = -1;  // 送信済みフラグをクリア
+                }
+                
+                // ゴール到達をチェックして送信
+                if (gameState.progress.isGoalReached && !gameState.multiplayer.isRaceFinished) {
+                    multiplayerManager.sendGoalReached(0, gameState.progress.clearTime); // 0 = ローカルプレイヤー
+                }
+            }
 
             GameLoop::GameRenderer::renderFrame(window, gameState, stageManager, platformSystem, renderer, uiRenderer, gameStateUIRenderer, keyStates, deltaTime);
             
@@ -672,7 +902,15 @@ namespace GameLoop {
             
             if (!gameState.ui.showWarpTutorialUI && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
                 if (selectedStage > 0) {
-                    InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    // マルチプレイモードの場合、ホストのみがステージを選択可能
+                    if (gameState.multiplayer.isMultiplayerMode && gameState.multiplayer.isConnected) {
+                        if (gameState.multiplayer.isHost) {
+                            InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                            // processStageSelectionAction内でpendingStageSelectionが設定される
+                        }
+                    } else {
+                        InputHandler::processStageSelectionAction(selectedStage, gameState, stageManager, platformSystem, resetStageStartTime, window);
+                    }
                 }
             }
             
@@ -1547,6 +1785,11 @@ namespace GameLoop {
             
             if (gameState.ui.showSecretStarSelectionUI) {
                 gameStateUIRenderer->renderSecretStarSelectionUI(width, height, gameState.progress.selectedSecretStarType);
+            }
+            
+            if (gameState.ui.showRaceResultUI) {
+                gameStateUIRenderer->renderRaceResultUI(width, height, gameState.ui.raceWinnerPlayerId, 
+                                                        gameState.ui.raceWinnerTime, gameState.ui.raceLoserTime);
             }
             
             bool shouldShowAssist = gameState.ui.showStageSelectionAssist && 

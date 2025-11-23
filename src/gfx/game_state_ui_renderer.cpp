@@ -3,6 +3,7 @@
 #endif
 
 #include "game_state_ui_renderer.h"
+#include "../io/network_manager.h"
 #include "../core/utils/ui_config_manager.h"
 #include "texture_manager.h"
 #include "../core/utils/resource_path.h"
@@ -1172,6 +1173,108 @@ void GameStateUIRenderer::renderPlayerNameInput(int width, int height, const std
     renderText(enterText, glm::vec2(enterPos.x * scaleX, enterPos.y * scaleY), confirmConfig.color, confirmConfig.scale);
 }
 
+void GameStateUIRenderer::renderIPAddressInput(int width, int height, const std::string& ipAddress, int cursorPos, float timer) {
+    font.initialize();
+    
+    // 背景描画用に2Dモードを設定
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 背景（半透明黒）
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    
+    // 入力欄の背景（白）
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    float inputBoxWidth = uiConfig.getPlayerNameInputBoxWidth();
+    float inputBoxHeight = uiConfig.getPlayerNameInputBoxHeight();
+    glm::vec2 inputBoxBasePos = uiConfig.calculatePosition(uiConfig.getPlayerNameInputBoxPosition(), width, height);
+    float inputBoxX = inputBoxBasePos.x - inputBoxWidth / 2.0f;
+    float inputBoxY = inputBoxBasePos.y - inputBoxHeight / 2.0f;
+    
+    glDisable(GL_BLEND);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(inputBoxX, inputBoxY);
+    glVertex2f(inputBoxX + inputBoxWidth, inputBoxY);
+    glVertex2f(inputBoxX + inputBoxWidth, inputBoxY + inputBoxHeight);
+    glVertex2f(inputBoxX, inputBoxY + inputBoxHeight);
+    glEnd();
+    glEnable(GL_BLEND);
+    
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    
+    // renderTextは1280x720の座標系を使うため、位置をスケーリング
+    float scaleX = 1280.0f / width;
+    float scaleY = 720.0f / height;
+    
+    // タイトル
+    std::string titleText = "ENTER HOST IP ADDRESS";
+    auto titleConfig = uiConfig.getPlayerNameInputTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText(titleText, glm::vec2(titlePos.x * scaleX, titlePos.y * scaleY), titleConfig.color, titleConfig.scale);
+    
+    // カーソル点滅
+    float blinkSpeed = 2.0f;
+    float blink = 0.5f + 0.5f * sinf(timer * blinkSpeed * 3.14159f);
+    bool showCursor = blink > 0.5f;
+    
+    // 入力テキスト
+    std::string inputText = ipAddress;
+    auto inputTextConfig = uiConfig.getPlayerNameInputTextConfig();
+    glm::vec2 inputTextBasePos = uiConfig.calculatePosition(inputTextConfig.position, width, height);
+    
+    float textStartX = inputTextBasePos.x;
+    float textY = inputTextBasePos.y;
+    
+    if (!inputText.empty()) {
+        renderText(inputText, glm::vec2(textStartX * scaleX, textY * scaleY), inputTextConfig.color, inputTextConfig.scale);
+    }
+    
+    // カーソルを描画
+    if (showCursor) {
+        float cursorX = textStartX;
+        if (!inputText.empty() && cursorPos >= 0 && cursorPos <= static_cast<int>(inputText.length())) {
+            cursorX = textStartX + inputText.substr(0, cursorPos).length() * 8.0f * inputTextConfig.scale;
+        }
+        renderText("_", glm::vec2(cursorX * scaleX, textY * scaleY), inputTextConfig.color, inputTextConfig.scale);
+    }
+    
+    // 説明テキスト
+    std::string hintText = "ENTER NUMBERS AND PERIODS (E.G. 192.168.1.14)";
+    auto hintConfig = uiConfig.getPlayerNameInputHintConfig();
+    glm::vec2 hintPos = uiConfig.calculatePosition(hintConfig.position, width, height);
+    renderText(hintText, glm::vec2(hintPos.x * scaleX, hintPos.y * scaleY), hintConfig.color, hintConfig.scale);
+    
+    // Enterキーで確定
+    std::string enterText = "CONFIRM : ENTER";
+    auto confirmConfig = uiConfig.getPlayerNameInputConfirmConfig();
+    glm::vec2 enterPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
+    renderText(enterText, glm::vec2(enterPos.x * scaleX, enterPos.y * scaleY), confirmConfig.color, confirmConfig.scale);
+}
+
 void GameStateUIRenderer::renderStageSelectionEscKeyInfo(int width, int height) {
     font.initialize();
     
@@ -1243,6 +1346,217 @@ void GameStateUIRenderer::renderStaffRoll(int width, int height, float timer) {
     
     renderText("DEBUG", glm::vec2(roleBasePos.x, roleBasePos.y - scrollOffset + spacing * 6), roleConfig.color, roleConfig.scale);
     renderText("TAKUMI KUSAKA", glm::vec2(nameBasePos.x, nameBasePos.y - scrollOffset + spacing * 6), nameConfig.color, nameConfig.scale);
+    
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void GameStateUIRenderer::renderMultiplayerMenu(int width, int height, bool isHosting, bool isConnected, bool isWaitingForConnection, 
+                                                 const std::string& connectionIP, int connectionPort) {
+    
+    font.initialize();
+    
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    // マトリックスを復元（renderTextが独自に設定するため）
+    glEnable(GL_DEPTH_TEST);
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    
+    auto& uiConfig = UIConfig::UIConfigManager::getInstance();
+    
+    // タイトル（他のUIと同じスタイル）
+    auto titleConfig = uiConfig.getModeSelectionTitleConfig();
+    glm::vec2 titlePos = uiConfig.calculatePosition(titleConfig.position, width, height);
+    renderText("MULTIPLAYER", titlePos, titleConfig.color, titleConfig.scale);
+    
+    // ローカルIPアドレスの表示（ホスト側とクライアント側の両方）
+    if (!isConnected) {
+        std::string localIP = NetworkManager::getLocalIPAddress();
+        if (!localIP.empty()) {
+            auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+            glm::vec2 ipPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+            std::string ipText = "YOUR IP: " + localIP;
+            renderText(ipText, glm::vec2(ipPos.x, ipPos.y - 150), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale);
+            
+            if (isHosting) {
+                renderText("SHARE THIS IP WITH CLIENT", glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(0.7f, 0.7f, 0.7f), normalConfig.scale * 0.8f);
+            } else {
+                std::string targetIP = connectionIP;
+                if (targetIP.empty()) {
+                    // 同じネットワーク内のIPアドレスを計算（ローカルIPのネットワーク部分を使用）
+                    size_t lastDot = localIP.find_last_of('.');
+                    if (lastDot != std::string::npos) {
+                        std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                        targetIP = networkPrefix + "100"; // 同じネットワークの .100 を試す
+                    } else {
+                        targetIP = "192.168.1.100";
+                    }
+                    renderText("CONNECTING TO: " + targetIP + ":" + std::to_string(connectionPort) + " (AUTO)", glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale * 0.8f);
+                } else {
+                    renderText("CONNECTING TO: " + targetIP + ":" + std::to_string(connectionPort), glm::vec2(ipPos.x, ipPos.y - 120), glm::vec3(0.7f, 0.7f, 0.7f), normalConfig.scale * 0.8f);
+                }
+            }
+        }
+    }
+    
+    // 接続状態の表示
+    if (isConnected) {
+        auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+        glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+        renderText("CONNECTED", glm::vec2(normalPos.x, normalPos.y - 100), glm::vec3(0.0f, 1.0f, 0.0f), normalConfig.scale);
+        
+        // 接続後の指示を表示（ホスト/クライアントで異なる）
+        auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+        glm::vec2 instructionPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+        std::string instructionText;
+        if (isHosting) {
+            instructionText = "SELECT STAGE (1-5) TO START RACE";
+        } else {
+            instructionText = "WAITING FOR HOST TO SELECT STAGE...";
+        }
+        renderText(instructionText, instructionPos, easyConfig.unselectedColor, easyConfig.scale);
+    } else if (isWaitingForConnection) {
+        auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+        glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+        renderText("WAITING FOR CONNECTION...", glm::vec2(normalPos.x, normalPos.y - 100), glm::vec3(1.0f, 1.0f, 0.0f), normalConfig.scale);
+    } else {
+        // ホストとして開始
+        auto normalConfig = uiConfig.getModeSelectionNormalTextConfig();
+        glm::vec2 normalPos = uiConfig.calculatePosition(normalConfig.position, width, height);
+        renderText("H: START AS HOST", normalPos, normalConfig.selectedColor, normalConfig.scale);
+        
+        // クライアントとして接続
+        auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+        glm::vec2 easyPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+        std::string connectText;
+        if (connectionIP.empty()) {
+            // 同じネットワーク内のIPアドレスを表示（ローカルIPのネットワーク部分を使用）
+            std::string localIP = NetworkManager::getLocalIPAddress();
+            std::string defaultIP = "192.168.1.100";
+            if (!localIP.empty()) {
+                size_t lastDot = localIP.find_last_of('.');
+                if (lastDot != std::string::npos) {
+                    std::string networkPrefix = localIP.substr(0, lastDot + 1);
+                    defaultIP = networkPrefix + "100"; // 同じネットワークの .100 を試す
+                }
+            }
+            connectText = "C: CONNECT TO " + defaultIP + ":" + std::to_string(connectionPort) + " (AUTO)";
+        } else {
+            connectText = "C: CONNECT TO " + connectionIP + ":" + std::to_string(connectionPort);
+        }
+        renderText(connectText, easyPos, easyConfig.unselectedColor, easyConfig.scale);
+        
+        // IPアドレス入力の説明
+        glm::vec2 ipInputPos = glm::vec2(easyPos.x, easyPos.y + 50);
+        renderText("I: ENTER HOST IP ADDRESS", ipInputPos, glm::vec3(0.7f, 0.7f, 0.7f), easyConfig.scale * 0.8f);
+    }
+    
+    // 接続後の説明（ホスト側のみ）
+    if (isConnected && isHosting) {
+        auto easyConfig = uiConfig.getModeSelectionEasyTextConfig();
+        glm::vec2 instructionPos = uiConfig.calculatePosition(easyConfig.position, width, height);
+        renderText("PRESS 1-5 TO SELECT STAGE", glm::vec2(instructionPos.x, instructionPos.y + 50), glm::vec3(0.8f, 0.8f, 1.0f), easyConfig.scale * 0.9f);
+    }
+    
+    // ESCキーで閉じる
+    auto confirmConfig = uiConfig.getModeSelectionConfirmConfig();
+    glm::vec2 confirmPos = uiConfig.calculatePosition(confirmConfig.position, width, height);
+    renderText("ESC: CLOSE MENU", confirmPos, confirmConfig.color, confirmConfig.scale);
+}
+
+void GameStateUIRenderer::renderRaceResultUI(int width, int height, int winnerPlayerId, float winnerTime, float loserTime) {
+    font.initialize();
+    
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_DEPTH_TEST);
+    
+    // 半透明の背景
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+    glBegin(GL_QUADS);
+    glVertex2f(0, 0);
+    glVertex2f(width, 0);
+    glVertex2f(width, height);
+    glVertex2f(0, height);
+    glEnd();
+    glDisable(GL_BLEND);
+    
+    float centerX = width / 2.0f;
+    float centerY = height / 2.0f;
+    
+    // タイトル
+    renderText("RACE RESULT", glm::vec2(centerX - 200, centerY - 200), glm::vec3(1.0f, 1.0f, 1.0f), 1.5f);
+    
+    // 勝者の表示
+    std::string winnerText;
+    glm::vec3 winnerColor;
+    if (winnerPlayerId == 0) {
+        winnerText = "YOU WIN!";
+        winnerColor = glm::vec3(0.0f, 1.0f, 0.0f);
+    } else if (winnerPlayerId == 1) {
+        winnerText = "OPPONENT WINS!";
+        winnerColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    } else {
+        winnerText = "DRAW";
+        winnerColor = glm::vec3(1.0f, 1.0f, 0.0f);
+    }
+    renderText(winnerText, glm::vec2(centerX - 200, centerY - 100), winnerColor, 1.3f);
+    
+    // タイムの表示
+    int winnerMinutes = static_cast<int>(winnerTime) / 60;
+    int winnerSeconds = static_cast<int>(winnerTime) % 60;
+    std::string winnerTimeText = "WINNER TIME: " + std::to_string(winnerMinutes) + ":" + 
+                                 (winnerSeconds < 10 ? "0" : "") + std::to_string(winnerSeconds);
+    renderText(winnerTimeText, glm::vec2(centerX - 250, centerY), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+    
+    if (loserTime > 0.0f) {
+        int loserMinutes = static_cast<int>(loserTime) / 60;
+        int loserSeconds = static_cast<int>(loserTime) % 60;
+        std::string loserTimeText = "LOSER TIME: " + std::to_string(loserMinutes) + ":" + 
+                                    (loserSeconds < 10 ? "0" : "") + std::to_string(loserSeconds);
+        renderText(loserTimeText, glm::vec2(centerX - 250, centerY + 50), glm::vec3(0.7f, 0.7f, 0.7f), 1.0f);
+    }
+    
+    // 続行の指示
+    renderText("PRESS ENTER TO CONTINUE", glm::vec2(centerX - 200, centerY + 200), glm::vec3(0.7f, 0.7f, 0.7f), 0.9f);
     
     glEnable(GL_DEPTH_TEST);
     
