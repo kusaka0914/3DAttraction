@@ -46,12 +46,6 @@ public:
     void cleanup();
     
     /**
-     * @brief フレームの開始処理
-     * @details フレーム描画の開始処理を実行します。
-     */
-    void beginFrame();
-    
-    /**
      * @brief 背景付きフレームの開始処理
      * @details ステージ番号に応じた背景を描画してからフレームを開始します。
      * 

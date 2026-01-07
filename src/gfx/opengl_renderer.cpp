@@ -38,23 +38,6 @@ void OpenGLRenderer::cleanup() {
     TextureManager::cleanup();
 }
 
-void OpenGLRenderer::beginFrame() {
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-    
-    glClearColor(GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.r, 
-                 GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.g, 
-                 GameConstants::RenderConstants::DEFAULT_BACKGROUND_COLOR.b, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(glm::value_ptr(projectionMatrix));
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(glm::value_ptr(viewMatrix));
-}
-
 void OpenGLRenderer::beginFrameWithBackground(int stageNumber) {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -62,13 +45,15 @@ void OpenGLRenderer::beginFrameWithBackground(int stageNumber) {
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    if (stageNumber == 6) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        backgroundRenderer.renderStageBackground(stageNumber);
-    } else {
-        backgroundRenderer.renderStageBackground(stageNumber);
-    }
+    // if (stageNumber == 6) {
+    //     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //     backgroundRenderer.renderStageBackground(stageNumber);
+    // } else {
+    //     backgroundRenderer.renderStageBackground(stageNumber);
+    // }
+
+    backgroundRenderer.renderStageBackground(stageNumber);
     
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
