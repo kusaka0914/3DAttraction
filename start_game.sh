@@ -1,34 +1,34 @@
 #!/bin/bash
 
-echo "ゲームを開始します。"
+echo "Starting the game..."
 
-# ビルドディレクトリが存在しない場合は作成
+# Create build directory if it doesn't exist
 if [ ! -d "build" ]; then
-    echo "ビルドディレクトリを作成しています・・・"
+    echo "Creating build directory..."
     mkdir -p build
 fi
 
 cd build
 
-# 実行ファイル名を決定（macOSでは拡張子なし、Windowsでは.exe）
+# Determine executable name (no extension on macOS, .exe on Windows)
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     EXECUTABLE="SlimesSkyTravel.exe"
 else
     EXECUTABLE="SlimesSkyTravel"
 fi
 
-# ビルドが必要かチェック
+# Check if build is needed
 if [ ! -f "$EXECUTABLE" ] || [ "../CMakeLists.txt" -nt "$EXECUTABLE" ]; then
-    echo "ゲームをビルドしています・・・"
+    echo "Building the game..."
     cmake .. && make
     if [ $? -ne 0 ]; then
-        echo "ビルドに失敗しました。依存関係を確認してください。"
+        echo "Build failed. Please check dependencies."
         exit 1
     fi
-    echo "ビルドが完了しました。"
+    echo "Build completed."
 else
-    echo "既存のビルドを使用します。"
+    echo "Using existing build."
 fi
 
-echo "ゲームを起動しています・・・"
+echo "Launching the game..."
 ./"$EXECUTABLE"
